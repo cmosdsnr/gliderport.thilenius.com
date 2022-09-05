@@ -37,7 +37,7 @@ app.get('/getLastEntry', (req, res) => {
 })
 
 app.get('/lastAdded', (req, res) => {
-    content += "<p>recorded: " + tdLast.toDateString() + " " + tdLast.toTimeString() + "</p>"
+    var content = "<p>recorded: " + tdLast.toDateString() + " " + tdLast.toTimeString() + "</p>"
     content += '<p>first Record: ' + firstRecord + '</p>'
     let content = '<p>last Record: ' + lastRecord + '</p>'
     content += '<p>number of Records: ' + numberRecords + '</p>'
