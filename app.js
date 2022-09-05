@@ -65,11 +65,7 @@ app.post("/addData", (req, res) => {
             if (i === d.length - 1) e = ''
             sql += '( "' + v[0] + '", ' + v[1] + ', ' + v[2] + ', ' + v[3] + ', ' + v[4] + ', ' + v[5] + ')' + e;
         })
-        // connection.query(sql,
-        //     function (err, results, fields) {
-        //         ans = { sql, err, results, fields }
-        //     }
-        // )
+        connection.query(sql, (err, results, fields) => { })
         setLastRecord()
         tdLast = new Date()
     }
