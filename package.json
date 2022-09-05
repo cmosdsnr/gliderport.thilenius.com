@@ -2,12 +2,15 @@
   "name": "websockets",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
+    "go": "nodemon app.js",
     "start": "node app.js"
   },
   "dependencies": {
     "dotenv": "^16.0.2",
     "express": "^4.18.1",
+    "fs": "0.0.1-security",
     "http": "0.0.1-security",
     "mysql2": "^2.3.3",
     "nodemon": "^2.0.19",
