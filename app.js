@@ -73,5 +73,5 @@ app.post("/addData", (req, res) => {
         setLastRecord()
         tdLast = new Date()
     }
-    res.json(sql)
+    res.send(numberRecords + " records inserted")
 })
