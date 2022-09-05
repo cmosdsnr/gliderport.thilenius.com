@@ -37,7 +37,8 @@ app.get('/getLastEntry', (req, res) => {
 })
 
 app.get('/lastAdded', (req, res) => {
-    let content = "<p>recorded: " + tdLast.toDateString() + " " + tdLast.toTimeString() + "</p>"
+    let content = "<p>Last Data received at: " + tdLast.toDateString() + " " +
+        tdLast.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }) + "</p>"
     content += '<p>first Record: ' + firstRecord + '</p>'
     content += '<p>last Record: ' + lastRecord + '</p>'
     content += '<p>number of Records: ' + numberRecords + '</p>'
@@ -47,7 +48,7 @@ app.get('/lastAdded', (req, res) => {
 
 app.post("/addData", (req, res) => {
     let ans = ""
-    const d = req.body.d
+    const d = JSON.parse(req.body.d)
     console.log(d)
     console.log(d.length)
     if (d != undefined) {
