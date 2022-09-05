@@ -11,12 +11,17 @@ connection.connect(function (err) {
 })
 
 let lastRecord = "2022-09-05 13:27:20", firstRecord, numberRecords, tdLast = new Date()
-connection.query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1",
-    function (err, results, fields) {
-        lastRecord = results[0].recorded
-        console.log(lastRecord)
-    }
-)
+
+const setLastRecord = () => {
+    connection.query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1",
+        function (err, results, fields) {
+            lastRecord = results[0].recorded
+            console.log(lastRecord)
+        }
+    )
+}
+setLastRecord()
+
 
 const app = express()
 dotenv.config()
@@ -57,10 +62,7 @@ app.post("/addData", (req, res) => {
         firstRecord = d[0][0]
         numberRecords = d.length
         d.forEach((v, i) => {
-            if (i === d.length - 1) {
-                e = ''
-                lastRecord = v[0]
-            }
+            if (i === d.length - 1) e = ''
             sql += '( "' + v[0] + '", ' + v[1] + ', ' + v[2] + ', ' + v[3] + ', ' + v[4] + ', ' + v[5] + ')' + e;
         })
         // connection.query(sql,
@@ -68,6 +70,7 @@ app.post("/addData", (req, res) => {
         //         ans = { sql, err, results, fields }
         //     }
         // )
+        setLastRecord()
         tdLast = new Date()
     }
     res.json(sql)
