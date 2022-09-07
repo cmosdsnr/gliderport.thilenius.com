@@ -54,7 +54,7 @@ const setLastRecord = () => {
         connection.query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1",
             function (err, results, fields) {
                 lastRecord = results[0].recorded
-                console.log(lastRecord)
+                // console.log(lastRecord)
             }
         )
 }
@@ -95,10 +95,7 @@ app.get('/lastAdded', (req, res) => {
 app.get('/ImageAdded', (req, res) => {
     if (sqlEnabled)
         connection.query("UPDATE `server_sent` SET `last_image`=" + parseInt((new Date()).getTime() / 1000) + " WHERE `id`=1",
-            function (err, results, fields) {
-                lastRecord = results[0].recorded
-                console.log(lastRecord)
-            }
+            function (err, results, fields) { }
         )
 })
 
