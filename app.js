@@ -153,7 +153,7 @@ app.post("/addData", (req, res) => {
             connection.query(sql, (err, results, fields) => { })
 
             //let's work on hours Db
-            const dtd = Date.now()
+            const dtd = Date.now() / 1000
             const thisHour = 3600 * parseInt(dtd / 3600);
             const twoDaysAgo = thisHour - 48 * 3600;
 
@@ -171,7 +171,7 @@ app.post("/addData", (req, res) => {
                     const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
                     var dt1 = new Date(i * 1000)
                     var dt2 = new Date((3600 + i) * 1000)
-                    console.log(i + " " + dt1.toISOString() + " " + latestHours)
+                    // console.log(i + " " + dt1.toISOString() + " " + latestHours + " " + twoDaysAgo)
                     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt1.toISOString() + "' AND recorded <= '" + dt2.toISOString() + "'";
                     connection.query(sql, (err, results, fields) => {
                         results?.forEach((v, j) => {
