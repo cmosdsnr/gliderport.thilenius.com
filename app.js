@@ -168,28 +168,29 @@ app.post("/addData", (req, res) => {
         sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1;";
         if (sqlEnabled) connection.query(sql, (err, results, fields) => {
             latestHours = results[0] ? results[0].start : twoDaysAgo
+
+            console.log(dtd + " " + thisHour + " " + twoDaysAgo + " " + latestHours)
+            //for each hour starting at 'latestHour', thru 'thisHour'
+            // for (let i = latestHours; i <= thisHour; i += 3600) {
+            //     const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
+            //     var dt1 = new Date(i * 1000);
+            //     var dt2 = new Date((3600 + i) * 1000);
+            //     sql = "SELECT * FROM `gliderport` WHERE recorded > " + dt1 + " AND recorded <= " + dt2;
+            //     if (sqlEnabled)
+            //         connection.query(sql, (err, results, fields) => {
+            //             results?.forEach((v, j) => {
+            //                 data.time.push((new Date(v.recorded)).getTime() / 1000 - i);
+            //                 data.speed.push(parseInt(v.speed))
+            //                 data.direction.push(parseInt(v.direction))
+            //                 data.humidity.push(parseInt(v.humidity))
+            //                 data.pressure.push(parseInt(v.pressure))
+            //                 data.temperature.push(parseInt(v.temperature))
+            //             })
+            //         })
+            //     sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
+            //     if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
+            // }
         })
-        console.log(dtd + " " + thisHour + " " + twoDaysAgo + " " + latestHours)
-        //for each hour starting at 'latestHour', thru 'thisHour'
-        // for (let i = latestHours; i <= thisHour; i += 3600) {
-        //     const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
-        //     var dt1 = new Date(i * 1000);
-        //     var dt2 = new Date((3600 + i) * 1000);
-        //     sql = "SELECT * FROM `gliderport` WHERE recorded > " + dt1 + " AND recorded <= " + dt2;
-        //     if (sqlEnabled)
-        //         connection.query(sql, (err, results, fields) => {
-        //             results?.forEach((v, j) => {
-        //                 data.time.push((new Date(v.recorded)).getTime() / 1000 - i);
-        //                 data.speed.push(parseInt(v.speed))
-        //                 data.direction.push(parseInt(v.direction))
-        //                 data.humidity.push(parseInt(v.humidity))
-        //                 data.pressure.push(parseInt(v.pressure))
-        //                 data.temperature.push(parseInt(v.temperature))
-        //             })
-        //         })
-        //     sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
-        //     if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
-        // }
     }
     res.send(numberRecords + " records inserted")
 })
