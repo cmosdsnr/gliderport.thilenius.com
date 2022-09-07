@@ -5,8 +5,7 @@ import mysql from 'mysql2'
 import calculateSunrise from './calculateSunrise.js'
 dotenv.config()
 
-const sqlEnabled = true
-//!(typeof process.env.SQL !== 'undefined')
+const sqlEnabled = !(typeof process.env.SQL !== 'undefined')
 
 
 var connection = sqlEnabled ? mysql.createConnection(process.env.DATABASE_URL) : 0
@@ -155,7 +154,7 @@ app.post("/addData", (req, res) => {
             ", `temperature` = " + last[5] +
             " WHERE `id`=1";
         if (sqlEnabled) connection.query(sql, (err, results, fields) => { console.log("UPDATE2 " + last[0]) })
-        console.log("UPDATE " + last[0])
+        console.log("UPDATE " + sql)
         //let's work on hours Db
         const dtd = Date.now()
         const thisHour = 3600 * parseInt(dtd / 3600);
