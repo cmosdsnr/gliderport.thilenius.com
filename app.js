@@ -5,7 +5,8 @@ import mysql from 'mysql2'
 import calculateSunrise from './calculateSunrise.js'
 dotenv.config()
 
-const sqlEnabled = !(typeof process.env.SQL !== 'undefined')
+const sqlEnabled = true
+//!(typeof process.env.SQL !== 'undefined')
 
 
 var connection = sqlEnabled ? mysql.createConnection(process.env.DATABASE_URL) : 0
