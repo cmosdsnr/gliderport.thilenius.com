@@ -174,7 +174,7 @@ app.post("/addData", (req, res) => {
                     sql = "SELECT * FROM `gliderport` WHERE recorded > " + dt1 + " AND recorded <= " + dt2;
                     connection.query(sql, (err, results, fields) => {
                         results?.forEach((v, j) => {
-                            data.time.push((new Date(v.recorded)).getTime() / 1000 - i);
+                            data.date.push((new Date(v.recorded)).getTime() / 1000 - i);
                             data.speed.push(parseInt(v.speed))
                             data.direction.push(parseInt(v.direction))
                             data.humidity.push(parseInt(v.humidity))
@@ -183,7 +183,7 @@ app.post("/addData", (req, res) => {
                         })
                     })
                     console.log(sql)
-                    console.log("pushing hour: " + data.start + " with " + data.time.length + " records")
+                    console.log("pushing hour: " + data.start + " with " + data.date.length + " records")
                     sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
                     connection.query(sql, (err, results, fields) => { })
                 }
