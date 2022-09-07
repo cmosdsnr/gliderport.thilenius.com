@@ -153,7 +153,7 @@ app.post("/addData", (req, res) => {
             ", `pressure` = " + last[4] +
             ", `temperature` = " + last[5] +
             " WHERE `id`=1";
-        if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
+        if (sqlEnabled) connection.query(sql, (err, results, fields) => { console.log("UPDATE2 " + last[0]) })
         console.log("UPDATE " + last[0])
         //let's work on hours Db
         const dtd = Date.now()
