@@ -191,7 +191,7 @@ app.post("/addData", (req, res) => {
                         data.temperature.push(parseInt(v.temperature))
                     })
                 })
-            sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify($data) + "')"
+            sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
             if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
         }
     }
