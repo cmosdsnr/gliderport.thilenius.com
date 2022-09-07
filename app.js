@@ -165,12 +165,13 @@ app.post("/addData", (req, res) => {
             sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1;";
             connection.query(sql, (err, results, fields) => {
                 latestHours = results[0] ? results[0].start : twoDaysAgo
-                // console.log(dtd + " " + thisHour + " " + twoDaysAgo + " " + latestHours)
+                // console.log(dt1.toISOString() + " " + thisHour + " " + twoDaysAgo + " " + latestHours)
                 // for each hour starting at 'latestHour', thru 'thisHour'
                 for (let i = latestHours; i <= thisHour; i += 3600) {
                     const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
-                    var dt1 = new Date(i * 1000);
-                    var dt2 = new Date((3600 + i) * 1000);
+                    var dt1 = new Date(i * 1000)
+                    var dt2 = new Date((3600 + i) * 1000)
+                    console.log(i + " " + dt1.toISOString() + " " + latestHours)
                     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt1.toISOString() + "' AND recorded <= '" + dt2.toISOString() + "'";
                     connection.query(sql, (err, results, fields) => {
                         results?.forEach((v, j) => {
