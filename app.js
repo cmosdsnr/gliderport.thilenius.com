@@ -175,14 +175,14 @@ app.post("/addData", (req, res) => {
         })
 
         //for each hour starting at 'latestHour', thru 'thisHour'
-        for (let i = latestHour; i <= thisHour; i += 3600) {
+        for (let i = latestHours; i <= thisHour; i += 3600) {
             const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
             var dt1 = new Date(i * 1000);
             var dt2 = new Date((3600 + i) * 1000);
             sql = "SELECT * FROM `gliderport` WHERE recorded > " + dt1 + " AND recorded <= " + dt2;
             if (sqlEnabled)
                 connection.query(sql, (err, results, fields) => {
-                    results?.forEach((v, i) => {
+                    results?.forEach((v, j) => {
                         data.time.push((new Date(v.recorded)).getTime() / 1000 - i);
                         data.speed.push(parseInt(v.speed))
                         data.direction.push(parseInt(v.direction))
