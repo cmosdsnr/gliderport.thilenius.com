@@ -154,11 +154,10 @@ app.post("/addData", (req, res) => {
             ", `temperature` = " + last[5] +
             " WHERE `id`=1";
         if (sqlEnabled) connection.query(sql, (err, results, fields) => { console.log("UPDATE2 " + last[0]) })
-        console.log("UPDATE " + sql)
+        console.log(sql)
         //let's work on hours Db
         const dtd = Date.now()
         const thisHour = 3600 * parseInt(dtd / 3600);
-        const lastHour = thisHour - 3600;
         const twoDaysAgo = thisHour - 48 * 3600;
 
         // delete older records
@@ -170,7 +169,7 @@ app.post("/addData", (req, res) => {
         if (sqlEnabled) connection.query(sql, (err, results, fields) => {
             latestHours = results[0] ? results[0].start : twoDaysAgo
         })
-        console.log(latestHours)
+        console.log(dtd + " " + thisHour + " " + twoDaysAgo + " " + latestHours)
         //for each hour starting at 'latestHour', thru 'thisHour'
         // for (let i = latestHours; i <= thisHour; i += 3600) {
         //     const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
