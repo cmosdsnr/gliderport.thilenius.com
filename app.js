@@ -189,7 +189,7 @@ app.post("/addData", (req, res) => {
                     })
                 })
             sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
-            if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
+            // if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
         }
     }
     res.send(numberRecords + " records inserted")
