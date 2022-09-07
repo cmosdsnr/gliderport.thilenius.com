@@ -165,7 +165,7 @@ app.post("/addData", (req, res) => {
         const twoDaysAgo = thisHour - 48 * 3600;
 
         // delete older records
-        sql = "DELETE FROM hours WHERE `start` < " + data.twoDaysAgo
+        sql = "DELETE FROM hours WHERE `start` < " + twoDaysAgo
         if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
 
         //get latest record (or 2 days ago if there are none)
