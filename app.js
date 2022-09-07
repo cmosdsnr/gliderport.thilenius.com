@@ -65,7 +65,7 @@ const app = express()
 
 const port = process.env.PORT || 1234;
 app.listen(port, () => {
-    console.log(`Example app listening on port data.${port}`)
+    console.log(`Updater listening on port data.${port}`)
 })
 
 
@@ -129,8 +129,8 @@ app.get('/UpdateStatus', (req, res) => {
 // called to add new wind Data to the db
 app.post("/addData", (req, res) => {
     const d = JSON.parse(req.body.d)
-    console.log(d)
-    console.log(d.length)
+    // console.log(d)
+    // console.log(d.length)
     if (d != undefined) {
         let sql = "INSERT INTO gliderport (recorded, speed, direction, humidity, pressure, temperature ) VALUES ";
         let e = ','
