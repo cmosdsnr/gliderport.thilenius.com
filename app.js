@@ -153,7 +153,7 @@ app.post("/addData", (req, res) => {
             connection.query(sql, (err, results, fields) => { })
 
             //let's work on hours Db
-            const dtd = Date.now() / 1000
+            const dtd = Date.now() / 1000 + 60 * Date.getTimezoneOffset()
             const thisHour = 3600 * parseInt(dtd / 3600);
             const twoDaysAgo = thisHour - 48 * 3600;
 
