@@ -154,7 +154,7 @@ app.post("/addData", (req, res) => {
             ", `temperature` = " + last[5] +
             " WHERE `id`=1";
         if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
-
+        console.log("UPDATE " + last[0])
         //let's work on hours Db
         const dtd = Date.now()
         const thisHour = 3600 * parseInt(dtd / 3600);
