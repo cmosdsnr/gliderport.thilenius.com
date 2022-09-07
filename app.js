@@ -129,8 +129,6 @@ app.get('/UpdateStatus', (req, res) => {
 // called to add new wind Data to the db
 app.post("/addData", (req, res) => {
     const d = JSON.parse(req.body.d)
-    // console.log(d)
-    // console.log(d.length)
     if (d != undefined) {
         let sql = "INSERT INTO gliderport (recorded, speed, direction, humidity, pressure, temperature ) VALUES ";
         let e = ','
@@ -140,56 +138,56 @@ app.post("/addData", (req, res) => {
             if (i === d.length - 1) e = ''
             sql += '( "' + v[0] + '", ' + v[1] + ', ' + v[2] + ', ' + v[3] + ', ' + v[4] + ', ' + v[5] + ')' + e;
         })
-        if (sqlEnabled)
+        connection.query(sql, (err, results, fields) => {
+            setLastRecord()
+            tdLast = new Date()
+
+            const last = d[d.length - 1]
+            sql = "UPDATE `server_sent` SET `last_record`=" + ((new Date(last[0])).getTime() / 1000) +
+                ", `speed` = " + last[1] +
+                ", `direction` = " + last[2] +
+                ", `humidity` = " + last[3] +
+                ", `pressure` = " + last[4] +
+                ", `temperature` = " + last[5] +
+                " WHERE `id`=1";
             connection.query(sql, (err, results, fields) => { })
-        setLastRecord()
-        tdLast = new Date()
 
-        const last = d[d.length - 1]
-        sql = "UPDATE `server_sent` SET `last_record`=" + ((new Date(last[0])).getTime() / 1000) +
-            ", `speed` = " + last[1] +
-            ", `direction` = " + last[2] +
-            ", `humidity` = " + last[3] +
-            ", `pressure` = " + last[4] +
-            ", `temperature` = " + last[5] +
-            " WHERE `id`=1";
-        if (sqlEnabled) connection.query(sql, (err, results, fields) => { console.log("UPDATE2 " + last[0]) })
-        console.log(sql)
-        //let's work on hours Db
-        const dtd = Date.now()
-        const thisHour = 3600 * parseInt(dtd / 3600);
-        const twoDaysAgo = thisHour - 48 * 3600;
+            //let's work on hours Db
+            const dtd = Date.now()
+            const thisHour = 3600 * parseInt(dtd / 3600);
+            const twoDaysAgo = thisHour - 48 * 3600;
 
-        // delete older records
-        sql = "DELETE FROM hours WHERE `start` < " + twoDaysAgo
-        if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
+            // delete older records
+            sql = "DELETE FROM hours WHERE `start` < " + twoDaysAgo
+            connection.query(sql, (err, results, fields) => { })
 
-        //get latest record (or 2 days ago if there are none)
-        sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1;";
-        if (sqlEnabled) connection.query(sql, (err, results, fields) => {
-            latestHours = results[0] ? results[0].start : twoDaysAgo
+            // get latest record (or 2 days ago if there are none)
+            sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1;";
+            connection.query(sql, (err, results, fields) => {
+                latestHours = results[0] ? results[0].start : twoDaysAgo
 
-            console.log(dtd + " " + thisHour + " " + twoDaysAgo + " " + latestHours)
-            //for each hour starting at 'latestHour', thru 'thisHour'
-            // for (let i = latestHours; i <= thisHour; i += 3600) {
-            //     const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
-            //     var dt1 = new Date(i * 1000);
-            //     var dt2 = new Date((3600 + i) * 1000);
-            //     sql = "SELECT * FROM `gliderport` WHERE recorded > " + dt1 + " AND recorded <= " + dt2;
-            //     if (sqlEnabled)
-            //         connection.query(sql, (err, results, fields) => {
-            //             results?.forEach((v, j) => {
-            //                 data.time.push((new Date(v.recorded)).getTime() / 1000 - i);
-            //                 data.speed.push(parseInt(v.speed))
-            //                 data.direction.push(parseInt(v.direction))
-            //                 data.humidity.push(parseInt(v.humidity))
-            //                 data.pressure.push(parseInt(v.pressure))
-            //                 data.temperature.push(parseInt(v.temperature))
-            //             })
-            //         })
-            //     sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
-            //     if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
-            // }
+                console.log(dtd + " " + thisHour + " " + twoDaysAgo + " " + latestHours)
+                // for each hour starting at 'latestHour', thru 'thisHour'
+                for (let i = latestHours; i <= thisHour; i += 3600) {
+                    const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
+                    var dt1 = new Date(i * 1000);
+                    var dt2 = new Date((3600 + i) * 1000);
+                    sql = "SELECT * FROM `gliderport` WHERE recorded > " + dt1 + " AND recorded <= " + dt2;
+                    if (sqlEnabled)
+                        connection.query(sql, (err, results, fields) => {
+                            results?.forEach((v, j) => {
+                                data.time.push((new Date(v.recorded)).getTime() / 1000 - i);
+                                data.speed.push(parseInt(v.speed))
+                                data.direction.push(parseInt(v.direction))
+                                data.humidity.push(parseInt(v.humidity))
+                                data.pressure.push(parseInt(v.pressure))
+                                data.temperature.push(parseInt(v.temperature))
+                            })
+                        })
+                    sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
+                    if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
+                }
+            })
         })
     }
     res.send(numberRecords + " records inserted")
