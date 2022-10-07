@@ -5,8 +5,8 @@ import calculateSunrise from './calculateSunrise.js'
 dotenv.config()
 
 process.env.TZ = 'America/Los_Angeles'
-let xx = new Date()
-console.log(xx.getTimezoneOffset())
+let offset = -60000 * (new Date()).getTimezoneOffset()
+console.log("offset ", offset)
 // A node server used to:
 // 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
 // 2. respond to teh following calls:
@@ -183,8 +183,8 @@ app.post("/addData", (req, res) => {
                 for (let i = latestHours; i <= thisHour; i += 3600) {
                     const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
                     console.log(tdLast.getTimezoneOffset())
-                    var dt1 = new Date(i * 1000 - 60000 * tdLast.getTimezoneOffset())
-                    var dt2 = new Date((3600 + i) * 1000 - 60000 * tdLast.getTimezoneOffset())
+                    var dt1 = new Date(i * 1000 + offset)
+                    var dt2 = new Date((3600 + i) * 1000 + offset)
                     // console.log(i + " " + dt1.toISOString() + " " + latestHours + " " + twoDaysAgo)
                     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt1.toISOString() + "' AND recorded <= '" + dt2.toISOString() + "'";
                     console.log("looking for ", sql)
