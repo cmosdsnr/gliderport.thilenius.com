@@ -5,7 +5,7 @@ import calculateSunrise from './calculateSunrise.js'
 dotenv.config()
 
 process.env.TZ = 'America/Los_Angeles'
-let xx = Date.now()
+let xx = new Date()
 console.log(xx.getTimezoneOffset())
 // A node server used to:
 // 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
