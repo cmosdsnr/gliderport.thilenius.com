@@ -4,6 +4,7 @@ import mysql from 'mysql2'
 import calculateSunrise from './calculateSunrise.js'
 dotenv.config()
 
+process.env.TZ = 'America/Los_Angeles'
 
 // A node server used to:
 // 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
