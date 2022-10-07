@@ -1,9 +1,20 @@
 import express from 'express'
-// import mysql from 'mysql2'
 import dotenv from 'dotenv'
 import mysql from 'mysql2'
 import calculateSunrise from './calculateSunrise.js'
 dotenv.config()
+
+
+// A node server used to:
+// 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
+// 2. respond to teh following calls:
+//  a. '/getLastEntry'  : ??             : return the last entry in gliderport db
+//  b. '/lastAdded'     : for browser    : Debug page to display latest happenings
+//  c. '/ImageAdded'    : called from Pi3: Update the time the last image was added to now in the server_sent table
+//  d. '/UpdateStatus'  : called from Pi4: Online status was checked so update those fields in server_sent and network_status
+//  e. '/addData'       : called from Pi3: with new record(s)
+
+
 
 const sqlEnabled = !(typeof process.env.SQL !== 'undefined')
 
@@ -169,11 +180,13 @@ app.post("/addData", (req, res) => {
                 // for each hour starting at 'latestHour', thru 'thisHour'
                 for (let i = latestHours; i <= thisHour; i += 3600) {
                     const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
-                    var dt1 = new Date(i * 1000)
-                    var dt2 = new Date((3600 + i) * 1000)
+                    var dt1 = new Date(i * 1000 - 60000 * tdLast.getTimezoneOffset())
+                    var dt2 = new Date((3600 + i) * 1000 - 60000 * tdLast.getTimezoneOffset())
                     // console.log(i + " " + dt1.toISOString() + " " + latestHours + " " + twoDaysAgo)
                     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt1.toISOString() + "' AND recorded <= '" + dt2.toISOString() + "'";
+                    console.log("looking for ", sql)
                     connection.query(sql, (err, results, fields) => {
+                        console.log("found ", results.length, " rows")
                         results?.forEach((v, j) => {
                             data.date.push((new Date(v.recorded)).getTime() / 1000 - i);
                             data.speed.push(parseInt(v.speed))
