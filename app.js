@@ -180,6 +180,7 @@ app.post("/addData", (req, res) => {
                 // for each hour starting at 'latestHour', thru 'thisHour'
                 for (let i = latestHours; i <= thisHour; i += 3600) {
                     const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
+                    console.log(tdLast.getTimezoneOffset())
                     var dt1 = new Date(i * 1000 - 60000 * tdLast.getTimezoneOffset())
                     var dt2 = new Date((3600 + i) * 1000 - 60000 * tdLast.getTimezoneOffset())
                     // console.log(i + " " + dt1.toISOString() + " " + latestHours + " " + twoDaysAgo)
