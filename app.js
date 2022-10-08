@@ -66,7 +66,7 @@ const setLastRecord = () => {
     if (sqlEnabled)
         connection.query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1",
             function (err, results, fields) {
-                lastRecord = results[0].recorded
+                lastRecord = results ? results[0].recorded : 0
                 // console.log(lastRecord)
             }
         )
@@ -141,9 +141,11 @@ app.get('/UpdateStatus', (req, res) => {
 
 // called to add new wind Data to the db
 app.post("/addData", (req, res) => {
-    const d = JSON.parse(req.body.d)
+    // const d = JSON.parse(req.body.d)
+    const d = undefined
+    let sql
     if (d != undefined) {
-        let sql = "INSERT INTO gliderport (recorded, speed, direction, humidity, pressure, temperature ) VALUES ";
+        sql = "INSERT INTO gliderport (recorded, speed, direction, humidity, pressure, temperature ) VALUES ";
         let e = ','
         firstRecord = d[0][0]
         numberRecords = d.length
@@ -167,12 +169,14 @@ app.post("/addData", (req, res) => {
         })
     }
     //let's work on hours Db
-    const dtd = Date.now() / 1000 + 60 * tdLast.getTimezoneOffset()
+    const dtd = (Date.now() + offset) / 1000 //+ 60 * tdLast.getTimezoneOffset()
     const thisHour = 3600 * parseInt(dtd / 3600);
     const twoDaysAgo = thisHour - 48 * 3600;
 
     // delete older records
     sql = "DELETE FROM hours WHERE `start` < " + twoDaysAgo
+    connection.query(sql, (err, results, fields) => { })
+    sql = "DELETE FROM hours WHERE `start` > " + thisHour
     connection.query(sql, (err, results, fields) => { })
 
     // get latest record (or 2 days ago if there are none)
@@ -183,27 +187,23 @@ app.post("/addData", (req, res) => {
         // for each hour starting at 'latestHour', thru 'thisHour'
         for (let i = latestHours; i <= thisHour; i += 3600) {
             const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
-            console.log(tdLast.getTimezoneOffset())
-            var dt1 = new Date(i * 1000 + offset)
-            var dt2 = new Date((3600 + i) * 1000 + offset)
+            var dt1 = new Date(i * 1000)
+            var dt2 = new Date((3600 + i) * 1000)
             // console.log(i + " " + dt1.toISOString() + " " + latestHours + " " + twoDaysAgo)
             sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt1.toISOString() + "' AND recorded <= '" + dt2.toISOString() + "'";
-            console.log("looking for ", sql)
+            // console.log("looking for ", sql)
             connection.query(sql, (err, results, fields) => {
-                console.log("found ", results.length, " rows")
                 results?.forEach((v, j) => {
-                    data.date.push((new Date(v.recorded)).getTime() / 1000 - i);
+                    data.date.push(((new Date(v.recorded)).getTime() + offset) / 1000 - i);
                     data.speed.push(parseInt(v.speed))
                     data.direction.push(parseInt(v.direction))
                     data.humidity.push(parseInt(v.humidity))
                     data.pressure.push(parseInt(v.pressure))
                     data.temperature.push(parseInt(v.temperature))
                 })
+                sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
+                connection.query(sql, (err, results, fields) => { })
             })
-            console.log(sql)
-            console.log("pushing hour: " + data.start + " with " + data.date.length + " records")
-            sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
-            connection.query(sql, (err, results, fields) => { })
         }
     })
 
