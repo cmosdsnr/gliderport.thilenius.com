@@ -21,7 +21,8 @@ console.log("offset ", offset)
 const sqlEnabled = !(typeof process.env.SQL !== 'undefined')
 
 
-var connection = sqlEnabled ? mysql.createConnection(process.env.DATABASE_URL) : 0
+let connection = sqlEnabled ? mysql.createConnection(process.env.DATABASE_URL) : 0
+let sql
 
 if (sqlEnabled)
     connection.connect(function (err) {
@@ -123,7 +124,6 @@ app.get('/UpdateStatus', (req, res) => {
         res.send("no status given")
         return
     }
-    let sql
     ts = Date.now()
     if (req.params.status === 2) {
         sql = "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1"
@@ -139,16 +139,16 @@ app.get('/UpdateStatus', (req, res) => {
     if (sqlEnabled) connection.query(sql, (err, results, fields) => { })
 })
 
+let msg = ""
 // called to add new wind Data to the db
 app.post("/addData", (req, res) => {
-    // const d = JSON.parse(req.body.d)
-    const d = undefined
-    let sql
-    if (d != undefined) {
+    if (("d" in req.body) && d.length > 0) {
+        const d = JSON.parse(req.body.d)
         sql = "INSERT INTO gliderport (recorded, speed, direction, humidity, pressure, temperature ) VALUES ";
         let e = ','
         firstRecord = d[0][0]
         numberRecords = d.length
+        msg += numberRecords + " records added to gliderport<br>"
         d.forEach((v, i) => {
             if (i === d.length - 1) e = ''
             sql += '( "' + v[0] + '", ' + v[1] + ', ' + v[2] + ', ' + v[3] + ', ' + v[4] + ', ' + v[5] + ')' + e;
@@ -183,16 +183,18 @@ app.post("/addData", (req, res) => {
     sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1;";
     connection.query(sql, (err, results, fields) => {
         latestHours = results[0] ? results[0].start : twoDaysAgo
+        msg += "selecting a start time of " + latestHours + "<br>"
         // console.log(dt1.toISOString() + " " + thisHour + " " + twoDaysAgo + " " + latestHours)
         // for each hour starting at 'latestHour', thru 'thisHour'
         for (let i = latestHours; i <= thisHour; i += 3600) {
             const data = { start: i, date: [], speed: [], direction: [], humidity: [], pressure: [], temperature: [] }
-            var dt1 = new Date(i * 1000)
-            var dt2 = new Date((3600 + i) * 1000)
-            // console.log(i + " " + dt1.toISOString() + " " + latestHours + " " + twoDaysAgo)
+            let dt1 = new Date(i * 1000)
+            let dt2 = new Date((3600 + i) * 1000)
+            msg += "selecting records from " + dt1.toISOString() + " to " + dt2.toISOString() + "<br>"
             sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt1.toISOString() + "' AND recorded <= '" + dt2.toISOString() + "'";
             // console.log("looking for ", sql)
             connection.query(sql, (err, results, fields) => {
+                msg += "found " + (results ? results.length : " none") + "<br>"
                 results?.forEach((v, j) => {
                     data.date.push(((new Date(v.recorded)).getTime() + offset) / 1000 - i);
                     data.speed.push(parseInt(v.speed))
@@ -201,11 +203,13 @@ app.post("/addData", (req, res) => {
                     data.pressure.push(parseInt(v.pressure))
                     data.temperature.push(parseInt(v.temperature))
                 })
+
+                msg += "replacing " + data.start + " with " + data.date.length + " records<br>"
                 sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
                 connection.query(sql, (err, results, fields) => { })
             })
         }
     })
 
-    res.send(numberRecords + " records inserted")
+    res.send(msg)
 })
