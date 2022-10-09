@@ -142,7 +142,7 @@ app.get('/UpdateStatus', (req, res) => {
 let msg = ""
 // called to add new wind Data to the db
 app.post("/addData", (req, res) => {
-    if (("d" in req.body) && d.length > 0) {
+    if ((req.body.d != undefined) && (d.length > 0)) {
         const d = JSON.parse(req.body.d)
         sql = "INSERT INTO gliderport (recorded, speed, direction, humidity, pressure, temperature ) VALUES ";
         let e = ','
