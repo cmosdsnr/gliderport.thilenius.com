@@ -142,9 +142,7 @@ app.get('/UpdateStatus', (req, res) => {
 let msg = ""
 // called to add new wind Data to the db
 app.post("/addData", (req, res) => {
-    console.log("addData called with d=", req.body.d)
     if ("d" in req.body) {
-        console.log("d is in req.body")
         const d = JSON.parse(req.body.d)
         sql = "INSERT INTO gliderport (recorded, speed, direction, humidity, pressure, temperature ) VALUES ";
         let e = ','
@@ -170,6 +168,8 @@ app.post("/addData", (req, res) => {
                 " WHERE `id`=1";
             connection.query(sql, (err, results, fields) => { })
         })
+    } else {
+        console.log("addData called with no data")
     }
     //let's work on hours Db
     const dtd = (Date.now() + offset) / 1000 //+ 60 * tdLast.getTimezoneOffset()
@@ -207,7 +207,7 @@ app.post("/addData", (req, res) => {
                     data.temperature.push(parseInt(v.temperature))
                 })
 
-                msg += "replacing " + data.start + " with " + data.date.length + " records<br>"
+                msg += "replacing " + data.start + " with " + data.date.length + " records"
                 sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
                 connection.query(sql, (err, results, fields) => { })
             })
