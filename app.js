@@ -67,7 +67,7 @@ const setLastRecord = () => {
     if (sqlEnabled)
         connection.query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1",
             function (err, results, fields) {
-                lastRecord = results ? results[0].recorded : 0
+                lastRecord = results ? (new Date((new Date(results[0].recorded)).getTime() + offset)).toISOString() : 0
                 // console.log(lastRecord)
             }
         )
