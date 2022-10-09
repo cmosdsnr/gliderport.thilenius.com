@@ -68,6 +68,8 @@ const setLastRecord = () => {
         connection.query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1",
             function (err, results, fields) {
                 lastRecord = results ? (new Date((new Date(results[0].recorded)).getTime() + offset)).toISOString() : 0
+                lastRecord = lastRecord.replace("T", " ")
+                lastRecord = lastRecord.replace(".000Z", "")
                 console.log(lastRecord)
             }
         )
