@@ -10,7 +10,7 @@ console.log("offset ", offset)
 // A node server used to:
 // 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
 // 2. respond to teh following calls:
-//  a. '/getLastEntry'  : ??             : return the last entry in gliderport db
+//  a. '/getLastEntry'  : called from Pi3: return the last entry in gliderport db
 //  b. '/lastAdded'     : for browser    : Debug page to display latest happenings
 //  c. '/ImageAdded'    : called from Pi3: Update the time the last image was added to now in the server_sent table
 //  d. '/UpdateStatus'  : called from Pi4: Online status was checked so update those fields in server_sent and network_status
@@ -91,6 +91,7 @@ app.use(express.static('./public'))
 
 
 app.get('/getLastEntry', (req, res) => {
+    console.log(lastRecord)
     res.send(lastRecord)
 })
 
