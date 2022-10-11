@@ -70,7 +70,7 @@ const setLastRecord = () => {
                 lastRecord = results ? (new Date((new Date(results[0].recorded)).getTime() + offset)).toISOString() : 0
                 lastRecord = lastRecord.replace("T", " ")
                 lastRecord = lastRecord.replace(".000Z", "")
-                console.log("last record: ", lastRecord)
+                // console.log("last record: ", lastRecord)
             }
         )
 }
@@ -153,7 +153,7 @@ app.post("/addData", (req, res) => {
         firstRecord = d[0][0]
         numberRecords = d.length
         msg += numberRecords + " records added to gliderport"
-        console.log(msg)
+        // console.log(msg)
         msg += "<br>\n"
         d.forEach((v, i) => {
             if (i === d.length - 1) e = ''
