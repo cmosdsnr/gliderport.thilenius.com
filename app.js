@@ -12,7 +12,7 @@ let offset = -60000 * new Date().getTimezoneOffset()
 console.log("offset ", offset)
 // A node server used to:
 // 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
-// 2. respond to teh following calls:
+// 2. respond to the following calls:
 //  a. '/getLastEntry'  : called from Pi3: return the last entry in gliderport db
 //  b. '/lastAdded'     : for browser    : Debug page to display latest happenings
 //  c. '/ImageAdded'    : called from Pi3: Update the time the last image was added to now in the server_sent table
@@ -153,6 +153,7 @@ app.get("/ImageAdded", (req, res) => {
         " WHERE `id`=1",
         () => { }
     )
+    res.send("Ok")
 })
 
 // ping this page to update the "latest Image" field in the server_sent table
