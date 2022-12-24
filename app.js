@@ -1,13 +1,15 @@
-import express from "express";
-import dotenv from "dotenv";
-import mysql from "mysql2";
-import calculateSunrise from "./calculateSunrise.js";
-import { Http2ServerRequest } from "http2";
-dotenv.config();
+import express from "express"
+import dotenv from "dotenv"
+import mysql from "mysql2"
+import calculateSunrise from "./calculateSunrise.js"
+import { Http2ServerRequest } from "http2"
+dotenv.config()
 
-process.env.TZ = "America/Los_Angeles";
-let offset = -60000 * new Date().getTimezoneOffset();
-console.log("offset ", offset);
+let DEBUG = true
+
+process.env.TZ = "America/Los_Angeles"
+let offset = -60000 * new Date().getTimezoneOffset()
+console.log("offset ", offset)
 // A node server used to:
 // 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
 // 2. respond to teh following calls:
@@ -18,56 +20,56 @@ console.log("offset ", offset);
 //  e. '/addData'       : called from Pi3: with new record(s)
 
 // interface Day {
-//   start: number;
-//   date: number[];
-//   speed: number[];
-//   direction: number[];
-//   humidity: number[];
-//   pressure: number[];
-//   temperature: number[];
+//   start: number
+//   date: number[]
+//   speed: number[]
+//   direction: number[]
+//   humidity: number[]
+//   pressure: number[]
+//   temperature: number[]
 // }
 
 // type Reading = {
-//   recorded: string;
-//   speed: number;
-//   direction: number;
-//   humidity: number;
-//   pressure: number;
-//   temperature: number;
-// };
+//   recorded: string
+//   speed: number
+//   direction: number
+//   humidity: number
+//   pressure: number
+//   temperature: number
+// }
 
 // type Hour = {
-//   start: number;
-//   data: string;
-// };
+//   start: number
+//   data: string
+// }
 
-const sqlEnabled = !(typeof process.env.SQL !== "undefined");
+const sqlEnabled = !(typeof process.env.SQL !== "undefined")
 
 let connection =
     typeof process.env.DATABASE_URL === "string" && sqlEnabled
         ? mysql.createConnection(process.env.DATABASE_URL)
-        : null;
+        : null
 
-let sql;
+let sql
 
 connection?.connect(function (err) {
-    if (err) throw err;
-    console.log("Connected!");
-});
+    if (err) throw err
+    console.log("Connected!")
+})
 
 let lastRecord = "2022-09-05 13:27:20",
     firstRecord,
     numberRecords,
-    tdLast = new Date();
-let latestHours = 0;
+    tdLast = new Date()
+let latestHours = 0
 
 let changes = {
     lastForecast: 0,
-};
+}
 
 // to do with sunrise and sunset
-let TodaysDay = new Date().getDate();
-let sunData = calculateSunrise(new Date());
+let TodaysDay = new Date().getDate()
+let sunData = calculateSunrise(new Date())
 
 const updateSunData = () => {
     const sql = "UPDATE `server_sent` SET `sunrise_raw`=" + sunData.sunrise +
@@ -76,72 +78,72 @@ const updateSunData = () => {
         "',`sunset_raw`=" + sunData.sunset +
         ",`sunset_timestamp`=" + sunData.sunsetTimestamp +
         ",`sunset_text`='" + sunData.sunsetText +
-        "' WHERE `id`=1";
-    connection?.query(sql, function (err, results, fields) { });
-};
-updateSunData();
+        "' WHERE `id`=1"
+    connection?.query(sql, function (err, results, fields) { })
+}
+updateSunData()
 
 //call every hour
 let id = setInterval(() => {
     if (TodaysDay != new Date().getDate()) {
-        TodaysDay = new Date().getDate();
-        sunData = calculateSunrise(new Date());
-        updateSunData();
+        TodaysDay = new Date().getDate()
+        sunData = calculateSunrise(new Date())
+        updateSunData()
     }
-}, 3600000);
+}, 3600000)
 
 const setLastRecord = () => {
     connection?.query(
         "SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1",
         function (err, results, fields) {
-            lastRecord = results ? new Date(new Date(results[0].recorded).getTime() + offset).toISOString() : "0";
-            lastRecord = lastRecord.replace("T", " ");
-            lastRecord = lastRecord.replace(".000Z", "");
+            lastRecord = results ? new Date(new Date(results[0].recorded).getTime() + offset).toISOString() : "0"
+            lastRecord = lastRecord.replace("T", " ")
+            lastRecord = lastRecord.replace(".000Z", "")
             // console.log("last record: ", lastRecord)
         }
-    );
-};
-setLastRecord();
+    )
+}
+setLastRecord()
 
-const app = express();
+const app = express()
 
-const port = process.env.PORT || 1234;
+const port = process.env.PORT || 1234
 app.listen(port, () => {
-    console.log(`Updater listening on port data.${port}`);
-});
+    console.log(`Updater listening on port data.${port}`)
+})
 
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use(express.json({ limit: "10mb" }));
-app.use(express.static("./public"));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }))
+app.use(express.json({ limit: "10mb" }))
+app.use(express.static("./public"))
 
 app.get("/getLastEntry", (req, res) => {
-    if (lastRecord) res.send(lastRecord);
-    else res.send("OK");
-});
+    if (lastRecord) res.send(lastRecord)
+    else res.send("OK")
+})
 
 // called from browser to display latest happenings
 app.get("/lastAdded", (req, res) => {
     let content = "<p>Last Data received at: " + tdLast.toDateString() + " " +
-        tdLast.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }) + "</p>";
-    content += "<p>first Record: " + firstRecord + "</p>";
-    content += "<p>last Record: " + lastRecord + "</p>";
-    content += "<p>number of Records: " + numberRecords + "</p>";
+        tdLast.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }) + "</p>"
+    content += "<p>first Record: " + firstRecord + "</p>"
+    content += "<p>last Record: " + lastRecord + "</p>"
+    content += "<p>number of Records: " + numberRecords + "</p>"
     if (latestHours > 0)
-        content += "<p>Latest Hours timestamp is: " + latestHours + "</p>";
+        content += "<p>Latest Hours timestamp is: " + latestHours + "</p>"
     content +=
         "<p><table><tr><td>Sunrise</td><td>" +
         sunData.sunriseTime?.toLocaleString("en-US", {
             timeZone: "America/Los_Angeles",
         }) +
-        "</td></tr>";
+        "</td></tr>"
     content +=
         "<tr><td>Sunset</td><td>" +
         sunData.sunsetTime?.toLocaleString("en-US", {
             timeZone: "America/Los_Angeles",
         }) +
-        "</td></tr></table></p>";
-    res.send(content);
-});
+        "</td></tr></table></p>"
+    res.send(content)
+})
 
 // ping this page to update the "latest Image" field in the server_sent table
 app.get("/ImageAdded", (req, res) => {
@@ -150,62 +152,62 @@ app.get("/ImageAdded", (req, res) => {
         Math.floor(new Date().getTime() / 1000) +
         " WHERE `id`=1",
         () => { }
-    );
-});
+    )
+})
 
 // ping this page to update the "latest Image" field in the server_sent table
 app.get("/UpdateStatus", (req, res) => {
     if (req.params.password != "ilove2fly") {
-        res.send("Password incorrect");
-        return;
+        res.send("Password incorrect")
+        return
     }
     if (req.params.status === undefined) {
-        res.send("no status given");
-        return;
+        res.send("no status given")
+        return
     }
-    let ts = Date.now();
+    let ts = Date.now()
     if (req.params.status === 2) {
         sql =
-            "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1";
-        connection?.query(sql, (err, results, fields) => { });
-        return;
+            "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1"
+        connection?.query(sql, (err, results, fields) => { })
+        return
     }
-    let i = 0;
-    if (req.params.status === 1) i = 1;
-    sql = "UPDATE `server_sent` SET `online_status`=" + i + " WHERE `id`=1";
-    connection?.query(sql, (err, results, fields) => { });
+    let i = 0
+    if (req.params.status === 1) i = 1
+    sql = "UPDATE `server_sent` SET `online_status`=" + i + " WHERE `id`=1"
+    connection?.query(sql, (err, results, fields) => { })
 
     sql =
         "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" +
         ts +
         "'," +
         i +
-        ")";
-    connection?.query(sql, (err, results, fields) => { });
-});
+        ")"
+    connection?.query(sql, (err, results, fields) => { })
+})
 
 // called to add new wind Data to the db
 app.post("/addData", (req, res) => {
-    let msg = "";
+    let msg = ""
     if ("d" in req.body) {
-        const d = JSON.parse(req.body.d);
+        const d = JSON.parse(req.body.d)
         sql =
-            "INSERT INTO gliderport (recorded, speed, direction, humidity, pressure, temperature ) VALUES ";
-        let e = ",";
-        firstRecord = d[0][0];
-        numberRecords = d.length;
-        msg += numberRecords + " records added to gliderport\n";
+            "INSERT INTO gliderport (recorded, speed, direction, humidity, pressure, temperature ) VALUES "
+        let e = ","
+        firstRecord = d[0][0]
+        numberRecords = d.length
+        msg += numberRecords + " records added to gliderport\n"
         // console.log(msg)
-        msg += "<br>\n";
+        msg += "<br>\n"
         d.forEach((v, i) => {
-            if (i === d.length - 1) e = "";
-            sql += '( "' + v[0] + '", ' + v[1] + ", " + v[2] + ", " + v[3] + ", " + v[4] + ", " + v[5] + ")" + e;
-        });
+            if (i === d.length - 1) e = ""
+            sql += '( "' + v[0] + '", ' + v[1] + ", " + v[2] + ", " + v[3] + ", " + v[4] + ", " + v[5] + ")" + e
+        })
         connection?.query(sql, (err, results, fields) => {
-            setLastRecord();
-            tdLast = new Date();
+            setLastRecord()
+            tdLast = new Date()
 
-            const last = d[d.length - 1];
+            const last = d[d.length - 1]
             sql =
                 "UPDATE `server_sent` SET `last_record`=" +
                 new Date(last[0]).getTime() / 1000 +
@@ -214,28 +216,28 @@ app.post("/addData", (req, res) => {
                 ", `humidity` = " + last[3] +
                 ", `pressure` = " + last[4] +
                 ", `temperature` = " + last[5] +
-                " WHERE `id`=1";
-            connection?.query(sql, (err, results, fields) => { });
-        });
+                " WHERE `id`=1"
+            connection?.query(sql, (err, results, fields) => { })
+        })
     } else {
-        msg += "addData called with no data\n";
+        msg += "addData called with no data\n"
     }
     //let's work on hours Db
-    const dtd = (Date.now() + offset) / 1000; //+ 60 * tdLast.getTimezoneOffset()
-    const thisHour = 3600 * Math.floor(dtd / 3600);
-    const twoDaysAgo = thisHour - 48 * 3600;
+    const dtd = (Date.now() + offset) / 1000 //+ 60 * tdLast.getTimezoneOffset()
+    const thisHour = 3600 * Math.floor(dtd / 3600)
+    const twoDaysAgo = thisHour - 48 * 3600
 
     // delete older records
-    sql = "DELETE FROM hours WHERE `start` < " + twoDaysAgo;
-    connection?.query(sql, (err, results, fields) => { });
-    sql = "DELETE FROM hours WHERE `start` > " + thisHour;
-    connection?.query(sql, (err, results, fields) => { });
+    sql = "DELETE FROM hours WHERE `start` < " + twoDaysAgo
+    connection?.query(sql, (err, results, fields) => { })
+    sql = "DELETE FROM hours WHERE `start` > " + thisHour
+    connection?.query(sql, (err, results, fields) => { })
 
     // get latest record (or 2 days ago if there are none)
-    sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1;";
+    sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1"
     connection?.query(sql, (err, results, fields) => {
-        latestHours = Array.isArray(results) ? results[0].start : twoDaysAgo;
-        msg += "latest hour starts at " + latestHours + "\n";
+        latestHours = Array.isArray(results) ? results[0].start : twoDaysAgo
+        msg += "latest hour starts at " + latestHours + "\n"
         // for each hour starting at 'latestHour', thru 'thisHour'
         for (let i = latestHours; i <= thisHour; i += 3600) {
             const data = {
@@ -246,35 +248,35 @@ app.post("/addData", (req, res) => {
                 humidity: [],
                 pressure: [],
                 temperature: [],
-            };
-            let dt1 = new Date(i * 1000);
-            let dt2 = new Date((3600 + i) * 1000);
-            msg += "pull from gliderport: records from " + dt1.toISOString() + " to " + dt2.toISOString() + "\n";
-            sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt1.toISOString() + "' AND recorded <= '" + dt2.toISOString() + "'";
+            }
+            let dt1 = new Date(i * 1000)
+            let dt2 = new Date((3600 + i) * 1000)
+            msg += "pull from gliderport: records from " + dt1.toISOString() + " to " + dt2.toISOString() + "\n"
+            sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt1.toISOString() + "' AND recorded <= '" + dt2.toISOString() + "'"
             connection?.query(sql, (err, results, fields) => {
                 if (Array.isArray(results)) {
-                    msg += "found " + results.length + "\n";
+                    msg += "found " + results.length + "\n"
                     results.forEach((v, j) => {
                         data.date.push(
                             (new Date(v.recorded).getTime() + offset) / 1000 - i
-                        );
-                        data.speed.push(v.speed);
-                        data.direction.push(v.direction);
-                        data.humidity.push(v.humidity);
-                        data.pressure.push(v.pressure);
-                        data.temperature.push(v.temperature);
-                    });
+                        )
+                        data.speed.push(v.speed)
+                        data.direction.push(v.direction)
+                        data.humidity.push(v.humidity)
+                        data.pressure.push(v.pressure)
+                        data.temperature.push(v.temperature)
+                    })
                 } else {
-                    msg += "found none\n";
+                    msg += "found none\n"
                 }
 
-                msg += "replacing " + data.start + " with " + data.date.length + " records\n";
+                msg += "replacing " + data.start + " with " + data.date.length + " records\n"
                 console.log(msg)
-                sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')";
-                connection?.query(sql, (err, results, fields) => { });
-            });
+                sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
+                connection?.query(sql, (err, results, fields) => { })
+            })
         }
-    });
+    })
 
     // read the last time we looked for the forecast
     let tsLast = 0, sunset = 0
@@ -289,7 +291,7 @@ app.post("/addData", (req, res) => {
             console.log("Now: ", tsNow)
             // if it's been more than one hours, update the forecast
             if (tsNow > tsLast + 1 * 60 * 60) {
-                msg += "Updated forecast\n";
+                msg += "Updated forecast\n"
                 // https://api.openweathermap.org/data/2.5/onecall?lat=32.8473&lon=-117.2742&exclude=minutely,daily&units=imperial&appid=483c6b4301f7069cbf4e266bffa6d5ff
                 const url =
                     "https://api.openweathermap.org/data/2.5/onecall" +
@@ -301,15 +303,15 @@ app.post("/addData", (req, res) => {
                     .then((response) => response.json())
                     .then((responseJson) => {
                         if (!responseJson || !responseJson.hourly) {
-                            msg += "OpenWeather Data Offline\n";
+                            msg += "OpenWeather Data Offline\n"
                         } else {
                             let forecast = []
                             let todaysCodes = []
                             let lastCode = -1
                             responseJson.hourly.forEach((v, i) => {
                                 if (v.dt > tsNow) {
-                                    const code = getCode(v.wind_speed * 10, v.wind_deg, 0);
-                                    forecast.push([v.dt, code]);
+                                    const code = getCode(v.wind_speed * 10, v.wind_deg, 0)
+                                    forecast.push([v.dt, code])
                                     // console.log((new Date(1000 * v.dt)).getHours())
                                     if (lastCode != code && v.dt < sunset) {
                                         lastCode = code
@@ -319,9 +321,9 @@ app.post("/addData", (req, res) => {
                             })
                             // console.log("forecast: ", forecast)
                             // console.log("todaysCodes: ", todaysCodes)
-                            connection?.query("UPDATE `server_sent` SET `last_forecast`=" + tsNow + " WHERE `id`=1;", (err, results, fields) => { });
-                            connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(forecast) + "' WHERE `id`='forecast';");
-                            connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(todaysCodes) + "' WHERE `id`='todays_codes';");
+                            connection?.query("UPDATE `server_sent` SET `last_forecast`=" + tsNow + " WHERE `id`=1", (err, results, fields) => { })
+                            connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(forecast) + "' WHERE `id`='forecast'")
+                            connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(todaysCodes) + "' WHERE `id`='todays_codes'")
                         }
                     })
             }
@@ -336,7 +338,7 @@ app.post("/addData", (req, res) => {
                     let lc = r.data.codes[r.data.codes.length - 1][1]
                     console.log("last code: ", lc)
                     console.log((new Date(tsLast * 1000)).toISOString())
-                    sql = "SELECT * FROM `gliderport` WHERE recorded > '" + (new Date(tsLast * 1000)).toISOString() + "';"
+                    sql = "SELECT * FROM `gliderport` WHERE recorded > '" + (new Date(tsLast * 1000)).toISOString() + "'"
                     connection?.query(sql, (err, results, fields) => {
                         if (Array.isArray(results)) {
                             console.log("found: ", results.length)
@@ -379,7 +381,7 @@ app.post("/addData", (req, res) => {
                                             + ", data='"
                                             + JSON.stringify(r.data)
                                             + "' ON DUPLICATE KEY UPDATE data ='"
-                                            + JSON.stringify(r.data) + "';"
+                                            + JSON.stringify(r.data) + "'"
                                         connection?.query(sql, () => { })
                                         console.log(r)
                                         // create a new day
@@ -398,7 +400,7 @@ app.post("/addData", (req, res) => {
                                     + ", data='"
                                     + JSON.stringify(r.data)
                                     + "' ON DUPLICATE KEY UPDATE data ='"
-                                    + JSON.stringify(r.data) + "';"
+                                    + JSON.stringify(r.data) + "'"
                                 connection?.query(sql, () => { })
                             }
                         }
@@ -406,7 +408,7 @@ app.post("/addData", (req, res) => {
                 }
             )
 
-            res.send(msg);
+            res.send(msg)
         }
     )
 
@@ -424,7 +426,7 @@ const c = {
     SPEED_BAR: 8,
     TOO_WINDY: 9,
     NO_DATA: 10,
-};
+}
 
 const codesMeaning = [
     "it is dark",
@@ -438,36 +440,36 @@ const codesMeaning = [
     "speed bar",
     "too windy",
     "no data",
-];
+]
 
 function getCode(speed, direction, isItDark) {
     if (isItDark) {
-        return c.IT_IS_DARK;
+        return c.IT_IS_DARK
     } else {
         if (speed < 60) {
             if (direction > 310 || direction < 230) {
-                return c.SLED_RIDE_BAD_ANGLE;
+                return c.SLED_RIDE_BAD_ANGLE
             } else if (direction > 302 || direction < 236) {
-                return c.SLED_RIDE_POOR_ANGLE;
+                return c.SLED_RIDE_POOR_ANGLE
             } else {
-                return c.SLED_RIDE;
+                return c.SLED_RIDE
             }
         } else if (speed < 210) {
             if (direction > 310 || direction < 230) {
-                return c.BAD_ANGLE;
+                return c.BAD_ANGLE
             } else if (direction > 302 || direction < 236) {
-                return c.POOR_ANGLE;
+                return c.POOR_ANGLE
             } else {
                 if (speed <= 110) {
-                    return c.GOOD;
+                    return c.GOOD
                 } else if (speed < 150) {
-                    return c.EXCELLENT;
+                    return c.EXCELLENT
                 } else {
-                    return c.SPEED_BAR;
+                    return c.SPEED_BAR
                 }
             }
         } else {
-            return c.TOO_WINDY;
+            return c.TOO_WINDY
         }
     }
 }
