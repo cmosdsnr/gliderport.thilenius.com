@@ -1,0 +1,86 @@
+import React, { useState, useEffect, useContext } from 'react'
+import { auth, db } from '../firebase.js'
+import { UserCredential, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updateEmail, updatePassword, onAuthStateChanged } from 'firebase/auth'
+import { collection, getDocs, DocumentData } from 'firebase/firestore'
+
+interface ContextValue { 
+    currentUser : User
+    login: () => Promise<void>
+    logout: () => Promise<void>
+    signup: () => Promise<UserCredential>
+    resetPassword: () => Promise<void>
+    updateUserEmail: () => DocumentData
+    updateUserPassword: () => DocumentData
+    getCollection : () => DocumentData
+    getDonorsCollectionDocs : () => DocumentData
+}
+
+const AuthContext = React.createContext<ContextValue | null>(null)
+
+
+export function useAuth() {
+    return useContext(AuthContext)
+}
+
+export function AuthProvider({ children }) {
+    const [currentUser, setCurrentUser] = useState<User | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    function signup(email, password) {
+        return createUserWithEmailAndPassword(auth, email, password)
+    }
+
+    function login(email, password) {
+        return signInWithEmailAndPassword(auth, email, password)
+    }
+
+    function logout() {
+        return signOut(auth)
+    }
+
+    function resetPassword(email) {
+        return sendPasswordResetEmail(auth, email)
+    }
+
+    function updateUserEmail(email) {
+        return updateEmail(auth.currentUser!, email)
+    }
+
+    function updateUserPassword(password) {
+        return updatePassword(auth.currentUser!, password)
+    }
+
+    function getCollection() {
+        return getDocs(collection(db, "posts"));
+    }
+
+    function getDonorsCollectionDocs() {
+        return getDocs(collection(db, "donors"))
+    }
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, user => {
+            setCurrentUser(user)
+            setLoading(false)
+        })
+        return unsubscribe
+    }, [])
+
+    const value = {
+        currentUser,
+        login,
+        logout,
+        signup,
+        resetPassword,
+        updateUserEmail,
+        updateUserPassword,
+        getCollection,
+        getDonorsCollectionDocs
+
+    }
+    return (
+        <AuthContext.Provider value={value}>
+            {!loading && children}
+        </AuthContext.Provider>
+    )
+}

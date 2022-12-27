@@ -1,0 +1,15 @@
+<html>
+
+<body>
+    <div id="root"></div>
+    <script>
+        var host = 'ws://live.flytorrey.com:8080/php/webSocket.php';
+        host = 'ws://67.20.114.187:8080/php/webSocket.php';
+        var socket = new WebSocket(host);
+        socket.onmessage = function (e) {
+            document.getElementById('root').innerHTML = e.data;
+        };
+    </script>
+</body>
+
+</html>

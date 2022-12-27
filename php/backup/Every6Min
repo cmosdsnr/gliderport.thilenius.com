@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+## go through the textlist and see if anyone needs texting
+#cd /home1/sandiel8/www/live/php
+#php chkTexts.php >> chkTexts.log
+# get the latest NOAA data and update the local data file
+#cd /home/thillnea/www/gliderport/Noaa
+#php sync.php > sync.log
+#export GOOGLE_APPLICATION_CREDENTIALS='netninja-game-guidez-1d8c2-firebase-adminsdk-w55cp-e90b7fc724.json'
+#cd /home1/sandiel8/www/live/php
+#php UpdateHistory.php > history.log
+
+
+
+
