@@ -187,7 +187,7 @@ export function DataProvider({ children }) {
 
     // Connect to the socket server
     useEffect(() => {
-        ws.current = new WebSocket("ws://gliderportsocketserver.thilenius.org/ws")
+        ws.current = new WebSocket("wss://gliderportsocketserver.thilenius.org/ws")
         // ws.current = new WebSocket("ws://localhost:8081/ws")
         ws.current.onopen = () => {
             console.log("ws opened")
