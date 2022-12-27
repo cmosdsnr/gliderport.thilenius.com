@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "deploy": "node deploy"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@bumaga/tabs": "^0.2.0",
