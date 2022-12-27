@@ -47,7 +47,7 @@ dokku apps:destroy gliderport
 dokku apps:create gliderport
 dokku buildpacks:set gliderport https://github.com/heroku/heroku-buildpack-static.git
 
-local 
+local  
 git remote add dokku dokku@thilenius.org:gliderport
 git commit -m "message"
 git push dokku master
