@@ -42,4 +42,12 @@ Hosting on Alecs Dokku
 create static.dist
 see https://v2.vitejs.dev/guide/static-deploy.html#heroku
 
+on server
+dokku apps:destroy gliderport
+dokku apps:create gliderport
+dokku buildpacks:set gliderport https://github.com/heroku/heroku-buildpack-static.git
 
+local 
+git remote add dokku dokku@thilenius.org:gliderport
+git commit -m "message"
+git push dokku master
