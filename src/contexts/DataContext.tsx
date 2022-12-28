@@ -223,7 +223,7 @@ export function DataProvider({ children }) {
         ws.current.send(JSON.stringify(messageBody));
     }
 
-    // process returned messages fetchData || update || ping
+    // process returned messages fetchData || update || image || ping
     useEffect(() => {
         if (ws.current != null) ws.current.onmessage = (webSocketMessage) => {
 
@@ -278,6 +278,9 @@ export function DataProvider({ children }) {
                     setLatest(newRecord)
                 }
                 setPassedSeconds(0)
+            }
+            if (messageBody.command === 'image') {
+                console.log("update message received: ", messageBody.data)
             }
             if (messageBody.command === 'ping') {
                 console.log("keep alive ping")
