@@ -101,6 +101,7 @@ interface DataContextInterface {
     passedSeconds: number,
     offline: Boolean,
     lastImage: TimeStamp,
+    image: Buffer | null,
     lastForecast: TimeStamp,
     sun: Sun,
     itIsDark: Boolean,
@@ -131,6 +132,7 @@ export function DataProvider({ children }) {
 
     const [passedSeconds, setPassedSeconds] = useState(0)
     const [offline, setOffline] = useState(false)
+    const [image, setImage] = useState<Buffer | null>(null)
     const [lastImage, setLastImage] = useState(0)
     const [lastForecast, setLastForecast] = useState(0)
 
@@ -280,7 +282,8 @@ export function DataProvider({ children }) {
                 setPassedSeconds(0)
             }
             if (messageBody.command === 'image') {
-                console.log("update message received: ", messageBody.data)
+                // console.log("image message received: ", messageBody.data)
+                setImage(Buffer.from(messageBody.data, 'base64'))
             }
             if (messageBody.command === 'ping') {
                 console.log("keep alive ping")
@@ -343,6 +346,7 @@ export function DataProvider({ children }) {
         passedSeconds,
         offline,
         lastImage,
+        image,
         lastForecast,
         sun,
         itIsDark,
