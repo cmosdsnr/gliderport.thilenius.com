@@ -50,11 +50,16 @@ let connection =
         ? mysql.createConnection(process.env.DATABASE_URL)
         : null
 
-let sql
+let sql, onlineStatus
 
 connection?.connect(function (err) {
     if (err) throw err
     console.log("Connected!")
+    // get server_sent data   
+    connection.query('SELECT * FROM `server_sent` WHERE `id`=1',
+        function (err, results, fields) {
+            onlineStatus = results[0].online_status
+        })
 })
 
 let lastRecord = "2022-09-05 13:27:20",
@@ -154,6 +159,36 @@ app.get("/ImageAdded", (req, res) => {
         () => { }
     )
     res.send("Ok")
+
+    const tsNow = (new Date()).getTime() / 1000
+    const itIsDark = (tsNow < sunData.sunriseTimestamp || tsNow > sunData.sunsetTimestamp) ? true : false
+    // if (!itIsDark && !offline) {
+    if (true) {
+        //grab the images
+        var image = "https://live.flytorrey.com/images/current.jpg"
+        try {
+            fetch(image)
+                .then(response => response.blob())
+                .then(blob => {
+                    const fileReader = new FileReader();
+                    fileReader.onloadend = () => {
+                        const arrayBuffer = fileReader.result;
+                        const byteArray = new Uint8Array(arrayBuffer);
+                        const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+                        // Save the image locally
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = 'current.jpg';
+                        a.click();
+                    };
+                    fileReader.readAsArrayBuffer(blob);
+                })
+        } catch (error) {
+            console.log("failed to fetch image")
+        }
+        //broadcast the images
+    }
 })
 
 // ping this page to update the "latest Image" field in the server_sent table
@@ -173,8 +208,7 @@ app.get("/UpdateStatus", (req, res) => {
         connection?.query(sql, (err, results, fields) => { })
         return
     }
-    let i = 0
-    if (req.params.status === 1) i = 1
+    let i = (req.params.status === 1) ? 0 : 1
     sql = "UPDATE `server_sent` SET `online_status`=" + i + " WHERE `id`=1"
     connection?.query(sql, (err, results, fields) => { })
 
