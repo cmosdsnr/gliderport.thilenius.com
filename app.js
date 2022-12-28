@@ -151,7 +151,11 @@ app.get("/lastAdded", (req, res) => {
     res.send(content)
 })
 
-let imageBuffer
+app.post("/updateSmallImage", (req, res) => {
+    console.log(res.json(req.body))
+})
+
+let imageBuffer, imageBigBuffer
 // ping this page to update the "latest Image" field in the server_sent table
 app.get("/ImageAdded", (req, res) => {
     connection?.query(
@@ -163,6 +167,17 @@ app.get("/ImageAdded", (req, res) => {
     res.send("Ok")
 
     console.log("reading image")
+    var url = "https://live.flytorrey.com/images/current.jpg"
+    fetch(url)
+        .then(res => res.arrayBuffer())
+        .then(arrayBuffer => {
+            const buffer = Buffer.from(arrayBuffer);
+            console.log("buffer is ", buffer.length, " bytes long");
+            imageBuffer = buffer;
+        })
+        .catch(err => {
+            console.error(err);
+        });
     var url = "https://live.flytorrey.com/images/current.jpg"
     fetch(url)
         .then(res => res.arrayBuffer())
@@ -206,9 +221,13 @@ app.get("/ImageAdded", (req, res) => {
     // }
 })
 
-app.get('/image.jpg', function (req, res) {
+app.get('/current.jpg', function (req, res) {
     res.contentType('image/jpeg');
     res.send(imageBuffer)
+})
+app.get('/currentBig.jpg', function (req, res) {
+    res.contentType('image/jpeg');
+    res.send(imageBigBuffer)
 })
 
 // ping this page to update the "latest Image" field in the server_sent table
