@@ -151,16 +151,16 @@ app.get("/lastAdded", (req, res) => {
     res.send(content)
 })
 
-let imageTestBuffer
-app.post("/updateSmallImage", (req, res) => {
-    // console.log("post Data: ", req.body)
-    imageTestBuffer = base64url.toBuffer(req.body.A)
-    res.json(req.body)
-})
 
 let imageBuffer, imageBigBuffer
-// ping this page to update the "latest Image" field in the server_sent table
-app.get("/ImageAdded", (req, res) => {
+app.post("/updateSmallImage", (req, res) => {
+    // console.log("post Data: ", req.body)
+    imageBuffer = base64url.toBuffer(req.body.A)
+    res.json(req.body)
+})
+app.post("/updateBigImage", (req, res) => {
+    // console.log("post Data: ", req.body)
+    imageBigBuffer = base64url.toBuffer(req.body.A)
     connection?.query(
         "UPDATE `server_sent` SET `last_image`=" +
         Math.floor(new Date().getTime() / 1000) +
@@ -168,30 +168,42 @@ app.get("/ImageAdded", (req, res) => {
         () => { }
     )
     res.send("Ok")
+})
 
-    console.log("reading image")
-    var url = "https://live.flytorrey.com/images/current.jpg"
-    fetch(url)
-        .then(res => res.arrayBuffer())
-        .then(arrayBuffer => {
-            const buffer = Buffer.from(arrayBuffer);
-            console.log("buffer is ", buffer.length, " bytes long");
-            imageBuffer = buffer;
-        })
-        .catch(err => {
-            console.error(err);
-        });
-    var url = "https://live.flytorrey.com/images/current.jpg"
-    fetch(url)
-        .then(res => res.arrayBuffer())
-        .then(arrayBuffer => {
-            const buffer = Buffer.from(arrayBuffer);
-            console.log("buffer is ", buffer.length, " bytes long");
-            imageBuffer = buffer;
-        })
-        .catch(err => {
-            console.error(err);
-        })
+// ping this page to update the "latest Image" field in the server_sent table
+// defunct, no longer needed
+app.get("/ImageAdded", (req, res) => {
+    // connection?.query(
+    //     "UPDATE `server_sent` SET `last_image`=" +
+    //     Math.floor(new Date().getTime() / 1000) +
+    //     " WHERE `id`=1",
+    //     () => { }
+    // )
+    res.send("Ok")
+
+    // console.log("reading image")
+    // var url = "https://live.flytorrey.com/images/current.jpg"
+    // fetch(url)
+    //     .then(res => res.arrayBuffer())
+    //     .then(arrayBuffer => {
+    //         const buffer = Buffer.from(arrayBuffer);
+    //         console.log("buffer is ", buffer.length, " bytes long");
+    //         imageBuffer = buffer;
+    //     })
+    //     .catch(err => {
+    //         console.error(err);
+    //     });
+    // var url = "https://live.flytorrey.com/images/current.jpg"
+    // fetch(url)
+    //     .then(res => res.arrayBuffer())
+    //     .then(arrayBuffer => {
+    //         const buffer = Buffer.from(arrayBuffer);
+    //         console.log("buffer is ", buffer.length, " bytes long");
+    //         imageBuffer = buffer;
+    //     })
+    //     .catch(err => {
+    //         console.error(err);
+    //     })
     //broadcast the images
 
 })
