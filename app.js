@@ -210,7 +210,7 @@ app.get("/ImageAdded", (req, res) => {
 
 app.get('/current.jpg', function (req, res) {
     res.contentType('image/jpeg');
-    res.send(imageTestBuffer)
+    res.send(imageBuffer)
 })
 app.get('/currentBig.jpg', function (req, res) {
     res.contentType('image/jpeg');
