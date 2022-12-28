@@ -152,7 +152,7 @@ app.get("/lastAdded", (req, res) => {
 })
 
 app.post("/updateSmallImage", (req, res) => {
-    console.log(res.json(req.body))
+    console.log("post Data: ", res.json(req.body))
 })
 
 let imageBuffer, imageBigBuffer
