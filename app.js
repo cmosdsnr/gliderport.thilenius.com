@@ -165,8 +165,9 @@ app.get("/ImageAdded", (req, res) => {
     console.log("reading image")
     var url = "https://live.flytorrey.com/images/current.jpg"
     fetch(url)
-        .then(res => res.buffer())
-        .then(buffer => {
+        .then(res => res.arrayBuffer())
+        .then(arrayBuffer => {
+            const buffer = Buffer.from(arrayBuffer);
             console.log("buffer is ", buffer.length, " bytes long");
             imageBuffer = buffer;
         })
