@@ -1,6 +1,7 @@
 import express from "express"
 import dotenv from "dotenv"
 import mysql from "mysql2"
+import fs from "fs"
 import calculateSunrise from "./calculateSunrise.js"
 import { Http2ServerRequest } from "http2"
 dotenv.config()
@@ -160,36 +161,48 @@ app.get("/ImageAdded", (req, res) => {
     )
     res.send("Ok")
 
-    const tsNow = (new Date()).getTime() / 1000
-    const itIsDark = (tsNow < sunData.sunriseTimestamp || tsNow > sunData.sunsetTimestamp) ? true : false
     console.log("reading image")
-    // if (!itIsDark && !offline) {
-    if (true) {
-        //grab the images
-        var image = "https://live.flytorrey.com/images/current.jpg"
-        try {
-            fetch(image)
-                .then(response => response.blob())
-                .then(blob => {
-                    const fileReader = new FileReader();
-                    fileReader.onloadend = () => {
-                        const arrayBuffer = fileReader.result;
-                        const byteArray = new Uint8Array(arrayBuffer);
-                        const blob = new Blob([byteArray], { type: 'image/jpeg' });
+    var url = "https://live.flytorrey.com/images/current.jpg"
+    let path = "./current.jpg"
+    const downloadFile = (async (url, path) => {
+        const res = await fetch(url);
+        const fileStream = fs.createWriteStream(path);
+        await new Promise((resolve, reject) => {
+            res.body.pipe(fileStream);
+            res.body.on("error", reject);
+            fileStream.on("finish", resolve);
+        });
+    });
+    // const tsNow = (new Date()).getTime() / 1000
+    // const itIsDark = (tsNow < sunData.sunriseTimestamp || tsNow > sunData.sunsetTimestamp) ? true : false
+    // console.log("reading image")
+    // // if (!itIsDark && !offline) {
+    // if (true) {
+    //     //grab the images
+    //     var image = "https://live.flytorrey.com/images/current.jpg"
+    //     try {
+    //         fetch(image)
+    //             .then(response => response.blob())
+    //             .then(blob => {
+    //                 const fileReader = new FileReader();
+    //                 fileReader.onloadend = () => {
+    //                     const arrayBuffer = fileReader.result;
+    //                     const byteArray = new Uint8Array(arrayBuffer);
+    //                     const blob = new Blob([byteArray], { type: 'image/jpeg' });
 
-                        // Save the image locally
-                        const a = document.createElement('a');
-                        a.href = URL.createObjectURL(blob);
-                        a.download = 'current.jpg';
-                        a.click();
-                    };
-                    fileReader.readAsArrayBuffer(blob);
-                })
-        } catch (error) {
-            console.log("failed to fetch image")
-        }
-        //broadcast the images
-    }
+    //                     // Save the image locally
+    //                     const a = document.createElement('a');
+    //                     a.href = URL.createObjectURL(blob);
+    //                     a.download = 'current.jpg';
+    //                     a.click();
+    //                 };
+    //                 fileReader.readAsArrayBuffer(blob);
+    //             })
+    //     } catch (error) {
+    //         console.log("failed to fetch image")
+    //     }
+    //broadcast the images
+}
 })
 
 // ping this page to update the "latest Image" field in the server_sent table
