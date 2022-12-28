@@ -22,7 +22,7 @@ export default function UpdatingImage({ itIsDark, offline, imageWasUpdated }) {
             setImgSrc(OutOfOrder)
         } else {
             // var image = "https://live.flytorrey.com/images/current.jpg?=" + Math.random()
-            var image = "https://gliderportupdateserver.com/current.jpg"
+            var image = "https://gliderportupdateserver.thilenius.org/current.jpg"
             if (!offline && !itIsDark) {
                 setDoNotReload(false)
             }
