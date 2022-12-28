@@ -1,7 +1,7 @@
 import express from "express"
 import dotenv from "dotenv"
 import mysql from "mysql2"
-import fs from "fs"
+import base64url from "base64url"
 import calculateSunrise from "./calculateSunrise.js"
 import { Http2ServerRequest } from "http2"
 dotenv.config()
@@ -151,8 +151,10 @@ app.get("/lastAdded", (req, res) => {
     res.send(content)
 })
 
+let imageTestBuffer
 app.post("/updateSmallImage", (req, res) => {
-    console.log("post Data: ", req.body)
+    // console.log("post Data: ", req.body)
+    imageTestBuffer = base64url.toBuffer(req.body.A)
     res.json(req.body)
 })
 
@@ -189,42 +191,14 @@ app.get("/ImageAdded", (req, res) => {
         })
         .catch(err => {
             console.error(err);
-        });
-    // const tsNow = (new Date()).getTime() / 1000
-    // const itIsDark = (tsNow < sunData.sunriseTimestamp || tsNow > sunData.sunsetTimestamp) ? true : false
-    // console.log("reading image")
-    // // if (!itIsDark && !offline) {
-    // if (true) {
-    //     //grab the images
-    //     var image = "https://live.flytorrey.com/images/current.jpg"
-    //     try {
-    //         fetch(image)
-    //             .then(response => response.blob())
-    //             .then(blob => {
-    //                 const fileReader = new FileReader();
-    //                 fileReader.onloadend = () => {
-    //                     const arrayBuffer = fileReader.result;
-    //                     const byteArray = new Uint8Array(arrayBuffer);
-    //                     const blob = new Blob([byteArray], { type: 'image/jpeg' });
-
-    //                     // Save the image locally
-    //                     const a = document.createElement('a');
-    //                     a.href = URL.createObjectURL(blob);
-    //                     a.download = 'current.jpg';
-    //                     a.click();
-    //                 };
-    //                 fileReader.readAsArrayBuffer(blob);
-    //             })
-    //     } catch (error) {
-    //         console.log("failed to fetch image")
-    //     }
+        })
     //broadcast the images
-    // }
+
 })
 
 app.get('/current.jpg', function (req, res) {
     res.contentType('image/jpeg');
-    res.send(imageBuffer)
+    res.send(imageTestBuffer)
 })
 app.get('/currentBig.jpg', function (req, res) {
     res.contentType('image/jpeg');
