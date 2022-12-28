@@ -156,7 +156,8 @@ let imageBuffer, imageBigBuffer
 app.post("/updateSmallImage", (req, res) => {
     // console.log("post Data: ", req.body)
     imageBuffer = base64url.toBuffer(req.body.A)
-    res.json(req.body)
+    connection?.query("UPDATE images SET d=? WHERE `id`=2", imageBigBuffer, () => { })
+    res.json("Ok")
 })
 app.post("/updateBigImage", (req, res) => {
     // console.log("post Data: ", req.body)
@@ -167,45 +168,13 @@ app.post("/updateBigImage", (req, res) => {
         " WHERE `id`=1",
         () => { }
     )
+    connection?.query("UPDATE images SET d=? WHERE `id`=2", imageBigBuffer, () => { })
     res.send("Ok")
 })
 
-// ping this page to update the "latest Image" field in the server_sent table
 // defunct, no longer needed
 app.get("/ImageAdded", (req, res) => {
-    // connection?.query(
-    //     "UPDATE `server_sent` SET `last_image`=" +
-    //     Math.floor(new Date().getTime() / 1000) +
-    //     " WHERE `id`=1",
-    //     () => { }
-    // )
     res.send("Ok")
-
-    // console.log("reading image")
-    // var url = "https://live.flytorrey.com/images/current.jpg"
-    // fetch(url)
-    //     .then(res => res.arrayBuffer())
-    //     .then(arrayBuffer => {
-    //         const buffer = Buffer.from(arrayBuffer);
-    //         console.log("buffer is ", buffer.length, " bytes long");
-    //         imageBuffer = buffer;
-    //     })
-    //     .catch(err => {
-    //         console.error(err);
-    //     });
-    // var url = "https://live.flytorrey.com/images/current.jpg"
-    // fetch(url)
-    //     .then(res => res.arrayBuffer())
-    //     .then(arrayBuffer => {
-    //         const buffer = Buffer.from(arrayBuffer);
-    //         console.log("buffer is ", buffer.length, " bytes long");
-    //         imageBuffer = buffer;
-    //     })
-    //     .catch(err => {
-    //         console.error(err);
-    //     })
-    //broadcast the images
-
 })
 
 app.get('/current.jpg', function (req, res) {
