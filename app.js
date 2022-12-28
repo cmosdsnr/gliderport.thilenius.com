@@ -151,6 +151,7 @@ app.get("/lastAdded", (req, res) => {
     res.send(content)
 })
 
+let imageBuffer
 // ping this page to update the "latest Image" field in the server_sent table
 app.get("/ImageAdded", (req, res) => {
     connection?.query(
@@ -163,16 +164,15 @@ app.get("/ImageAdded", (req, res) => {
 
     console.log("reading image")
     var url = "https://live.flytorrey.com/images/current.jpg"
-    let path = "./current.jpg"
-    const downloadFile = (async (url, path) => {
-        const res = await fetch(url);
-        const fileStream = fs.createWriteStream(path)
-        await new Promise((resolve, reject) => {
-            res.body.pipe(fileStream)
-            res.body.on("error", reject)
-            fileStream.on("finish", resolve)
+    fetch(url)
+        .then(res => res.buffer())
+        .then(buffer => {
+            console.log("buffer is ", buffer.length, " bytes long");
+            imageBuffer = buffer;
         })
-    })
+        .catch(err => {
+            console.error(err);
+        });
     // const tsNow = (new Date()).getTime() / 1000
     // const itIsDark = (tsNow < sunData.sunriseTimestamp || tsNow > sunData.sunsetTimestamp) ? true : false
     // console.log("reading image")
