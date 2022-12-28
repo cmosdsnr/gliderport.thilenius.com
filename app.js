@@ -206,6 +206,11 @@ app.get("/ImageAdded", (req, res) => {
     // }
 })
 
+app.get('/image.jpg', function (req, res) {
+    res.contentType('image/jpeg');
+    res.send(imageBuffer)
+})
+
 // ping this page to update the "latest Image" field in the server_sent table
 app.get("/UpdateStatus", (req, res) => {
     if (req.params.password != "ilove2fly") {
