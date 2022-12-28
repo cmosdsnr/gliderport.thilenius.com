@@ -156,7 +156,7 @@ let imageBuffer, imageBigBuffer
 app.post("/updateSmallImage", (req, res) => {
     // console.log("post Data: ", req.body)
     imageBuffer = base64url.toBuffer(req.body.A)
-    connection?.query("UPDATE images SET d=? WHERE `id`=2", imageBigBuffer, () => { })
+    connection?.query("UPDATE images SET d=? WHERE `id`=2", imageBuffer, () => { })
     res.json("Ok")
 })
 app.post("/updateBigImage", (req, res) => {
