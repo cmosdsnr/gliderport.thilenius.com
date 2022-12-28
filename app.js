@@ -162,6 +162,7 @@ app.get("/ImageAdded", (req, res) => {
 
     const tsNow = (new Date()).getTime() / 1000
     const itIsDark = (tsNow < sunData.sunriseTimestamp || tsNow > sunData.sunsetTimestamp) ? true : false
+    console.log("reading image")
     // if (!itIsDark && !offline) {
     if (true) {
         //grab the images
