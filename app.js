@@ -220,6 +220,7 @@ app.get("/UpdateStatus", (req, res) => {
 
 // called to add new wind Data to the db
 app.post("/addData", (req, res) => {
+    console.log("add data called")
     let msg = ""
     if ("d" in req.body) {
         const d = JSON.parse(req.body.d)
