@@ -28,7 +28,6 @@ export const Home = () => {
         itIsDark,
         timeToSunrise,
         offline,
-        lastImage,
     } = useData()
 
     //display the bootstrap grid size, for development
@@ -89,7 +88,7 @@ export const Home = () => {
                             {/* style={{ border: "1px solid black" }} */}
                             <Row>
                                 <Col xs={12} className="container" >
-                                    <UpdatingImage itIsDark={itIsDark} offline={offline} imageWasUpdated={lastImage} />
+                                    <UpdatingImage itIsDark={itIsDark} offline={offline} />
                                     {offline ?
                                         <svg height="35" width="350" transform="translate(0,0) rotate(-35 -0 -0)" className="top-left">
                                             <text x="0" y="30" fill="red" >Internet offline</text>

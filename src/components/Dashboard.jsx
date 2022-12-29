@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { Link, useHistory } from 'react-router-dom'
 import { PhoneNumberInput } from './PhoneNumber'
 import TextField from '@mui/material/TextField'
-// import { ToggleSlider } from "react-toggle-slider";
+import { ToggleSlider } from "react-toggle-slider";
 
 
 /**
@@ -175,7 +175,7 @@ export default function Dashboard() {
                                                         </Row>
                                                         {currentUser.text?.address?.length > 0 ?
                                                             <>
-                                                                {/* <Row>Enable Text Alerts: <ToggleSlider active={currentUser.text.enabled} onToggle={state => updateUserText({ enabled: state })} /></Row> */}
+                                                                <Row>Enable Text Alerts: <ToggleSlider active={currentUser.text.enabled} onToggle={state => updateUserText({ enabled: state })} /></Row>
                                                             </> : null}
 
                                                         {currentUser.text.enabled ?

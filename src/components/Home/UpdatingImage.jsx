@@ -5,7 +5,7 @@ import Viewer from 'react-viewer'
 import OutOfOrder from "../../images/OutOfOrder.jpg"
 import OffTime from "../../images/OffTime.jpg"
 
-export default function UpdatingImage({ itIsDark, offline, imageWasUpdated }) {
+export default function UpdatingImage({ itIsDark, offline }) {
 
     const [isLoaded, setIsLoaded] = useState(false);
     const [doNotReload, setDoNotReload] = useState(false)
@@ -46,9 +46,8 @@ export default function UpdatingImage({ itIsDark, offline, imageWasUpdated }) {
         } else if (offline) {
             setImgSrc(OutOfOrder)
         } else if (image != null) {
-            const blob = b64toBlob(image, "image/jpeg");
-            debugger
-            const blobUrl = URL.createObjectURL(blob);
+            const blob = b64toBlob(image, "image/jpeg")
+            const blobUrl = URL.createObjectURL(blob)
             setImgSrc(blobUrl)
         }
     }, [image, itIsDark, offline])
@@ -59,8 +58,8 @@ export default function UpdatingImage({ itIsDark, offline, imageWasUpdated }) {
         } else if (offline) {
             setImgSrcLarge(OutOfOrder)
         } else if (bigImage != null) {
-            const blob = b64toBlob(bigImage, "image/jpeg");
-            const blobUrl = URL.createObjectURL(blob);
+            const blob = b64toBlob(bigImage, "image/jpeg")
+            const blobUrl = URL.createObjectURL(blob)
             setImgSrcLarge(blobUrl)
         }
     }, [bigImage, itIsDark, offline])

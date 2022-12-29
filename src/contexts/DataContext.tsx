@@ -103,7 +103,6 @@ interface DataContextInterface {
     hitStats: HitStats | null,
     passedSeconds: number,
     offline: Boolean,
-    lastImage: TimeStamp,
     image: Buffer | null,
     bigImage: Buffer | null,
     lastForecast: TimeStamp,
@@ -138,7 +137,7 @@ export function DataProvider({ children }) {
     const [offline, setOffline] = useState(false)
     const [image, setImage] = useState<Buffer | null>(null)
     const [bigImage, setBigImage] = useState<Buffer | null>(null)
-    const [lastImage, setLastImage] = useState(0)
+    // const [lastImage, setLastImage] = useState(0)
     const [lastForecast, setLastForecast] = useState(0)
 
     const [sun, setSun] = useState<Sun>({ rise: 0, set: 0 })
@@ -168,7 +167,7 @@ export function DataProvider({ children }) {
         setOffline(d.onlineStatus === 0)
         setLastCheck(d.onlineStatusTouched)
 
-        setLastImage(d.lastImage)
+        // setLastImage(d.lastImage)
         setLastForecast(d.lastForecast)
     }
 
@@ -277,7 +276,7 @@ export function DataProvider({ children }) {
                 if ('onlineStatus' in d) setOffline(d.onlineStatus === 0)
                 if ('onlineStatusTouched' in d) setLastCheck(d.onlineStatusTouched)
 
-                if ('lastImage' in d) setLastImage(d.lastImage)
+                // if ('lastImage' in d) setLastImage(d.lastImage)
                 if ('lastForecast' in d) setLastForecast(d.lastForecast)
 
 
@@ -298,7 +297,7 @@ export function DataProvider({ children }) {
                 setPassedSeconds(0)
             }
             if (messageBody.command === 'Image') {
-                // console.log("image message received: ", messageBody.data)
+                console.log("image message received, length: ", messageBody.data.A.length)
                 setImage(messageBody.data.A)
             }
             if (messageBody.command === 'ping') {
@@ -363,7 +362,6 @@ export function DataProvider({ children }) {
         hitStats,
         passedSeconds,
         offline,
-        lastImage,
         image,
         bigImage,
         lastForecast,
