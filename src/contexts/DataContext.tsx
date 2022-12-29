@@ -215,7 +215,7 @@ export function DataProvider({ children }) {
             setLoading(false)
             setPassedSeconds(0)
         }
-        ws.current.onclose = () => console.log("ws closed");
+        ws.current.onclose = () => console.log("ws closed")
 
         const wsCurrent = ws.current;
         return () => {
@@ -296,12 +296,12 @@ export function DataProvider({ children }) {
                 }
                 setPassedSeconds(0)
             }
-            if (messageBody.command === 'Image') {
-                console.log("image message received, length: ", messageBody.data.A.length)
-                setImage(messageBody.data.A)
+            if (messageBody.command === 'image') {
+                console.log("image message received, length: ", messageBody.data.length)
+                setImage(messageBody.data)
             }
             if (messageBody.command === 'ping') {
-                console.log("keep alive ping")
+                console.log("keep alive ping received")
             }
         };
     }, [chart])
