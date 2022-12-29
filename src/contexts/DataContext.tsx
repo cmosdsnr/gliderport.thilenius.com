@@ -85,6 +85,9 @@ type CurrentData = {
     lastForecast: TimeStamp,
 }
 
+type ImageData = null | {
+    A: Buffer,
+}
 
 interface DataContextInterface {
     //states
@@ -102,6 +105,7 @@ interface DataContextInterface {
     offline: Boolean,
     lastImage: TimeStamp,
     image: Buffer | null,
+    bigImage: Buffer | null,
     lastForecast: TimeStamp,
     sun: Sun,
     itIsDark: Boolean,
@@ -133,6 +137,7 @@ export function DataProvider({ children }) {
     const [passedSeconds, setPassedSeconds] = useState(0)
     const [offline, setOffline] = useState(false)
     const [image, setImage] = useState<Buffer | null>(null)
+    const [bigImage, setBigImage] = useState<Buffer | null>(null)
     const [lastImage, setLastImage] = useState(0)
     const [lastForecast, setLastForecast] = useState(0)
 
@@ -158,12 +163,21 @@ export function DataProvider({ children }) {
 
     const handleCurrentData = (d: CurrentData) => {
         setSun({ rise: d.sunrise, set: d.sunset })
-
+        const tsNow = (new Date()).getTime() / 1000
+        if ((tsNow < d.sunrise - 15 * 60) || (tsNow > d.sunset + 15 * 60)) setItIsDark(true)
         setOffline(d.onlineStatus === 0)
         setLastCheck(d.onlineStatusTouched)
 
         setLastImage(d.lastImage)
         setLastForecast(d.lastForecast)
+    }
+
+    const handleImage = (d: ImageData) => {
+        setImage((d === null ? null : d.A))
+    }
+
+    const handleBigImage = (d: ImageData) => {
+        setBigImage((d === null ? null : d.A))
     }
 
     const subCommands = {
@@ -176,6 +190,8 @@ export function DataProvider({ children }) {
         Videos: setVideos,
         Stats: setHitStats,
         CurrentData: handleCurrentData,
+        Image: handleImage,
+        BigImage: handleBigImage,
     }
 
     const ws = useRef<WebSocket | null>(null)
@@ -281,9 +297,9 @@ export function DataProvider({ children }) {
                 }
                 setPassedSeconds(0)
             }
-            if (messageBody.command === 'image') {
+            if (messageBody.command === 'Image') {
                 // console.log("image message received: ", messageBody.data)
-                setImage(Buffer.from(messageBody.data, 'base64'))
+                setImage(messageBody.data.A)
             }
             if (messageBody.command === 'ping') {
                 console.log("keep alive ping")
@@ -296,7 +312,7 @@ export function DataProvider({ children }) {
     useInterval(() => {
         const tsNow = (new Date()).getTime() / 1000
         // if it is before sunrise...
-        if (sun.rise && itIsDark && (tsNow < sun.rise)) {
+        if ((tsNow < sun?.rise - 15 * 60) || (tsNow > sun?.set + 15 * 60)) {
             const SecondsToSunrise = sun.rise - tsNow
             const h = Math.floor(SecondsToSunrise / 3600)
             const m = Math.floor(SecondsToSunrise / 60 - h * 60)
@@ -321,6 +337,8 @@ export function DataProvider({ children }) {
         )
     }
     const testAll = () => {
+        loadData("Image")
+        loadData("BigImage")
         loadData("Posts")
         loadData("Donors")
         loadData("History")
@@ -347,6 +365,7 @@ export function DataProvider({ children }) {
         offline,
         lastImage,
         image,
+        bigImage,
         lastForecast,
         sun,
         itIsDark,

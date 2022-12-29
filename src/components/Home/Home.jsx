@@ -26,17 +26,13 @@ export const Home = () => {
         chart,
         passedSeconds,
         itIsDark,
+        timeToSunrise,
         offline,
         lastImage,
     } = useData()
 
-
-
-
     //display the bootstrap grid size, for development
     const showGridSize = false
-
-
 
     // Reload the page after we detect sleep wake up
     // var lastTime = (new Date()).getTime();
