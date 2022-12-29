@@ -201,6 +201,7 @@ app.get("/UpdateStatus", (req, res) => {
         sql =
             "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1"
         connection?.query(sql, (err, results, fields) => { })
+        res.send("last touched updated")
         return
     }
     let i = (req.params.status === 1) ? 0 : 1
@@ -214,6 +215,7 @@ app.get("/UpdateStatus", (req, res) => {
         i +
         ")"
     connection?.query(sql, (err, results, fields) => { })
+    res.send("online status updated")
 })
 
 // called to add new wind Data to the db
@@ -226,9 +228,9 @@ app.post("/addData", (req, res) => {
         let e = ","
         firstRecord = d[0][0]
         numberRecords = d.length
-        msg += numberRecords + " records added to gliderport\n"
+        msg += numberRecords + " records added to gliderport"
         // console.log(msg)
-        msg += "<br>\n"
+        msg += "<br/>\n"
         d.forEach((v, i) => {
             if (i === d.length - 1) e = ""
             sql += '( "' + v[0] + '", ' + v[1] + ", " + v[2] + ", " + v[3] + ", " + v[4] + ", " + v[5] + ")" + e
@@ -249,7 +251,6 @@ app.post("/addData", (req, res) => {
                 " WHERE `id`=1"
             connection?.query(sql, (err, results, fields) => { })
         })
-        res.send(msg)
     } else {
         msg += "addData called with no data\n"
     }
@@ -438,11 +439,9 @@ app.post("/addData", (req, res) => {
                     })
                 }
             )
-
-            res.send(msg)
         }
     )
-
+    res.send(msg)
 })
 
 const c = {
