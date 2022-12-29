@@ -47,6 +47,7 @@ export default function UpdatingImage({ itIsDark, offline, imageWasUpdated }) {
             setImgSrc(OutOfOrder)
         } else if (image != null) {
             const blob = b64toBlob(image, "image/jpeg");
+            debugger
             const blobUrl = URL.createObjectURL(blob);
             setImgSrc(blobUrl)
         }
