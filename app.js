@@ -149,6 +149,7 @@ app.get("/lastAdded", (req, res) => {
         }) +
         "</td></tr></table></p>"
     res.send(content)
+    console.log("lastAdded called")
 })
 
 
