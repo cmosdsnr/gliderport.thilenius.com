@@ -442,6 +442,7 @@ app.post("/addData", (req, res) => {
         }
     )
     res.send(msg)
+    console.log(msg)
 })
 
 const c = {
