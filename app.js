@@ -249,6 +249,7 @@ app.post("/addData", (req, res) => {
                 " WHERE `id`=1"
             connection?.query(sql, (err, results, fields) => { })
         })
+        res.send(msg)
     } else {
         msg += "addData called with no data\n"
     }
