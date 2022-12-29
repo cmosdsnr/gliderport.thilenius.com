@@ -52,5 +52,11 @@
     "@vitejs/plugin-react": "^2.0.1",
     "ftp-deploy": "^2.4.3",
     "vite": "^3.0.7"
+  },
+  "overrides": {
+    "react-toggle-slider": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
   }
 }
