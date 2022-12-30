@@ -254,6 +254,19 @@ app.get("/UpdateStatus", (req, res) => {
         res.send("Password incorrect")
         return
     }
+    switch (req.query.status) {
+        case undefined:
+            console.log("switch: undefined")
+            break;
+        case 0:
+        case 1:
+            console.log("switch: ", req.query.status)
+            break;
+        case 2:
+            console.log("switch: 2")
+            break;
+
+    }
     if (req.query.status === undefined) {
         res.send("no status given")
         return
@@ -272,10 +285,10 @@ app.get("/UpdateStatus", (req, res) => {
 
                 sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + ts + "'," + req.query.status + ")"
                 connection?.query(sql, (err, results, fields) => { })
-                const r = "online status updated to " + (req.query.status === 0 ? "offline" : "online")
+                const r = "online status updated to " + (req.query.status == 0 ? "offline" : "online")
                 res.send(r)
             } else {
-                const r = "online status was already " + (req.query.status === 0 ? "offline" : "online")
+                const r = "online status was already " + (req.query.status == 0 ? "offline" : "online")
                 res.send(r)
             }
         } else {
