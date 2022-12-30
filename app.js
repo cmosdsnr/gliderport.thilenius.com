@@ -173,6 +173,8 @@ app.post("/updateBigImage", (req, res) => {
     res.send("Ok")
 })
 app.get('/RegenerateAllHours', function (req, res) {
+
+    console.log("regenerate all hours\n")
     const dtd = (Date.now() + offset) / 1000 //+ 60 * tdLast.getTimezoneOffset()
     const thisHour = 3600 * Math.floor(dtd / 3600)
     const twoDaysAgo = thisHour - 48 * 3600
@@ -189,6 +191,7 @@ app.get('/RegenerateAllHours', function (req, res) {
         temperature: [],
     }
     let msg = "pull from gliderport: records from " + dt.toISOString() + "<br/>\n"
+    console.log("pull from gliderport: records from " + dt.toISOString() + "\n")
     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt.toISOString() + "'"
     connection?.query(sql, (err, results, fields) => {
         msg += "found " + results.length + "<br/>\n"
