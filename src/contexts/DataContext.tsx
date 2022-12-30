@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext, useRef } from 'react'
-import { phpLoc } from '../components/Globals'
+import { phpLoc, useInterval } from '../components/Globals'
 
 // Donor format from WebSocket Server
 type Donor = {
@@ -107,14 +107,13 @@ interface DataContextInterface {
     bigImage: Buffer | null,
     lastForecast: TimeStamp,
     sun: Sun,
-    itIsDark: Boolean,
-    timeToSunrise: String,
     //functions 
     loadData: (name: string) => void,
     printDate: (ts: TimeStamp) => String,
 }
 
-const DataContext = createContext<DataContextInterface | null>(null)
+// const DataContext = createContext<DataContextInterface | null>(null)
+const DataContext = createContext<DataContextInterface>({} as DataContextInterface);
 
 export function useData() {
     return useContext(DataContext)
@@ -132,26 +131,18 @@ export function DataProvider({ children }) {
     const [status, setStatus] = useState<number[]>([])
     const [forecast, setForecast] = useState<Forecast>([])
     const [hitStats, setHitStats] = useState<Stats>({})
-
     const [passedSeconds, setPassedSeconds] = useState(0)
     const [offline, setOffline] = useState(false)
     const [image, setImage] = useState<Buffer | null>(null)
     const [bigImage, setBigImage] = useState<Buffer | null>(null)
-    // const [lastImage, setLastImage] = useState(0)
     const [lastForecast, setLastForecast] = useState(0)
-
     const [sun, setSun] = useState<Sun>({ rise: 0, set: 0 })
-    const [timeToSunrise, setTimeToSunrise] = useState<String>("")
-
     const [videos, setVideos] = useState({ videos: [], videoYears: [] })
-
-
     const [updateForecast, setUpdateForecast] = useState(0)
     const [reFetch, setReFetch] = useState(0)
     const [restartEventSource, setRestartEventSource] = useState()
     const [loaded, setLoaded] = useState<Boolean>(false)
     const [lastCheck, setLastCheck] = useState<TimeStamp>(1658263194)
-    const [itIsDark, setItIsDark] = useState<Boolean>(false)
 
     const handleChart = (d: Reading[]) => {
         setChart(d)
@@ -163,7 +154,7 @@ export function DataProvider({ children }) {
     const handleCurrentData = (d: CurrentData) => {
         setSun({ rise: d.sunrise, set: d.sunset })
         const tsNow = (new Date()).getTime() / 1000
-        if ((tsNow < d.sunrise - 15 * 60) || (tsNow > d.sunset + 15 * 60)) setItIsDark(true)
+        // if ((tsNow < d.sunrise - 15 * 60) || (tsNow > d.sunset + 15 * 60)) setItIsDark(true)
         setOffline(d.onlineStatus === 0)
         setLastCheck(d.onlineStatusTouched)
 
@@ -306,22 +297,9 @@ export function DataProvider({ children }) {
         };
     }, [chart])
 
-    // update 'time passed' numbers on screen
     const interval = 10 //seconds
     useInterval(() => {
-        const tsNow = (new Date()).getTime() / 1000
-        // if it is before sunrise...
-        if ((tsNow < sun?.rise - 15 * 60) || (tsNow > sun?.set + 15 * 60)) {
-            const SecondsToSunrise = sun.rise - tsNow
-            const h = Math.floor(SecondsToSunrise / 3600)
-            const m = Math.floor(SecondsToSunrise / 60 - h * 60)
-            setTimeToSunrise("Sunrise in " + (h > 0 ? h + " hours, " : "") + m + " minutes")
-            setItIsDark(true)
-        } else {
-            setItIsDark(false)
-        }
         setPassedSeconds(passedSeconds + interval)
-
     }, interval * 1000)
 
     const printDate = (ts: TimeStamp): String => {
@@ -366,8 +344,6 @@ export function DataProvider({ children }) {
         bigImage,
         lastForecast,
         sun,
-        itIsDark,
-        timeToSunrise,
         //functions 
         loadData,
         printDate,
@@ -377,26 +353,4 @@ export function DataProvider({ children }) {
             {loading ? <h3>Connecting to Web Socket Server</h3> : children}
         </DataContext.Provider>
     )
-}
-
-
-function useInterval(callback, delay) {
-    const savedCallback = useRef<() => void>();
-
-    // Remember the latest function.
-    useEffect(() => {
-        savedCallback.current = callback;
-    }, [callback]);
-
-    // Set up the interval.
-    useEffect(() => {
-        function tick() {
-            if (typeof savedCallback.current === 'function')
-                savedCallback.current();
-        }
-        if (delay !== null) {
-            let id = setInterval(tick, delay);
-            return () => clearInterval(id);
-        }
-    }, [delay]);
 }

@@ -25,8 +25,6 @@ export const Home = () => {
     const {
         chart,
         passedSeconds,
-        itIsDark,
-        timeToSunrise,
         offline,
     } = useData()
 
@@ -88,17 +86,7 @@ export const Home = () => {
                             {/* style={{ border: "1px solid black" }} */}
                             <Row>
                                 <Col xs={12} className="container" >
-                                    <UpdatingImage itIsDark={itIsDark} offline={offline} />
-                                    {offline ?
-                                        <svg height="35" width="350" transform="translate(0,0) rotate(-35 -0 -0)" className="top-left">
-                                            <text x="0" y="30" fill="red" >Internet offline</text>
-                                            Sorry, your browser does not support inline SVG.
-                                        </svg>
-                                        : null
-                                    }
-                                    {itIsDark ? <span className="bottom-left">{timeToSunrise}</span> : null}
-                                    {/* <p className="ooo">Some Equipment was removed<br />Waiting for staff to return it...</p> */}
-                                    {/* <p className="ooo" >Temporarily Out of Order</p> */}
+                                    <UpdatingImage offline={offline} />
                                     <p>Live Image every 45 Seconds, click to expand and zoom</p>
                                 </Col>
                             </Row>
