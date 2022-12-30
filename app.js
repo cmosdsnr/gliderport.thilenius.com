@@ -260,25 +260,19 @@ app.get("/UpdateStatus", (req, res) => {
     }
     let ts = (Date.now() + offset) / 1000
     if (req.query.status === 2) {
-        sql =
-            "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1"
+        sql = "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1"
         connection?.query(sql, (err, results, fields) => { })
-        res.send("last touched updated")
-        return
-    }
-    let i = (req.query.status === 1) ? 1 : 0
-    sql = "UPDATE `server_sent` SET `online_status`=" + i + " WHERE `id`=1"
-    connection?.query(sql, (err, results, fields) => { })
+        res.send("online status touched updated to now")
+    } else
+        if (req.query.status === 0 || req.query.status === 1) {
+            sql = "UPDATE `server_sent` SET `online_status`=" + req.query.status + " WHERE `id`=1"
+            connection?.query(sql, (err, results, fields) => { })
 
-    sql =
-        "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" +
-        ts +
-        "'," +
-        i +
-        ")"
-    connection?.query(sql, (err, results, fields) => { })
-    res.send("online status updated")
-    console.log("Updated status")
+            sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + ts + "'," + req.query.status + ")"
+            connection?.query(sql, (err, results, fields) => { })
+            res.send("online status updated to ", req.query.status === 0 ? "offline" : "online")
+        } else
+            console.log("Updated status called with a wrong number")
 })
 
 // called to add new wind Data to the db
