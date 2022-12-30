@@ -192,13 +192,14 @@ app.get('/RegenerateAllHours', function (req, res) {
     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt.toISOString() + "'"
     connection?.query(sql, (err, results, fields) => {
         if (Array.isArray(results)) {
-            msg += "found " + results.length + "\n"
+            msg += "found " + results.length + "<br/>\n"
             results.forEach((v, j) => {
                 ts = parseInt((new Date(v.recorded).getTime() + offset) / 1000)
                 if (ts >= stop) {
                     //save the hour
                     sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
                     connection?.query(sql, (err, results, fields) => { })
+                    msg += "Saved hr " + data.start + " with " + data.date.length + " records<br/>"
                     // reset the data
                     start = stop
                     stop += 3600
