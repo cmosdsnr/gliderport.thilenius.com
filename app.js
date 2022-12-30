@@ -188,7 +188,7 @@ app.get('/RegenerateAllHours', function (req, res) {
         pressure: [],
         temperature: [],
     }
-    msg += "pull from gliderport: records from " + dt.toISOString() + "\n"
+    let msg = "pull from gliderport: records from " + dt.toISOString() + "<br/>\n"
     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt.toISOString() + "'"
     connection?.query(sql, (err, results, fields) => {
         if (Array.isArray(results)) {
@@ -223,7 +223,7 @@ app.get('/RegenerateAllHours', function (req, res) {
             })
         }
     })
-    res.send("Ok")
+    res.send(msg)
 })
 
 // defunct, no longer needed
