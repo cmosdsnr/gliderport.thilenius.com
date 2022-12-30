@@ -271,8 +271,11 @@ app.get("/UpdateStatus", (req, res) => {
             sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + ts + "'," + req.query.status + ")"
             connection?.query(sql, (err, results, fields) => { })
             res.send("online status updated to ", req.query.status === 0 ? "offline" : "online")
-        } else
+        } else {
             console.log("Updated status called with a wrong number")
+            res.send("Updated status called with a wrong number")
+        }
+
 })
 
 // called to add new wind Data to the db
