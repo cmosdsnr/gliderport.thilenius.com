@@ -173,8 +173,7 @@ app.post("/updateBigImage", (req, res) => {
     res.send("Ok")
 })
 app.get('/RegenerateAllHours', function (req, res) {
-
-    console.log("regenerate all hours\n")
+    console.log("regenerate all hours")
     const dtd = (Date.now() + offset) / 1000 //+ 60 * tdLast.getTimezoneOffset()
     const thisHour = 3600 * Math.floor(dtd / 3600)
     const twoDaysAgo = thisHour - 48 * 3600
@@ -191,9 +190,11 @@ app.get('/RegenerateAllHours', function (req, res) {
         temperature: [],
     }
     let msg = "pull from gliderport: records from " + dt.toISOString() + "<br/>\n"
-    console.log("pull from gliderport: records from " + dt.toISOString() + "\n")
+    console.log("pull from gliderport: records from " + dt.toISOString())
     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt.toISOString() + "'"
+    console.log(sql)
     connection?.query(sql, (err, results, fields) => {
+        console.log("found " + results.length + " results")
         msg += "found " + results.length + "<br/>\n"
         if (Array.isArray(results)) {
             msg += "found " + results.length + "<br/>\n"
@@ -204,6 +205,7 @@ app.get('/RegenerateAllHours', function (req, res) {
                     sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
                     connection?.query(sql, (err, results, fields) => { })
                     msg += "Saved hr " + data.start + " with " + data.date.length + " records<br/>"
+                    console.log("Saved hr " + data.start + " with " + data.date.length + " records")
                     // reset the data
                     start = stop
                     stop += 3600
