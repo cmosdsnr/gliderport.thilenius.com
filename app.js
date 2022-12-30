@@ -253,7 +253,8 @@ app.get("/UpdateStatus", (req, res) => {
         res.send("Password incorrect")
         return
     }
-    let ts = (Date.now() + offset) / 1000
+    const ts = (Date.now() + offset) / 1000
+    const dateString = new Date(ts * 1000).toISOString()
 
     switch (req.query.status) {
         case undefined:
@@ -268,10 +269,10 @@ app.get("/UpdateStatus", (req, res) => {
                 onlineStatus = req.query.status
                 sql = "UPDATE `server_sent` SET `online_status`=" + req.query.status + " WHERE `id`=1"
                 connection?.query(sql, (err, results, fields) => { })
-                sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + ts + "'," + req.query.status + ")"
+                sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + dateString + "'," + req.query.status + ")"
                 connection?.query(sql, (err, results, fields) => { })
                 const r = "online status updated to " + (req.query.status == 0 ? "offline" : "online")
-                res.send(r)
+                res.send(sql)
             } else {
                 const r = "online status was already " + (req.query.status == 0 ? "offline" : "online")
                 res.send(r)
