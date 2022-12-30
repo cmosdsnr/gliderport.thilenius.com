@@ -250,7 +250,8 @@ app.get('/currentBig.jpg', function (req, res) {
 app.get("/UpdateStatus", (req, res) => {
     if (req.params.password != "ilove2fly") {
         console.log(req.params.password, " != ilove2fly")
-        res.send("Password incorrect")
+        res.send(req)
+        // res.send("Password incorrect")
         return
     }
     if (req.params.status === undefined) {
