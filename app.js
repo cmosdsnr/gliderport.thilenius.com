@@ -228,6 +228,7 @@ app.get('/RegenerateAllHours', function (req, res) {
             })
         }
     })
+    console.log("Done with regeneration")
     res.send(msg)
 })
 
@@ -255,7 +256,7 @@ app.get("/UpdateStatus", (req, res) => {
         res.send("no status given")
         return
     }
-    let ts = Date.now()
+    let ts = (Date.now() + offset) / 1000
     if (req.params.status === 2) {
         sql =
             "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1"
@@ -263,7 +264,7 @@ app.get("/UpdateStatus", (req, res) => {
         res.send("last touched updated")
         return
     }
-    let i = (req.params.status === 1) ? 0 : 1
+    let i = (req.params.status === 1) ? 1 : 0
     sql = "UPDATE `server_sent` SET `online_status`=" + i + " WHERE `id`=1"
     connection?.query(sql, (err, results, fields) => { })
 
