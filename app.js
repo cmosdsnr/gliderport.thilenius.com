@@ -172,6 +172,59 @@ app.post("/updateBigImage", (req, res) => {
     connection?.query("UPDATE images SET d=? WHERE `id`=2", imageBigBuffer, () => { })
     res.send("Ok")
 })
+app.get('/RegenerateAllHours', function (req, res) {
+    const dtd = (Date.now() + offset) / 1000 //+ 60 * tdLast.getTimezoneOffset()
+    const thisHour = 3600 * Math.floor(dtd / 3600)
+    const twoDaysAgo = thisHour - 48 * 3600
+    const dt = new Date(twoDaysAgo * 1000)
+    let start = twoDaysAgo
+    let stop = twoDaysAgo + 3600
+    let data = {
+        start: twoDaysAgo,
+        date: [],
+        speed: [],
+        direction: [],
+        humidity: [],
+        pressure: [],
+        temperature: [],
+    }
+    msg += "pull from gliderport: records from " + dt.toISOString() + "\n"
+    sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt.toISOString() + "'"
+    connection?.query(sql, (err, results, fields) => {
+        if (Array.isArray(results)) {
+            msg += "found " + results.length + "\n"
+            results.forEach((v, j) => {
+                ts = parseInt((new Date(v.recorded).getTime() + offset) / 1000)
+                if (ts >= stop) {
+                    //save the hour
+                    sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
+                    connection?.query(sql, (err, results, fields) => { })
+                    // reset the data
+                    start = stop
+                    stop += 3600
+                    data = {
+                        start: start,
+                        date: [],
+                        speed: [],
+                        direction: [],
+                        humidity: [],
+                        pressure: [],
+                        temperature: [],
+                    }
+                }
+                data.date.push(
+                    (new Date(v.recorded).getTime() + offset) / 1000 - start
+                )
+                data.speed.push(v.speed)
+                data.direction.push(v.direction)
+                data.humidity.push(v.humidity)
+                data.pressure.push(v.pressure)
+                data.temperature.push(v.temperature)
+            })
+        }
+    })
+    res.send("Ok")
+})
 
 // defunct, no longer needed
 app.get("/ImageAdded", (req, res) => {
