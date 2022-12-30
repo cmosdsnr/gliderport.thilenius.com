@@ -191,6 +191,7 @@ app.get('/RegenerateAllHours', function (req, res) {
     let msg = "pull from gliderport: records from " + dt.toISOString() + "<br/>\n"
     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt.toISOString() + "'"
     connection?.query(sql, (err, results, fields) => {
+        msg += "found " + results.length + "<br/>\n"
         if (Array.isArray(results)) {
             msg += "found " + results.length + "<br/>\n"
             results.forEach((v, j) => {
