@@ -2,6 +2,7 @@ import express from "express"
 import dotenv from "dotenv"
 import mysql from "mysql2"
 import base64url from "base64url"
+import ping from "web-pingjs"
 import calculateSunrise from "./calculateSunrise.js"
 import { Http2ServerRequest } from "http2"
 dotenv.config()
@@ -88,6 +89,15 @@ const updateSunData = () => {
     connection?.query(sql, function (err, results, fields) { })
 }
 updateSunData()
+
+//call every minute
+let ping = setInterval(() => {
+    ping('https://google.com/').then(function (delta) {
+        console.log('Ping time was ' + String(delta) + ' ms')
+    }).catch(function (err) {
+        console.error('Could not ping remote URL', err)
+    })
+}, 60000)
 
 //call every hour
 let id = setInterval(() => {
