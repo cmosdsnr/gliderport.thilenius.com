@@ -250,39 +250,24 @@ app.get('/currentBig.jpg', function (req, res) {
 app.get("/UpdateStatus", (req, res) => {
     if (req.query.password != "ilove2fly") {
         console.log(req.query.password, " != ilove2fly")
-        // res.send(req.query)
         res.send("Password incorrect")
         return
     }
+    let ts = (Date.now() + offset) / 1000
+
     switch (req.query.status) {
         case undefined:
-            console.log("switch: undefined")
+            res.send("no status given")
             break;
         case '0':
         case '1':
-            console.log("switch: ", req.query.status)
-            break;
-        case '2':
-            console.log("switch: 2")
-            break;
+            sql = "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1"
+            connection?.query(sql, (err, results, fields) => { })
 
-    }
-    if (req.query.status === undefined) {
-        res.send("no status given")
-        return
-    }
-    let ts = (Date.now() + offset) / 1000
-    if (req.query.status == 2) {
-        sql = "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1"
-        connection?.query(sql, (err, results, fields) => { })
-        res.send("online status touched updated to now")
-    } else
-        if (req.query.status == 0 || req.query.status == 1) {
             if (onlineStatus != req.query.status) {
                 onlineStatus = req.query.status
                 sql = "UPDATE `server_sent` SET `online_status`=" + req.query.status + " WHERE `id`=1"
                 connection?.query(sql, (err, results, fields) => { })
-
                 sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + ts + "'," + req.query.status + ")"
                 connection?.query(sql, (err, results, fields) => { })
                 const r = "online status updated to " + (req.query.status == 0 ? "offline" : "online")
@@ -291,11 +276,12 @@ app.get("/UpdateStatus", (req, res) => {
                 const r = "online status was already " + (req.query.status == 0 ? "offline" : "online")
                 res.send(r)
             }
-        } else {
+            break;
+
+        default:
             console.log("Updated status called with a wrong number")
             res.send("Updated status called with a wrong number")
-        }
-
+    }
 })
 
 // called to add new wind Data to the db
