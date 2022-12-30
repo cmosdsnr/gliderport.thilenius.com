@@ -20,6 +20,7 @@
     "nodemon": "^2.0.19",
     "request": "^2.88.2",
     "vite": "^3.0.9",
+    "web-pingjs": "^1.0.1",
     "ws": "^8.8.1"
   },
   "devDependencies": {
