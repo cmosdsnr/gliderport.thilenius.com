@@ -92,7 +92,7 @@ updateSunData()
 
 //call every minute
 let pingTimer = setInterval(() => {
-    ping('https://google.com/').then(function (delta) {
+    ping('https://104.36.31.118/').then(function (delta) {
         console.log('Ping time was ' + String(delta) + ' ms')
     }).catch(function (err) {
         console.error('Could not ping remote URL', err)
@@ -265,6 +265,7 @@ app.get("/UpdateStatus", (req, res) => {
     }
     const ts = parseInt((Date.now() + offset) / 1000)
     const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
+    // const 
     switch (req.query.status) {
         case undefined:
             res.send("no status given")
