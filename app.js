@@ -258,11 +258,11 @@ app.get("/UpdateStatus", (req, res) => {
         case undefined:
             console.log("switch: undefined")
             break;
-        case 0:
-        case 1:
+        case '0':
+        case '1':
             console.log("switch: ", req.query.status)
             break;
-        case 2:
+        case '2':
             console.log("switch: 2")
             break;
 
