@@ -259,12 +259,12 @@ app.get("/UpdateStatus", (req, res) => {
         return
     }
     let ts = (Date.now() + offset) / 1000
-    if (req.query.status === 2) {
+    if (req.query.status == 2) {
         sql = "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1"
         connection?.query(sql, (err, results, fields) => { })
         res.send("online status touched updated to now")
     } else
-        if (req.query.status === 0 || req.query.status === 1) {
+        if (req.query.status == 0 || req.query.status == 1) {
             sql = "UPDATE `server_sent` SET `online_status`=" + req.query.status + " WHERE `id`=1"
             connection?.query(sql, (err, results, fields) => { })
 
