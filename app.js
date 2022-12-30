@@ -436,6 +436,7 @@ app.post("/addData", (req, res) => {
             // if it's been more than one hours, update the forecast
             if (tsNow > tsLast + 1 * 60 * 60) {
                 msg += "Updated forecast\n"
+                console.log("   attempting to update forecast since last was ", tsLast, " and now is ", tsNow)
                 // https://api.openweathermap.org/data/2.5/onecall?lat=32.8473&lon=-117.2742&exclude=minutely,daily&units=imperial&appid=483c6b4301f7069cbf4e266bffa6d5ff
                 const url =
                     "https://api.openweathermap.org/data/2.5/onecall" +
@@ -478,15 +479,17 @@ app.post("/addData", (req, res) => {
                 function (err, results, fields) {
                     const r = { date: results[0].date, data: JSON.parse(results[0].data) }
                     const tsLast = r.date + 3600 * r.data.limits[0] + r.data.codes[r.data.codes.length - 1][0]
-                    console.log("last record: ", tsLast)
+                    // console.log("last record: ", tsLast)
                     let lc = r.data.codes[r.data.codes.length - 1][1]
-                    console.log("last code: ", lc)
-                    console.log((new Date(tsLast * 1000)).toISOString())
+                    // console.log("last code: ", lc)
+                    // console.log((new Date(tsLast * 1000)).toISOString())
                     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + (new Date(tsLast * 1000)).toISOString() + "'"
                     connection?.query(sql, (err, results, fields) => {
                         if (Array.isArray(results)) {
-                            console.log("found: ", results.length)
-                            console.log("last: ", results[results.length - 1].recorded)
+                            console.log("   Since the last record in code_history at ", (new Date(tsLast * 1000)).toISOString(), " with code ",
+                                lc, ", there are ", results.length, " new data points in gliderport")
+                            // console.log("found: ", results.length)
+                            // console.log("last: ", results[results.length - 1].recorded)
                             results.forEach((v, i) => {
                                 const ts = Math.round((new Date(v.recorded)).getTime / 1000)
                                 if (ts > r.date + r.data.sun[0]) {
@@ -527,7 +530,7 @@ app.post("/addData", (req, res) => {
                                             + "' ON DUPLICATE KEY UPDATE data ='"
                                             + JSON.stringify(r.data) + "'"
                                         connection?.query(sql, () => { })
-                                        console.log(r)
+                                        console.log("   add ", r.data.codes.length, " new code(s) to code_history table",)
                                         // create a new day
                                         r.date += 24 * 3600
                                         const sunData = calculateSunrise(new Date(r.date * 1000))
