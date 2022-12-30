@@ -414,7 +414,7 @@ app.post("/addData", (req, res) => {
                 }
 
                 console.log("   latest hour in hours table starts at ", latestHours, " had ",
-                    hourLength, " rows and now has ", data.data.length, " rows")
+                    hourLength, " rows and now has ", data.date.length, " rows")
                 msg += "replacing " + data.start + " with " + data.date.length + " records\n"
                 sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
                 connection?.query(sql, (err, results, fields) => { })
