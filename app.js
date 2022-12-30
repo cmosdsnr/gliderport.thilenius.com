@@ -198,7 +198,7 @@ app.get('/RegenerateAllHours', function (req, res) {
         if (Array.isArray(results)) {
             msg += "found " + results.length + "<br/>\n"
             results.forEach((v, j) => {
-                ts = parseInt((new Date(v.recorded).getTime() + offset) / 1000)
+                let ts = parseInt((new Date(v.recorded).getTime() + offset) / 1000)
                 if (ts >= stop) {
                     //save the hour
                     sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
@@ -217,9 +217,7 @@ app.get('/RegenerateAllHours', function (req, res) {
                         temperature: [],
                     }
                 }
-                data.date.push(
-                    (new Date(v.recorded).getTime() + offset) / 1000 - start
-                )
+                data.date.push(ts - start)
                 data.speed.push(v.speed)
                 data.direction.push(v.direction)
                 data.humidity.push(v.humidity)
