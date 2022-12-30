@@ -91,7 +91,7 @@ const updateSunData = () => {
 updateSunData()
 
 //call every minute
-let ping = setInterval(() => {
+let pingTimer = setInterval(() => {
     ping('https://google.com/').then(function (delta) {
         console.log('Ping time was ' + String(delta) + ' ms')
     }).catch(function (err) {
@@ -289,8 +289,8 @@ app.get("/UpdateStatus", (req, res) => {
             break;
 
         default:
-            console.log("Updated status called with a wrong number")
-            res.send("Updated status called with a wrong number")
+            console.log("Updated status called with a wrong number: (", req.query.status, ")")
+            res.send("Updated status called with a wrong number " + req.query.status)
     }
 })
 
