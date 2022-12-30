@@ -326,7 +326,7 @@ app.get("/UpdateStatus", (req, res) => {
 
 // called to add new wind Data to the db
 app.post("/addData", (req, res) => {
-    console.log("add data called")
+    console.log("++++++++ Adding Data ++++++++++++")
     let msg = ""
     if ("d" in req.body) {
         const d = JSON.parse(req.body.d)
@@ -336,6 +336,7 @@ app.post("/addData", (req, res) => {
         firstRecord = d[0][0]
         numberRecords = d.length
         msg += numberRecords + " records added to gliderport"
+        console.log("   received " + numberRecords + " records from PI3 and added them to the gliderport table")
         // console.log(msg)
         msg += "<br/>\n"
         d.forEach((v, i) => {
@@ -360,6 +361,8 @@ app.post("/addData", (req, res) => {
         })
     } else {
         msg += "addData called with no data\n"
+        console.log("   addData called with no data")
+
     }
     //let's work on hours Db
     const dtd = (Date.now() + offset) / 1000 //+ 60 * tdLast.getTimezoneOffset()
@@ -376,6 +379,7 @@ app.post("/addData", (req, res) => {
     sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1"
     connection?.query(sql, (err, results, fields) => {
         latestHours = Array.isArray(results) ? results[0].start : twoDaysAgo
+        const hourLength = results?.length
         msg += "latest hour starts at " + latestHours + "\n"
         // for each hour starting at 'latestHour', thru 'thisHour'
         for (let i = latestHours; i <= thisHour; i += 3600) {
@@ -409,8 +413,9 @@ app.post("/addData", (req, res) => {
                     msg += "found none\n"
                 }
 
+                console.log("   latest hour in hours table starts at ", latestHours, " had ",
+                    hourLength, " rows and now has ", data.data.length, " rows")
                 msg += "replacing " + data.start + " with " + data.date.length + " records\n"
-                console.log(msg)
                 sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
                 connection?.query(sql, (err, results, fields) => { })
             })
@@ -549,7 +554,7 @@ app.post("/addData", (req, res) => {
         }
     )
     res.send(msg)
-    console.log(msg)
+    // console.log(msg)
 })
 
 const c = {
