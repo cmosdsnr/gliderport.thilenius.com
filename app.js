@@ -248,25 +248,25 @@ app.get('/currentBig.jpg', function (req, res) {
 
 // ping this page to update the "latest Image" field in the server_sent table
 app.get("/UpdateStatus", (req, res) => {
-    if (req.params.password != "ilove2fly") {
-        console.log(req.params.password, " != ilove2fly")
-        res.send(req.params)
-        // res.send("Password incorrect")
+    if (req.query.password != "ilove2fly") {
+        console.log(req.query.password, " != ilove2fly")
+        // res.send(req.query)
+        res.send("Password incorrect")
         return
     }
-    if (req.params.status === undefined) {
+    if (req.query.status === undefined) {
         res.send("no status given")
         return
     }
     let ts = (Date.now() + offset) / 1000
-    if (req.params.status === 2) {
+    if (req.query.status === 2) {
         sql =
             "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1"
         connection?.query(sql, (err, results, fields) => { })
         res.send("last touched updated")
         return
     }
-    let i = (req.params.status === 1) ? 1 : 0
+    let i = (req.query.status === 1) ? 1 : 0
     sql = "UPDATE `server_sent` SET `online_status`=" + i + " WHERE `id`=1"
     connection?.query(sql, (err, results, fields) => { })
 
