@@ -430,9 +430,7 @@ app.post("/addData", (req, res) => {
                 if (results[0].last_forecast) tsLast = results[0].last_forecast
                 if (results[0].sunset_timestamp) sunset = results[0].sunset_timestamp
             }
-            console.log("last Forecast: ", tsLast)
             const tsNow = (new Date()).getTime() / 1000
-            console.log("Now: ", tsNow)
             // if it's been more than one hours, update the forecast
             if (tsNow > tsLast + 1 * 60 * 60) {
                 msg += "Updated forecast\n"
