@@ -92,14 +92,15 @@ updateSunData()
 
 //call every minute
 let pingTimer = setInterval(() => {
-    ping('https://104.36.31.118/').then(function (delta) {
+    const url = 'https://104.36.31.118/'
 
+    ping(ulr).then(function (delta) {
         const ts = parseInt((Date.now() + offset) / 1000)
         const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
         if (onlineStatus === 0) {
             // We saw it go online!
             onlineStatus = 1
-            console.log('gliderport at 104.36.31.118 came online')
+            console.log('gliderport at ' + url + ' came online')
             sql = "UPDATE `server_sent` SET `online_status`=" + onlineStatus + " WHERE `id`=1"
             connection?.query(sql, (err, results, fields) => { })
             sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + dateString + "'," + onlineStatus + ")"
@@ -113,7 +114,7 @@ let pingTimer = setInterval(() => {
         if (onlineStatus === 1) {
             // We saw it go offline!
             onlineStatus = 0
-            console.log('gliderport at 104.36.31.118 went offline')
+            console.log('gliderport at ' + url + ' went offline')
             sql = "UPDATE `server_sent` SET `online_status`=" + onlineStatus + " WHERE `id`=1"
             connection?.query(sql, (err, results, fields) => { })
             sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + dateString + "'," + onlineStatus + ")"
