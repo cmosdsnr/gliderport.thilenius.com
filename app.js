@@ -276,6 +276,7 @@ app.get("/UpdateStatus", (req, res) => {
         ")"
     connection?.query(sql, (err, results, fields) => { })
     res.send("online status updated")
+    console.log("Updated status")
 })
 
 // called to add new wind Data to the db
