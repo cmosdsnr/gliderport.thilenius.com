@@ -93,9 +93,34 @@ updateSunData()
 //call every minute
 let pingTimer = setInterval(() => {
     ping('https://104.36.31.118/').then(function (delta) {
-        console.log('Ping time was ' + String(delta) + ' ms')
+
+        const ts = parseInt((Date.now() + offset) / 1000)
+        const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
+        if (onlineStatus === 0) {
+            // We saw it go online!
+            onlineStatus = 1
+            console.log('gliderport at 104.36.31.118 came online')
+            sql = "UPDATE `server_sent` SET `online_status`=" + onlineStatus + " WHERE `id`=1"
+            connection?.query(sql, (err, results, fields) => { })
+            sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + dateString + "'," + onlineStatus + ")"
+            connection?.query(sql, (err, results, fields) => { })
+        }
+        sql = "UPDATE `server_sent` SET `online_status_touched`='" + dateString + "' WHERE 1"
+        connection?.query(sql, (err, results, fields) => { })
     }).catch(function (err) {
-        console.error('Could not ping remote URL', err)
+        const ts = parseInt((Date.now() + offset) / 1000)
+        const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
+        if (onlineStatus === 1) {
+            // We saw it go offline!
+            onlineStatus = 0
+            console.log('gliderport at 104.36.31.118 went offline')
+            sql = "UPDATE `server_sent` SET `online_status`=" + onlineStatus + " WHERE `id`=1"
+            connection?.query(sql, (err, results, fields) => { })
+            sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + dateString + "'," + onlineStatus + ")"
+            connection?.query(sql, (err, results, fields) => { })
+        }
+        sql = "UPDATE `server_sent` SET `online_status_touched`='" + dateString + "' WHERE 1"
+        connection?.query(sql, (err, results, fields) => { })
     })
 }, 60000)
 
@@ -258,41 +283,44 @@ app.get('/currentBig.jpg', function (req, res) {
 
 // ping this page to update the "latest Image" field in the server_sent table
 app.get("/UpdateStatus", (req, res) => {
-    if (req.query.password != "ilove2fly") {
-        console.log(req.query.password, " != ilove2fly")
-        res.send("Password incorrect")
-        return
-    }
-    const ts = parseInt((Date.now() + offset) / 1000)
-    const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
-    // const 
-    switch (req.query.status) {
-        case undefined:
-            res.send("no status given")
-            break;
-        case '0':
-        case '1':
-            sql = "UPDATE `server_sent` SET `online_status_touched`='" + dateString + "' WHERE 1"
-            connection?.query(sql, (err, results, fields) => { })
+    // defunct
+    res.send("No longer does anything")
 
-            if (onlineStatus != req.query.status) {
-                onlineStatus = req.query.status
-                sql = "UPDATE `server_sent` SET `online_status`=" + req.query.status + " WHERE `id`=1"
-                connection?.query(sql, (err, results, fields) => { })
-                sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + dateString + "'," + req.query.status + ")"
-                connection?.query(sql, (err, results, fields) => { })
-                const r = "online status updated to " + (req.query.status == 0 ? "offline" : "online")
-                res.send(sql)
-            } else {
-                const r = "online status was already " + (req.query.status == 0 ? "offline" : "online")
-                res.send(r)
-            }
-            break;
+    // if (req.query.password != "ilove2fly") {
+    //     console.log(req.query.password, " != ilove2fly")
+    //     res.send("Password incorrect")
+    //     return
+    // }
+    // const ts = parseInt((Date.now() + offset) / 1000)
+    // const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
+    // // const 
+    // switch (req.query.status) {
+    //     case undefined:
+    //         res.send("no status given")
+    //         break;
+    //     case '0':
+    //     case '1':
+    //         sql = "UPDATE `server_sent` SET `online_status_touched`='" + dateString + "' WHERE 1"
+    //         connection?.query(sql, (err, results, fields) => { })
 
-        default:
-            console.log("Updated status called with a wrong number: (", req.query.status, ")")
-            res.send("Updated status called with a wrong number " + req.query.status)
-    }
+    //         if (onlineStatus != req.query.status) {
+    //             onlineStatus = req.query.status
+    //             sql = "UPDATE `server_sent` SET `online_status`=" + req.query.status + " WHERE `id`=1"
+    //             connection?.query(sql, (err, results, fields) => { })
+    //             sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + dateString + "'," + req.query.status + ")"
+    //             connection?.query(sql, (err, results, fields) => { })
+    //             const r = "online status updated to " + (req.query.status == 0 ? "offline" : "online")
+    //             res.send(sql)
+    //         } else {
+    //             const r = "online status was already " + (req.query.status == 0 ? "offline" : "online")
+    //             res.send(r)
+    //         }
+    //         break;
+
+    //     default:
+    //         console.log("Updated status called with a wrong number: (", req.query.status, ")")
+    //         res.send("Updated status called with a wrong number " + req.query.status)
+    // }
 })
 
 // called to add new wind Data to the db
