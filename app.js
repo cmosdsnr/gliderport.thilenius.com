@@ -92,9 +92,9 @@ updateSunData()
 
 //call every minute
 let pingTimer = setInterval(() => {
-    const url = 'https://104.36.31.118/'
 
-    ping(ulr).then(function (delta) {
+    const url = 'https://104.36.31.118/'
+    ping(url).then(function (delta) {
         const ts = parseInt((Date.now() + offset) / 1000)
         const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
         if (onlineStatus === 0) {
