@@ -253,16 +253,15 @@ app.get("/UpdateStatus", (req, res) => {
         res.send("Password incorrect")
         return
     }
-    const ts = (Date.now() + offset) / 1000
-    const dateString = new Date(ts * 1000).toISOString()
-
+    const ts = parseInt((Date.now() + offset) / 1000)
+    const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
     switch (req.query.status) {
         case undefined:
             res.send("no status given")
             break;
         case '0':
         case '1':
-            sql = "UPDATE `server_sent` SET `online_status_touched`='" + ts + "' WHERE 1"
+            sql = "UPDATE `server_sent` SET `online_status_touched`='" + dateString + "' WHERE 1"
             connection?.query(sql, (err, results, fields) => { })
 
             if (onlineStatus != req.query.status) {
