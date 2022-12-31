@@ -479,9 +479,9 @@ app.post("/addData", (req, res) => {
                 "SELECT * FROM code_history ORDER BY date DESC LIMIT 1",
                 function (err, results, fields) {
                     const r = { date: results[0].date, data: JSON.parse(results[0].data) }
-                    // second to last code is the last real one. Sunset is always added at the end
-                    const tsLast = r.date + 3600 * r.data.limits[0] + r.data.codes[r.data.codes.length - 2][0]
-                    let lc = r.data.codes[r.data.codes.length - 2][1]
+
+                    const tsLast = r.date + 3600 * r.data.limits[0] + r.data.codes[r.data.codes.length - 1][0]
+                    let lc = r.data.codes[r.data.codes.length - 1][1]
                     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + (new Date(tsLast * 1000)).toISOString() + "'"
                     connection?.query(sql, (err, results, fields) => {
                         if (Array.isArray(results)) {
@@ -531,7 +531,7 @@ app.post("/addData", (req, res) => {
                                             + JSON.stringify(r.data)
                                             + "' ON DUPLICATE KEY UPDATE data ='"
                                             + JSON.stringify(r.data) + "'"
-                                        connection?.query(sql, () => { })
+                                        // connection?.query(sql, () => { })
                                         console.log("   add ", r.data.codes.length, " new code(s) to code_history table for day ",
                                             (new Date(r.date * 1000)).toISOString())
                                         // create a new day
