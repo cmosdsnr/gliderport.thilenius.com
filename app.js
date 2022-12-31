@@ -394,6 +394,7 @@ app.post("/addData", (req, res) => {
                 pressure: [],
                 temperature: [],
             }
+            new Date(i * 1000)
             let dt1 = new Date(i * 1000)
             let dt2 = new Date((3600 + i) * 1000)
             msg += "pull from gliderport: records from " + dt1.toISOString() + " to " + dt2.toISOString() + "\n"
@@ -478,22 +479,20 @@ app.post("/addData", (req, res) => {
                 "SELECT * FROM code_history ORDER BY date DESC LIMIT 1",
                 function (err, results, fields) {
                     const r = { date: results[0].date, data: JSON.parse(results[0].data) }
-                    const tsLast = r.date + 3600 * r.data.limits[0] + r.data.codes[r.data.codes.length - 1][0]
-                    // console.log("last record: ", tsLast)
-                    let lc = r.data.codes[r.data.codes.length - 1][1]
-                    // console.log("last code: ", lc)
-                    // console.log((new Date(tsLast * 1000)).toISOString())
+                    // second to last code is the last real one. Sunset is always added at the end
+                    const tsLast = r.date + 3600 * r.data.limits[0] + r.data.codes[r.data.codes.length - 2][0]
+                    let lc = r.data.codes[r.data.codes.length - 2][1]
                     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + (new Date(tsLast * 1000)).toISOString() + "'"
                     connection?.query(sql, (err, results, fields) => {
                         if (Array.isArray(results)) {
                             console.log("   Since the last record in code_history at ", (new Date(tsLast * 1000)).toISOString(), " with code ",
                                 lc, ", there are ", results.length, " new data points in gliderport")
-                            // console.log("found: ", results.length)
-                            // console.log("last: ", results[results.length - 1].recorded)
                             results.forEach((v, i) => {
                                 const ts = Math.round((new Date(v.recorded)).getTime / 1000)
                                 if (ts > r.date + r.data.sun[0]) {
+                                    // after sunrise
                                     if (ts < r.date + r.data.sun[1]) {
+                                        //before sunset
                                         // if r.data.codes is empty then add sunrise point
                                         if (r.data.codes.length === 0) {
                                             if (i > 0)
@@ -520,6 +519,7 @@ app.post("/addData", (req, res) => {
                                             )
                                         }
                                     } else {
+                                        // after sunset
                                         // add sunset point
                                         r.data.codes.push([r.data.sun[1] - 3600 * r.data.limits[0], 0])
                                         // save this day in code_history
@@ -530,7 +530,8 @@ app.post("/addData", (req, res) => {
                                             + "' ON DUPLICATE KEY UPDATE data ='"
                                             + JSON.stringify(r.data) + "'"
                                         connection?.query(sql, () => { })
-                                        console.log("   add ", r.data.codes.length, " new code(s) to code_history table",)
+                                        console.log("   add ", r.data.codes.length, " new code(s) to code_history table for day ",
+                                            (new Date(r.date * 1000)).toISOString())
                                         // create a new day
                                         r.date += 24 * 3600
                                         const sunData = calculateSunrise(new Date(r.date * 1000))
