@@ -379,7 +379,7 @@ app.post("/addData", (req, res) => {
     sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1"
     connection?.query(sql, (err, results, fields) => {
         const d = JSON.parse(results[0].data)
-        latestHours = Array.isArray(results) ? d.start : twoDaysAgo
+        latestHours = d ? d.start : twoDaysAgo
         // console.log(results[0].data)
         const hourLength = d.date.length
         msg += "latest hour starts at " + latestHours + "\n"
