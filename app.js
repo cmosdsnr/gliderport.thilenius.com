@@ -490,7 +490,7 @@ app.post("/addData", (req, res) => {
 
                             results.forEach((v, i) => {
                                 const ts = Math.round((new Date(v.recorded)).getTime() / 1000)
-                                if (i % 10000 === 0) console.log(v.recorded, " ", ts, " ", r.date + r.data.sun[0])
+                                if (i % 10000 === 0) console.log(v.recorded, " ", ts, " ", r.date, " ", r.data.sun[0])
                                 if (ts > r.date + r.data.sun[0]) {
                                     // after sunrise
                                     if (ts < r.date + r.data.sun[1]) {
