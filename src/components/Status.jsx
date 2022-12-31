@@ -53,7 +53,7 @@ export default function Status() {
     }, [])
 
     useEffect(() => {
-        debugger
+        // debugger
     }, [status])
 
 
