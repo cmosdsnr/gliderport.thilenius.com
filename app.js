@@ -479,7 +479,9 @@ app.post("/addData", (req, res) => {
                 "SELECT * FROM code_history ORDER BY date DESC LIMIT 1",
                 function (err, results, fields) {
                     const r = { date: results[0].date, data: JSON.parse(results[0].data) }
-
+                    // remove sunset
+                    r.data.codes.pop()
+                    // at least sunrise should still be in the array
                     const tsLast = r.date + 3600 * r.data.limits[0] + r.data.codes[r.data.codes.length - 1][0]
                     let lc = r.data.codes[r.data.codes.length - 1][1]
                     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + (new Date(tsLast * 1000)).toISOString() + "'"
@@ -487,10 +489,10 @@ app.post("/addData", (req, res) => {
                         if (Array.isArray(results)) {
                             console.log("   Since the last record in code_history at ", (new Date(tsLast * 1000)).toISOString(), " with code ",
                                 lc, ", there are ", results.length, " new data points in gliderport")
-
+                            let c = 0
                             results.forEach((v, i) => {
+                                c++
                                 const ts = Math.round((new Date(v.recorded)).getTime() / 1000)
-                                if (i % 10000 === 0) console.log(v.recorded, " ", ts, " ", r.date, " ", r.data.sun[0])
                                 if (ts > r.date + r.data.sun[0]) {
                                     // after sunrise
                                     if (ts < r.date + r.data.sun[1]) {
@@ -531,17 +533,27 @@ app.post("/addData", (req, res) => {
                                             + JSON.stringify(r.data)
                                             + "' ON DUPLICATE KEY UPDATE data ='"
                                             + JSON.stringify(r.data) + "'"
-                                        // connection?.query(sql, () => { })
+                                        connection?.query(sql, () => { })
                                         console.log("   add ", r.data.codes.length, " new code(s) to code_history table for day ",
-                                            (new Date(r.date * 1000)).toISOString())
+                                            (new Date(r.date * 1000)).toISOString(), " form ", c, " points")
+                                        c = 0
+
+                                        // if (r.date < 2665558000) {
+                                        //     let s = "["
+                                        //     r.data.codes.forEach((w, j) => {
+                                        //         s += '[' + w[0] + ',' + w[1] + '],'
+                                        //     })
+                                        //     s += ']'
+                                        //     console.log("date: ", r.date, ", data: {limits: [ ", r.data.limits[0], ", ",
+                                        //         r.data.limits[1], " ], sun: [ ", r.data.sun[0], ", ", r.data.sun[1], " ], code:", s)
+                                        // }
+
                                         // create a new day
                                         r.date += 24 * 3600
-                                        const t = new Date(r.date * 1000)
-                                        const sunData = calculateSunrise(new Date(r.date * 1000))
-                                        console.log("new sunrise at ", sunData.sunriseTimestamp, "r.date =", r.date, " ", t.toISOString())
+                                        const sunData = calculateSunrise(new Date((r.date * 1000) + 3600000))
                                         r.data.codes = []
                                         r.data.sun = [sunData.sunriseTimestamp - r.date, sunData.sunsetTimestamp - r.date]
-                                        r.data.limits = [Math.round(sunData.sunriseTimestamp / 3600) - 1, Math.round(sunData.sunsetTimestamp / 3600) + 2]
+                                        r.data.limits = [Math.floor(24 * sunData.sunrise) - 1, Math.floor(24 * sunData.sunset) + 2]
                                     }
                                 }
                             })
