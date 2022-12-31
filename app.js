@@ -536,8 +536,9 @@ app.post("/addData", (req, res) => {
                                             (new Date(r.date * 1000)).toISOString())
                                         // create a new day
                                         r.date += 24 * 3600
+                                        const t = new Date(r.date * 1000)
                                         const sunData = calculateSunrise(new Date(r.date * 1000))
-                                        console.log("new sunrise at ", sunData.sunriseTimestamp, "r.date =", r.date)
+                                        console.log("new sunrise at ", sunData.sunriseTimestamp, "r.date =", r.date, " ", t.toISOString())
                                         r.data.codes = []
                                         r.data.sun = [sunData.sunriseTimestamp - r.date, sunData.sunsetTimestamp - r.date]
                                         r.data.limits = [Math.round(sunData.sunriseTimestamp / 3600) - 1, Math.round(sunData.sunsetTimestamp / 3600) + 2]
