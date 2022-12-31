@@ -487,8 +487,12 @@ app.post("/addData", (req, res) => {
                         if (Array.isArray(results)) {
                             console.log("   Since the last record in code_history at ", (new Date(tsLast * 1000)).toISOString(), " with code ",
                                 lc, ", there are ", results.length, " new data points in gliderport")
+                            let x = 0
                             results.forEach((v, i) => {
-                                if (i % 1000 === 0) console.log("x")
+                                if (r.date != x) {
+                                    console.log(r.date)
+                                    x = r.date
+                                }
                                 const ts = Math.round((new Date(v.recorded)).getTime / 1000)
                                 if (ts > r.date + r.data.sun[0]) {
                                     // after sunrise
