@@ -489,7 +489,7 @@ app.post("/addData", (req, res) => {
                                 lc, ", there are ", results.length, " new data points in gliderport")
 
                             results.forEach((v, i) => {
-                                const ts = Math.round((new Date(v.recorded)).getTime / 1000)
+                                const ts = Math.round((new Date(v.recorded)).getTime() / 1000)
                                 if (i % 10000 === 0) console.log(v.recorded, " ", ts, " ", r.date + r.data.sun[0])
                                 if (ts > r.date + r.data.sun[0]) {
                                     // after sunrise
