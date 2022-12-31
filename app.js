@@ -378,9 +378,10 @@ app.post("/addData", (req, res) => {
     // get latest record (or 2 days ago if there are none)
     sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1"
     connection?.query(sql, (err, results, fields) => {
-        latestHours = Array.isArray(results) ? results[0].data.start : twoDaysAgo
-        // console.log(results[0])
-        const hourLength = results[0].data.date.length
+        const d = JSON.parse(results[0].data)
+        latestHours = Array.isArray(results) ? d.start : twoDaysAgo
+        // console.log(results[0].data)
+        const hourLength = d.date.length
         msg += "latest hour starts at " + latestHours + "\n"
         // for each hour starting at 'latestHour', thru 'thisHour'
         for (let i = latestHours; i <= thisHour; i += 3600) {
