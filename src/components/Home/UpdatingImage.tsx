@@ -8,8 +8,6 @@ import { useInterval, b64toBlob } from "../Globals"
 
 export default function UpdatingImage({ offline }) {
 
-    const [isLoaded, setIsLoaded] = useState<boolean>(false);
-    const [doNotReload, setDoNotReload] = useState<boolean>(false)
     const [visible, setVisible] = React.useState<boolean>(false)
     const [imgSrc, setImgSrc] = useState<string>("")
     const [imgSrcLarge, setImgSrcLarge] = useState<string>("")
@@ -20,6 +18,7 @@ export default function UpdatingImage({ offline }) {
     const { sun, image, bigImage, loadData } = useData()
     const imgRef = useRef(null)
 
+    const outOfOrder = false;
 
     // update 'time passed' numbers on screen
     const interval = 10 //seconds
@@ -93,8 +92,7 @@ export default function UpdatingImage({ offline }) {
                 : null
             }
             {itIsDark ? <span className="bottom-left">{timeToSunrise}</span> : null}
-            {/* <p className="ooo">Some Equipment was removed<br />Waiting for staff to return it...</p> */}
-            {/* <p className="ooo" >Temporarily Out of Order</p> */}
+            {outOfOrder ? <p className="ooo" >Temporarily Out of Order</p> : null}
         </>
     )
 }

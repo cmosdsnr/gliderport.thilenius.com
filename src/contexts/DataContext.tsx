@@ -201,7 +201,6 @@ export function DataProvider({ children }) {
             console.log("ws opened")
             loadData("CurrentData")
             loadData("Chart")
-            loadData("Status")
             // testAll()
             setLoading(false)
             setPassedSeconds(0)

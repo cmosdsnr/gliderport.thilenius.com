@@ -11,7 +11,9 @@ export default function Status() {
     const {
         status,
         lastCheck,
+        loadData,
     } = useData()
+
 
     useEffect(() => {
         var dt = new Date(1000 * lastCheck)
@@ -34,6 +36,7 @@ export default function Status() {
 
 
     useEffect(() => {
+        loadData("Status")
         const resizeAndDraw = () => {
             const divContainer = rowRef.current
             if (!divContainer) {
@@ -49,6 +52,10 @@ export default function Status() {
         }
     }, [])
 
+    useEffect(() => {
+        debugger
+    }, [status])
+
 
 
     return (
@@ -62,9 +69,9 @@ export default function Status() {
                 </Col>
             </Row>
             <Row ref={rowRef}>
-                {statusData && statusData.map((day, i) => {
+                {status?.map((day, i) => {
                     return (
-                        <StatusCanvas key={i} width={width.current} data={day} full={i === (statusData.length - 1)} />
+                        <StatusCanvas key={i} width={width.current} data={day} full={i === (status.length - 1)} />
                     )
                 })
                 }
