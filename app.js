@@ -403,10 +403,14 @@ app.post("/addData", (req, res) => {
     // get latest record (or 2 days ago if there are none)
     sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1"
     connection?.query(sql, (err, results, fields) => {
-        const d = JSON.parse(results[0].data)
-        latestHours = d?.start ? d.start : twoDaysAgo
+        let hourLength = 0
+        latestHours = twoDaysAgo
+        if (Array.isArray(results)) {
+            const d = JSON.parse(results[0].data)
+            latestHours = d.start
+            hourLength = d.date.length
+        }
         // console.log(results[0].data)
-        const hourLength = d.date.length
         msg += "latest hour starts at " + latestHours + "\n"
         // for each hour starting at 'latestHour', thru 'thisHour'
         for (let i = latestHours; i <= thisHour; i += 3600) {
@@ -423,7 +427,7 @@ app.post("/addData", (req, res) => {
             let dt1 = new Date(i * 1000)
             let dt2 = new Date((3600 + i) * 1000)
             msg += "pull from gliderport: records from " + dt1.toISOString() + " to " + dt2.toISOString() + "\n"
-            sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt1.toISOString() + "' AND recorded <= '" + dt2.toISOString() + "'"
+            sql = "SELECT * FROM `gliderport` WHERE recorded >= '" + dt1.toISOString() + "' AND recorded < '" + dt2.toISOString() + "'"
             connection?.query(sql, (err, results, fields) => {
                 if (Array.isArray(results)) {
                     msg += "found " + results.length + "\n"
