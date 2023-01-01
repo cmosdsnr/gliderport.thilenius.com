@@ -324,6 +324,31 @@ app.get("/UpdateStatus", (req, res) => {
     // }
 })
 
+
+app.get("/fixHistory", (req, res) => {
+    let p = "database:<br/>"
+    connection?.query(
+        "SELECT * FROM code_history ORDER BY date DESC LIMIT 100",
+        function (err, results, fields) {
+            results.forEach((v, i) => {
+                // console.log(v)
+                const r = { date: v.date, data: JSON.parse(v.data) }
+                let dt = new Date(r.date * 1000)
+                if (dt.getHours() === 23) {
+                    sql = "DELETE FROM code_history where `date`=" + v.date + ";"
+                    connection?.query(sql, (err, results, fields) => { })
+                    p += sql + "<br/>"
+                    v.date += 3600
+                    sql = "INSERT into code_history (`date`, `data`) value(" + v.date + ",'" + v.data + "')"
+                    connection?.query(sql, (err, results, fields) => { })
+                    p += sql + "<br/>"
+                }
+            })
+            res.send(p)
+        })
+
+})
+
 // called to add new wind Data to the db
 app.post("/addData", (req, res) => {
     console.log("++++++++ Adding Data ++++++++++++")
@@ -514,7 +539,7 @@ app.post("/addData", (req, res) => {
                                         const c = getCode(v.speed, v.direction)
                                         if (c != lc) {
                                             lc = c
-                                            // add to r.data.codes [ts, code]
+                                            // add to r.data.codes code_history[ts, code]
                                             r.data.codes.push(
                                                 [
                                                     ts - 3600 * r.data.limits[0] - r.date,
