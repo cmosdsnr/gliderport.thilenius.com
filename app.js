@@ -504,11 +504,19 @@ app.post("/addData", (req, res) => {
                 "SELECT * FROM code_history ORDER BY date DESC LIMIT 1",
                 function (err, results, fields) {
                     const r = { date: results[0].date, data: JSON.parse(results[0].data) }
-                    // remove sunset
+                    // if it exists it will have at least two points, sunrise and sunset
+                    // pop off sunset (it's always add to the end of a day)
                     r.data.codes.pop()
                     // at least sunrise should still be in the array
-                    const tsLast = r.date + 3600 * r.data.limits[0] + r.data.codes[r.data.codes.length - 1][0]
-                    let lc = r.data.codes[r.data.codes.length - 1][1]
+                    let tsLast = r.date + 3600 * r.data.limits[0]
+                    let lc = 0
+                    if (r.data.codes.length === 0) {
+                        console.log("   ERROR: Found a zero length codes on ", (new Date(r.date * 1000)).toISOString())
+                    } else {
+                        tsLast += r.data.codes[r.data.codes.length - 1][0]
+                        lc = r.data.codes[r.data.codes.length - 1][1]
+                    }
+
                     sql = "SELECT * FROM `gliderport` WHERE recorded > '" + (new Date(tsLast * 1000)).toISOString() + "'"
                     connection?.query(sql, (err, results, fields) => {
                         if (Array.isArray(results)) {
@@ -520,37 +528,30 @@ app.post("/addData", (req, res) => {
                                 const ts = Math.round((new Date(v.recorded)).getTime() / 1000)
                                 if (ts > r.date + r.data.sun[0]) {
                                     // after sunrise
+                                    // if r.data.codes is empty then add sunrise point
+                                    if (r.data.codes.length === 0) {
+                                        if (i > 0)
+                                            lc = getCode(results[i - 1].speed, results[i - 1].direction)
+                                        else
+                                            lc = getCode(v.speed, v.direction)
+                                        r.data.codes.push([r.data.sun[0] - 3600 * r.data.limits[0], lc])
+                                    }
+
                                     if (ts < r.date + r.data.sun[1]) {
                                         //before sunset
-                                        // if r.data.codes is empty then add sunrise point
-                                        if (r.data.codes.length === 0) {
-                                            if (i > 0)
-                                                lc = getCode(results[i - 1].speed, results[i - 1].direction)
-                                            else
-                                                lc = getCode(v.speed, v.direction)
-                                            r.data.codes.push(
-                                                [
-                                                    r.data.sun[0] - 3600 * r.data.limits[0],
-                                                    lc
-                                                ]
-                                            )
-                                        }
                                         // check code for change
                                         const c = getCode(v.speed, v.direction)
                                         if (c != lc) {
                                             lc = c
                                             // add to r.data.codes code_history[ts, code]
-                                            r.data.codes.push(
-                                                [
-                                                    ts - 3600 * r.data.limits[0] - r.date,
-                                                    lc
-                                                ]
-                                            )
+                                            r.data.codes.push([ts - 3600 * r.data.limits[0] - r.date, lc])
                                         }
-                                    } else {
-                                        // after sunset
+                                    }
+                                    // if it's after sunset OR it's the last data point AND there is stuff to save
+                                    if (((i === results.length - 1) && (r.data.codes.length > 0)) || ts >= r.date + r.data.sun[1]) {
                                         // add sunset point
                                         r.data.codes.push([r.data.sun[1] - 3600 * r.data.limits[0], 0])
+                                        // anything we save should now have at least sunrise AND sunset points (2)
                                         // save this day in code_history
                                         sql = "INSERT INTO `code_history` SET date="
                                             + r.date
@@ -582,16 +583,6 @@ app.post("/addData", (req, res) => {
                                     }
                                 }
                             })
-                            if (r.data.codes.length > 0) {
-                                //save it
-                                sql = "INSERT INTO `code_history` SET date="
-                                    + r.date
-                                    + ", data='"
-                                    + JSON.stringify(r.data)
-                                    + "' ON DUPLICATE KEY UPDATE data ='"
-                                    + JSON.stringify(r.data) + "'"
-                                connection?.query(sql, () => { })
-                            }
                         }
                     })
                 }
