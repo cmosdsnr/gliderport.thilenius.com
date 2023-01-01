@@ -95,9 +95,8 @@ const updateSunData = () => {
 updateSunData()
 
 //call every minute
-const reportEveryMin = true
+const reportEveryMin = false
 let pingTimer = setInterval(() => {
-
     const url = 'https://104.36.31.118/'
     ping(url).then(function (delta) {
         if (reportEveryMin) console.log('gliderport online')
@@ -274,64 +273,6 @@ app.get('/RegenerateAllHours', function (req, res) {
     console.log("Done with regeneration")
     res.send(msg)
 })
-
-// defunct, no longer needed
-app.get("/ImageAdded", (req, res) => {
-    res.send("Ok")
-})
-
-app.get('/current.jpg', function (req, res) {
-    res.contentType('image/jpeg');
-    res.send(imageBuffer)
-})
-app.get('/currentBig.jpg', function (req, res) {
-    res.contentType('image/jpeg');
-    res.send(imageBigBuffer)
-})
-
-// ping this page to update the "latest Image" field in the server_sent table
-app.get("/UpdateStatus", (req, res) => {
-    // defunct
-    res.send("No longer does anything")
-
-    // if (req.query.password != "ilove2fly") {
-    //     console.log(req.query.password, " != ilove2fly")
-    //     res.send("Password incorrect")
-    //     return
-    // }
-    // const ts = parseInt((Date.now() + offset) / 1000)
-    // const dateString = timestampToString(ts)
-    // // const 
-    // switch (req.query.status) {
-    //     case undefined:
-    //         res.send("no status given")
-    //         break;
-    //     case '0':
-    //     case '1':
-    //         sql = "UPDATE `server_sent` SET `online_status_touched`='" + dateString + "' WHERE 1"
-    //         connection?.query(sql, (err, results, fields) => { })
-
-    //         if (onlineStatus != req.query.status) {
-    //             onlineStatus = req.query.status
-    //             sql = "UPDATE `server_sent` SET `online_status`=" + req.query.status + " WHERE `id`=1"
-    //             connection?.query(sql, (err, results, fields) => { })
-    //             sql = "INSERT INTO `network_status`(`recorded`, `status`) VALUES ('" + dateString + "'," + req.query.status + ")"
-    //             connection?.query(sql, (err, results, fields) => { })
-    //             const r = "online status updated to " + (req.query.status == 0 ? "offline" : "online")
-    //             res.send(sql)
-    //         } else {
-    //             const r = "online status was already " + (req.query.status == 0 ? "offline" : "online")
-    //             res.send(r)
-    //         }
-    //         break;
-
-    //     default:
-    //         console.log("Updated status called with a wrong number: (", req.query.status, ")")
-    //         res.send("Updated status called with a wrong number " + req.query.status)
-    // }
-})
-
-
 app.get("/fixHistory", (req, res) => {
     let p = "database:<br/>"
     connection?.query(
@@ -660,3 +601,23 @@ function getCode(speed, direction, isItDark) {
         }
     }
 }
+
+// for testing:
+app.get('/current.jpg', function (req, res) {
+    res.contentType('image/jpeg');
+    res.send(imageBuffer)
+})
+app.get('/currentBig.jpg', function (req, res) {
+    res.contentType('image/jpeg');
+    res.send(imageBigBuffer)
+})
+
+app.get("/UpdateStatus", (req, res) => {
+    // defunct
+    res.send("No longer does anything")
+})
+
+// defunct, no longer needed
+app.get("/ImageAdded", (req, res) => {
+    res.send("Ok")
+})
