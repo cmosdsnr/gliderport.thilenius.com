@@ -95,6 +95,7 @@ let pingTimer = setInterval(() => {
 
     const url = 'https://104.36.31.118/'
     ping(url).then(function (delta) {
+        console.log('gliderport online')
         const ts = parseInt((Date.now() + offset) / 1000)
         const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
         if (onlineStatus === 0) {
@@ -109,6 +110,7 @@ let pingTimer = setInterval(() => {
         sql = "UPDATE `server_sent` SET `online_status_touched`='" + dateString + "' WHERE 1"
         connection?.query(sql, (err, results, fields) => { })
     }).catch(function (err) {
+        console.log('gliderport offline')
         const ts = parseInt((Date.now() + offset) / 1000)
         const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
         if (onlineStatus === 1) {
