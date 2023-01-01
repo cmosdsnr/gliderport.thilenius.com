@@ -9,6 +9,10 @@ dotenv.config()
 
 let DEBUG = true
 
+const timestampToString = (ts) => {
+    return new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
+}
+
 process.env.TZ = "America/Los_Angeles"
 let offset = -60000 * new Date().getTimezoneOffset()
 console.log("offset ", offset)
@@ -98,7 +102,7 @@ let pingTimer = setInterval(() => {
     ping(url).then(function (delta) {
         if (reportEveryMin) console.log('gliderport online')
         const ts = parseInt((Date.now() + offset) / 1000)
-        const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
+        const dateString = timestampToString(ts)
         if (onlineStatus === 0) {
             // We saw it go online!
             onlineStatus = 1
@@ -113,7 +117,7 @@ let pingTimer = setInterval(() => {
     }).catch(function (err) {
         if (reportEveryMin) console.log('gliderport offline')
         const ts = parseInt((Date.now() + offset) / 1000)
-        const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
+        const dateString = timestampToString(ts)
         if (onlineStatus === 1) {
             // We saw it go offline!
             onlineStatus = 0
@@ -141,7 +145,7 @@ const setLastRecord = () => {
     connection?.query(
         "SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1",
         function (err, results, fields) {
-            lastRecord = results ? new Date(new Date(results[0].recorded).getTime() + offset).toISOString() : "0"
+            lastRecord = results ? timestampToString(new Date(results[0].recorded).getTime() + offset) : "0"
             lastRecord = lastRecord.replace("T", " ")
             lastRecord = lastRecord.replace(".000Z", "")
             // console.log("last record: ", lastRecord)
@@ -228,9 +232,9 @@ app.get('/RegenerateAllHours', function (req, res) {
         pressure: [],
         temperature: [],
     }
-    let msg = "pull from gliderport: records from " + dt.toISOString() + "<br/>\n"
-    console.log("pull from gliderport: records from " + dt.toISOString())
-    sql = "SELECT * FROM `gliderport` WHERE recorded > '" + dt.toISOString().replace("T", " ").replace(".000Z", "") + "'"
+    let msg = "pull from gliderport: records from " + timestampToString(twoDaysAgo) + "<br/>\n"
+    console.log("pull from gliderport: records from " + timestampToString(twoDaysAgo))
+    sql = "SELECT * FROM `gliderport` WHERE recorded > '" + timestampToString(twoDaysAgo) + "'"
     console.log(sql)
     connection?.query(sql, (err, results, fields) => {
         console.log("found " + results.length + " results")
@@ -296,7 +300,7 @@ app.get("/UpdateStatus", (req, res) => {
     //     return
     // }
     // const ts = parseInt((Date.now() + offset) / 1000)
-    // const dateString = new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
+    // const dateString = timestampToString(ts)
     // // const 
     // switch (req.query.status) {
     //     case undefined:
@@ -426,11 +430,8 @@ app.post("/addData", (req, res) => {
                 pressure: [],
                 temperature: [],
             }
-            new Date(i * 1000)
-            let dt1 = new Date(i * 1000)
-            let dt2 = new Date((3600 + i) * 1000)
-            msg += "pull from gliderport: records from " + dt1.toISOString() + " to " + dt2.toISOString() + "\n"
-            sql = "SELECT * FROM `gliderport` WHERE recorded >= '" + dt1.toISOString() + "' AND recorded < '" + dt2.toISOString() + "'"
+            msg += "pull from gliderport: records from " + timestampToString(i) + " to " + timestampToString(i + 3600) + "\n"
+            sql = "SELECT * FROM `gliderport` WHERE recorded >= '" + timestampToString(i) + "' AND recorded < '" + timestampToString(i + 3600) + "'"
             connection?.query(sql, (err, results, fields) => {
                 if (Array.isArray(results)) {
                     msg += "found " + results.length + "\n"
@@ -518,16 +519,17 @@ app.post("/addData", (req, res) => {
                     let tsLast = r.date + 3600 * r.data.limits[0]
                     let lc = 0
                     if (r.data.codes.length === 0) {
-                        console.log("   ERROR: Found a zero length codes on ", (new Date(r.date * 1000)).toISOString())
+                        console.log("   ERROR: Found a zero length codes on ", timestampToString(r.date))
                     } else {
                         tsLast += r.data.codes[r.data.codes.length - 1][0]
                         lc = r.data.codes[r.data.codes.length - 1][1]
                     }
 
-                    sql = "SELECT * FROM `gliderport` WHERE recorded > '" + (new Date(tsLast * 1000)).toISOString() + "'"
+                    sql = "SELECT * FROM `gliderport` WHERE recorded > '" +
+                        timestampToString(tsLast) + "'"
                     connection?.query(sql, (err, results, fields) => {
                         if (Array.isArray(results)) {
-                            console.log("   Since the last record in code_history at ", (new Date(tsLast * 1000)).toISOString(), " with code ",
+                            console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
                                 lc, ", there are ", results.length, " new data points in gliderport")
                             let c = 0
                             results.forEach((v, i) => {
@@ -568,7 +570,7 @@ app.post("/addData", (req, res) => {
                                             + JSON.stringify(r.data) + "'"
                                         connection?.query(sql, () => { })
                                         console.log("   add ", r.data.codes.length, " new code(s) to code_history table for day ",
-                                            (new Date(r.date * 1000)).toISOString(), " form ", c, " points")
+                                            timestampToString(r.date), " form ", c, " points")
                                         c = 0
 
                                         // if (r.date < 2665558000) {
