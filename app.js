@@ -144,9 +144,8 @@ const setLastRecord = () => {
     connection?.query(
         "SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1",
         function (err, results, fields) {
-            lastRecord = results ? timestampToString(new Date(results[0].recorded).getTime() + offset) : "0"
-            lastRecord = lastRecord.replace("T", " ")
-            lastRecord = lastRecord.replace(".000Z", "")
+            const ts = (new Date(results[0].recorded).getTime() + offset) / 1000
+            lastRecord = results ? timestampToString(ts) : "0"
             // console.log("last record: ", lastRecord)
         }
     )
@@ -163,37 +162,6 @@ app.listen(port, () => {
 app.use(express.urlencoded({ extended: true, limit: "10mb" }))
 app.use(express.json({ limit: "10mb" }))
 app.use(express.static("./public"))
-
-app.get("/getLastEntry", (req, res) => {
-    if (lastRecord) res.send(lastRecord)
-    else res.send("OK")
-})
-
-// called from browser to display latest happenings
-app.get("/lastAdded", (req, res) => {
-    let content = "<p>Last Data received at: " + tdLast.toDateString() + " " +
-        tdLast.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }) + "</p>"
-    content += "<p>first Record: " + firstRecord + "</p>"
-    content += "<p>last Record: " + lastRecord + "</p>"
-    content += "<p>number of Records: " + numberRecords + "</p>"
-    if (latestHours > 0)
-        content += "<p>Latest Hours timestamp is: " + latestHours + "</p>"
-    content +=
-        "<p><table><tr><td>Sunrise</td><td>" +
-        sunData.sunriseTime?.toLocaleString("en-US", {
-            timeZone: "America/Los_Angeles",
-        }) +
-        "</td></tr>"
-    content +=
-        "<tr><td>Sunset</td><td>" +
-        sunData.sunsetTime?.toLocaleString("en-US", {
-            timeZone: "America/Los_Angeles",
-        }) +
-        "</td></tr></table></p>"
-    res.send(content)
-    console.log("lastAdded called")
-})
-
 
 let imageBuffer, imageBigBuffer
 app.post("/updateSmallImage", (req, res) => {
@@ -603,6 +571,37 @@ function getCode(speed, direction, isItDark) {
 }
 
 // for testing:
+
+app.get("/getLastEntry", (req, res) => {
+    if (lastRecord) res.send(lastRecord)
+    else res.send("OK")
+})
+
+// called from browser to display latest happenings
+app.get("/lastAdded", (req, res) => {
+    let content = "<p>Last Data received at: " + tdLast.toDateString() + " " +
+        tdLast.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }) + "</p>"
+    content += "<p>first Record: " + firstRecord + "</p>"
+    content += "<p>last Record: " + lastRecord + "</p>"
+    content += "<p>number of Records: " + numberRecords + "</p>"
+    if (latestHours > 0)
+        content += "<p>Latest Hours timestamp is: " + latestHours + "</p>"
+    content +=
+        "<p><table><tr><td>Sunrise</td><td>" +
+        sunData.sunriseTime?.toLocaleString("en-US", {
+            timeZone: "America/Los_Angeles",
+        }) +
+        "</td></tr>"
+    content +=
+        "<tr><td>Sunset</td><td>" +
+        sunData.sunsetTime?.toLocaleString("en-US", {
+            timeZone: "America/Los_Angeles",
+        }) +
+        "</td></tr></table></p>"
+    res.send(content)
+    console.log("lastAdded called")
+})
+
 app.get('/current.jpg', function (req, res) {
     res.contentType('image/jpeg');
     res.send(imageBuffer)
