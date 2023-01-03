@@ -17,14 +17,18 @@ const toHMS = (s) => {
     let l = s
     let sStr = ""
     if (l > 3600) {
-        sStr += parseInt(l / 3600) + ":"
+        const h = parseInt(l / 3600)
+        sStr += h < 10 ? "0" : "" + h + ":"
         l -= 3600 * parseInt(l / 3600)
     }
     if (s > 60) {
+        const m = parseInt(l / 60)
+        sStr += m < 10 ? "0" : "" + h + ":"
         sStr += parseInt(l / 60) + ":"
         l -= 60 * parseInt(l / 60)
+        sStr += l < 10 ? "0" : ""
     }
-    sStr += parseInt(l)
+    sStr += l
     return sStr
 }
 
