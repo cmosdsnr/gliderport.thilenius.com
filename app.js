@@ -608,6 +608,8 @@ app.get("/info", (req, res) => {
         connection.query('SELECT * FROM `server_sent` WHERE `id`=1',
             function (err, results, fields) {
                 content += `<p>SERVER SENT TABLE</p><p><table>`
+                const tsNow = (new Date()).getTime() / 1000
+                content += `<tr><td><b>Now</b></td><td>(${tsNow})  <b>${timestampToString(tsNow)}</b></td></tr><tr></tr>`
                 for (const [key, value] of Object.entries(results[0])) {
                     if ('last_record' === key ||
                         'last_image' === key ||
