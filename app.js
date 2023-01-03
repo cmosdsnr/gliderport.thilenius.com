@@ -505,7 +505,7 @@ app.post("/addData", (req, res) => {
                                             + JSON.stringify(r.data)
                                             + "' ON DUPLICATE KEY UPDATE data ='"
                                             + JSON.stringify(r.data) + "'"
-                                        //connection?.query(sql, () => { })
+                                        connection?.query(sql, () => { })
                                         console.log("   add ", r.data.codes.length, " new code(s) to code_history table for day ",
                                             timestampToString(r.date), " form ", c, " points")
                                         c = 0
