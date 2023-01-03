@@ -600,9 +600,18 @@ app.get("/info", (req, res) => {
     sql = "SELECT * FROM `hours` ORDER BY start DESC"
     connection?.query(sql, (err, results, fields) => {
         content += "<ul>Hours has " + results.length + " entries"
+        let l = []
         results.forEach((v, i) => {
             const d = JSON.parse(v.data)
-            content += `<li>${timestampToString(v.start)} with ${d.date.length} items</li>`
+            l.push([timestampToString(v.start), d.date.length])
+
+        })
+        l.forEach((v, i) => {
+            sql = "SELECT * FROM `gliderport` WHERE recorded >= '" + timestampToString(v[0]) +
+                "' AND recorded < '" + timestampToString(v[0] + 3600) + "'"
+            connection?.query(sql, (err, results, fields) => {
+                content += `<li>${v[0]} with ${v[1]} items (gliderport has ${results.length})</li>`
+            })
         })
         content += "</ul>"
         connection.query('SELECT * FROM `server_sent` WHERE `id`=1',
@@ -611,11 +620,8 @@ app.get("/info", (req, res) => {
                 const tsNow = parseInt((new Date()).getTime() / 1000)
                 content += `<tr><td><b>Now</b></td><td>(${tsNow})  <b>${timestampToString(tsNow)}</b></td></tr><tr></tr>`
                 for (const [key, value] of Object.entries(results[0])) {
-                    if ('last_record' === key ||
-                        'last_image' === key ||
-                        'last_forecast' === key ||
-                        'sunrise_timestamp' === key ||
-                        'sunset_timestamp' === key) {
+                    if ('last_record' === key || 'last_image' === key || 'last_forecast' === key ||
+                        'sunrise_timestamp' === key || 'sunset_timestamp' === key) {
                         let deltaStr = ""
                         let delta = tsNow - value
                         let end = "ago"
