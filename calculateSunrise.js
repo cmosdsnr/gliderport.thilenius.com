@@ -56,7 +56,10 @@ const toString = (fractionOfDay) => {
 export default function calculateSunrise(date) {
     const d = { latitude: 32.89, longitude: -117.25 };
     d.timeZone = -date.getTimezoneOffset() / 60;
+
+    // this set's local time to 12, note we need to add the timezone offset in the julian Day
     date.setHours(12, 0, 0);
+
     d.noon = date.getTime() / 1000;
     d.julianDay = Math.floor(d.noon / 86400) - d.timeZone / 24 + 2440588;
 
@@ -128,10 +131,10 @@ export default function calculateSunrise(date) {
     d.sunriseText = toString(d.sunrise);
     d.sunsetText = toString(d.sunset);
 
-    d.sunriseTime = new Date();
+    d.sunriseTime = new Date(1000 * d.noon);
     d.sunriseTime.setHours(0, 0, 0);
     d.sunriseTime.setTime(d.sunriseTime.getTime() + 1000 * 3600 * 24 * d.sunrise);
-    d.sunsetTime = new Date();
+    d.sunsetTime = new Date(1000 * d.noon);
     d.sunsetTime.setHours(0, 0, 0);
     d.sunsetTime.setTime(d.sunsetTime.getTime() + 1000 * 3600 * 24 * d.sunset);
 
