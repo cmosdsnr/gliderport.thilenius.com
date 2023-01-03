@@ -15,14 +15,13 @@ const timestampToString = (ts) => {
 
 const toHMS = (s) => {
     let l = s
-    let sStr = ""
     const h = parseInt(l / 3600)
-    sStr += h < 10 ? "0" : "" + h
+    let sStr = (h < 10 ? "0" : "") + h
     l -= 3600 * h
     const m = parseInt(l / 60)
-    sStr += m < 10 ? ":0" : ":" + m
+    sStr += (m < 10 ? ":0" : ":") + m
     l -= 60 * m
-    sStr += l < 10 ? ":0" : ":" + l
+    sStr += (l < 10 ? ":0" : ":") + l
     return sStr
 }
 
