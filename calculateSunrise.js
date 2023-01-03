@@ -57,7 +57,7 @@ export default function calculateSunrise(date) {
     const d = { latitude: 32.89, longitude: -117.25 };
     d.timeZone = -date.getTimezoneOffset() / 60;
 
-    // this set's local time to 12, note we need to add the timezone offset in the julian Day
+    // this set's LOCAL time to 12, note we need to add the timezone offset in the julian Day
     date.setHours(12, 0, 0);
 
     d.noon = date.getTime() / 1000;
