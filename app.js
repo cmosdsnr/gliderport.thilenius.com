@@ -657,13 +657,45 @@ app.get("/info", (req, res) => {
                         content += `<tr><td>${key}</td><td>${value}</td></tr>`
                 }
                 content += `</table></p>`
-                res.send(content)
-            })
+
+                content += `<h3>Code History Table</h3><p><table>`
+                connection?.query(
+                    "SELECT * FROM code_history ORDER BY date DESC LIMIT 10",
+                    function (err, results, fields) {
+                        results.forEach((v, i) => {
+                            const r = { date: v.date, data: JSON.parse(v.data) }
+                            content += `<tr><td>${timestampToString(r.date)}</td><td>${r.data.codes.length} changes</td></tr>`
+                        })
+                        content += `</table></p>`
+                        content += `<h3>Latest Code History Table ${timestampToString(results[0].date)}</h3><p><table>`
+                        const r = { date: results[0].date, data: JSON.parse(results[0].data) }
+                        const s = r.data.limits[0]
+                        content += `<tr><td>start</td><td>${s} hr</td><td>${s * 3600} s</td></tr>`
+                        content += `<tr><td>stop</td><td>${r.data.limits[1]} hr</td><td>${r.data.limits[1] * 3600} s</td></tr>`
+                        content += `<tr><td>${r.data.codes.length} code changes</td></tr>`
+                        content += `<tr><td>First at ${r.data.codes[0][0]}</td><td>First at ${3600 * s + r.data.codes[0][0]}</td></tr>`
+                        content += `<tr><td>Sunrise ${r.data.sun[0]}</td><td>Should match ${3600 * s + r.data.codes[0][0]}</td></tr>`
+                        const codes = [
+                            "It Is dark",
+                            "Sled ride, bad angle",
+                            "Sled ride, poor angle",
+                            "Sled ride",
+                            "Bad angle",
+                            "Poor angle",
+                            "Good",
+                            "Excellent",
+                            "Use Speed bar!",
+                            "Too windy",
+                            "No data"
+                        ]
+                        r.data.codes.forEach((v, i) => content += `<tr><td>${v[0]}</td><td>${v[1]}</td><td>${codes[v[1]]}</td></tr>`)
+                        content += `</table></p>`
+                        res.send(content)
+                    }
+                )
+            }
+        )
     })
-    // connection?.query(
-    //     "SELECT * FROM code_history ORDER BY date DESC LIMIT 10",
-    //     function (err, results, fields) {
-    //         const r = { date: results[0].date, data: JSON.parse(results[0].data) }
     console.log("info called")
 })
 
