@@ -578,12 +578,23 @@ app.get("/getLastEntry", (req, res) => {
 
 // called from browser for debug to display latest happenings
 app.get("/info", (req, res) => {
-    let content = "<ul>Most recent addData at: " + tdLast.toDateString()
-    content += "<li>first Record: " + firstRecord + "</li>"
-    content += "<li>last Record: " + lastRecord + "</li>"
-    content += "<li>number of Records added: " + numberRecords + "</li>"
-    if (latestHours > 0)
-        content += "<li>Latest Hours timestamp is: " + latestHours + " which is " + timestampToString(latestHours) + "</li></ul>"
+    let content = "<p><table>"
+    content += `<tr><td>last Record in gliderport table:</td><td>${lastRecord}</td></tr><tr></tr>`
+    content += `<tr><td>Most recent addData at:</td><td>${tdLast.toDateString()}</td></tr>`
+    if (firstRecord === undefined) {
+        content += `<tr><td></td><td>First Record of last added:</td><td>Never Called</td></tr>`
+        content += `<tr><td></td><td>Number of Records added:</td><td>Never Called</td></tr>`
+    } else {
+        content += `<tr><td></td><td>First Record of last added:</td><td>${firstRecord}</td></tr>`
+        content += `<tr><td></td><td>Number of Records added:</td><td>${numberRecords}</td></tr>`
+
+    }
+    if (latestHours === 0)
+        content += `<tr><td></td><td>Latest Hours table timestamp is:</td><td>Never Called</td></tr>`
+    else
+        content += `<tr><td></td><td>Latest Hours table timestamp is:</td><td>${latestHours}</td><td>${timestampToString(latestHours)}</td></tr>`
+    content += `</table></p>`
+
     content +=
         "<p><table><tr><td>Sunrise</td><td>" +
         sunData.sunriseTime?.toLocaleString("en-US", {
