@@ -468,7 +468,7 @@ app.post("/addData", (req, res) => {
                             console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
                                 lc, ", there are ", results.length, " new data points in gliderport")
                             let c = 0
-                            let lastTs = 0
+                            let lastTs = tsLast + 300 // 5 min after last
                             results.forEach((v, i) => {
                                 c++
                                 const ts = Math.round((new Date(v.recorded)).getTime() / 1000)
