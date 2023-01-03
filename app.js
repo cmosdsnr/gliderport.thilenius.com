@@ -616,7 +616,7 @@ app.get("/info", (req, res) => {
                         'last_forecast' === key ||
                         'sunrise_timestamp' === key ||
                         'sunset_timestamp' === key) {
-                        content += `<tr><td>${key}</td><td>(${value})  <b>${timestampToString(value)}</b></td></tr>`
+                        content += `<tr><td>${key}</td><td>(${value})  <b>${timestampToString(value)}</b>   (delta: ${tsNow - value})</td></tr>`
                     } else
                         content += `<tr><td>${key}</td><td>${value}</td></tr>`
                 }
