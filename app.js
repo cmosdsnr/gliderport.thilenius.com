@@ -506,6 +506,7 @@ app.post("/addData", (req, res) => {
                                             + "' ON DUPLICATE KEY UPDATE data ='"
                                             + JSON.stringify(r.data) + "'"
                                         // connection?.query(sql, () => { })
+                                        console.log(`   DEBUG: saving ${JSON.stringify(r)} `)
                                         console.log("   add ", r.data.codes.length, " new code(s) to code_history table for day ",
                                             timestampToString(r.date), " form ", c, " points")
                                         c = 0
@@ -525,13 +526,13 @@ app.post("/addData", (req, res) => {
                                         //make sure the local time is in the next day (sub offset)
                                         const y = new Date((r.date * 1000) - offset)
                                         const sunData = calculateSunrise(y)
-                                        console.log(`   DEBUG: y:${y.getTime() / 1000} r.date: ${r.date} sunrise: ${sunData.sunriseTimestamp}`)
+                                        // console.log(`   DEBUG: y:${y.getTime() / 1000} r.date: ${r.date} sunrise: ${sunData.sunriseTimestamp}`)
                                         r.data.codes = []
                                         //  sunriseTimestamp is true local sunrise, r.date is midnight UTC, so add the timezone offset
                                         r.data.sun = [sunData.sunriseTimestamp - r.date + offset / 1000, sunData.sunsetTimestamp - r.date + offset / 1000]
                                         r.data.limits = [Math.floor(24 * sunData.sunrise) - 1, Math.floor(24 * sunData.sunset) + 2]
 
-                                        console.log(`   DEBUG: y:${JSON.stringify(r.data)} `)
+                                        // console.log(`   DEBUG: y:${JSON.stringify(r.data)} `)
                                     }
                                 }
                             })
