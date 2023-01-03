@@ -468,6 +468,7 @@ app.post("/addData", (req, res) => {
                             console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
                                 lc, ", there are ", results.length, " new data points in gliderport")
                             let c = 0
+                            let lastTs = 0
                             results.forEach((v, i) => {
                                 c++
                                 const ts = Math.round((new Date(v.recorded)).getTime() / 1000)
@@ -487,10 +488,11 @@ app.post("/addData", (req, res) => {
                                         //before sunset
                                         // check code for change
                                         const c = getCode(v.speed, v.direction)
-                                        if (c != lc) {
+                                        if ((c != lc) && (ts - lastTs > 300)) {
                                             lc = c
                                             // add to r.data.codes code_history[ts, code]
                                             r.data.codes.push([ts - 3600 * r.data.limits[0] - r.date, lc])
+                                            lastTs = ts
                                         }
                                     }
                                     // if it's after sunset OR it's the last data point AND there is stuff to save
