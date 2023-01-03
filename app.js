@@ -21,7 +21,7 @@ const toHMS = (s) => {
         sStr += h < 10 ? "0" : "" + h + ":"
         l -= 3600 * parseInt(l / 3600)
     }
-    if (s > 60) {
+    if (l > 60) {
         const m = parseInt(l / 60)
         sStr += m < 10 ? "0" : "" + h + ":"
         sStr += parseInt(l / 60) + ":"
