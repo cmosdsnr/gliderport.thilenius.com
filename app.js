@@ -605,12 +605,15 @@ app.get("/info", (req, res) => {
             content += "<li>" + timestampToString(v.start) + " with " + d.date.length + " items</li>"
         })
         content += "</ul>"
-
-        sql = "SELECT * FROM `hours` ORDER BY start DESC"
-        connection?.query(sql, (err, results, fields) => {
-
-            res.send(content)
-        }
+        connection.query('SELECT * FROM `server_sent` WHERE `id`=1',
+            function (err, results, fields) {
+                content += "<p><table><tr><td>Sunrise</td><td>"
+                for (const [key, value] of Object.entries(results)) {
+                    content += `<tr><td>${key}</td><td>${value}</td></tr>`
+                }
+                content += `</table></p>`
+                res.send(content)
+            })
     })
     // connection?.query(
     //     "SELECT * FROM code_history ORDER BY date DESC LIMIT 10",
