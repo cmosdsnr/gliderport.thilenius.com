@@ -603,14 +603,14 @@ app.get("/info", (req, res) => {
         let l = []
         results.forEach((v, i) => {
             const d = JSON.parse(v.data)
-            l.push([timestampToString(v.start), d.date.length])
+            l.push([v.start, d.date.length])
 
         })
         l.forEach((v, i) => {
             sql = "SELECT * FROM `gliderport` WHERE recorded >= '" + timestampToString(v[0]) +
                 "' AND recorded < '" + timestampToString(v[0] + 3600) + "'"
             connection?.query(sql, (err, results, fields) => {
-                content += `<li>${v[0]} with ${v[1]} items (gliderport has ${results.length})</li>`
+                content += `<li>${timestampToString(v[0])} with ${v[1]} items (gliderport has ${results.length})</li>`
             })
         })
         content += "</ul>"
