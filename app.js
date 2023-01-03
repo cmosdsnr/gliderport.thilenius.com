@@ -616,7 +616,18 @@ app.get("/info", (req, res) => {
                         'last_forecast' === key ||
                         'sunrise_timestamp' === key ||
                         'sunset_timestamp' === key) {
-                        content += `<tr><td>${key}</td><td>(${value})  <b>${timestampToString(value)}</b>   (delta: ${tsNow - value})</td></tr>`
+                        let deltaStr = ""
+                        let delta = tsNow - value
+                        if (delta > 3600) {
+                            deltaStr += parseInt(delta / 3600) + " hr, "
+                            delta -= 3600 * parseInt(delta / 3600)
+                        }
+                        if (delta > 60) {
+                            deltaStr += parseInt(delta / 60) + " min, "
+                            delta -= 60 * parseInt(delta / 60)
+                        }
+                        deltaStr += parseInt(delta) + " sec ago"
+                        content += `<tr><td>${key}</td><td>(${value})  <b>${timestampToString(value)}</b>   (${deltaStr})</td></tr>`
                     } else
                         content += `<tr><td>${key}</td><td>${value}</td></tr>`
                 }
