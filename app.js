@@ -702,7 +702,7 @@ app.get("/info", (req, res) => {
                             "Too windy",
                             "No data"
                         ]
-                        r.data.codes.forEach((v, i) => content += `<tr><td>${v[0]}</td><td>${toHMS(v[0] + 3600 * s)}</td><td>${v[1]}</td><td>${codes[v[1]]}</td></tr>`)
+                        r.data.codes.forEach((v, i) => content += `<tr><td>${v[0]}</td><td>${toHMS(v[0] + 3600 * s)}</td><td>${codes[v[1]]} (${v[1]})</td></tr>`)
                         content += `</table></p>`
                         res.send(content)
                     }
