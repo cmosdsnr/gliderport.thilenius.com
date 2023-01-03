@@ -471,7 +471,7 @@ app.post("/addData", (req, res) => {
                             results.forEach((v, i) => {
                                 c++
                                 const ts = Math.round((new Date(v.recorded)).getTime() / 1000)
-                                if (i % 1000 === 0) console.log(`   DEBUG: ${ts} : ${r.date + r.data.sun[0]} : ${r.date + r.data.sun[1]}`)
+                                // if (i % 1000 === 0) console.log(`   DEBUG: ${ts} : ${r.date + r.data.sun[0]} : ${r.date + r.data.sun[1]}`)
                                 if (ts > r.date + r.data.sun[0]) {
                                     // after sunrise
                                     // if r.data.codes is empty then add sunrise point
@@ -522,7 +522,9 @@ app.post("/addData", (req, res) => {
 
                                         // create a new day
                                         r.date += 24 * 3600
-                                        const sunData = calculateSunrise(new Date((r.date * 1000) + 3600000))
+                                        const y = new Date(r.date * 1000)
+                                        const sunData = calculateSunrise(y)
+                                        console.log(`   DEBUG: y:${y.getTime() / 1000} r.date: ${r.date} sunrise: ${sunData.sunriseTimestamp}`)
                                         r.data.codes = []
                                         r.data.sun = [sunData.sunriseTimestamp - r.date, sunData.sunsetTimestamp - r.date]
                                         r.data.limits = [Math.floor(24 * sunData.sunrise) - 1, Math.floor(24 * sunData.sunset) + 2]
