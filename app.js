@@ -522,7 +522,8 @@ app.post("/addData", (req, res) => {
 
                                         // create a new day
                                         r.date += 24 * 3600
-                                        const y = new Date(r.date * 1000)
+                                        //make sure the local time is in the next day (sub offset)
+                                        const y = new Date((r.date * 1000) - offset)
                                         const sunData = calculateSunrise(y)
                                         console.log(`   DEBUG: y:${y.getTime() / 1000} r.date: ${r.date} sunrise: ${sunData.sunriseTimestamp}`)
                                         r.data.codes = []
