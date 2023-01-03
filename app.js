@@ -445,7 +445,9 @@ app.post("/addData", (req, res) => {
             connection?.query(
                 "SELECT * FROM code_history ORDER BY date DESC LIMIT 1",
                 function (err, results, fields) {
-                    const r = { date: results[0].date, data: JSON.parse(results[0].data) }
+                    const date = new Date(results[0].date)
+                    date.setHours(0, 0, 0)
+                    const r = { date: parseInt(date.getTime() / 1000), data: JSON.parse(results[0].data) }
                     // if it exists it will have at least two points, sunrise and sunset
                     // pop off sunset (it's always add to the end of a day)
                     r.data.codes.pop()
