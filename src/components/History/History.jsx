@@ -12,7 +12,7 @@ export default function History() {
     const containerRef = useRef(null)
     const containerKeyRef = useRef(null)
     const [clockFormat, setClockFormat] = useState(false)
-    const [toggleText, setToggleText] = useState("Toggle to Line Format")
+    const [toggleText, setToggleText] = useState("Toggle to Clock Format")
     const [circleWidth, setCircleWidth] = useState(100)
     const [keyWidth, setKeyWidth] = useState(100)
     // const [history, setHistory] = useState(Array.apply(null, Array(8)).map(function (x, i) { return {}; }))
@@ -28,37 +28,37 @@ export default function History() {
         console.log(history)
     }, [history])
 
-    useEffect(() => {
+    const resizeAndDraw = () => {
 
-        const resizeAndDraw = () => {
+        const container = containerRef.current
+        const containerKey = containerKeyRef.current
 
-            const container = containerRef.current
-            const containerKey = containerKeyRef.current
-
-            if (!container | !containerKey) {
-                if (!container) { console.log("no container") }
-                if (!containerKey) { console.log("no containerKey") }
-                return
-            }
-            const maxWidth = 500
-            var cw = container.clientWidth;
-            // console.log(cw)
-            setCircleWidth(cw > maxWidth ? maxWidth : cw)
-            setKeyWidth(containerKey.clientWidth)
+        if (!container | !containerKey) {
+            if (!container) { console.log("no container") }
+            if (!containerKey) { console.log("no containerKey") }
+            return
         }
-        resizeAndDraw()
+        const maxWidth = 500
+        var cw = container.clientWidth;
+        // console.log(cw)
+        setCircleWidth(cw > maxWidth ? maxWidth : cw)
+        setKeyWidth(containerKey.clientWidth)
+    }
+
+    useEffect(() => {
         window.addEventListener("resize", resizeAndDraw)
         return () => {
             window.removeEventListener("resize", resizeAndDraw)
         }
-    }, [clockFormat])
+    }, [])
+
+    useEffect(() => {
+        resizeAndDraw()
+        // debugger
+    }, [clockFormat, history])
 
     const toggleFormat = () => {
-        if (clockFormat) {
-            setToggleText("Toggle to Clock Format")
-        } else {
-            setToggleText("Toggle to Line Format")
-        }
+        setToggleText("Toggle to " + (clockFormat ? "Clock" : "Line") + " Format")
         setClockFormat(!clockFormat)
     }
 
@@ -83,7 +83,7 @@ export default function History() {
             </Row>
 
             {!clockFormat ? (
-                <div >
+                <div style={{ paddingBottom: "20px" }}>
                     {history?.map((day, i) => {
                         return (
                             <Row key={i} ref={containerRef} >
@@ -93,7 +93,7 @@ export default function History() {
                     })}
                 </div>
             ) : (
-                <Row>
+                <Row style={{ paddingBottom: "20px" }}>
                     {history?.map((day, i) => {
                         return (
                             < Col
