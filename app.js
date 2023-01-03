@@ -17,14 +17,14 @@ const toHMS = (s) => {
     let l = s
     let sStr = ""
     if (l > 3600) {
-        sStr += parseInt(l / 3600) + " hr, "
+        sStr += parseInt(l / 3600) + ":"
         l -= 3600 * parseInt(l / 3600)
     }
     if (s > 60) {
-        sStr += parseInt(l / 60) + " min, "
+        sStr += parseInt(l / 60) + ":"
         l -= 60 * parseInt(l / 60)
     }
-    sStr += parseInt(l) + " sec "
+    sStr += parseInt(l)
     return sStr
 }
 
