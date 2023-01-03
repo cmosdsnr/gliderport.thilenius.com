@@ -527,7 +527,8 @@ app.post("/addData", (req, res) => {
                                         const sunData = calculateSunrise(y)
                                         console.log(`   DEBUG: y:${y.getTime() / 1000} r.date: ${r.date} sunrise: ${sunData.sunriseTimestamp}`)
                                         r.data.codes = []
-                                        r.data.sun = [sunData.sunriseTimestamp - r.date, sunData.sunsetTimestamp - r.date]
+                                        //  sunriseTimestamp is true local sunrise, r.date is midnight UTC, so add the timezone offset
+                                        r.data.sun = [sunData.sunriseTimestamp - r.date + offset, sunData.sunsetTimestamp - r.date + offset]
                                         r.data.limits = [Math.floor(24 * sunData.sunrise) - 1, Math.floor(24 * sunData.sunset) + 2]
 
                                         console.log(`   DEBUG: y:${JSON.stringify(r.data)} `)
