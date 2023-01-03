@@ -446,8 +446,8 @@ app.post("/addData", (req, res) => {
                 "SELECT * FROM code_history ORDER BY date DESC LIMIT 1",
                 function (err, results, fields) {
                     const date = 24 * 3600 * parseInt(results[0].date / (24 * 3600))
-                    console.log("   DEBUG: latest code history date reset to ", timestampToString(parseInt(date.getTime() / 1000)), " ", parseInt(date.getTime() / 1000))
-                    const r = { date: parseInt(date.getTime() / 1000), data: JSON.parse(results[0].data) }
+                    console.log("   DEBUG: latest code history date reset to ", timestampToString(date), " ", date)
+                    const r = { date: date, data: JSON.parse(results[0].data) }
                     // if it exists it will have at least two points, sunrise and sunset
                     // pop off sunset (it's always add to the end of a day)
                     r.data.codes.pop()
