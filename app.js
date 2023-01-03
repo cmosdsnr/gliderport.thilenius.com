@@ -529,6 +529,8 @@ app.post("/addData", (req, res) => {
                                         r.data.codes = []
                                         r.data.sun = [sunData.sunriseTimestamp - r.date, sunData.sunsetTimestamp - r.date]
                                         r.data.limits = [Math.floor(24 * sunData.sunrise) - 1, Math.floor(24 * sunData.sunset) + 2]
+
+                                        console.log(`   DEBUG: y:${r.data} `)
                                     }
                                 }
                             })
