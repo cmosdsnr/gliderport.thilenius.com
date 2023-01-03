@@ -609,7 +609,11 @@ app.get("/info", (req, res) => {
             function (err, results, fields) {
                 content += `<p>SERVER SENT TABLE</p><p><table>`
                 for (const [key, value] of Object.entries(results[0])) {
-                    if ('last_record' === key || 'last_image' === key || 'last_forecast' === key || 'sunrise_timestamp' === key || 'sunset_timestamp' === key) {
+                    if ('last_record' === key ||
+                        'last_image' === key ||
+                        'last_forecast' === key ||
+                        'sunrise_timestamp' === key ||
+                        'sunset_timestamp' === key) {
                         content += `<tr><td>${key}</td><td>${value}  ${timestampToString(value)}</td></tr>`
                     } else
                         content += `<tr><td>${key}</td><td>${value}</td></tr>`
