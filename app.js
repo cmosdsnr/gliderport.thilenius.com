@@ -447,6 +447,7 @@ app.post("/addData", (req, res) => {
                 function (err, results, fields) {
                     const date = new Date(results[0].date)
                     date.setHours(0, 0, 0)
+                    console.log("   DEBUG: latest code history reset date", timestampToString(parseInt(date.getTime() / 1000)), " ", parseInt(date.getTime() / 1000))
                     const r = { date: parseInt(date.getTime() / 1000), data: JSON.parse(results[0].data) }
                     // if it exists it will have at least two points, sunrise and sunset
                     // pop off sunset (it's always add to the end of a day)
