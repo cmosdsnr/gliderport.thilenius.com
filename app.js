@@ -607,8 +607,8 @@ app.get("/info", (req, res) => {
         content += "</ul>"
         connection.query('SELECT * FROM `server_sent` WHERE `id`=1',
             function (err, results, fields) {
-                content += "<p><table><tr><td>Sunrise</td><td>"
-                for (const [key, value] of Object.entries(results)) {
+                content += "<p><table>"
+                for (const [key, value] of Object.entries(results[0])) {
                     content += `<tr><td>${key}</td><td>${value}</td></tr>`
                 }
                 content += `</table></p>`
