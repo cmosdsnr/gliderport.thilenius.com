@@ -611,7 +611,7 @@ app.get("/info", (req, res) => {
 
     sql = "SELECT * FROM `hours` ORDER BY start DESC"
     connection?.query(sql, (err, results, fields) => {
-        content += `<h3>Hours has ${results.length} entries"</h3>`
+        content += `<h3>Hours has ${results.length} entries</h3>`
         content += `<p><table>`
         let l = []
         results.forEach((v, i) => {
@@ -630,7 +630,7 @@ app.get("/info", (req, res) => {
 
         connection.query('SELECT * FROM `server_sent` WHERE `id`=1',
             function (err, results, fields) {
-                content += `<h3>SERVER SENT TABLE</h3><p><table>`
+                content += `<h3>Server Sent Table</h3><p><table>`
                 const tsNow = parseInt((new Date()).getTime() / 1000)
                 content += `<tr><td><b>Now</b></td><td>(${tsNow})  <b>${timestampToString(tsNow)}</b></td></tr><tr></tr>`
                 for (const [key, value] of Object.entries(results[0])) {
