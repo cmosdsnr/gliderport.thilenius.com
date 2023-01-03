@@ -580,11 +580,12 @@ app.get("/getLastEntry", (req, res) => {
 app.get("/info", (req, res) => {
     let content = "<p><table>"
     content += `<tr><td>last Record in gliderport table:</td><td>${lastRecord}</td></tr><tr></tr>`
-    content += `<tr><td>Most recent addData at:</td><td>${tdLast.toDateString()}</td></tr>`
     if (firstRecord === undefined) {
+        content += `<tr><td>Most recent addData at:</td><td>Never Called</td></tr>`
         content += `<tr><td></td><td>First Record of last added:</td><td>Never Called</td></tr>`
         content += `<tr><td></td><td>Number of Records added:</td><td>Never Called</td></tr>`
     } else {
+        content += `<tr><td>Most recent addData at:</td><td>${tdLast.toDateString()}</td></tr>`
         content += `<tr><td></td><td>First Record of last added:</td><td>${firstRecord}</td></tr>`
         content += `<tr><td></td><td>Number of Records added:</td><td>${numberRecords}</td></tr>`
 
@@ -610,7 +611,8 @@ app.get("/info", (req, res) => {
 
     sql = "SELECT * FROM `hours` ORDER BY start DESC"
     connection?.query(sql, (err, results, fields) => {
-        content += "<ul>Hours has " + results.length + " entries"
+        content += `<h3>Hours has ${results.length} entries"</h3>`
+        content += `<p><table>`
         let l = []
         results.forEach((v, i) => {
             const d = JSON.parse(v.data)
@@ -621,13 +623,14 @@ app.get("/info", (req, res) => {
             sql = "SELECT * FROM `gliderport` WHERE recorded >= '" + timestampToString(v[0]) +
                 "' AND recorded < '" + timestampToString(v[0] + 3600) + "'"
             connection?.query(sql, (err, results, fields) => {
-                content += `<li>${timestampToString(v[0])} with ${v[1]} items (gliderport has ${results.length})</li>`
+                content += `<tr><td>${timestampToString(v[0])}</td><td>${v[1]} items</td><td>gliderport has ${results.length}</td></tr>`
             })
         })
-        content += "</ul>"
+        content += "</table></p>"
+
         connection.query('SELECT * FROM `server_sent` WHERE `id`=1',
             function (err, results, fields) {
-                content += `<p>SERVER SENT TABLE</p><p><table>`
+                content += `<h3>SERVER SENT TABLE</h3><p><table>`
                 const tsNow = parseInt((new Date()).getTime() / 1000)
                 content += `<tr><td><b>Now</b></td><td>(${tsNow})  <b>${timestampToString(tsNow)}</b></td></tr><tr></tr>`
                 for (const [key, value] of Object.entries(results[0])) {
