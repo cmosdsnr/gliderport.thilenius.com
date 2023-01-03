@@ -445,8 +445,7 @@ app.post("/addData", (req, res) => {
             connection?.query(
                 "SELECT * FROM code_history ORDER BY date DESC LIMIT 1",
                 function (err, results, fields) {
-                    const date = new Date(1000 * results[0].date)
-                    date.setHours(0, 0, 0)
+                    const date = 24 * 3600 * parseInt(results[0].date / (24 * 3600))
                     console.log("   DEBUG: latest code history date reset to ", timestampToString(parseInt(date.getTime() / 1000)), " ", parseInt(date.getTime() / 1000))
                     const r = { date: parseInt(date.getTime() / 1000), data: JSON.parse(results[0].data) }
                     // if it exists it will have at least two points, sunrise and sunset
