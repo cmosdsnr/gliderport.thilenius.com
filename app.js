@@ -32,10 +32,23 @@ console.log("offset ", offset)
 // 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
 // 2. respond to the following calls:
 //  a. '/getLastEntry'  : called from Pi3: return the last entry in gliderport db
-//  b. '/lastAdded'     : for browser    : Debug page to display latest happenings
-//  c. '/ImageAdded'    : called from Pi3: Update the time the last image was added to now in the server_sent table
-//  d. '/UpdateStatus'  : called from Pi4: Online status was checked so update those fields in server_sent and network_status
-//  e. '/addData'       : called from Pi3: with new record(s)
+//  b. '/ImageAdded'    : called from Pi3: Update the time the last image was added to now in the server_sent table
+//  c. '/addData'       : called from Pi3: with new record(s)
+//  d. '/updateSmallImage' : called from Pi3: Update the small image data
+//  e. '/updateBigImage' :  called from Pi3: Update the large image data
+//
+// For Debug
+//  a. '/current.jpg    : browser call to get latest small image
+//  b. '/currentBig.jpg : browser call to get latest small image
+//  c. '/info           : browser call to get lots of info about current situation
+//
+//   DEFUNCT procedures  
+//  a. '/ImageAdded'    : DEFUNCT, Image data is now added directly thru AddData
+//                          WAS: called from Pi3: Update the time the last image was added to now in the server_sent table
+//  b. '/UpdateStatus'  : DEFUNCT, status is checked locally now
+//                          WAS: called from Pi4: Online status was checked so update those fields in server_sent and network_status
+
+
 
 // interface Day {
 //   start: number
