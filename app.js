@@ -618,6 +618,11 @@ app.get("/info", (req, res) => {
                         'sunset_timestamp' === key) {
                         let deltaStr = ""
                         let delta = tsNow - value
+                        let end = "ago"
+                        if (delta < 0) {
+                            delta = -delta
+                            end = "from now"
+                        }
                         if (delta > 3600) {
                             deltaStr += parseInt(delta / 3600) + " hr, "
                             delta -= 3600 * parseInt(delta / 3600)
@@ -626,7 +631,7 @@ app.get("/info", (req, res) => {
                             deltaStr += parseInt(delta / 60) + " min, "
                             delta -= 60 * parseInt(delta / 60)
                         }
-                        deltaStr += parseInt(delta) + " sec ago"
+                        deltaStr += parseInt(delta) + " sec " + end
                         content += `<tr><td>${key}</td><td>(${value})  <b>${timestampToString(value)}</b>   (${deltaStr})</td></tr>`
                     } else
                         content += `<tr><td>${key}</td><td>${value}</td></tr>`
