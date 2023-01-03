@@ -488,6 +488,7 @@ app.post("/addData", (req, res) => {
                                         //before sunset
                                         // check code for change
                                         const c = getCode(v.speed, v.direction)
+                                        // make a code last at least 5min (300s)
                                         if ((c != lc) && (ts - lastTs > 300)) {
                                             lc = c
                                             // add to r.data.codes code_history[ts, code]
@@ -507,8 +508,8 @@ app.post("/addData", (req, res) => {
                                             + JSON.stringify(r.data)
                                             + "' ON DUPLICATE KEY UPDATE data ='"
                                             + JSON.stringify(r.data) + "'"
-                                        // connection?.query(sql, () => { })
-                                        console.log(`   DEBUG: saving ${JSON.stringify(r)} `)
+                                        connection?.query(sql, () => { })
+                                        // console.log(`   DEBUG: saving ${JSON.stringify(r)} `)
                                         console.log("   add ", r.data.codes.length, " new code(s) to code_history table for day ",
                                             timestampToString(r.date), " form ", c, " points")
                                         c = 0
