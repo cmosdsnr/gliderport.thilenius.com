@@ -471,7 +471,7 @@ app.post("/addData", (req, res) => {
                             results.forEach((v, i) => {
                                 c++
                                 const ts = Math.round((new Date(v.recorded)).getTime() / 1000)
-                                if (i % 50 === 0) console.log(`   DEBUG: ${ts} : ${r.date + r.data.sun[0]} : ${r.date + r.data.sun[1]}`)
+                                if (i % 1000 === 0) console.log(`   DEBUG: ${ts} : ${r.date + r.data.sun[0]} : ${r.date + r.data.sun[1]}`)
                                 if (ts > r.date + r.data.sun[0]) {
                                     // after sunrise
                                     // if r.data.codes is empty then add sunrise point
