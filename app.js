@@ -624,9 +624,9 @@ app.get("/info", (req, res) => {
                 "' AND recorded < '" + timestampToString(v[0] + 3600) + "'"
             connection?.query(sql, (err, results, fields) => {
                 content += `<tr><td>${timestampToString(v[0])}</td><td>${v[1]} items</td><td>gliderport has ${results.length}</td></tr>`
+                if (l.length === i + 1) content += `</table></p>`
             })
         })
-        content += "</table></p>"
 
         connection.query('SELECT * FROM `server_sent` WHERE `id`=1',
             function (err, results, fields) {
