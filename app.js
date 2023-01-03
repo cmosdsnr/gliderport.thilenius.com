@@ -13,6 +13,21 @@ const timestampToString = (ts) => {
     return new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
 }
 
+const toHMS = (s) => {
+    let l = s
+    let sStr = ""
+    if (l > 3600) {
+        sStr += parseInt(l / 3600) + " hr, "
+        l -= 3600 * parseInt(l / 3600)
+    }
+    if (s > 60) {
+        sStr += parseInt(l / 60) + " min, "
+        l -= 60 * parseInt(l / 60)
+    }
+    sStr += parseInt(l) + " sec "
+    return sStr
+}
+
 process.env.TZ = "America/Los_Angeles"
 let offset = -60000 * new Date().getTimezoneOffset()
 console.log("offset ", offset)
@@ -687,7 +702,7 @@ app.get("/info", (req, res) => {
                             "Too windy",
                             "No data"
                         ]
-                        r.data.codes.forEach((v, i) => content += `<tr><td>${v[0]}</td><td>${v[1]}</td><td>${codes[v[1]]}</td></tr>`)
+                        r.data.codes.forEach((v, i) => content += `<tr><td>${v[0]}</td><td>${toHMS(v[0] + 3600 * s)}</td><td>${v[1]}</td><td>${codes[v[1]]}</td></tr>`)
                         content += `</table></p>`
                         res.send(content)
                     }
