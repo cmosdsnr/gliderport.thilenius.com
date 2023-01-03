@@ -570,22 +570,20 @@ function getCode(speed, direction, isItDark) {
     }
 }
 
-// for testing:
-
+// called by gliderport Pi3 to see what needs updating
 app.get("/getLastEntry", (req, res) => {
     if (lastRecord) res.send(lastRecord)
-    else res.send("OK")
+    else res.send("Failure")
 })
 
-// called from browser to display latest happenings
-app.get("/lastAdded", (req, res) => {
-    let content = "<p>Last Data received at: " + tdLast.toDateString() + " " +
-        tdLast.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }) + "</p>"
-    content += "<p>first Record: " + firstRecord + "</p>"
-    content += "<p>last Record: " + lastRecord + "</p>"
-    content += "<p>number of Records: " + numberRecords + "</p>"
+// called from browser for debug to display latest happenings
+app.get("/info", (req, res) => {
+    let content = "<ul>Most recent addData at: " + tdLast.toDateString()
+    content += "<li>first Record: " + firstRecord + "</li>"
+    content += "<li>last Record: " + lastRecord + "</li>"
+    content += "<li>number of Records added: " + numberRecords + "</li>"
     if (latestHours > 0)
-        content += "<p>Latest Hours timestamp is: " + latestHours + "</p>"
+        content += "<li>Latest Hours timestamp is: " + latestHours + " which is " + timestampToString(latestHours) + "</li></ul>"
     content +=
         "<p><table><tr><td>Sunrise</td><td>" +
         sunData.sunriseTime?.toLocaleString("en-US", {
@@ -598,8 +596,27 @@ app.get("/lastAdded", (req, res) => {
             timeZone: "America/Los_Angeles",
         }) +
         "</td></tr></table></p>"
-    res.send(content)
-    console.log("lastAdded called")
+
+    sql = "SELECT * FROM `hours` ORDER BY start DESC"
+    connection?.query(sql, (err, results, fields) => {
+        content += "<ul>Hours has " + results.length + " entries"
+        results.forEach((v, i) => {
+            const d = JSON.parse(v.data)
+            content += "<li>" + timestampToString(v.start) + " with " + d.date.length + " items</li>"
+        })
+        content += "</ul>"
+
+        sql = "SELECT * FROM `hours` ORDER BY start DESC"
+        connection?.query(sql, (err, results, fields) => {
+
+            res.send(content)
+        }
+    })
+    // connection?.query(
+    //     "SELECT * FROM code_history ORDER BY date DESC LIMIT 10",
+    //     function (err, results, fields) {
+    //         const r = { date: results[0].date, data: JSON.parse(results[0].data) }
+    console.log("info called")
 })
 
 app.get('/current.jpg', function (req, res) {
