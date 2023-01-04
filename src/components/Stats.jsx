@@ -6,25 +6,24 @@ import '../css/stats.css'
 import Modal from "react-modal"
 
 export default function Stats() {
-    const [stats, setStats] = useState(null)
-    const [videos, setVideos] = useState([])
     const [years, setYears] = useState([])
     const [filterValue, setFilterValue] = useState("2022")
     const [modalIsOpen, setModalIsOpen] = useState(false)
     const [selectedVideo, setSelectedVideo] = useState(null)
 
     const videoRef = useRef(null)
-    const { visitorStats, availableVideos } = useData()
+    const { loadData, videos, hitStats, } = useData()
 
     // link up the visitor data
     useEffect(() => {
-        return visitorStats(setStats)
-    }, [visitorStats, setStats])
+        loadData("Videos")
+        loadData("Stats")
+    }, [])
 
     useEffect(() => {
-        return availableVideos(setVideos, setYears)
-
-    }, [availableVideos, setVideos])
+        // debugger
+        console.log(`videos ${JSON.stringify(videos)}`)
+    }, [videos])
 
     function afterOpenModal() {
         if (videoRef?.current) {
@@ -262,34 +261,34 @@ export default function Stats() {
                                         </tr>
                                         <tr>
                                             <th>Visits last 24 hrs:</th>
-                                            <th>{stats?.day.count}</th>
-                                            <th>{stats?.day.unique}</th>
+                                            <th>{hitStats?.day?.count}</th>
+                                            <th>{hitStats?.day?.unique}</th>
                                         </tr>
                                         <tr>
                                             <th>Visits last week:</th>
-                                            <th>{stats?.week.count}</th>
-                                            <th>{stats?.week.unique}</th>
+                                            <th>{hitStats?.week?.count}</th>
+                                            <th>{hitStats?.week?.unique}</th>
                                         </tr>
                                         <tr>
                                             <th>Visits last 30 days:</th>
-                                            <th>{stats?.month.count}</th>
-                                            <th>{stats?.month.unique}</th>
+                                            <th>{hitStats?.month?.count}</th>
+                                            <th>{hitStats?.month?.unique}</th>
                                         </tr>
                                         <tr>
                                             <th>Total visits:</th>
-                                            <th>{stats?.total.count}</th>
-                                            <th>{stats?.total.unique}</th>
+                                            <th>{hitStats?.total?.count}</th>
+                                            <th>{hitStats?.total?.unique}</th>
                                         </tr>
                                         <tr>
                                             <th>Last reset:</th>
-                                            <th>{stats?.lastReset}</th>
+                                            <th>{hitStats?.lastReset}</th>
                                         </tr>
                                     </tbody>
                                 </table>
                             </center>
                         </Col>
                     </Row>
-                    <Row><Col xs={12} ><StatPlot data={stats?.weeks} /></Col></Row>
+                    <Row><Col xs={12} ><StatPlot data={hitStats?.weeks} /></Col></Row>
 
                     <Row className="blueBorder">
                         <Col xs={12}>
@@ -312,16 +311,16 @@ export default function Stats() {
                                 {/* filter: <input size="3" value={filterValue} onChange={e => setFilterValue(e.target.value)} /> */}
                                 filter:
                                 <select size="1" value={filterValue} onChange={e => setFilterValue(e.target.value)} >
-                                    {years.map((v, i) => {
+                                    {videos.videoYears.map((v, i) => {
                                         return <option key={i} value={v}>{v}</option>
                                     })}
                                 </select>
-                            </center>S
+                            </center>
                         </Col>
 
                         <Col xs={12} style={{ height: '200px', overflow: 'auto', padding: '2%', marginTop: "20px", border: "3px solid orange" }} >
                             <Row className="small">
-                                {videos.filter(video => video.includes(filterValue)).map((v, i) => {
+                                {videos.videos.filter(video => video.includes(filterValue)).map((v, i) => {
                                     return (
                                         <Col
                                             key={i}

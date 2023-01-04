@@ -51,8 +51,14 @@ interface Forecast {
     [index: number]: [number, string]  // hour of the day, forecast
 }
 
-interface Videos {
-    [index: number]: [string, string]  // from date -> to date
+// video data received from server
+type VideoItem = [string, string]  // from date -> to date
+
+
+// translated video data for consumption
+interface VideoData {
+    videos: string[]
+    videoYears: string[]
 }
 
 interface HitStats {
@@ -99,7 +105,7 @@ interface DataContextInterface {
     status: Array<number>,
     lastCheck: TimeStamp,
     forecast: Forecast,
-    videos: Videos,
+    videos: VideoData,
     hitStats: HitStats | null,
     passedSeconds: number,
     offline: Boolean,
@@ -137,7 +143,7 @@ export function DataProvider({ children }) {
     const [bigImage, setBigImage] = useState<Buffer | null>(null)
     const [lastForecast, setLastForecast] = useState(0)
     const [sun, setSun] = useState<Sun>({ rise: 0, set: 0 })
-    const [videos, setVideos] = useState({ videos: [], videoYears: [] })
+    const [videos, setVideos] = useState<VideoData>({ videos: [], videoYears: [] })
     const [updateForecast, setUpdateForecast] = useState(0)
     const [reFetch, setReFetch] = useState(0)
     const [restartEventSource, setRestartEventSource] = useState()
@@ -162,6 +168,35 @@ export function DataProvider({ children }) {
         setLastForecast(d.lastForecast)
     }
 
+    const handleVideos = (d: VideoItem[]) => {
+        let vids: string[] = []
+        let yearMin = 3000, yearMax = 0
+        d.forEach((v, i) => {
+            let dt = new Date(v[0] + " 12:00:00")
+            const end = new Date(v[1] + " 12:00:00")
+            while (dt <= end) {
+                //push the date
+                const yyyy = dt.getFullYear()
+                let mm = dt.getMonth() + 1 as string | number // Months start at 0!
+                let dd = dt.getDate() as string | number
+
+                if (dd < 10) dd = '0' + dd;
+                if (mm < 10) mm = '0' + mm;
+                vids.push(yyyy + '-' + mm + '-' + dd)
+                //check the year
+                if (yyyy < yearMin) yearMin = yyyy
+                if (yyyy > yearMax) yearMax = yyyy
+                //add a day
+                dt.setDate(dt.getDate() + 1)
+            }
+        })
+        let vidYrs: string[] = []
+        for (let i = yearMin; i <= yearMax; i++) {
+            vidYrs.push(i.toString())
+        }
+        setVideos({ videos: vids, videoYears: vidYrs })
+    }
+
     const handleImage = (d: ImageData) => {
         setImage((d === null ? null : d.A))
     }
@@ -177,7 +212,7 @@ export function DataProvider({ children }) {
         Chart: handleChart,
         Status: setStatus,
         Forecast: setForecast,
-        Videos: setVideos,
+        Videos: handleVideos,
         Stats: setHitStats,
         CurrentData: handleCurrentData,
         Image: handleImage,
