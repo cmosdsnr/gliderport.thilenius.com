@@ -204,6 +204,8 @@ app.post("/updateSmallImage", (req, res) => {
     // console.log("post Data: ", req.body)
     imageBuffer = base64url.toBuffer(req.body.A)
     var buf = new Buffer.from(req.body.A, 'base64')
+
+    console.log('enc size: ', req.body.A.length);
     console.log('buffer size: ', imageBuffer.length);
     console.log('buf size: ', buf.length);
     fs.writeFile('/app/storage/current.jpg', imageBuffer, (err) => {
