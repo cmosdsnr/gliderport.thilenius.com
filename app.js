@@ -194,7 +194,7 @@ app.post("/addVideo", (req, res) => {
     var videoBuffer = new Buffer.from(req.body.A, 'base64')
     console.log('enc size: ', req.body.A.length);
     console.log('buffer size: ', videoBuffer.length);
-    fs.writeFile('/app/storage/new.jpg', videoBuffer, (err) => {
+    fs.writeFile(`/app/storage/${req.body.name}`, videoBuffer, (err) => {
         if (err) throw err;
         res.json("Ok")
     })
@@ -202,20 +202,14 @@ app.post("/addVideo", (req, res) => {
 
 let imageBuffer, imageBigBuffer
 app.post("/updateSmallImage", (req, res) => {
-    // console.log("post Data: ", req.body)
-    imageBuffer = base64url.toBuffer(req.body.A)
-    console.log('enc size: ', req.body.A.length);
-    console.log('buffer size: ', imageBuffer.length);
-    fs.writeFile('/app/storage/current.jpg', imageBuffer, (err) => {
-        if (err) throw err;
-        console.log('The image has been saved!');
-    })
+    // imageBuffer = base64url.toBuffer(req.body.A)
+    imageBuffer = new Buffer.from(req.body.A, 'base64')
     connection?.query("UPDATE images SET d=? WHERE `id`=1", imageBuffer, () => { })
     res.json("Ok")
 })
 app.post("/updateBigImage", (req, res) => {
     // console.log("post Data: ", req.body)
-    imageBigBuffer = base64url.toBuffer(req.body.A)
+    imageBigBuffer = new Buffer.from(req.body.A, 'base64')
     connection?.query(
         "UPDATE `server_sent` SET `last_image`=" +
         Math.floor(new Date().getTime() / 1000) +
