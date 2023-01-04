@@ -189,19 +189,15 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }))
 app.use(express.json({ limit: "10mb" }))
 app.use(express.static("./public"))
 
-let videoBuffer
+
 app.post("/addVideo", (req, res) => {
-    // console.log("post Data: ", req.body)
-    videoBuffer = base64url.toBuffer(req.body.A)
-    // var buf = new Buffer.from(req.body.A, 'base64')
+    var videoBuffer = new Buffer.from(req.body.A, 'base64')
     console.log('enc size: ', req.body.A.length);
     console.log('buffer size: ', videoBuffer.length);
-    // console.log('buf size: ', buf.length);
     fs.writeFile('/app/storage/new.jpg', videoBuffer, (err) => {
         if (err) throw err;
-        console.log('The file has been saved!');
+        res.json("Ok")
     })
-    res.json("Ok")
 })
 
 let imageBuffer, imageBigBuffer
