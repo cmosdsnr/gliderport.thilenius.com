@@ -192,7 +192,7 @@ app.use(express.static("./public"))
 app.post("/addVideo", (req, res) => {
     // console.log("post Data: ", req.body)
     let videoBuffer = base64url.toBuffer(req.body.A)
-    writeFile('/app/storage/new.mp4', videoBuffer, (err) => {
+    fs.writeFile('/app/storage/new.mp4', videoBuffer, (err) => {
         if (err) throw err;
         console.log('The file has been saved!');
     })
