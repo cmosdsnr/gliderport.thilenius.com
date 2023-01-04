@@ -203,7 +203,9 @@ let imageBuffer, imageBigBuffer
 app.post("/updateSmallImage", (req, res) => {
     // console.log("post Data: ", req.body)
     imageBuffer = base64url.toBuffer(req.body.A)
+    var buf = new Buffer.from(req.body.A, 'base64')
     console.log('buffer size: ', imageBuffer.length);
+    console.log('buf size: ', buf.length);
     fs.writeFile('/app/storage/current.jpg', imageBuffer, (err) => {
         if (err) throw err;
         console.log('The image has been saved!');
