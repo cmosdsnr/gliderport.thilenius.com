@@ -12,7 +12,6 @@ import PostDetail from './PostDetail'
 import CreatePost from './CreatePost'
 import Forecast from './Forecast'
 import Equipment from './Equipment'
-import WebSocket from './WebSocket'
 import GpNavbar from './Navigation/GpNavbar'
 import { Home } from './Home/Home'
 import LoginModal, { Login, SignUp, Logout } from "./Navigation/LoginModal"

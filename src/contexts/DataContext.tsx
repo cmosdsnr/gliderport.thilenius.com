@@ -271,6 +271,8 @@ export function DataProvider({ children }) {
 
 
                 // console.log(messageBody.data)
+                // note: speed, temp, and pressure are transmitted in the proper scale
+                // scaling is done in the socketserver (temp/10, speed/10 etc)
                 if ('lastRecord' in d) {
                     let newRecord: Reading = { ...latest }
                     newRecord.time = d.lastRecord
