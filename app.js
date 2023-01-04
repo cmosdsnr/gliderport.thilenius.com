@@ -203,6 +203,10 @@ let imageBuffer, imageBigBuffer
 app.post("/updateSmallImage", (req, res) => {
     // console.log("post Data: ", req.body)
     imageBuffer = base64url.toBuffer(req.body.A)
+    fs.writeFile('/app/storage/current.jpg', imageBuffer, (err) => {
+        if (err) throw err;
+        console.log('The image has been saved!');
+    })
     connection?.query("UPDATE images SET d=? WHERE `id`=1", imageBuffer, () => { })
     res.json("Ok")
 })
