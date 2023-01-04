@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import mysql from "mysql2"
 import base64url from "base64url"
 import ping from "web-pingjs"
+import fs from "fs"
 import calculateSunrise from "./calculateSunrise.js"
 import { Http2ServerRequest } from "http2"
 dotenv.config()
@@ -187,6 +188,16 @@ app.listen(port, () => {
 app.use(express.urlencoded({ extended: true, limit: "10mb" }))
 app.use(express.json({ limit: "10mb" }))
 app.use(express.static("./public"))
+
+app.post("/addVideo", (req, res) => {
+    // console.log("post Data: ", req.body)
+    let videoBuffer = base64url.toBuffer(req.body.A)
+    writeFile('/app/storage/new.mp4', videoBuffer, (err) => {
+        if (err) throw err;
+        console.log('The file has been saved!');
+    })
+    res.json("Ok")
+})
 
 let imageBuffer, imageBigBuffer
 app.post("/updateSmallImage", (req, res) => {
