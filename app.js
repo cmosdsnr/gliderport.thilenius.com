@@ -194,7 +194,7 @@ app.post("/addVideo", (req, res) => {
     let videoBuffer = base64url.toBuffer(req.body.A)
     var buf = new Buffer.from(req.body.A, 'base64')
     console.log('enc size: ', req.body.A.length);
-    console.log('buffer size: ', imageBuffer.length);
+    console.log('buffer size: ', videoBuffer.length);
     console.log('buf size: ', buf.length);
     fs.writeFile('/app/storage/new.mp4', videoBuffer, (err) => {
         if (err) throw err;
