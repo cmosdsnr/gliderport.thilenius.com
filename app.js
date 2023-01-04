@@ -196,7 +196,7 @@ app.post("/addVideo", (req, res) => {
     console.log('enc size: ', req.body.A.length);
     console.log('buffer size: ', videoBuffer.length);
     console.log('buf size: ', buf.length);
-    fs.writeFile('/app/storage/new.jpg', videoBuffer, (err) => {
+    fs.writeFile('/app/storage/new.jpg', 'binary', videoBuffer, (err) => {
         if (err) throw err;
         console.log('The file has been saved!');
     })
