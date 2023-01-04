@@ -189,9 +189,10 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }))
 app.use(express.json({ limit: "10mb" }))
 app.use(express.static("./public"))
 
+let videoBuffer
 app.post("/addVideo", (req, res) => {
     // console.log("post Data: ", req.body)
-    let videoBuffer = base64url.toBuffer(req.body.A)
+    videoBuffer = base64url.toBuffer(req.body.A)
     // var buf = new Buffer.from(req.body.A, 'base64')
     console.log('enc size: ', req.body.A.length);
     console.log('buffer size: ', videoBuffer.length);
