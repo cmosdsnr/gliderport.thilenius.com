@@ -185,8 +185,8 @@ app.listen(port, () => {
     console.log(`Updater listening on port data.${port}`)
 })
 
-app.use(express.urlencoded({ extended: true, limit: "15mb" }))
-app.use(express.json({ limit: "15mb" }))
+app.use(express.urlencoded({ extended: true, limit: "30mb" }))
+app.use(express.json({ limit: "30mb" }))
 app.use(express.static("./public"))
 
 
