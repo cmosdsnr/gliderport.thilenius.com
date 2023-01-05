@@ -212,7 +212,7 @@ app.post('/uploadVideo', async (req, res) => {
             });
         } else {
             let video = req.files.video
-            video.mv('/app/storage/' + video.name);
+            video.mv('/app/storage/' + video.name)
 
             //send response
             res.send({
