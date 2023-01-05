@@ -17,6 +17,7 @@ export default function Stats() {
     // link up the visitor data
     useEffect(() => {
         loadData("Videos")
+        loadData("VideosNew")
         loadData("Stats")
     }, [])
 

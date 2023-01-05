@@ -168,6 +168,8 @@ export function DataProvider({ children }) {
         setLastForecast(d.lastForecast)
     }
 
+    const handleVideosNew = (d: VideoItem[]) => { }
+
     const handleVideos = (d: VideoItem[]) => {
         let vids: string[] = []
         let yearMin = 3000, yearMax = 0
@@ -213,6 +215,7 @@ export function DataProvider({ children }) {
         Status: setStatus,
         Forecast: setForecast,
         Videos: handleVideos,
+        VideosNew: handleVideosNew,
         Stats: setHitStats,
         CurrentData: handleCurrentData,
         Image: handleImage,
