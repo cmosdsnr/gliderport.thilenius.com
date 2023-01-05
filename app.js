@@ -185,8 +185,8 @@ app.listen(port, () => {
     console.log(`Updater listening on port data.${port}`)
 })
 
-app.use(express.urlencoded({ extended: true, limit: "10mb" }))
-app.use(express.json({ limit: "10mb" }))
+app.use(express.urlencoded({ extended: true, limit: "15mb" }))
+app.use(express.json({ limit: "15mb" }))
 app.use(express.static("./public"))
 
 
@@ -194,7 +194,7 @@ app.post("/addVideo", (req, res) => {
     var videoBuffer = new Buffer.from(req.body.A, 'base64')
     console.log('enc size: ', req.body.A.length);
     console.log('buffer size: ', videoBuffer.length);
-    fs.writeFile(`/app/storage/${req.body.name}`, videoBuffer, (err) => {
+    fs.writeFile(`/app/storage/${req.body.name}.mp4`, videoBuffer, (err) => {
         if (err) throw err;
         res.json("Ok")
     })
