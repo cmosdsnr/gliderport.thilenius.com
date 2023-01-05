@@ -191,7 +191,7 @@ app.use(express.static("./public"))
 
 
 app.post("/addVideo", (req, res) => {
-    if (req.body.A.length > 0 && req.body.name.length > 0) {
+    if (req.body.A != undefined && req.body.name != undefined) {
         var videoBuffer = new Buffer.from(req.body.A, 'base64')
         console.log('enc size: ', req.body.A.length);
         console.log('buffer size: ', videoBuffer.length);
