@@ -203,7 +203,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-app.post('/upload-avatar', async (req, res) => {
+app.post('/uploadVideo', async (req, res) => {
     try {
         if (!req.files) {
             res.send({
@@ -211,20 +211,20 @@ app.post('/upload-avatar', async (req, res) => {
                 message: 'No file uploaded'
             });
         } else {
-            //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
-            let avatar = req.files.avatar
+            //Use the name of the input field (i.e. "video") to retrieve the uploaded file
+            let video = req.files.video
 
             //Use the mv() method to place the file in the upload directory (i.e. "uploads")
-            avatar.mv('/app/storage/' + avatar.name)
+            video.mv('/app/storage/' + video.name)
 
             //send response
             res.send({
                 status: true,
                 message: 'File is uploaded',
                 data: {
-                    name: avatar.name,
-                    mimetype: avatar.mimetype,
-                    size: avatar.size
+                    name: video.name,
+                    mimetype: video.mimetype,
+                    size: video.size
                 }
             })
         }
