@@ -5,6 +5,7 @@ import base64url from "base64url"
 import ping from "web-pingjs"
 import fs from "fs"
 import bodyParser from "body-parser"
+import cors from "cors"
 import fileUpload from 'express-fileupload'
 import calculateSunrise from "./calculateSunrise.js"
 import { Http2ServerRequest } from "http2"
@@ -189,6 +190,13 @@ app.listen(port, () => {
 
 app.use(express.urlencoded({ extended: true, limit: "30mb" }))
 
+
+var corsOptions = {
+    origin: 'https://gliderport.thilenius.org',
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+
+app.use(cors(corsOptions))
 app.use(express.static("/app/storage"))
 
 // enable files upload
