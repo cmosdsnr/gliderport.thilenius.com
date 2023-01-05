@@ -206,7 +206,7 @@ app.post('/upload-avatar', async (req, res) => {
             res.send({
                 status: false,
                 message: 'No file uploaded'
-            })
+            });
         } else {
             //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
             let avatar = req.files.avatar
