@@ -195,8 +195,8 @@ app.use(express.static("/app/storage"))
 app.use(fileUpload({
     createParentPath: true,
     limits: {
-        fileSize: 2 * 1024 * 1024 * 1024 * 1024 //2GB max file(s) size
-    },
+        fileSize: 2 * 1024 * 1024 * 1024 //2GB max file(s) size
+    }
 }))
 
 app.use(bodyParser.json())
