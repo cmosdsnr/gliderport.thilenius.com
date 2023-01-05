@@ -4,6 +4,8 @@ import mysql from "mysql2"
 import base64url from "base64url"
 import ping from "web-pingjs"
 import fs from "fs"
+import bodyParser from "body-parser"
+import fileUpload from 'express-fileupload'
 import calculateSunrise from "./calculateSunrise.js"
 import { Http2ServerRequest } from "http2"
 dotenv.config()
@@ -186,8 +188,47 @@ app.listen(port, () => {
 })
 
 app.use(express.urlencoded({ extended: true, limit: "30mb" }))
-app.use(express.json({ limit: "30mb" }))
-app.use(express.static("./public"))
+
+app.use(express.static("/app/storage"))
+
+// enable files upload
+app.use(fileUpload({
+    createParentPath: true
+}))
+
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }));
+
+
+app.post('/upload-avatar', async (req, res) => {
+    try {
+        if (!req.files) {
+            res.send({
+                status: false,
+                message: 'No file uploaded'
+            })
+        } else {
+            //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
+            let avatar = req.files.avatar
+
+            //Use the mv() method to place the file in the upload directory (i.e. "uploads")
+            avatar.mv('/app/storage' + avatar.name)
+
+            //send response
+            res.send({
+                status: true,
+                message: 'File is uploaded',
+                data: {
+                    name: avatar.name,
+                    mimetype: avatar.mimetype,
+                    size: avatar.size
+                }
+            })
+        }
+    } catch (err) {
+        res.status(500).send(err)
+    }
+})
 
 
 app.post("/addVideo", (req, res) => {
