@@ -386,7 +386,7 @@ export default function Stats() {
                 <Card>
                     <Card.Body>
                         <video ref={videoRef} controls id="video1" preload="none">
-                            <source src={"http://live.flytorrey.com/video/" + selectedVideo + ".mp4"} type="video/mp4" />
+                            <source src={"https://gliderportupdateserver.thilenius.org/" + selectedVideo + ".mp4"} type="video/mp4" />
                             Your browser does not support the video tag.
                         </video>
                         <div id="demo">Start</div>
