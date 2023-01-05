@@ -211,11 +211,8 @@ app.post('/uploadVideo', async (req, res) => {
                 message: 'No file uploaded'
             });
         } else {
-            //Use the name of the input field (i.e. "video") to retrieve the uploaded file
             let video = req.files.video
-
-            //Use the mv() method to place the file in the upload directory (i.e. "uploads")
-            video.mv('/app/storage/' + video.name)
+            video.mv('/app/storage/' + video.name);
 
             //send response
             res.send({
