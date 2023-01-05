@@ -191,13 +191,18 @@ app.use(express.static("./public"))
 
 
 app.post("/addVideo", (req, res) => {
-    var videoBuffer = new Buffer.from(req.body.A, 'base64')
-    console.log('enc size: ', req.body.A.length);
-    console.log('buffer size: ', videoBuffer.length);
-    fs.writeFile(`/app/storage/${req.body.name}.mp4`, videoBuffer, (err) => {
-        if (err) throw err;
-        res.json("Ok")
-    })
+    if (req.body.A.length > 0 && req.body.name.length > 0) {
+        var videoBuffer = new Buffer.from(req.body.A, 'base64')
+        console.log('enc size: ', req.body.A.length);
+        console.log('buffer size: ', videoBuffer.length);
+        fs.writeFile(`/app/storage/${req.body.name}.mp4`, videoBuffer, (err) => {
+            if (err) throw err;
+            res.json("Ok")
+        })
+    } else {
+        res.json("wrong parameters")
+    }
+
 })
 
 let imageBuffer, imageBigBuffer
