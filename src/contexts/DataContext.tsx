@@ -52,7 +52,10 @@ interface Forecast {
 }
 
 // video data received from server
-type VideoItem = [string, string]  // from date -> to date
+type VideoItem = {
+    years: [string],
+    dates: [[string, string] | string] // from date -> to date, or a single day
+}
 
 
 // translated video data for consumption
@@ -168,16 +171,31 @@ export function DataProvider({ children }) {
         setLastForecast(d.lastForecast)
     }
 
-    const handleVideosNew = (d: VideoItem[]) => { }
 
-    const handleVideos = (d: VideoItem[]) => {
+    const handleVideos = (d: VideoItem) => {
         let vids: string[] = []
         let yearMin = 3000, yearMax = 0
-        d.forEach((v, i) => {
-            let dt = new Date(v[0] + " 12:00:00")
-            const end = new Date(v[1] + " 12:00:00")
-            while (dt <= end) {
-                //push the date
+        d.dates.forEach((v, i) => {
+            if (Array.isArray(v)) {
+                let dt = new Date(v[0] + " 12:00:00")
+                const end = new Date(v[1] + " 12:00:00")
+                while (dt <= end) {
+                    //push the date
+                    const yyyy = dt.getFullYear()
+                    let mm = dt.getMonth() + 1 as string | number // Months start at 0!
+                    let dd = dt.getDate() as string | number
+
+                    if (dd < 10) dd = '0' + dd;
+                    if (mm < 10) mm = '0' + mm;
+                    vids.push(yyyy + '-' + mm + '-' + dd)
+                    //check the year
+                    if (yyyy < yearMin) yearMin = yyyy
+                    if (yyyy > yearMax) yearMax = yyyy
+                    //add a day
+                    dt.setDate(dt.getDate() + 1)
+                }
+            } else {
+                let dt = new Date(v + " 12:00:00")
                 const yyyy = dt.getFullYear()
                 let mm = dt.getMonth() + 1 as string | number // Months start at 0!
                 let dd = dt.getDate() as string | number
@@ -185,18 +203,9 @@ export function DataProvider({ children }) {
                 if (dd < 10) dd = '0' + dd;
                 if (mm < 10) mm = '0' + mm;
                 vids.push(yyyy + '-' + mm + '-' + dd)
-                //check the year
-                if (yyyy < yearMin) yearMin = yyyy
-                if (yyyy > yearMax) yearMax = yyyy
-                //add a day
-                dt.setDate(dt.getDate() + 1)
             }
         })
-        let vidYrs: string[] = []
-        for (let i = yearMin; i <= yearMax; i++) {
-            vidYrs.push(i.toString())
-        }
-        setVideos({ videos: vids, videoYears: vidYrs })
+        setVideos({ videos: vids, videoYears: d.years })
     }
 
     const handleImage = (d: ImageData) => {
@@ -215,7 +224,6 @@ export function DataProvider({ children }) {
         Status: setStatus,
         Forecast: setForecast,
         Videos: handleVideos,
-        VideosNew: handleVideosNew,
         Stats: setHitStats,
         CurrentData: handleCurrentData,
         Image: handleImage,

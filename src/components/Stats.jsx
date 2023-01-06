@@ -17,7 +17,6 @@ export default function Stats() {
     // link up the visitor data
     useEffect(() => {
         loadData("Videos")
-        loadData("VideosNew")
         loadData("Stats")
     }, [])
 
@@ -297,23 +296,13 @@ export default function Stats() {
                                 <h4>Past Videos</h4>
                             </center>
                         </Col>
+
                         <Col xs={12}>
                             <center>
-                                <h5 style={{ marginTop: '20px' }}>
-                                    <button className="btn btn-primary"
-                                        onClick={e => setModalIsOpen(true)}>
-                                        Play {selectedVideo}
-                                    </button>
-                                </h5>
-                            </center>
-                        </Col>
-                        <Col xs={12}>
-                            <center>
-                                {/* filter: <input size="3" value={filterValue} onChange={e => setFilterValue(e.target.value)} /> */}
-                                filter:
-                                <select size="1" value={filterValue} onChange={e => setFilterValue(e.target.value)} >
+                                <span style={{ marginRight: "10px" }}>year:</span>
+                                <select value={filterValue} onChange={e => setFilterValue(e.target.value)} >
                                     {videos.videoYears.map((v, i) => {
-                                        return <option key={i} value={v}>{v}</option>
+                                        return <option key={i} value={v}> {v}</option>
                                     })}
                                 </select>
                             </center>
@@ -335,7 +324,16 @@ export default function Stats() {
                                 })}
                             </Row>
                         </Col>
-
+                        <Col xs={12}>
+                            <center>
+                                <h5 style={{ marginTop: '20px' }}>
+                                    <button className="btn btn-primary"
+                                        onClick={e => setModalIsOpen(true)}>
+                                        Play {selectedVideo}
+                                    </button>
+                                </h5>
+                            </center>
+                        </Col>
                     </Row>
 
                     <Row className="blueBorder">
