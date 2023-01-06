@@ -174,7 +174,6 @@ export function DataProvider({ children }) {
 
     const handleVideos = (d: VideoItem) => {
         let vids: string[] = []
-        let yearMin = 3000, yearMax = 0
         d.dates.forEach((v, i) => {
             if (Array.isArray(v)) {
                 let dt = new Date(v[0] + " 12:00:00")
@@ -183,14 +182,10 @@ export function DataProvider({ children }) {
                     //push the date
                     const yyyy = dt.getFullYear()
                     let mm = dt.getMonth() + 1 as string | number // Months start at 0!
-                    let dd = dt.getDate() as string | number
-
-                    if (dd < 10) dd = '0' + dd;
                     if (mm < 10) mm = '0' + mm;
+                    let dd = dt.getDate() as string | number
+                    if (dd < 10) dd = '0' + dd;
                     vids.push(yyyy + '-' + mm + '-' + dd)
-                    //check the year
-                    if (yyyy < yearMin) yearMin = yyyy
-                    if (yyyy > yearMax) yearMax = yyyy
                     //add a day
                     dt.setDate(dt.getDate() + 1)
                 }
@@ -198,10 +193,9 @@ export function DataProvider({ children }) {
                 let dt = new Date(v + " 12:00:00")
                 const yyyy = dt.getFullYear()
                 let mm = dt.getMonth() + 1 as string | number // Months start at 0!
-                let dd = dt.getDate() as string | number
-
-                if (dd < 10) dd = '0' + dd;
                 if (mm < 10) mm = '0' + mm;
+                let dd = dt.getDate() as string | number
+                if (dd < 10) dd = '0' + dd;
                 vids.push(yyyy + '-' + mm + '-' + dd)
             }
         })

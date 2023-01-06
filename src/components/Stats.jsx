@@ -7,12 +7,16 @@ import Modal from "react-modal"
 
 export default function Stats() {
     const [years, setYears] = useState([])
+    const [yearFilter, setYearFilter] = useState("0")
+    const [monthFilter, setMonthFilter] = useState(-1)
     const [filterValue, setFilterValue] = useState("2022")
     const [modalIsOpen, setModalIsOpen] = useState(false)
     const [selectedVideo, setSelectedVideo] = useState(null)
 
     const videoRef = useRef(null)
     const { loadData, videos, hitStats, } = useData()
+
+    let abbrMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
     // link up the visitor data
     useEffect(() => {
@@ -24,6 +28,12 @@ export default function Stats() {
         // debugger
         console.log(`videos ${JSON.stringify(videos)}`)
     }, [videos])
+
+
+    useEffect(() => {
+        let m = monthFilter > -1 ? ("-" + (monthFilter >= 9 ? "" : "0") + (monthFilter + 1).toString() + "-") : ""
+        setFilterValue((yearFilter != "0" ? yearFilter : "") + m)
+    }, [yearFilter, monthFilter])
 
     function afterOpenModal() {
         if (videoRef?.current) {
@@ -296,16 +306,57 @@ export default function Stats() {
                                 <h4>Past Videos</h4>
                             </center>
                         </Col>
-
                         <Col xs={12}>
-                            <center>
-                                <span style={{ marginRight: "10px" }}>year:</span>
-                                <select value={filterValue} onChange={e => setFilterValue(e.target.value)} >
-                                    {videos.videoYears.map((v, i) => {
-                                        return <option key={i} value={v}> {v}</option>
-                                    })}
-                                </select>
-                            </center>
+                            years:
+                            {videos.videoYears.map((v, i) => {
+                                return <button
+                                    style={{
+                                        marginLeft: "10px",
+                                        border: "Solid 1px black",
+                                        borderRadius: "3px",
+                                        backgroundColor: v === yearFilter ? "yellow" : "lightblue",
+                                    }}
+                                    key={i}
+                                    onClick={() => {
+                                        if (v === yearFilter) setYearFilter("0")
+                                        else setYearFilter(v)
+                                    }}>{v}</button>
+                            })}
+                        </Col>
+                        <Col xs={2} style={{ marginTop: "10px" }}>
+                            month:
+                        </Col>
+                        <Col xs={10} style={{ marginTop: "10px" }}>
+                            {[...Array(6).keys()].map((v, i) => {
+                                return <button
+                                    style={{
+                                        marginLeft: "10px",
+                                        border: "Solid 1px black",
+                                        borderRadius: "3px",
+                                        backgroundColor: i === monthFilter ? "yellow" : "lightblue",
+                                    }}
+                                    key={i}
+                                    onClick={() => {
+                                        if (i === monthFilter) setMonthFilter(-1)
+                                        else setMonthFilter(i)
+                                    }}>{abbrMonths[i]}</button>
+                            })}
+                        </Col>
+                        <Col xs={{ offset: 2, span: 10 }} style={{ marginTop: "10px" }}>
+                            {[...Array(6).keys()].map((v, i) => {
+                                return <button
+                                    style={{
+                                        marginLeft: "10px",
+                                        border: "Solid 1px black",
+                                        borderRadius: "3px",
+                                        backgroundColor: i + 6 === monthFilter ? "yellow" : "lightblue",
+                                    }}
+                                    key={i}
+                                    onClick={() => {
+                                        if (i + 6 === monthFilter) setMonthFilter(-1)
+                                        else setMonthFilter(i + 6)
+                                    }} >{abbrMonths[i + 6]}</button>
+                            })}
                         </Col>
 
                         <Col xs={12} style={{ height: '200px', overflow: 'auto', padding: '2%', marginTop: "20px", border: "3px solid orange" }} >
