@@ -12,6 +12,7 @@ import PostDetail from './PostDetail'
 import CreatePost from './CreatePost'
 import Forecast from './Forecast'
 import Equipment from './Equipment'
+import Video from './Video'
 import GpNavbar from './Navigation/GpNavbar'
 import { Home } from './Home/Home'
 import LoginModal, { Login, SignUp, Logout } from "./Navigation/LoginModal"
@@ -53,6 +54,7 @@ function App() {
                                 <PrivateRoute exact path="/stats" component={Stats} />
                                 <PrivateRoute exact path="/forecast" component={Forecast} />
                                 <PrivateRoute exact path="/equipment" component={Equipment} />
+                                <PrivateRoute exact path="/video" component={Video} />
                                 <Route exact path="/contact"><Contact /></Route>
                                 <PrivateRoute exact path="/contribute" component={Contribute} />
                                 <PrivateRoute exact path="/dashboard" component={Dashboard} />

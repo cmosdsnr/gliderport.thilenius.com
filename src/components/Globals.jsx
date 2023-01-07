@@ -98,3 +98,49 @@ export const b64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
     const blob = new Blob(byteArrays, { type: contentType });
     return blob;
 }
+
+
+export const months = [
+    { "value": 1, "name": "January" },
+    { "value": 2, "name": "February" },
+    { "value": 3, "name": "March" },
+    { "value": 4, "name": "April" },
+    { "value": 5, "name": "May" },
+    { "value": 6, "name": "June" },
+    { "value": 7, "name": "July" },
+    { "value": 8, "name": "August" },
+    { "value": 9, "name": "September" },
+    { "value": 10, "name": "October" },
+    { "value": 11, "name": "November" },
+    { "value": 12, "name": "December" }];
+
+
+export function Vids() {
+    const videoRef = useRef(null);
+
+    useEffect(() => {
+        getVideo();
+    }, [videoRef]);
+
+    const getVideo = () => {
+        navigator.mediaDevices
+            .getUserMedia({ video: { width: 300 } })
+            .then(stream => {
+                let video = videoRef.current;
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(err => {
+                console.error("error:", err);
+            });
+    };
+
+    return (
+        <div>
+            <div>
+                <button>Take a photo</button>
+                <video ref={videoRef} />
+            </div>
+        </div>
+    );
+};

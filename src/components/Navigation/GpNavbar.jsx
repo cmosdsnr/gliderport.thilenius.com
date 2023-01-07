@@ -4,7 +4,7 @@ import Nav from "react-bootstrap/Nav"
 import Navbar from "react-bootstrap/Navbar"
 // import NavDropdown from "react-bootstrap/NavDropdown"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faHome, faDonate, faInfoCircle, faTty, faAtom, faWind, faSignInAlt, faSignOutAlt, faUserPlus } from '@fortawesome/free-solid-svg-icons'
+import { faHome, faVideo, faDonate, faInfoCircle, faTty, faAtom, faWind, faSignInAlt, faSignOutAlt, faUserPlus } from '@fortawesome/free-solid-svg-icons'
 import { useAuth } from '../../contexts/AuthContext'
 
 
@@ -32,6 +32,10 @@ export default function GpNavbar({ showSignUpModal, setShowSignUpModal, showLogi
         {
             icon: faHome,
             name: "Home",
+        },
+        {
+            icon: faVideo,
+            name: "Video",
         },
         {
             icon: faInfoCircle,

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react"
 import * as d3 from 'd3'
 import { Row, Col, Card } from "react-bootstrap"
 import { useData } from '../contexts/DataContext'
+import { Vids } from './Globals.jsx'
 import '../css/stats.css'
 import Modal from "react-modal"
 
@@ -12,8 +13,12 @@ export default function Stats() {
     const [filterValue, setFilterValue] = useState("2022")
     const [modalIsOpen, setModalIsOpen] = useState(false)
     const [selectedVideo, setSelectedVideo] = useState(null)
+    const [changeText, setChangeText] = useState(null)
+    const [changeId, setChangeId] = useState(null)
+    const [player, setPlayer] = useState(null)
 
     const videoRef = useRef(null)
+    const canvas = useRef(null)
     const { loadData, videos, hitStats, } = useData()
 
     let abbrMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -23,12 +28,6 @@ export default function Stats() {
         loadData("Videos")
         loadData("Stats")
     }, [])
-
-    useEffect(() => {
-        // debugger
-        console.log(`videos ${JSON.stringify(videos)}`)
-    }, [videos])
-
 
     useEffect(() => {
         let m = monthFilter > -1 ? ("-" + (monthFilter >= 9 ? "" : "0") + (monthFilter + 1).toString() + "-") : ""
@@ -41,177 +40,6 @@ export default function Stats() {
             videoRef.current.play();
         }
     }
-
-
-    // const months = [
-    //     { "value": 1, "name": "January" },
-    //     { "value": 2, "name": "February" },
-    //     { "value": 3, "name": "March" },
-    //     { "value": 4, "name": "April" },
-    //     { "value": 5, "name": "May" },
-    //     { "value": 6, "name": "June" },
-    //     { "value": 7, "name": "July" },
-    //     { "value": 8, "name": "August" },
-    //     { "value": 9, "name": "September" },
-    //     { "value": 10, "name": "October" },
-    //     { "value": 11, "name": "November" },
-    //     { "value": 12, "name": "December" }];
-
-
-    // var tconv = function (d) {
-    //     var dt = new Date();
-    //     dt.setTime(d);
-    //     var mo = dt.getMonth() + 1;
-    //     return mo + "/" + dt.getDate() + "/" + dt.getFullYear();
-    // };
-
-    // $scope.options = {
-    //     title: {
-    //         enable: true,
-    //         text: 'Site Hits (per week)'
-    //     },
-    //     chart: {
-    //         type: 'lineChart',
-    //         noData: 'Loading Chart Data...',
-    //         x: function (d) {
-    //             return d.x;
-    //         },
-    //         y: function (d) {
-    //             return d.y;
-    //         },
-    //         height: 350,
-    //         xAxis: {
-    //             tickFormat: tconv,
-    //             axisLabel: 'Time'
-    //         },
-    //         yAxis: {
-    //             axisLabel: 'Hits'
-    //         },
-    //     }
-    // };
-
-    // UniqueWeekCnt = [];
-    // TotalWeekCnt = [];
-
-    // $scope.stats = [
-    //     {
-    //         values: UniqueWeekCnt,
-    //         key: 'Unique Hits',
-    //         color: '#790098',
-    //         strokeWidth: 2,
-    //         disabled: false
-    //     },
-    //     {
-    //         values: TotalWeekCnt,
-    //         key: 'Total Hits',
-    //         color: '#007998',
-    //         strokeWidth: 2,
-    //         disabled: false
-    //     }
-    // ];
-
-    // var elapsed = 0;
-    // var lastSec = 0;
-    // var lastUpdate = 0;
-    // $scope.mspeed = 0;
-    // $scope.mdirection = 0;
-
-    // var VideoTime = function () {
-    //     var cT = parseInt(5 * document.getElementById("video1").currentTime);
-    //     if (cT > elapsed) {
-    //         elapsed = cT;
-    //         //document.getElementById("demo").innerHTML = elapsed+"s";
-    //         if ((elapsed / 5) > lastSec) {
-    //             lastSec = parseInt(elapsed / 5);
-    //             document.getElementById("demo").innerHTML = lastSec + "s";
-    //         }
-    //         if (elapsed > lastUpdate) {
-    //             lastUpdate = elapsed;
-    //             if ($scope.data) {
-    //                 if ($scope.data[elapsed]) {
-    //                     arrow = document.getElementById("movieArrowLine").attributes.y2; // = "250";
-    //                     arrow.value = "440";
-
-    //                     arrow = document.getElementById("movieArrow").attributes.transform;
-    //                     $scope.mspeed = $scope.data[elapsed][0];
-    //                     $scope.mdirection = 90 + $scope.data[elapsed][1];
-    //                     arrow.value = "rotate(" + $scope.mdirection + ",250,250)";
-    //                     console.log(elapsed + " " + $scope.mspeed + " " + $scope.mdirection);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // };
-
-    // document.getElementById("video1").ontimeupdate = VideoTime;
-
-    // var data = {
-    //     Command: 'getStats',
-    //     Options: {}
-    // };
-
-    // $scope.filesText = [];
-
-    // $http.post(loc + 'php/server.php', jQuery.param(data), config).then(
-    //     function (response) {
-    //         $scope.monthCnt = response.data.hits.monthCnt;
-    //         $scope.totalCnt = response.data.hits.totalCnt;
-    //         $scope.dayCnt = response.data.hits.dayCnt;
-    //         $scope.UniqueMonthCnt = response.data.hits.UniqueMonthCnt;
-    //         $scope.UniqueTotalCnt = response.data.hits.UniqueTotalCnt;
-    //         $scope.UniqueDayCnt = response.data.hits.UniqueDayCnt;
-    //         $scope.history = response.data.history;
-    //         $scope.files = response.data.files;
-    //         $scope.selectedVideo = $scope.files[$scope.files.length - 1];
-    //         $scope.files.forEach(function (item) {
-    //             var s = item.split(".");
-    //             var t = s[0].split("-");
-    //             $scope.filesText.push(t[1] + "/" + t[2] + "/" + t[0]);
-    //         });
-    //         response.data.history.forEach(function (item, index) {
-    //             d = new Date(item.day).getTime();
-    //             UniqueWeekCnt.push({
-    //                 x: d,
-    //                 y: parseInt(item.unique)
-    //             });
-    //             TotalWeekCnt.push({
-    //                 x: d,
-    //                 y: parseInt(item.total)
-    //             });
-    //         });    //for each    
-    //         data = {
-    //             Command: 'getVideoData',
-    //             Options: { date: "06/07/2020" }
-    //         };
-
-    //         $http.post(loc + 'php/server.php', jQuery.param(data), config).then(
-    //             function (response) {
-    //                 $scope.data = response.data.data;
-    //                 $scope.mspeed = $scope.data[0][0];
-    //                 $scope.mdirection = $scope.data[0][1];
-    //             });
-    //     });        // function/http  call
-
-    // $scope.videoFile = "2020-06-04.mp4";
-    // //$scope.video = "video/2020-06-04.mp4";
-    // // $scope.$watch('videoFile', function(newValue, oldValue, scope) {
-    // //   $scope.video = "video/"+newValue;
-    // // });
-
-    // // ngmodel for video to watch
-    // $scope.selectVideo = function (index) {
-    //     console.log(index);
-    //     $scope.selectedVideo = $scope.filesText[index];
-    //     $scope.videoFile = $scope.files[index];
-    // };
-
-    // //ngclick to play video
-    // $scope.StartVideo = function () {
-    //     var mediaElement = document.getElementById("video1");
-    //     mediaElement.src = "video/" + $scope.videoFile;
-    //     mediaElement.currentTime = 0;
-    //     mediaElement.play();
-    // };
 
     // var lineInc = 2,
     //     majMarkDegree = 10,
@@ -231,7 +59,6 @@ export default function Stats() {
     //         compassrose.appendChild(newline);
     //     }
     // }
-
     // var writeDegs = document.createElementNS(xmlns, 'text'),
     //     currentDeg = 0,
     //     writeOffset = 0;
@@ -351,7 +178,7 @@ export default function Stats() {
                                         borderRadius: "3px",
                                         backgroundColor: i + 6 === monthFilter ? "yellow" : "lightblue",
                                     }}
-                                    key={i}
+                                    key={i + 6}
                                     onClick={() => {
                                         if (i + 6 === monthFilter) setMonthFilter(-1)
                                         else setMonthFilter(i + 6)
@@ -388,7 +215,7 @@ export default function Stats() {
                     </Row>
 
                     <Row className="blueBorder">
-                        <h4>Some usefull links:</h4>
+                        <h4>Some useful links:</h4>
                         <ul style={{ fontSize: '23px' }}>
                             <li><a href="https://www.windy.com/32.892/-117.240?100m,32.883,-117.240,14,m:ezYacTK">Wind Predictions (location = Torrey Pines)</a></li>
                             <li><a href="http://findu.com/cgi-bin/wx.cgi?call=W9IF-4&last=4">Analog gliderport system Weather</a>
@@ -400,9 +227,22 @@ export default function Stats() {
                     </Row>
                 </Col>
 
-
                 <Col xs={12} md={6} className="leftBorder">
-                    <center>
+                    <Row>
+                        <center>
+                            <h2>Changes & Updates</h2>
+                        </center>
+                        <Col xs={2}>
+                            {changes.map((v, i) => {
+                                return (<h5 key={i}
+                                    style={{ backgroundColor: changeId === i ? "lightblue" : "white" }}
+                                    onMouseEnter={() => { setChangeId(i); setChangeText(v.html) }}>{v.date}</h5>)
+                            })
+                            }
+                        </Col>
+                        <Col xs={10}>{changeText}</Col>
+                    </Row>
+                    {/* <center>
                         <h2>Changes & Updates</h2>
                     </center>
 
@@ -416,7 +256,7 @@ export default function Stats() {
                                     <div className="card-body">{v.html}</div>
                                 </AccordionItem>)
                         })}
-                    </Accordion>
+                    </Accordion> */}
                 </Col>
             </Row>
 
@@ -641,7 +481,24 @@ function AccordionItem({ children, eventKey, currentKey, setCurrentKey }) {
 
 const changes = [
     {
-        date: "8/8/22 Major revision", html:
+        date: "1/7/23", html: <>
+            <h4> semi-major revision</h4>
+            <ol>
+                <li>Site now uses 3 dokku servers</li>
+                <ol>
+                    <li>static site server</li>
+                    <li> websocket data server</li>
+                    <li> and nodejs update server</li>
+                </ol>
+                <li>Image data transmitted directly thru websocket server</li>
+                <li>update server checks status of gliderport directly</li>
+                <li>videos held on persistent storage and shared via update/websocket server</li>
+            </ol>
+        </>
+    },
+    {
+        date: "8/8/22", html: <>
+            <h4> Major revision</h4>
             <ol>
                 <li>Site re-writer in React JS</li>
                 <li>Site moved to live.flytorrey.com</li>
@@ -650,6 +507,7 @@ const changes = [
                 <li>Uses raspberry Pi 3 data collector at gliderport</li>
                 <li>Raspberry Pi 3 is still connected to ESP module</li>
             </ol>
+        </>
     },
     {
         date: "9/4/20", html:

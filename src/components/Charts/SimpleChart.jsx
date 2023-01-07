@@ -127,6 +127,15 @@ const SimpleChart = props => {
         }
 
         //label axis
+        if (label === "Pressure")
+            svg.append("text")
+                .attr("class", "title")
+                .attr("text-anchor", "middle")
+                .attr("y", "1.75em")
+                .attr("x", 400)
+                .text("Rising barometric pressure usually brings better weather");
+
+        //label axis
         svg.append("text")
             .attr("class", "y label")
             .attr("text-anchor", "middle")
