@@ -12,10 +12,13 @@ export default function Video() {
         }
 
     }, [])
+    //width: "960px", height: "540px",
+    //width: "1920px", height: "1080px",
+    //width: "3840px", height: "2160px",
     return (
 
         <div id="videoWrapper" style={{
-            width: "800px", height: "450px", margin: "auto", marginTop: "30px"
+            width: "960px", height: "540px", margin: "auto", marginTop: "30px"
         }} />
 
     )
