@@ -36,6 +36,7 @@ export default function GpNavbar({ showSignUpModal, setShowSignUpModal, showLogi
         {
             icon: faVideo,
             name: "Video",
+            loggedIn: true,
         },
         {
             icon: faInfoCircle,
