@@ -123,15 +123,11 @@ export const Home = () => {
                         </Col>
                         <Col
                             className="d-xs-none d-lg-block"
-                            lg={{ span: 4, offset: 0 }}
+                            lg={{ span: 3, offset: 1 }}
                             style={style}
                         >
                             <center>
                                 <p>
-                                    <a style={{ fontSize: "20px" }} href="https://www.youtube.com/user/cmosdsnr2/videos" rel="noreferrer" target="_blank">
-                                        1080p Video on my YouTube channel (disconnects frequently)
-                                    </a><br />
-
                                     Courtesy of Torrey Pines, Rich Parry and Stephen Thilenius, Safe Flying!<br />
                                     Comments and suggestions welcome: <a href="/Contact">Contact me</a>
                                 </p>

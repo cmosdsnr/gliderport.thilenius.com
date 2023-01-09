@@ -53,15 +53,12 @@ export default function UpdatingImage({ offline }) {
     }, [])
 
     useEffect(() => {
-        if (itIsDark) {
-            setImgSrc(OffTime)
-        } else if (offline) {
-            setImgSrc(OutOfOrder)
-        } else if (image != null) {
+        // night image is set by gliderport PI3 into the database
+        if (!offline && image != null) {
             const blob = b64toBlob(image, "image/jpeg")
             const blobUrl = URL.createObjectURL(blob)
             setImgSrc(blobUrl)
-        }
+        } else setImgSrc(OutOfOrder)
     }, [image, itIsDark, offline])
 
     useEffect(() => {
