@@ -262,21 +262,15 @@ app.post("/addVideo", (req, res) => {
 
 let imageBuffer, imageBigBuffer
 app.post("/updateSmallImage", (req, res) => {
-    // imageBuffer = base64url.toBuffer(req.body.A)
     imageBuffer = new Buffer.from(req.body.A, 'base64')
     connection?.query("UPDATE images SET d=? WHERE `id`=1", imageBuffer, () => { })
     res.json("Ok")
 })
 app.post("/updateBigImage", (req, res) => {
-    // console.log("post Data: ", req.body)
     imageBigBuffer = new Buffer.from(req.body.A, 'base64')
-    connection?.query(
-        "UPDATE `server_sent` SET `last_image`=" +
-        Math.floor(new Date().getTime() / 1000) +
-        " WHERE `id`=1",
-        () => { }
-    )
-    connection?.query("UPDATE images SET d=? WHERE `id`=2", imageBigBuffer, () => { })
+    const ts = parseInt(new Date().getTime() / 1000)
+    connection?.query(`UPDATE server_sent SET last_image=${ts} WHERE id=1`, () => { })
+    connection?.query("UPDATE images SET d=? WHERE id=2", imageBigBuffer, () => { })
     res.send("Ok")
 })
 app.get('/RegenerateAllHours', function (req, res) {
@@ -288,13 +282,8 @@ app.get('/RegenerateAllHours', function (req, res) {
     let start = twoDaysAgo
     let stop = twoDaysAgo + 3600
     let data = {
-        start: twoDaysAgo,
-        date: [],
-        speed: [],
-        direction: [],
-        humidity: [],
-        pressure: [],
-        temperature: [],
+        start: twoDaysAgo, date: [], speed: [],
+        direction: [], humidity: [], pressure: [], temperature: [],
     }
     let msg = "pull from gliderport: records from " + timestampToString(twoDaysAgo) + "<br/>\n"
     console.log("pull from gliderport: records from " + timestampToString(twoDaysAgo))
@@ -317,13 +306,8 @@ app.get('/RegenerateAllHours', function (req, res) {
                     start = stop
                     stop += 3600
                     data = {
-                        start: start,
-                        date: [],
-                        speed: [],
-                        direction: [],
-                        humidity: [],
-                        pressure: [],
-                        temperature: [],
+                        start: start, date: [], speed: [], direction: [],
+                        humidity: [], pressure: [], temperature: [],
                     }
                 }
                 data.date.push(ts - start)
@@ -384,11 +368,10 @@ app.post("/addData", (req, res) => {
         connection?.query(sql, (err, results, fields) => {
             setLastRecord()
             tdLast = new Date()
-
             const last = d[d.length - 1]
+            const ts = parseInt(new Date(last[0]).getTime() / 1000)
             sql =
-                "UPDATE `server_sent` SET `last_record`=" +
-                new Date(last[0]).getTime() / 1000 +
+                "UPDATE `server_sent` SET `last_record`=" + ts +
                 ", `speed` = " + last[1] +
                 ", `direction` = " + last[2] +
                 ", `humidity` = " + last[3] +
@@ -408,13 +391,11 @@ app.post("/addData", (req, res) => {
     const twoDaysAgo = thisHour - 48 * 3600
 
     // delete older records
-    sql = "DELETE FROM hours WHERE `start` < " + twoDaysAgo
-    connection?.query(sql, (err, results, fields) => { })
-    sql = "DELETE FROM hours WHERE `start` > " + thisHour
-    connection?.query(sql, (err, results, fields) => { })
+    connection?.query(`DELETE FROM hours WHERE start < ${twoDaysAgo}`, (err, results, fields) => { })
+    connection?.query(`DELETE FROM hours WHERE start > ${thisHour}`, (err, results, fields) => { })
 
     // get latest record (or 2 days ago if there are none)
-    sql = "SELECT * FROM `hours` WHERE `start` > " + twoDaysAgo + " ORDER BY start DESC LIMIT 1"
+    sql = `SELECT * FROM hours WHERE start > ${twoDaysAgo} ORDER BY start DESC LIMIT 1`
     connection?.query(sql, (err, results, fields) => {
         let hourLength = 0
         latestHours = twoDaysAgo
@@ -428,13 +409,8 @@ app.post("/addData", (req, res) => {
         // for each hour starting at 'latestHour', thru 'thisHour'
         for (let i = latestHours; i <= thisHour; i += 3600) {
             const data = {
-                start: i,
-                date: [],
-                speed: [],
-                direction: [],
-                humidity: [],
-                pressure: [],
-                temperature: [],
+                start: i, date: [], speed: [], direction: [],
+                humidity: [], pressure: [], temperature: [],
             }
             msg += "pull from gliderport: records from " + timestampToString(i) + " to " + timestampToString(i + 3600) + "\n"
             sql = "SELECT * FROM `gliderport` WHERE recorded >= '" + timestampToString(i) + "' AND recorded < '" + timestampToString(i + 3600) + "'"
