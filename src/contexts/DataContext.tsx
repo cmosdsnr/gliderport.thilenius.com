@@ -92,6 +92,11 @@ type CurrentData = {
 
     lastImage: TimeStamp,
     lastForecast: TimeStamp,
+
+    videoWidth: number,
+    videoHeight: number,
+    numberConnections: number,
+
 }
 
 type ImageData = null | {
@@ -116,6 +121,9 @@ interface DataContextInterface {
     bigImage: Buffer | null,
     lastForecast: TimeStamp,
     sun: Sun,
+    videoWidth: number,
+    videoHeight: number,
+    numberConnections: number,
     //functions 
     loadData: (name: string) => void,
     printDate: (ts: TimeStamp) => String,
@@ -152,7 +160,9 @@ export function DataProvider({ children }) {
     const [restartEventSource, setRestartEventSource] = useState()
     const [loaded, setLoaded] = useState<Boolean>(false)
     const [lastCheck, setLastCheck] = useState<TimeStamp>(1658263194)
-
+    const [videoWidth, setVideoWidth] = useState(0)
+    const [videoHeight, setVideoHeight] = useState(0)
+    const [numberConnections, setNumberConnections] = useState(0)
     const handleChart = (d: Reading[]) => {
         setChart(d)
         setLatest(d[d.length - 1])
@@ -169,6 +179,9 @@ export function DataProvider({ children }) {
 
         // setLastImage(d.lastImage)
         setLastForecast(d.lastForecast)
+        setVideoWidth(d.videoWidth)
+        setVideoHeight(d.videoHeight)
+        setNumberConnections(d.numberConnections)
     }
 
 
@@ -326,6 +339,11 @@ export function DataProvider({ children }) {
                     setChart([...chart, newRecord])
                     setLatest(newRecord)
                 }
+
+                if ('videoWidth' in d) setVideoWidth(d.videoWidth)
+                if ('videoHeight' in d) setVideoHeight(d.videoHeight)
+                if ('numberConnections' in d) setNumberConnections(d.numberConnections)
+
                 setPassedSeconds(0)
             }
             if (messageBody.command === 'image') {
@@ -385,6 +403,9 @@ export function DataProvider({ children }) {
         bigImage,
         lastForecast,
         sun,
+        videoWidth,
+        videoHeight,
+        numberConnections,
         //functions 
         loadData,
         printDate,
