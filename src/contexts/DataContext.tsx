@@ -258,8 +258,10 @@ export function DataProvider({ children }) {
             setLoading(false)
             setPassedSeconds(0)
         }
-        ws.current.onclose = () => console.log("ws closed")
-
+        ws.current.onclose = () => {
+            setLoading(true)
+            console.log("ws closed")
+        }
         const wsCurrent = ws.current;
         return () => {
             wsCurrent.close();
@@ -325,7 +327,7 @@ export function DataProvider({ children }) {
 
                 // console.log(messageBody.data)
                 // note: speed, temp, and pressure are transmitted in the proper scale
-                // scaling is done in the socketserver (temp/10, speed/10 etc)
+                // scaling of raw database data is done in the socketserver (temp/10, speed/10 etc)
                 if ('lastRecord' in d) {
                     let newRecord: Reading = { ...latest }
                     newRecord.time = d.lastRecord
@@ -334,8 +336,6 @@ export function DataProvider({ children }) {
                     if ('humidity' in d) newRecord.humidity = d.humidity
                     if ('pressure' in d) newRecord.pressure = d.pressure
                     if ('temperature' in d) newRecord.temperature = d.temperature
-                    // if (newRecord.speed > 100 || d.speed > 100) debugger
-                    // console.log(chart.length)
                     setChart([...chart, newRecord])
                     setLatest(newRecord)
                 }
@@ -412,7 +412,7 @@ export function DataProvider({ children }) {
     }
     return (
         <DataContext.Provider value={value}>
-            {loading ? <h3>Connecting to Web Socket Server</h3> : children}
+            {loading ? <h3>Connecting to Web Socket Server...</h3> : children}
         </DataContext.Provider>
     )
 }

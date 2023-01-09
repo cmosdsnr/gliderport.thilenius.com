@@ -4,7 +4,11 @@ import { codes } from '../Globals'
 
 const Today = props => {
     const { ...rest } = props
-    const { forecast } = useData()
+    const { forecast, loadData } = useData()
+
+    useEffect(() => {
+        loadData("Forecast")
+    }, [])
 
     return (
         <table className="forecast-table">
