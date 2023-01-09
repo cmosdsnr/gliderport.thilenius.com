@@ -13,6 +13,9 @@ dotenv.config()
 
 let DEBUG = true
 
+// used to daily update hit counter tables
+let d = new Date().getDate()
+
 const timestampToString = (ts) => {
     return new Date(ts * 1000).toISOString().replace("T", " ").replace(".000Z", "")
 }
@@ -802,3 +805,158 @@ app.get("/UpdateStatus", (req, res) => {
 app.get("/ImageAdded", (req, res) => {
     res.send("Ok")
 })
+
+const getTsFromDate = (date) => {
+    return parseInt(date.getTime() / 1000)
+}
+
+const getSQLDate = (date) => {
+    return date.getUTCFullYear() + '-' +
+        ('00' + (date.getUTCMonth() + 1)).slice(-2) + '-' +
+        ('00' + date.getUTCDate()).slice(-2) + ' '
+}
+
+
+const getWeekCount = (start, stop) => {
+    let startDay = start
+    let stopDay = stop
+
+    console.log(startDay, stopDay)
+    connection?.query(`select count(*) AS count from hit_counter where hit >'${startDay} 08:00:00' AND hit <'${stopDay} 08:00:00'`,
+        (err, c, fields) => {
+
+            console.log("start week:", startDay, " Stop week:", stopDay, " count:", c[0].count)
+            connection?.query(`select count(DISTINCT IP) AS count from hit_counter where hit >'${startDay} 08:00:00' AND hit <'${stopDay} 08:00:00'`,
+                (err, d, fields) => {
+                    console.log("start week:", startDay, " Stop week:", stopDay, " count:", c[0].count, " Distict:", d[0].count)
+                    connection?.query(`INSERT INTO hit_counter_week (day, total, unique) VALUES ('${startDay}', ${c[0].count}, ${d[0].count})`)
+                })
+        })
+}
+
+//Update Day and Week hit_counter databases on each new day
+// setInterval(() => {
+//     if (d != new Date().getDate()) {
+
+
+
+let dt = new Date()
+d = dt.getDate()
+// do updates
+let dtEnd, tsEnd
+connection?.query(`SELECT MAX(hit) AS endDate FROM hit_counter WHERE 1`, (err, results, fields) => {
+    dtEnd = new Date(results[0].endDate)
+    console.log("end of hit_counter:", dtEnd.toLocaleString())
+    tsEnd = getTsFromDate(dtEnd)
+})
+
+connection?.query(`SELECT MAX(day) AS maxDate FROM hit_counter_week WHERE 1`, (err, results, fields) => {
+    connection?.query(`SELECT MIN(hit) AS startDate FROM hit_counter WHERE 1`, (err, resMin, fields) => {
+        connection?.query(`SELECT MAX(hit) AS endDate FROM hit_counter WHERE 1`, (err, resMax, fields) => {
+            let dt = new Date()
+            if (Array.isArray(results) && results[0].maxDate) {
+                dt = new Date(results[0].maxDate)
+                dt.setDate(dt.getDate() + 7)
+            } else {
+                console.log("weeks table is empty")
+                dt = new Date(resMin[0].startDate)
+            }
+            let lastEntry = new Date(resMax[0].endDate)
+            let startDay = getSQLDate(dt)
+            dt.setDate(dt.getDate() + 7)
+            let stopDay = getSQLDate(dt)
+            while (dt < lastEntry) {
+                getWeekCount(startDay, stopDay)
+
+                dt.setDate(dt.getDate() + 7)
+                startDay = stopDay
+
+                stopDay = getSQLDate(dt)
+            }
+        })
+    })
+})
+// $now = new DateTime("now", new DateTimeZone('America/Los_Angeles'));
+
+// // find the last week we added
+// $sql = "SELECT MAX(day) AS maxdate FROM hit_counter_week WHERE 1";
+// $s = ($db->query($sql)->fetch())->maxdate;
+
+// // 7 days later than the last entry into hit_counter_week
+// $start = new DateTime($s, new DateTimeZone('America/Los_Angeles'));
+// $start->add(new DateInterval("P7D"));
+
+// // 14 days later than the last entry into hit_counter_week
+// $stop = new DateTime($s, new DateTimeZone('America/Los_Angeles'));
+// $stop->add(new DateInterval("P14D"));
+
+// $day = $start->format('Y-m-d');
+// echo "adding week starting $day\n";
+
+// while ($stop < $now) {
+//     // get hit count 
+//     $sql = 'select count(*) from hit_counter where hit >"' .
+//         $start->format('Y-m-d H:i:s') . '" AND hit <"' .
+//         $stop->format('Y-m-d H:i:s') . '"';
+//     $all    = $db->query($sql)->fetchColumn();
+
+//     // get distinct hit count 
+//     $sql = 'select count(DISTINCT IP) from hit_counter where hit >"' .
+//         $start->format('Y-m-d H:i:s') . '" AND hit <"' .
+//         $stop->format('Y-m-d H:i:s') . '"';
+//     $unique = $db->query($sql)->fetchColumn();
+
+//     // insert into hit_counter_week  
+//     $sql = "INSERT INTO `hit_counter_week` (`day`, `total`, `unique`) 
+//             VALUES ('$day', '$all', '$unique')";
+//     $db->query($sql);
+
+
+//     echo "week from $day to {$stop->format('Y-m-d')} all:$all unique:$unique\n";
+//     // move one week forward
+//     $start->add(new DateInterval("P7D"));
+//     $stop->add(new DateInterval("P7D"));
+//     $day = $start->format('Y-m-d');
+// }
+
+// // find the last day we added
+// $sql = "SELECT MAX(day) AS maxdate FROM hit_counter_day WHERE 1";
+// $s = ($db->query($sql)->fetch())->maxdate;
+
+// $now = new DateTime("now", new DateTimeZone('America/Los_Angeles'));
+
+// // 1 day later than the last entry into hit_counter_day
+// $start = new DateTime($s, new DateTimeZone('America/Los_Angeles'));
+// $start->add(new DateInterval("P1D"));
+
+// // 2 day later than the last entry into hit_counter_day
+// $stop = new DateTime($s, new DateTimeZone('America/Los_Angeles'));
+// $stop->add(new DateInterval("P2D"));
+
+// $day = $start->format('Y-m-d');
+// echo "adding days starting $day\n";
+
+// while ($stop < $now) {
+//     $sql = 'select count(*) from hit_counter where hit >"' .
+//         $start->format('Y-m-d H:i:s') . '" AND hit <"' .
+//         $stop->format('Y-m-d H:i:s') . '"';
+//     $all    = $db->query($sql)->fetchColumn();
+
+//     $sql = 'select count(DISTINCT IP) from hit_counter where hit >"' .
+//         $start->format('Y-m-d H:i:s') . '" AND hit <"' .
+//         $stop->format('Y-m-d H:i:s') . '"';
+//     $unique = $db->query($sql)->fetchColumn();
+
+//     $sql = "INSERT INTO `hit_counter_day` (`day`, `total`, ` unique`) 
+//     VALUES ('$day', '$all', '$unique');";
+//     $db->query($sql);
+
+//     echo "day from $day to {$stop->format('Y-m-d')} all:$all unique:$unique\n";
+//     $start->add(new DateInterval("P1D"));
+//     $stop->add(new DateInterval("P1D"));
+//     $day = $start->format('Y-m-d');
+// }
+
+
+//     }
+// }, 3 * 3600 * 1000) // every 3 hours
