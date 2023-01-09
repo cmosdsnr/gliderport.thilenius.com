@@ -862,15 +862,16 @@ connection?.query(`SELECT MAX(day) AS maxDate FROM hit_counter_week WHERE 1`, (e
                 dt = new Date(resMin[0].startDate)
             }
             let lastEntry = new Date(resMax[0].endDate)
+            // want only full weeks
+            lastEntry.setDate(lastEntry.getDate() - 7)
+
             let startDay = getSQLDate(dt)
             dt.setDate(dt.getDate() + 7)
             let stopDay = getSQLDate(dt)
             while (dt < lastEntry) {
-                getWeekCount(startDay, stopDay)
-
-                dt.setDate(dt.getDate() + 7)
+                //getWeekCount(startDay, stopDay)
                 startDay = stopDay
-
+                dt.setDate(dt.getDate() + 7)
                 stopDay = getSQLDate(dt)
             }
         })
