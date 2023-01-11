@@ -259,8 +259,10 @@ export function DataProvider({ children }) {
             setPassedSeconds(0)
         }
         ws.current.onclose = () => {
-            setLoading(true)
             console.log("ws closed")
+            // try to open again
+            setLoading(true)
+            ws.current = new WebSocket("wss://gliderportsocketserver.thilenius.org/ws")
         }
         const wsCurrent = ws.current;
         return () => {
@@ -304,6 +306,7 @@ export function DataProvider({ children }) {
                     return
                 }
                 console.log("Fetch Data message received for " + messageBody.subCommand)
+
                 // console.log('✅ function is defined');
                 // console.log('⛔️ ', cmd, ' function is NOT defined')
                 // if (chart.length > 1) debugger

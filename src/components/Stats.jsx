@@ -97,18 +97,18 @@ export default function Stats() {
                                             <th>unique IP's</th>
                                         </tr>
                                         <tr>
-                                            <th>Visits last 24 hrs:</th>
-                                            <th>{hitStats?.day?.count}</th>
+                                            <th>Visits on {hitStats?.day?.day}</th>
+                                            <th>{hitStats?.day?.total}</th>
                                             <th>{hitStats?.day?.unique}</th>
                                         </tr>
                                         <tr>
-                                            <th>Visits last week:</th>
-                                            <th>{hitStats?.week?.count}</th>
+                                            <th>Visits last week (Fri-Fri):</th>
+                                            <th>{hitStats?.week?.total}</th>
                                             <th>{hitStats?.week?.unique}</th>
                                         </tr>
                                         <tr>
                                             <th>Visits last 30 days:</th>
-                                            <th>{hitStats?.month?.count}</th>
+                                            <th>{hitStats?.month?.total}</th>
                                             <th>{hitStats?.month?.unique}</th>
                                         </tr>
                                         <tr>
@@ -337,9 +337,10 @@ const StatPlot = props => {
 
     useEffect(() => {
         if (data) {
-            const start = data.last - data.data.length * 7 * 24 * 3600
+            const start = parseInt(new Date(data.start + "08:00:00").getTime() / 1000)
+            //  data.last - data.data.length * 7 * 24 * 3600
             let d = []
-            data.data.forEach((v, i) => d.push([start + i * 7 * 24 * 3600, parseInt(v)]));
+            data.totals.forEach((v, i) => d.push([start + i * 7 * 24 * 3600, parseInt(v)]));
             setPlotData(d)
         }
     }, [data])

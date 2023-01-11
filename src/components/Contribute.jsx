@@ -4,11 +4,10 @@ import Col from "react-bootstrap/Col"
 import { useData } from '../contexts/DataContext'
 
 export default function Contribute() {
-    const [donors, setDonors] = useState([])
-    const { loadDonors } = useData()
+    const { loadData, donors } = useData()
 
     useEffect(() => {
-        loadDonors(setDonors);
+        loadData("Donors")
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
