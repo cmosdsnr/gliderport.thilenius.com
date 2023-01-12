@@ -491,6 +491,7 @@ app.post("/addData", (req, res) => {
                             console.log("todaysCodes: ", todaysCodes)
                             connection?.query("UPDATE `server_sent` SET `last_forecast`=" + tsNow + " WHERE `id`=1", (err, results, fields) => { })
                             connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(forecast) + "' WHERE `id`='forecast'")
+                            connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(responseJson.hourly) + "' WHERE `id`='forecast_full'")
                             connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(todaysCodes) + "' WHERE `id`='todays_codes'")
                         }
                     })
