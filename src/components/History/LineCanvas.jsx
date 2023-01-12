@@ -79,6 +79,8 @@ export const LineCanvas = ({ width, data }) => {
         const dtNow = new Date()
         const dtStart = new Date(data.date * 1000 + 12 * 3600 * 1000)
         const itIsToday = (dtNow.getDate() === dtStart.getDate())
+        dtNow.setDate(dtNow.getDate() + 1)
+        const itIsTomorrow = (dtNow.getDate() === dtStart.getDate())
         ctx.fillStyle = "white";
         ctx.beginPath();
         if (itIsToday) {
@@ -87,12 +89,19 @@ export const LineCanvas = ({ width, data }) => {
             ctx.fillText("Today", 20, 20);
         }
         else {
-            ctx.fillStyle = "white";
-            ctx.font = "15px Verdana"
-            var text = formatDate(dtStart)
-            ctx.fillText(text, 20, 15);
-            text = (1 + dtStart.getMonth()) + "/" + dtStart.getDate();
-            ctx.fillText(text, 20, 30);
+            if (itIsTomorrow) {
+                ctx.fillStyle = "Darkblue";
+                ctx.font = "20px Verdana"
+                ctx.fillText("Tomorrow", 20, 20);
+            }
+            else {
+                ctx.fillStyle = "white";
+                ctx.font = "15px Verdana"
+                var text = formatDate(dtStart)
+                ctx.fillText(text, 20, 15);
+                text = (1 + dtStart.getMonth()) + "/" + dtStart.getDate();
+                ctx.fillText(text, 20, 30);
+            }
         }
         ctx.stroke();
         ctx.closePath();
