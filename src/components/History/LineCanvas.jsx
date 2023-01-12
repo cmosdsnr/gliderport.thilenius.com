@@ -77,7 +77,7 @@ export const LineCanvas = ({ width, data }) => {
 
         //add text for the day (day or week and mm/dd)
         const dtNow = new Date()
-        const dtStart = new Date(data.date * 1000)
+        const dtStart = new Date(data.date * 1000 + 12 * 3600 * 1000)
         const itIsToday = (dtNow.getDate() === dtStart.getDate())
         ctx.fillStyle = "white";
         ctx.beginPath();

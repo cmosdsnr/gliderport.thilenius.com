@@ -66,9 +66,24 @@ export default function UpdatingImage({ offline }) {
             console.log("image effect: new image added")
             const blob = b64toBlob(image, "image/jpeg")
             const blobUrl = URL.createObjectURL(blob)
+            debugger
             setImgSrc(blobUrl)
         }
-    }, [image, offline])
+    }, [image])
+
+    useEffect(() => {
+        // night image is set by gliderport PI3 into the database
+        if (offline) {
+            console.log("offline effect: offline")
+            setImgSrc(OutOfOrder)
+        }
+        else {
+            console.log("offline effect: image restored")
+            const blob = b64toBlob(image, "image/jpeg")
+            const blobUrl = URL.createObjectURL(blob)
+            setImgSrc(blobUrl)
+        }
+    }, [offline])
 
     useEffect(() => {
         if (itIsDark) {
@@ -81,6 +96,10 @@ export default function UpdatingImage({ offline }) {
             setImgSrcLarge(blobUrl)
         }
     }, [bigImage, itIsDark, offline])
+
+    useEffect(() => {
+        console.log("imgSrc changed")
+    }, [imgSrc])
 
     return (
         <>

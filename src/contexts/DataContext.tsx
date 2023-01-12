@@ -217,10 +217,15 @@ export function DataProvider({ children }) {
 
     const handleImage = (d: ImageData) => {
         setImage((d === null ? null : d.A))
+        if (d === null)
+            console.log("Initial fetch of image was NULL")
+        else
+            console.log("Initial fetch of image")
     }
 
     const handleBigImage = (d: ImageData) => {
         setBigImage((d === null ? null : d.A))
+        console.log("Initial fetch of big image")
     }
 
     const subCommands = {
