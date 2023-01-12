@@ -66,7 +66,6 @@ export default function UpdatingImage({ offline }) {
             console.log("image effect: new image added")
             const blob = b64toBlob(image, "image/jpeg")
             const blobUrl = URL.createObjectURL(blob)
-            debugger
             setImgSrc(blobUrl)
         }
     }, [image])
