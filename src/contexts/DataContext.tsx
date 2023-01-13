@@ -113,6 +113,7 @@ interface DataContextInterface {
     status: Array<number>,
     lastCheck: TimeStamp,
     forecast: Forecast,
+    forecastFull: any,
     videos: VideoData,
     hitStats: HitStats | null,
     passedSeconds: number,
@@ -147,6 +148,7 @@ export function DataProvider({ children }) {
     const [latest, setLatest] = useState<Reading>(emptyReading)
     const [status, setStatus] = useState<number[]>([])
     const [forecast, setForecast] = useState<Forecast>([])
+    const [forecastFull, setForecastFull] = useState<Forecast>([])
     const [hitStats, setHitStats] = useState<Stats>({})
     const [passedSeconds, setPassedSeconds] = useState(0)
     const [offline, setOffline] = useState(false)
@@ -169,6 +171,7 @@ export function DataProvider({ children }) {
         console.log(d)
         // debugger
     }
+
 
     const handleCurrentData = (d: CurrentData) => {
         setSun({ rise: d.sunrise, set: d.sunset })
@@ -235,6 +238,7 @@ export function DataProvider({ children }) {
         Chart: handleChart,
         Status: setStatus,
         Forecast: setForecast,
+        ForecastFull: setForecastFull,
         Videos: handleVideos,
         Stats: setHitStats,
         CurrentData: handleCurrentData,
@@ -389,6 +393,7 @@ export function DataProvider({ children }) {
         loadData("Chart")
         loadData("Status")
         loadData("Forecast")
+        loadData("ForecastFull")
         loadData("Videos")
         loadData("Stats")
     }
@@ -401,6 +406,7 @@ export function DataProvider({ children }) {
         chart,
         latest,
         forecast,
+        forecastFull,
         status,
         lastCheck,
         videos,

@@ -58,7 +58,7 @@ export default function UpdatingImage({ offline }) {
             console.log("image effect: offline")
             setImgSrc(OutOfOrder)
         }
-        else if (image != null) {
+        else if (image === null) {
             console.log("image effect: null image")
             setImgSrc(OutOfOrder)
         }
@@ -76,7 +76,7 @@ export default function UpdatingImage({ offline }) {
             console.log("offline effect: offline")
             setImgSrc(OutOfOrder)
         }
-        else {
+        else if (image != null) {
             console.log("offline effect: image restored")
             const blob = b64toBlob(image, "image/jpeg")
             const blobUrl = URL.createObjectURL(blob)
@@ -90,6 +90,7 @@ export default function UpdatingImage({ offline }) {
         } else if (offline) {
             setImgSrcLarge(OutOfOrder)
         } else if (bigImage != null) {
+            debugger
             const blob = b64toBlob(bigImage, "image/jpeg")
             const blobUrl = URL.createObjectURL(blob)
             setImgSrcLarge(blobUrl)
