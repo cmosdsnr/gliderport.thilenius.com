@@ -84,6 +84,12 @@ export const b64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
         console.log("b64toBlob called with null")
         return null
     }
+    try {
+        const byteCharacters = atob(b64Data);
+    } catch (error) {
+        console.log("b64toBlob called with invalid image")
+        return null
+    }
     const byteCharacters = atob(b64Data);
     const byteArrays = [];
 
