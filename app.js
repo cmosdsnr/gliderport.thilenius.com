@@ -491,7 +491,15 @@ app.post("/addData", (req, res) => {
                             console.log("todaysCodes: ", todaysCodes)
                             connection?.query("UPDATE `server_sent` SET `last_forecast`=" + tsNow + " WHERE `id`=1", (err, results, fields) => { })
                             connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(forecast) + "' WHERE `id`='forecast'")
-                            connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(responseJson.hourly) + "' WHERE `id`='forecast_full'")
+                            const h = responseJson.hourly
+                            h.forEach((v, i) => {
+                                let z = v.weather
+                                Object.keys(z[0]).forEach((w, j) => {
+                                    v["weather_" + w] = z[0][w]
+                                })
+                                delete (h[i].weather)
+                            })
+                            connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(h) + "' WHERE `id`='forecast_full'")
                             connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(todaysCodes) + "' WHERE `id`='todays_codes'")
                         }
                     })
@@ -918,59 +926,30 @@ setInterval(() => {
 
 }, 60 * 1000);
 
-let t
-const results = await connection?.promise().query("SELECT * FROM miscellaneous WHERE id='hit_stats'")
-
-// console.log(results[0].data)
-t = JSON.parse(results[0][0].data)
-// for (const [key, value] of Object.entries(t)) {
-//     if (key === "lastReset")
-//         console.log(`${key}: ${value}`)
-//     else {
-//         console.log(`${key}:`)
-//         for (const [kej, value] of Object.entries(t[key])) console.log(`       ${kej}: ${value}`)
-//     }
-// }
 
 
-const replacement = {}
-replacement.lastReset = t.lastReset
-
-const row = await connection?.promise().query(`select count(*) AS count from hit_counter where 1`)
-replacement.total = { count: row[0][0].count }
-
-const latest = await connection?.promise().query(`SELECT MAX(hit) AS latest FROM hit_counter WHERE 1`)
-const dt = latest[0][0].latest
-dt.setTime(dt.getTime() + 2 * offset)
-replacement.total.date = dt.toISOString().replace("T", " ").replace(/\.[0-9]*Z/, "")
-
-const wks = await connection?.promise().query(`SELECT * FROM hit_counter_week WHERE 1`)
-const weeks = { start: "", totals: [], uniques: [] }
-weeks.start = wks[0][0].day.toISOString().replace(/T.*/, " ")
-let unique = 0, total = 0
-wks[0].forEach((v, i) => {
-    weeks.totals.push(v.total)
-    weeks.uniques.push(v.unique)
-    unique += v.unique
-})
-replacement.total.unique = unique
-replacement.weeks = weeks
-
-replacement.week = wks[0][wks[0].length - 1]
-replacement.week.day = getSQLDate(replacement.week.day)
-unique = 0, total = 0
-for (let i = wks[0].length - 4; i < wks[0].length; i++) {
-    const element = wks[0][i]
-    unique += element.unique
-    total += element.total
-}
-replacement.month = { unique, total }
-
-
-const y = await connection?.promise().query(`SELECT * FROM hit_counter_day ORDER BY day DESC LIMIT 1`)
-replacement.day = y[0][0]
-replacement.day.day = getSQLDate(replacement.day.day)
-
-connection?.query(`REPLACE into miscellaneous (id, data) VALUES ('hit_stats', '${JSON.stringify(replacement)}')`, () => { })
-// console.log(JSON.stringify(replacement))
-
+// const tsNow = parseInt((new Date()).getTime() / 1000)
+// const url =
+//     "https://api.openweathermap.org/data/2.5/onecall" +
+//     "?lat=32.8473&lon=-117.2742" +
+//     "&exclude=minutely,daily" +
+//     "&units=imperial" +
+//     "&appid=483c6b4301f7069cbf4e266bffa6d5ff"
+// fetch(url)
+//     .then((response) => response.json())
+//     .then((responseJson) => {
+//         if (!responseJson || !responseJson.hourly) {
+//             msg += "OpenWeather Data Offline\n"
+//             console.log("OpenWeather Data Offline")
+//         } else {
+//             const h = responseJson.hourly
+//             h.forEach((v, i) => {
+//                 let z = v.weather
+//                 Object.keys(z[0]).forEach((w, j) => {
+//                     v["weather_" + w] = z[0][w]
+//                 })
+//                 delete (h[i].weather)
+//             })
+//             connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(h) + "' WHERE `id`='forecast_full'")
+//         }
+//     })
