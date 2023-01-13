@@ -8,12 +8,20 @@ table {
     border: 1px solid #dddddd;
     text-align: center;
     padding: 2px;
+    word-wrap: break-word;
+    font-size: 1.1vw;
   }
   
-  tr {
-    
+  .key {
+   border: 1px solid cyan;
+   background-color: lightcyan;
+   border-radius: 5px;
+   min-height: 40px;
+   min-width: 60px;
   }
 
   tr:nth-child(even) {
     background-color: #dddddd;
   }
+
+ 
