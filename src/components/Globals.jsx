@@ -80,7 +80,10 @@ export const useInterval = (callback, delay) => {
 }
 
 export const b64toBlob = (b64Data, contentType = '', sliceSize = 512) => {
-
+    if (b64Data === null) {
+        console.log("b64toBlob called with null")
+        return null
+    }
     const byteCharacters = atob(b64Data);
     const byteArrays = [];
 
