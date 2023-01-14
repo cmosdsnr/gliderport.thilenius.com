@@ -7,6 +7,7 @@ import fs from "fs"
 import bodyParser from "body-parser"
 import cors from "cors"
 import fileUpload from 'express-fileupload'
+import nodemailer from "nodemailer"
 import calculateSunrise from "./calculateSunrise.js"
 import { Http2ServerRequest } from "http2"
 dotenv.config()
@@ -818,6 +819,42 @@ app.get("/UpdateStatus", (req, res) => {
 app.get("/ImageAdded", (req, res) => {
     res.send("Ok")
 })
+
+
+app.get("/sendTestSms", (req, res) => {
+    if ("to" in req.query && "name" in req.query) {
+        let transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false, // true for 465, false for other ports
+            auth: {
+                user: 'glider.port.wind.alert@gmail.com',
+                pass: 'qxhzpfxewjdnqcky',
+            },
+        })
+
+        var mailOptions = {
+            from: 'glider.port.wind.alert@gmail.com',
+            name: 'Gliderport Wind',
+            to: req.query.to,
+            subject: '',
+            text: `Hi ${req.query.name}, This message is a test from the gliderport`,
+        }
+
+        transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+                console.log(error);
+            } else {
+                console.log('Email sent: ' + info.response);
+            }
+        })
+        res.send("Ok")
+    } else {
+        res.send("did not get name & to")
+    }
+})
+
+
 
 const getTsFromDate = (date) => {
     return parseInt(date.getTime() / 1000)
