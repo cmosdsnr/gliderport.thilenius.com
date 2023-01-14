@@ -20,6 +20,7 @@
     "fs": "^0.0.1-security",
     "http": "0.0.1-security",
     "mysql2": "^2.3.3",
+    "nodemailer": "^6.9.0",
     "nodemon": "^2.0.19",
     "request": "^2.88.2",
     "vite": "^3.0.9",
