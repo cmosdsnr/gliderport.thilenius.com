@@ -13,7 +13,6 @@ export default function UpdatingImage({ offline }) {
     const [imgSrcLarge, setImgSrcLarge] = useState<string>("")
 
     const [timeToSunrise, setTimeToSunrise] = useState<String>("")
-    const [itIsDark, setItIsDark] = useState<boolean>(false)
 
     const { sun, image, bigImage, loadData } = useData()
     const imgRef = useRef(null)
@@ -31,21 +30,10 @@ export default function UpdatingImage({ offline }) {
             const h = Math.floor(SecondsToSunrise / 3600)
             const m = Math.floor(SecondsToSunrise / 60 - h * 60)
             setTimeToSunrise("Sunrise in " + (h > 0 ? h + " hours, " : "") + m + " minutes")
-            setItIsDark(true)
         } else {
-            setItIsDark(false)
+            setTimeToSunrise("")
         }
     }, interval * 1000)
-
-
-    useEffect(() => {
-        const tsNow = (new Date()).getTime() / 1000
-        if ((tsNow < sun?.rise - 15 * 60) || (tsNow > sun?.set + 15 * 60)) {
-            setItIsDark(true)
-        } else {
-            setItIsDark(false)
-        }
-    }, [sun])
 
     // load initial image
     useEffect(() => {
@@ -70,37 +58,27 @@ export default function UpdatingImage({ offline }) {
                 setImgSrc(blobUrl)
             }
         }
-    }, [image])
+    }, [image, offline])
 
     useEffect(() => {
         // night image is set by gliderport PI3 into the database
         if (offline) {
-            console.log("offline effect: offline")
-            setImgSrc(OutOfOrder)
-        }
-        else if (image != null) {
-            console.log("offline effect: image restored")
-            const blob = b64toBlob(image, "image/jpeg")
-            const blobUrl = URL.createObjectURL(blob)
-            setImgSrc(blobUrl)
-        }
-    }, [offline])
-
-    useEffect(() => {
-        if (itIsDark) {
-            setImgSrcLarge(OffTime)
-        } else if (offline) {
+            console.log("image effect: offline")
             setImgSrcLarge(OutOfOrder)
-        } else if (bigImage != null) {
-            const blob = b64toBlob(bigImage, "image/jpeg")
-            const blobUrl = URL.createObjectURL(blob)
-            setImgSrcLarge(blobUrl)
         }
-    }, [bigImage, itIsDark, offline])
-
-    useEffect(() => {
-        console.log("imgSrc changed")
-    }, [imgSrc])
+        else if (image === null) {
+            console.log("image effect: null image")
+            setImgSrcLarge(OutOfOrder)
+        }
+        else {
+            console.log("image effect: new image added")
+            const blob = b64toBlob(image, "image/jpeg")
+            if (blob != null) {
+                const blobUrl = URL.createObjectURL(blob)
+                setImgSrcLarge(blobUrl)
+            }
+        }
+    }, [bigImage, offline])
 
     return (
         <>
@@ -117,7 +95,7 @@ export default function UpdatingImage({ offline }) {
                 </svg>
                 : null
             }
-            {itIsDark ? <span className="bottom-left">{timeToSunrise}</span> : null}
+            <span className="bottom-left">{timeToSunrise}</span>
             {outOfOrder ? <p className="ooo" >Temporarily Out of Order</p> : null}
         </>
     )
