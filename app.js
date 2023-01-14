@@ -173,15 +173,10 @@ let id = setInterval(() => {
     }
 }, 3600000)
 
-const setLastRecord = () => {
-    connection?.query(
-        "SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1",
-        function (err, results, fields) {
-            const ts = (new Date(results[0].recorded).getTime() + offset) / 1000
-            lastRecord = results ? timestampToString(ts) : "0"
-            // console.log("last record: ", lastRecord)
-        }
-    )
+const setLastRecord = async () => {
+    const res = await connection?.promise().query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1")
+    const ts = (new Date(res[0][0].recorded).getTime() + offset) / 1000
+    lastRecord = res ? timestampToString(ts) : "0"
 }
 setLastRecord()
 
@@ -889,104 +884,46 @@ const getDayCount = (start, stop) => {
     )
 }
 
-let count = 0
+
 // Update Day and Week hit_counter databases on each new day
-setInterval(() => {
+setInterval(async () => {
     if (d != new Date().getDate()) {
         //it is a new day of the month
         d = new Date().getDate()
-        count = 1
         // Check for needed updates on hit_counter_week
-        connection?.query(`SELECT MAX(day) AS maxDate FROM hit_counter_week WHERE 1`, (err, results, fields) => {
-            connection?.query(`SELECT MIN(hit) AS startDate FROM hit_counter WHERE 1`, (err, resMin, fields) => {
-                connection?.query(`SELECT MAX(hit) AS endDate FROM hit_counter WHERE 1`, (err, resMax, fields) => {
-                    let dt = new Date()
-                    if (Array.isArray(results) && results[0].maxDate) {
-                        dt = new Date(results[0].maxDate)
-                        dt.setDate(dt.getDate() + 7)
-                    } else {
-                        console.log("weeks table is empty")
-                        dt = new Date(resMin[0].startDate)
-                    }
-                    let lastEntry = new Date(resMax[0].endDate)
+        res = await connection?.promise().query(`SELECT MIN(hit) AS startDate FROM hit_counter WHERE 1`)
+        const startDate = (res != undefined) ? (res[0] != undefined ? (Array.isArray(res[0]) ? res[0][0].startDate : 0) : 0) : 0
 
-                    let startDay = getSQLDate(dt)
-                    dt.setDate(dt.getDate() + 7)
-                    let stopDay = getSQLDate(dt)
+        res = await connection?.promise().query(`SELECT MAX(hit) AS endDate FROM hit_counter WHERE 1`)
+        const endDate = (res != undefined) ? (res[0] != undefined ? (Array.isArray(res[0]) ? res[0][0].endDate : 0) : 0) : 0
 
-                    while (dt < lastEntry) {
-                        getWeekCount(startDay, stopDay);
-                        startDay = stopDay
-                        dt.setDate(dt.getDate() + 7)
-                        stopDay = getSQLDate(dt)
-                    }
-                })
-            })
-        })
+        let res = await connection?.promise().query(`SELECT MAX(day) AS maxDate FROM hit_counter_week WHERE 1`)
+        const results = res[0]
+        let dt = new Date()
+        if (Array.isArray(results)) {
+            dt = new Date(endDate)
+            dt.setDate(dt.getDate() + 7)
+        } else {
+            console.log("weeks table is empty")
+            dt = new Date(startDate)
+        }
 
-        // Check for needed updates on hit_counter_day
-        connection?.query(`SELECT MAX(day) AS maxDate FROM hit_counter_day WHERE 1`, (err, results, fields) => {
-            connection?.query(`SELECT MIN(hit) AS startDate FROM hit_counter WHERE 1`, (err, resMin, fields) => {
-                connection?.query(`SELECT MAX(hit) AS endDate FROM hit_counter WHERE 1`, (err, resMax, fields) => {
-                    let dt = new Date()
-                    if (Array.isArray(results) && results[0].maxDate) {
-                        dt = new Date(results[0].maxDate)
-                        dt.setDate(dt.getDate() + 1)
-                    } else {
-                        console.log("weeks table is empty")
-                        dt = new Date(resMin[0].startDate)
-                    }
-                    let lastEntry = new Date(resMax[0].endDate)
+        let lastEntry = new Date(endDate)
 
-                    let startDay = getSQLDate(dt)
-                    dt.setDate(dt.getDate() + 1)
-                    let stopDay = getSQLDate(dt)
+        let startDay = getSQLDate(dt)
+        dt.setDate(dt.getDate() + 7)
+        let stopDay = getSQLDate(dt)
 
+        while (dt < lastEntry) {
+            getWeekCount(startDay, stopDay);
+            startDay = stopDay
+            dt.setDate(dt.getDate() + 7)
+            stopDay = getSQLDate(dt)
+        }
+        //update hit_stats in miscellaneous
 
-                    while (dt < lastEntry) {
-                        getDayCount(startDay, stopDay);
-                        startDay = stopDay
-                        dt.setDate(dt.getDate() + 1)
-                        stopDay = getSQLDate(dt)
-                    }
-                })
-            })
-        })
     }
 }, 3 * 3600 * 1000) // every 3 hours
 
-setInterval(() => {
-    if (count === 2) {
-        //update hit_stats in miscellaneous
-    }
-    if (count === 1) count = 2
-
-}, 60 * 1000);
 
 
-
-// const tsNow = parseInt((new Date()).getTime() / 1000)
-// const url =
-//     "https://api.openweathermap.org/data/2.5/onecall" +
-//     "?lat=32.8473&lon=-117.2742" +
-//     "&exclude=minutely,daily" +
-//     "&units=imperial" +
-//     "&appid=483c6b4301f7069cbf4e266bffa6d5ff"
-// fetch(url)
-//     .then((response) => response.json())
-//     .then((responseJson) => {
-//         if (!responseJson || !responseJson.hourly) {
-//             msg += "OpenWeather Data Offline\n"
-//             console.log("OpenWeather Data Offline")
-//         } else {
-//             const h = responseJson.hourly
-//             h.forEach((v, i) => {
-//                 let z = v.weather
-//                 Object.keys(z[0]).forEach((w, j) => {
-//                     v["weather_" + w] = z[0][w]
-//                 })
-//                 delete (h[i].weather)
-//             })
-//             connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(h) + "' WHERE `id`='forecast_full'")
-//         }
-//     })
