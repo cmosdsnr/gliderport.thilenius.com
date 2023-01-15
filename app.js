@@ -408,13 +408,13 @@ app.post("/addData", (req, res) => {
         Object.keys(textWatch).forEach((v, i) => {
             const d = textWatch[v]
             if (d.text.sent != true) {
-                console.log("not yet sent to", document.id, " => ", d)
+                console.log("not yet sent to", v, " => ", d)
                 // console.log(document.id, " => ", document.data())
 
                 // d.text.sent = true
                 // await setDoc(doc(db, 'users', document.id), d)
             } else {
-                console.log("already sent to", document.id, " => ", d)
+                console.log("already sent to", v, " => ", d)
             }
         })
     } else {
