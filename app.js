@@ -923,9 +923,11 @@ app.get("/PhoneFinder", (req, res) => {
                 el.innerHTML = data
                 const href = ((((el.getElementsByTagName('table')[1]).getElementsByTagName('tr')[1]).getElementsByTagName('td')[4]).getElementsByTagName('a')[0]).href
                 const carrier = href.slice(1 + href.lastIndexOf('/'), href.lastIndexOf('.'))
-                return carrier
+                res.send(carrier)
             })
-
+    }
+    else {
+        res.send("none")
     }
 })
 
