@@ -30,6 +30,7 @@ onAuthStateChanged(auth, async (user) => {
         const usersRef = collection(db, "users")
         const q = query(usersRef, where('text.enabled', '==', true))
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            console.log("snapshot update")
             textWatch = {}
             querySnapshot.forEach((document) => {
                 const d = document.data()
@@ -43,6 +44,7 @@ const resetAllSentTexts = () => {
     Object.keys(textWatch).map(async (v, i) => {
         const d = textWatch[v]
         d.text.sent = false
+        console.log("resetting ", d.email)
         await setDoc(doc(db, 'users', v), d)
     })
 }
@@ -319,7 +321,7 @@ app.get('/RegenerateAllHours', function (req, res) {
     }
     let msg = "pull from gliderport: records from " + timestampToString(twoDaysAgo) + "<br/>\n"
     console.log("pull from gliderport: records from " + timestampToString(twoDaysAgo))
-    sql = "SELECT * FROM `gliderport` WHERE recorded > '" + timestampToString(twoDaysAgo) + "'"
+    sql = "SELECT * F WHERE recorded > '" + timestampToString(twoDaysAgo) + "'"
     console.log(sql)
     connection?.query(sql, (err, results, fields) => {
         console.log("found " + results.length + " results")
@@ -379,7 +381,7 @@ app.get("/fixHistory", (req, res) => {
 })
 
 // called to add new wind Data to the db
-app.post("/addData", (req, res) => {
+app.post("/addData", async (req, res) => {
     console.log("++++++++ Adding Data ++++++++++++")
     let msg = ""
     if ("d" in req.body) {
@@ -413,16 +415,55 @@ app.post("/addData", (req, res) => {
             connection?.query(sql, (err, results, fields) => { })
         })
         //check for texts that need sending
-        Object.keys(textWatch).forEach((v, i) => {
+        const tsNow = parseInt((Date.now() + offset) / 1000)
+        const fifteenMin = tsNow - 15 * 60
+        const oneMin = tsNow - 1 * 60
+        const fiveMin = tsNow - 5 * 60
+        sql = "SELECT * FROM `gliderport` WHERE recorded > '" + timestampToString(fifteenMin) + "'"
+        let res = await connection?.promise().query(sql)
+        let aSpeed = 0, bSpeed = 0, cSpeed = 0
+        let aDir = 0, bDir = 0, cDir = 0
+        let aCnt = 0, bCnt = 0, cCnt = 0
+        if (Array.isArray(res[0])) res[0].forEach(e => {
+            aDir += e.direction
+            aSpeed += e.speed
+            aCnt += 1
+            const ts = parseInt((new Date(v.recorded).getTime() + offset) / 1000)
+            if (ts >= fiveMin) {
+                bDir += e.direction
+                bSpeed += e.speed
+                bCnt += 1
+            }
+            if (ts >= oneMin) {
+                cDir += e.direction
+                cSpeed += e.speed
+                cCnt += 1
+            }
+        })
+        aDir /= (aCnt > 0 ? aCnt : 1)
+        aSpeed /= (aCnt > 0 ? aCnt : 1)
+        bDir /= (bCnt > 0 ? bCnt : 1)
+        bSpeed /= (bCnt > 0 ? bCnt : 1)
+        cDir /= (cCnt > 0 ? cCnt : 1)
+        cSpeed /= (cCnt > 0 ? cCnt : 1)
+
+        Object.keys(textWatch).forEach(async (v, i) => {
             const d = textWatch[v]
             if (d.text.sent != true) {
-                console.log("not yet sent to", v, " => ", d)
-                // console.log(document.id, " => ", document.data())
+                console.log("not yet sent to", d.email)
+                if ((d.text.duration === 0 && cSpeed >= d.text.speed && Math.abs(270 - cDir) <= v.text.direction) ||
+                    (d.text.duration === 1 && bSpeed >= d.text.speed && Math.abs(270 - bDir) <= v.text.direction) ||
+                    (d.text.duration === 0 && aSpeed >= d.text.speed && Math.abs(270 - aDir) <= v.text.direction)) {
+                    console.log("sending text to ", d.email)
+                    //send message
+                    sendTextMessage(v.text.address, v.firstName, null)
+                    d.text.sent = true
+                    await setDoc(doc(db, 'users', document.id), d)
+                }
 
-                d.text.sent = true
-                // await setDoc(doc(db, 'users', document.id), d)
+
             } else {
-                console.log("already sent to", v, " => ", d)
+                // console.log("already sent to", v, " => ", d)
             }
         })
     } else {
@@ -458,7 +499,7 @@ app.post("/addData", (req, res) => {
                 humidity: [], pressure: [], temperature: [],
             }
             msg += "pull from gliderport: records from " + timestampToString(i) + " to " + timestampToString(i + 3600) + "\n"
-            sql = "SELECT * FROM `gliderport` WHERE recorded >= '" + timestampToString(i) + "' AND recorded < '" + timestampToString(i + 3600) + "'"
+            sql = "SELECT * F WHERE recorded >= '" + timestampToString(i) + "' AND recorded < '" + timestampToString(i + 3600) + "'"
             connection?.query(sql, (err, results, fields) => {
                 if (Array.isArray(results)) {
                     msg += "found " + results.length + "\n"
@@ -567,7 +608,7 @@ app.post("/addData", (req, res) => {
                         lc = r.data.codes[r.data.codes.length - 1][1]
                     }
 
-                    sql = "SELECT * FROM `gliderport` WHERE recorded > '" +
+                    sql = "SELECT * F WHERE recorded > '" +
                         timestampToString(tsLast) + "'"
                     connection?.query(sql, (err, results, fields) => {
                         if (Array.isArray(results)) {
@@ -764,7 +805,7 @@ app.get("/info", (req, res) => {
 
         })
         l.forEach((v, i) => {
-            sql = "SELECT * FROM `gliderport` WHERE recorded >= '" + timestampToString(v[0]) +
+            sql = "SELECT * F WHERE recorded >= '" + timestampToString(v[0]) +
                 "' AND recorded < '" + timestampToString(v[0] + 3600) + "'"
             connection?.query(sql, (err, results, fields) => {
                 content += `<tr><td>${timestampToString(v[0])}</td><td>${v[1]} items</td><td>gliderport has ${results.length}</td></tr>`
@@ -864,37 +905,29 @@ app.get("/ImageAdded", (req, res) => {
 
 app.get("/sendTestSms", (req, res) => {
     if ("to" in req.query && "name" in req.query) {
-        let transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com",
-            port: 587,
-            secure: false, // true for 465, false for other ports
-            auth: {
-                user: 'glider.port.wind.alert@gmail.com',
-                pass: 'qxhzpfxewjdnqcky',
-            },
-        })
-
-        var mailOptions = {
-            from: 'glider.port.wind.alert@gmail.com',
-            name: 'Gliderport Wind',
-            to: req.query.to,
-            subject: '',
-            text: `Hi ${req.query.name}, This message is a test from the gliderport`,
-        }
-
-        transporter.sendMail(mailOptions, function (error, info) {
-            if (error) {
-                console.log(error);
-            } else {
-                console.log('Email sent: ' + info.response);
-            }
-        })
+        sendTextMessage(req.query.to, req.query.name, null)
         res.send("Ok")
     } else {
         res.send("did not get name & to")
     }
 })
 
+app.get("/PhoneFinder", (req, res) => {
+    if ("area" in req.query && "prefix" in req.query && "number" in req.query) {
+        const sql = `https://www.fonefinder.net/findome.php?npa=${req.query.area}&nxx=${req.query.prefix}` +
+            `&thoublock=${req.query.number}&usaquerytype=Search+by+Number`
+        fetch(url)
+            .then((response) => response.text())
+            .then((responseText) => {
+                var el = document.createElement('html');
+                el.innerHTML = data
+                const href = ((((el.getElementsByTagName('table')[1]).getElementsByTagName('tr')[1]).getElementsByTagName('td')[4]).getElementsByTagName('a')[0]).href
+                const carrier = href.slice(1 + href.lastIndexOf('/'), href.lastIndexOf('.'))
+                return carrier
+            })
+
+    }
+})
 
 
 const getTsFromDate = (date) => {
@@ -912,8 +945,8 @@ const getWeekCount = (start, stop) => {
     let startDay = start
     let stopDay = stop
     console.log("******** Adding a week hitcount from: ", startDay, " to: ", stopDay)
-    connection?.query(`select count(*) AS count from hit_counter where hit >'${startDay} 08:00:00' AND hit <'${stopDay} 08:00:00'`,
-        (err, c, fields) => connection?.query(`select count(DISTINCT IP) AS count from hit_counter where hit >'${startDay} 08:00:00' AND hit <'${stopDay} 08:00:00'`,
+    connection?.query(`select count(*) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`,
+        (err, c, fields) => connection?.query(`select count(DISTINCT IP) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`,
             (err, d, fields) => connection?.query("INSERT INTO hit_counter_week (`day`, total, `unique`) VALUES ('" + startDay + "', " + c[0].count + ", " + d[0].count + ")")
         )
     )
@@ -923,8 +956,8 @@ const getDayCount = (start, stop) => {
     let startDay = start
     let stopDay = stop
     console.log("******** Adding a day hitcount from: ", startDay, " to: ", stopDay)
-    connection?.query(`select count(*) AS count from hit_counter where hit >'${startDay} 08:00:00' AND hit <'${stopDay} 08:00:00'`,
-        (err, c, fields) => connection?.query(`select count(DISTINCT IP) AS count from hit_counter where hit >'${startDay} 08:00:00' AND hit <'${stopDay} 08:00:00'`,
+    connection?.query(`select count(*) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`,
+        (err, c, fields) => connection?.query(`select count(DISTINCT IP) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`,
             (err, d, fields) => connection?.query("INSERT INTO hit_counter_day (`day`, total, `unique`) VALUES ('" + startDay + "', " + c[0].count + ", " + d[0].count + ")")
         )
     )
@@ -1039,5 +1072,37 @@ const handleHits = async () => {
     replacement.day = y[0][0]
     replacement.day.day = getSQLDate(replacement.day.day)
 
-    connection?.query(`REPLACE into miscellaneous (id, data) VALUES ('hit_stats', '${JSON.stringify(replacement)}')`, () => { })
+    connection?.query(`REPLACE into miscellaneous(id, data) VALUES('hit_stats', '${JSON.stringify(replacement)}')`, () => { })
+}
+
+const sendTextMessage = (to, name, data) => {
+    let transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+            user: 'glider.port.wind.alert@gmail.com',
+            pass: 'qxhzpfxewjdnqcky',
+        },
+    })
+
+    var mailOptions = {
+        from: 'glider.port.wind.alert@gmail.com',
+        name: 'Gliderport Wind',
+        to: to,
+        subject: '',
+        text: `Hi ${name}, This message is a test from the gliderport`,
+    }
+    if (Array.isArray(data)) {
+        mailOptions.text = "Time to Fly!\nYour Gliderport criteria was met." +
+            ` Wind is at ${data[0]} deg at ${data[1]} mph` +
+            "\nMake changes at http://www.thilenius.com/gliderport/#/Text"
+    }
+    transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Email sent: ' + info.response);
+        }
+    })
 }
