@@ -39,6 +39,14 @@ onAuthStateChanged(auth, async (user) => {
     }
 })
 
+const resetAllSentTexts = () => {
+    Object.keys(textWatch).map(async (v, i) => {
+        const d = textWatch[v]
+        d.text.sent = false
+        await setDoc(doc(db, 'users', v), d)
+    })
+}
+
 // used to daily update hit counter tables (day of month)
 let d = new Date().getDate()
 
@@ -411,7 +419,7 @@ app.post("/addData", (req, res) => {
                 console.log("not yet sent to", v, " => ", d)
                 // console.log(document.id, " => ", document.data())
 
-                // d.text.sent = true
+                d.text.sent = true
                 // await setDoc(doc(db, 'users', document.id), d)
             } else {
                 console.log("already sent to", v, " => ", d)
@@ -929,6 +937,7 @@ setInterval(async () => {
         //it is a new day of the month
         d = new Date().getDate()
         handleHits()
+        resetAllSentTexts()
     }
 }, 3 * 3600 * 1000) // every 3 hours
 
