@@ -8,11 +8,36 @@ import bodyParser from "body-parser"
 import cors from "cors"
 import fileUpload from 'express-fileupload'
 import nodemailer from "nodemailer"
+
+import { auth, db } from './firebase.js'
+import { onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, collection, query, where } from "firebase/firestore";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth'
 import calculateSunrise from "./calculateSunrise.js"
 import { Http2ServerRequest } from "http2"
 dotenv.config()
 
 let DEBUG = true
+
+
+//log in to firebase
+signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123")
+
+let textWatch = {}
+
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        // console.log("user", JSON.stringify(user))
+        const usersRef = collection(db, "users")
+        const q = query(usersRef, where('text.enabled', '==', true))
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            textWatch = {}
+            querySnapshot.forEach((document) => {
+                const d = document.data()
+                textWatch[document.id] = d
+            })
+        })
+    }
+})
 
 // used to daily update hit counter tables (day of month)
 let d = new Date().getDate()
@@ -378,6 +403,19 @@ app.post("/addData", (req, res) => {
                 ", `temperature` = " + last[5] +
                 " WHERE `id`=1"
             connection?.query(sql, (err, results, fields) => { })
+        })
+        //check for texts that need sending
+        Object.keys(textWatch).forEach((v, i) => {
+            const d = textWatch.v
+            if (d.text.sent != true) {
+                console.log("not yet sent to", document.id, " => ", d)
+                // console.log(document.id, " => ", document.data())
+
+                // d.text.sent = true
+                // await setDoc(doc(db, 'users', document.id), d)
+            } else {
+                console.log("already sent to", document.id, " => ", d)
+            }
         })
     } else {
         msg += "addData called with no data\n"
@@ -890,40 +928,107 @@ setInterval(async () => {
     if (d != new Date().getDate()) {
         //it is a new day of the month
         d = new Date().getDate()
-        // Check for needed updates on hit_counter_week
-        res = await connection?.promise().query(`SELECT MIN(hit) AS startDate FROM hit_counter WHERE 1`)
-        const startDate = (res != undefined) ? (res[0] != undefined ? (Array.isArray(res[0]) ? res[0][0].startDate : 0) : 0) : 0
-
-        res = await connection?.promise().query(`SELECT MAX(hit) AS endDate FROM hit_counter WHERE 1`)
-        const endDate = (res != undefined) ? (res[0] != undefined ? (Array.isArray(res[0]) ? res[0][0].endDate : 0) : 0) : 0
-
-        let res = await connection?.promise().query(`SELECT MAX(day) AS maxDate FROM hit_counter_week WHERE 1`)
-        const results = res[0]
-        let dt = new Date()
-        if (Array.isArray(results)) {
-            dt = new Date(endDate)
-            dt.setDate(dt.getDate() + 7)
-        } else {
-            console.log("weeks table is empty")
-            dt = new Date(startDate)
-        }
-
-        let lastEntry = new Date(endDate)
-
-        let startDay = getSQLDate(dt)
-        dt.setDate(dt.getDate() + 7)
-        let stopDay = getSQLDate(dt)
-
-        while (dt < lastEntry) {
-            getWeekCount(startDay, stopDay);
-            startDay = stopDay
-            dt.setDate(dt.getDate() + 7)
-            stopDay = getSQLDate(dt)
-        }
-        //update hit_stats in miscellaneous
-
+        handleHits()
     }
 }, 3 * 3600 * 1000) // every 3 hours
 
 
+const handleHits = async () => {
+    var dt
 
+    // Check for needed updates on hit_counter_week
+    let res = await connection?.promise().query(`SELECT MIN(hit) AS startDate FROM hit_counter WHERE 1`)
+    const startDate = (res != undefined) ? (res[0] != undefined ? (Array.isArray(res[0]) ? res[0][0].startDate : 0) : 0) : 0
+
+    res = await connection?.promise().query(`SELECT MAX(hit) AS endDate FROM hit_counter WHERE 1`)
+    const endDate = (res != undefined) ? (res[0] != undefined ? (Array.isArray(res[0]) ? res[0][0].endDate : 0) : 0) : 0
+
+    res = await connection?.promise().query(`SELECT MAX(day) AS maxDate FROM hit_counter_week WHERE 1`)
+    let results = res[0]
+    dt = new Date()
+    if (Array.isArray(results)) {
+        dt = new Date(endDate)
+        dt.setDate(dt.getDate() + 7)
+    } else {
+        console.log("weeks table is empty")
+        dt = new Date(startDate)
+    }
+
+    let lastEntry = new Date(endDate)
+
+    let startDay = getSQLDate(dt)
+    dt.setDate(dt.getDate() + 7)
+    let stopDay = getSQLDate(dt)
+
+    while (dt < lastEntry) {
+        getWeekCount(startDay, stopDay);
+        startDay = stopDay
+        dt.setDate(dt.getDate() + 7)
+        stopDay = getSQLDate(dt)
+    }
+
+    // Check for needed updates on hit_counter_day
+    res = await connection?.promise().query(`SELECT MAX(day) AS maxDate FROM hit_counter_day WHERE 1`)
+    results = res[0]
+    if (Array.isArray(results)) {
+        dt = new Date(endDate)
+        dt.setDate(dt.getDate() + 1)
+    } else {
+        console.log("weeks table is empty")
+        dt = new Date(startDate)
+    }
+
+    startDay = getSQLDate(dt)
+    dt.setDate(dt.getDate() + 1)
+    stopDay = getSQLDate(dt)
+
+    while (dt < lastEntry) {
+        getDayCount(startDay, stopDay);
+        startDay = stopDay
+        dt.setDate(dt.getDate() + 1)
+        stopDay = getSQLDate(dt)
+    }
+
+    //update hit_stats in miscellaneous
+    let t
+    results = await connection?.promise().query("SELECT * FROM miscellaneous WHERE id='hit_stats'")
+    t = JSON.parse(results[0][0].data)
+    const replacement = {}
+    replacement.lastReset = t.lastReset
+
+    const row = await connection?.promise().query(`select count(*) AS count from hit_counter where 1`)
+    replacement.total = { count: row[0][0].count }
+
+    const latest = await connection?.promise().query(`SELECT MAX(hit) AS latest FROM hit_counter WHERE 1`)
+    dt = latest[0][0].latest
+    dt.setTime(dt.getTime() + 2 * offset)
+    replacement.total.date = dt.toISOString().replace("T", " ").replace(/\.[0-9]*Z/, "")
+
+    const wks = await connection?.promise().query(`SELECT * FROM hit_counter_week WHERE 1`)
+    const weeks = { start: "", totals: [], uniques: [] }
+    weeks.start = wks[0][0].day.toISOString().replace(/T.*/, " ")
+    let unique = 0, total = 0
+    wks[0].forEach((v, i) => {
+        weeks.totals.push(v.total)
+        weeks.uniques.push(v.unique)
+        unique += v.unique
+    })
+    replacement.total.unique = unique
+    replacement.weeks = weeks
+
+    replacement.week = wks[0][wks[0].length - 1]
+    replacement.week.day = getSQLDate(replacement.week.day)
+    unique = 0, total = 0
+    for (let i = wks[0].length - 4; i < wks[0].length; i++) {
+        const element = wks[0][i]
+        unique += element.unique
+        total += element.total
+    }
+    replacement.month = { unique, total }
+
+    const y = await connection?.promise().query(`SELECT * FROM hit_counter_day ORDER BY day DESC LIMIT 1`)
+    replacement.day = y[0][0]
+    replacement.day.day = getSQLDate(replacement.day.day)
+
+    connection?.query(`REPLACE into miscellaneous (id, data) VALUES ('hit_stats', '${JSON.stringify(replacement)}')`, () => { })
+}
