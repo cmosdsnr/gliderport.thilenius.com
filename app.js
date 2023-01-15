@@ -406,7 +406,7 @@ app.post("/addData", (req, res) => {
         })
         //check for texts that need sending
         Object.keys(textWatch).forEach((v, i) => {
-            const d = textWatch.v
+            const d = textWatch[v]
             if (d.text.sent != true) {
                 console.log("not yet sent to", document.id, " => ", d)
                 // console.log(document.id, " => ", document.data())
