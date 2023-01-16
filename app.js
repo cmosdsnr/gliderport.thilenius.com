@@ -928,6 +928,7 @@ app.get("/PhoneFinder", (req, res) => {
                 responseText = responseText.replace(/<TD><A HREF=\'http:\/\/fonefinder.net\//, "")
                 responseText = responseText.replace(/\.php\'.*/, "")
                 responseText = responseText.split('\n')[0];
+                responseText = responseText.split('\r')[0];
                 res.send(responseText)
             })
     }
