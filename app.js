@@ -914,16 +914,17 @@ app.get("/sendTestSms", (req, res) => {
 
 app.get("/PhoneFinder", (req, res) => {
     if ("area" in req.query && "prefix" in req.query && "number" in req.query) {
-        const sql = `https://www.fonefinder.net/findome.php?npa=${req.query.area}&nxx=${req.query.prefix}` +
+        const url = `https://www.fonefinder.net/findome.php?npa=${req.query.area}&nxx=${req.query.prefix}` +
             `&thoublock=${req.query.number}&usaquerytype=Search+by+Number`
         fetch(url)
             .then((response) => response.text())
             .then((responseText) => {
-                var el = document.createElement('html');
-                el.innerHTML = data
-                const href = ((((el.getElementsByTagName('table')[1]).getElementsByTagName('tr')[1]).getElementsByTagName('td')[4]).getElementsByTagName('a')[0]).href
-                const carrier = href.slice(1 + href.lastIndexOf('/'), href.lastIndexOf('.'))
-                res.send(carrier)
+                // console.log(url)
+                // var el = document.createElement('html');
+                // el.innerHTML = data
+                // const href = ((((el.getElementsByTagName('table')[1]).getElementsByTagName('tr')[1]).getElementsByTagName('td')[4]).getElementsByTagName('a')[0]).href
+                // const carrier = href.slice(1 + href.lastIndexOf('/'), href.lastIndexOf('.'))
+                res.send(responseText)
             })
     }
     else {
