@@ -919,6 +919,8 @@ app.get("/PhoneFinder", (req, res) => {
         fetch(url)
             .then((response) => response.text())
             .then((responseText) => {
+                secondTablePosition = responseText.split('<table', 2).join('<table').length;
+                responseText = responseText.slice(secondTablePosition, responseText.length - 1)
                 // console.log(url)
                 // var el = document.createElement('html');
                 // el.innerHTML = data
