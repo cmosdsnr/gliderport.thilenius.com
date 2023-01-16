@@ -919,13 +919,15 @@ app.get("/PhoneFinder", (req, res) => {
         fetch(url)
             .then((response) => response.text())
             .then((responseText) => {
-                secondTablePosition = responseText.split('<table', 2).join('<table').length;
+                const secondTablePosition = responseText.split('<TABLE', 1).join('<TABLE').length;
                 responseText = responseText.slice(secondTablePosition, responseText.length - 1)
-                // console.log(url)
-                // var el = document.createElement('html');
-                // el.innerHTML = data
-                // const href = ((((el.getElementsByTagName('table')[1]).getElementsByTagName('tr')[1]).getElementsByTagName('td')[4]).getElementsByTagName('a')[0]).href
-                // const carrier = href.slice(1 + href.lastIndexOf('/'), href.lastIndexOf('.'))
+                const secondTrPosition = responseText.split('<TR', 2).join('<TR').length;
+                responseText = responseText.slice(secondTrPosition, responseText.length - 1)
+                const secondTdPosition = responseText.split('<TD', 5).join('<TD').length;
+                responseText = responseText.slice(secondTdPosition, responseText.length - 1)
+                responseText = responseText.replace(/<TD><A HREF=\'http:\/\/fonefinder.net\//, "")
+                responseText = responseText.replace(/\.php\'.*/, "")
+                responseText = responseText.split('\n')[0];
                 res.send(responseText)
             })
     }
