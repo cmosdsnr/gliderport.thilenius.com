@@ -30,7 +30,7 @@ onAuthStateChanged(auth, async (user) => {
         const usersRef = collection(db, "users")
         const q = query(usersRef, where('text.enabled', '==', true))
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            console.log("snapshot update")
+            console.log((new Date()).toISOString(), ": snapshot update")
             textWatch = {}
             querySnapshot.forEach((document) => {
                 const d = document.data()
@@ -321,7 +321,7 @@ app.get('/RegenerateAllHours', function (req, res) {
     }
     let msg = "pull from gliderport: records from " + timestampToString(twoDaysAgo) + "<br/>\n"
     console.log("pull from gliderport: records from " + timestampToString(twoDaysAgo))
-    sql = "SELECT * F WHERE recorded > '" + timestampToString(twoDaysAgo) + "'"
+    sql = "SELECT * FROM gliderport WHERE recorded > '" + timestampToString(twoDaysAgo) + "'"
     console.log(sql)
     connection?.query(sql, (err, results, fields) => {
         console.log("found " + results.length + " results")
@@ -529,7 +529,7 @@ app.post("/addData", async (req, res) => {
                 humidity: [], pressure: [], temperature: [],
             }
             msg += "pull from gliderport: records from " + timestampToString(i) + " to " + timestampToString(i + 3600) + "\n"
-            sql = "SELECT * F WHERE recorded >= '" + timestampToString(i) + "' AND recorded < '" + timestampToString(i + 3600) + "'"
+            sql = "SELECT * FROM gliderport WHERE recorded >= '" + timestampToString(i) + "' AND recorded < '" + timestampToString(i + 3600) + "'"
             connection?.query(sql, (err, results, fields) => {
                 if (Array.isArray(results)) {
                     msg += "found " + results.length + "\n"
@@ -638,7 +638,7 @@ app.post("/addData", async (req, res) => {
                         lc = r.data.codes[r.data.codes.length - 1][1]
                     }
 
-                    sql = "SELECT * F WHERE recorded > '" +
+                    sql = "SELECT * FROM gliderport WHERE recorded > '" +
                         timestampToString(tsLast) + "'"
                     connection?.query(sql, (err, results, fields) => {
                         if (Array.isArray(results)) {
@@ -835,7 +835,7 @@ app.get("/info", (req, res) => {
 
         })
         l.forEach((v, i) => {
-            sql = "SELECT * F WHERE recorded >= '" + timestampToString(v[0]) +
+            sql = "SELECT * FROM gliderport WHERE recorded >= '" + timestampToString(v[0]) +
                 "' AND recorded < '" + timestampToString(v[0] + 3600) + "'"
             connection?.query(sql, (err, results, fields) => {
                 content += `<tr><td>${timestampToString(v[0])}</td><td>${v[1]} items</td><td>gliderport has ${results.length}</td></tr>`
