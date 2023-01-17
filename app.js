@@ -451,18 +451,48 @@ app.post("/addData", async (req, res) => {
             const d = textWatch[v]
             if (d.text.sent != true) {
                 console.log("not yet sent to", d.email)
-                if ((d.text.duration === 0 && cSpeed >= d.text.speed && Math.abs(270 - cDir) <= v.text.direction) ||
-                    (d.text.duration === 1 && bSpeed >= d.text.speed && Math.abs(270 - bDir) <= v.text.direction) ||
-                    (d.text.duration === 0 && aSpeed >= d.text.speed && Math.abs(270 - aDir) <= v.text.direction)) {
-                    console.log("sending text to ", d.email)
-                    //send message
-                    sendTextMessage(v.text.address, v.firstName, null)
+                if (d.text.duration === 0 &&
+                    cSpeed >= d.text.speed &&
+                    Math.abs(270 - cDir) <= v.text.direction) {
+                    sendTextMessage(v.text.address, v.firstName,
+                        {
+                            speed: cSpeed,
+                            direction: cDir,
+                            duration: "1"
+                        }
+                    )
                     d.text.sent = true
+                }
+                if (d.text.duration === 1 &&
+                    bSpeed >= d.text.speed &&
+                    Math.abs(270 - bDir) <= v.text.direction) {
+                    sendTextMessage(v.text.address, v.firstName,
+                        {
+                            speed: bSpeed,
+                            direction: bDir,
+                            duration: "5"
+                        }
+                    )
+                    d.text.sent = true
+                }
+                if (d.text.duration === 2 &&
+                    aSpeed >= d.text.speed &&
+                    Math.abs(270 - aDir) <= v.text.direction) {
+                    sendTextMessage(v.text.address, v.firstName,
+                        {
+                            speed: aSpeed,
+                            direction: aDir,
+                            duration: "15"
+                        }
+                    )
+                    d.text.sent = true
+                }
+                if (d.text.sent === true) {
+                    console.log("sending text to ", d.email)
                     await setDoc(doc(db, 'users', document.id), d)
                 }
-
-
-            } else {
+            }
+            else {
                 // console.log("already sent to", v, " => ", d)
             }
         })
@@ -912,6 +942,7 @@ app.get("/sendTestSms", (req, res) => {
     }
 })
 
+// Call to find out carrier of a phone number
 app.get("/PhoneFinder", (req, res) => {
     if ("area" in req.query && "prefix" in req.query && "number" in req.query) {
         // https://www.fonefinder.net/findome.php?npa=530&nxx=613&thoublock=5388&usaquerytype=Search+by+Number
@@ -1100,12 +1131,13 @@ const sendTextMessage = (to, name, data) => {
         name: 'Gliderport Wind',
         to: to,
         subject: '',
-        text: `Hi ${name}, This message is a test from the gliderport`,
     }
-    if (Array.isArray(data)) {
-        mailOptions.text = "Time to Fly!\nYour Gliderport criteria was met." +
-            ` Wind is at ${data[0]} deg at ${data[1]} mph` +
-            "\nMake changes at http://www.thilenius.com/gliderport/#/Text"
+    if (data === null) {
+        mailOptions.text = `Hi ${name}, This message is a test from the gliderport`
+    } else {
+        mailOptions.text = `${name}, Time to Fly!\nYour Gliderport criteria was met.` +
+            ` Average of last ${data.duration} min, wind is at ${data.direction} deg at ${data.speed} mph` +
+            "\nMake changes at http://live.flytorrey.com"
     }
     transporter.sendMail(mailOptions, function (error, info) {
         if (error) {
