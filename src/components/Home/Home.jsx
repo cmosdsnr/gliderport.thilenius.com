@@ -93,6 +93,13 @@ export const Home = () => {
                         </Col>
 
                     </Row>
+                    <Row>
+                        <Col
+                            xs={12}
+                            style={{ backgroundColor: "lightpink" }}
+                        >
+                            This site is still under construction. patience please...</Col></Row>
+
                     {offline ? <Row>
                         <Col
                             xs={12}

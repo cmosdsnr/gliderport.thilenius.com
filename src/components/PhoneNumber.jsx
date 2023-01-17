@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { useInterval } from "./Globals"
+// import { useInterval } from "./Globals"
 
 const provider = {
     'alltel': ['mms.alltelwireless.com', 'Alltel', 'NotFoundYet'],
@@ -31,10 +31,10 @@ export const PhoneNumberInput = (props) => {
     const { currentUser, updateUser } = useAuth()
 
 
-    const report = () => console.log("cu:", currentUser.phone, " p:", phone)
-    const interval = useInterval(() => {
-        report()
-    }, 5000)
+    // const report = () => console.log("cu:", currentUser.phone, " p:", phone)
+    // const interval = useInterval(() => {
+    //     report()
+    // }, 5000)
 
     useEffect(() => {
         setPhone(currentUser.phone)
@@ -85,8 +85,6 @@ export const PhoneNumberInput = (props) => {
                 })
         }
     }
-
-
     return (
         <input {...rest} onChange={e => handleChange(e)} value={phone} />
     )

@@ -219,11 +219,8 @@ export function DataProvider({ children }) {
     }
 
     const handleImage = (d: ImageData) => {
-        setImage((d === null ? null : d.A))
-        if (d === null)
-            console.log("Initial fetch of image was NULL")
-        else
-            console.log("Initial fetch of image")
+        if (d === null || d.A === undefined) return
+        setImage(d.A)
     }
 
     const handleBigImage = (d: ImageData) => {
@@ -359,7 +356,7 @@ export function DataProvider({ children }) {
                 setPassedSeconds(0)
             }
             if (messageBody.command === 'image') {
-                console.log("image message received, length: ", messageBody.data.length)
+                // console.log("image message received, length: ", messageBody.data.length)
                 setImage(messageBody.data)
             }
             if (messageBody.command === 'ping') {

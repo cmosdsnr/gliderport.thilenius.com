@@ -51,7 +51,7 @@ export default function UpdatingImage({ offline }) {
             setImgSrc(OutOfOrder)
         }
         else {
-            console.log("image effect: new image added")
+            // console.log("image effect: new image added")
             const blob = b64toBlob(image, "image/jpeg")
             if (blob != null) {
                 const blobUrl = URL.createObjectURL(blob)
@@ -71,7 +71,7 @@ export default function UpdatingImage({ offline }) {
             setImgSrcLarge(OutOfOrder)
         }
         else {
-            console.log("image effect: new image added")
+            // console.log("image effect: new image added")
             const blob = b64toBlob(image, "image/jpeg")
             if (blob != null) {
                 const blobUrl = URL.createObjectURL(blob)
