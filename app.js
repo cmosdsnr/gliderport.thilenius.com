@@ -226,7 +226,7 @@ app.use(express.urlencoded({ extended: true, limit: "30mb" }))
 
 
 var corsOptions = {
-    origin: [/gliderport.thilenius.*/, /localhost/],
+    origin: [/gliderport\.thilenius\..*/, /localhost.*/],
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 
@@ -914,6 +914,7 @@ app.get("/sendTestSms", (req, res) => {
 
 app.get("/PhoneFinder", (req, res) => {
     if ("area" in req.query && "prefix" in req.query && "number" in req.query) {
+        // https://www.fonefinder.net/findome.php?npa=530&nxx=613&thoublock=5388&usaquerytype=Search+by+Number
         const url = `https://www.fonefinder.net/findome.php?npa=${req.query.area}&nxx=${req.query.prefix}` +
             `&thoublock=${req.query.number}&usaquerytype=Search+by+Number`
         fetch(url)
