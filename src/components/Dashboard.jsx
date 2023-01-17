@@ -139,23 +139,14 @@ export default function Dashboard() {
                                         }
 
                                         <Row className="profileBox">
-                                            {editing === 2 ?
-                                                <>
-                                                    <Col xs={12}>
-                                                        <label>Please enter your Mobile Number:      <PhoneNumberInput
-                                                            parentPhoneNumber={currentUser.phone}
-                                                            updateUser={updateUser}
-                                                            updateUserText={updateUserText}
-                                                        />
-                                                        </label>
-                                                    </Col>
-                                                </>
-                                                :
-                                                <Row onClick={() => setEditing(2)}>
-                                                    <Col xs={3}><strong>Mobile:</strong></Col>
-                                                    <Col xs={8}>{'(' + currentUser.phone.slice(0, 3) + ') ' + currentUser.phone.slice(3, 6) + '-' + currentUser.phone.slice(6, 10)}</Col>
-                                                </Row>
-                                            }
+                                            <Col xs={12}>
+                                                <label>Mobile Number:
+                                                    <PhoneNumberInput
+                                                        style={{ marginLeft: "20px" }}
+                                                        updateUserText={updateUserText}
+                                                    />
+                                                </label>
+                                            </Col>
                                             <Col xs={12}>
                                                 {currentUser.text.address?.length > 0 ?
                                                     <>

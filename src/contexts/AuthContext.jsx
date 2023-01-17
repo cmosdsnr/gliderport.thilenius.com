@@ -50,6 +50,7 @@ export function AuthProvider({ children }) {
         let delta = {}
         delta[name] = value
         setCurrentUser({ ...currentUser, ...delta })
+        if (name === 'phone') console.log("auth ", currentUser.phone)
         const docRef = doc(db, 'users', currentUser.uid)
         return updateDoc(docRef, delta)
     }
