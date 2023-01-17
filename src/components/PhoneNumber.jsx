@@ -47,7 +47,6 @@ export const PhoneNumberInput = (props) => {
     const handleChange = (e) => {
         setPhone(e.target.value)
         const fn = formatPhoneNumber(e.target.value)
-        debugger
         if (fn.length === 14) {
             gatewayPhoneNumber(fn)
             updateUser('phone', fn)
