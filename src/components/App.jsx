@@ -7,9 +7,8 @@ import { BrowserRouter as Router, Switch, Route, Redirect } from "react-router-d
 import Dashboard from "./Dashboard"
 import PrivateRoute from './Navigation/PrivateRoute'
 import ForgotPassword from './Navigation/ForgotPassword'
+import MessageBoard from './Messages/MessageBoard'
 import UpdateProfile from './UpdateProfile'
-import PostDetail from './PostDetail'
-import CreatePost from './CreatePost'
 import Forecast from './Forecast'
 import Equipment from './Equipment'
 import Video from './Video'
@@ -54,6 +53,7 @@ function App() {
                                 <PrivateRoute exact path="/stats" component={Stats} />
                                 <PrivateRoute exact path="/forecast" component={Forecast} />
                                 <PrivateRoute exact path="/equipment" component={Equipment} />
+                                <PrivateRoute exact path="/blog" component={MessageBoard} />
                                 <PrivateRoute exact path="/video" component={Video} />
                                 <Route exact path="/contact"><Contact /></Route>
                                 <PrivateRoute exact path="/contribute" component={Contribute} />
@@ -75,8 +75,6 @@ function App() {
                                         setShowLoginModal={setShowLoginModal}
                                     />
                                 </Route>
-                                <PrivateRoute path="/post/:id" component={PostDetail} />
-                                <PrivateRoute path="/create-post" component={CreatePost} />
                             </Switch>
                             {/* </div> */}
                         </Container>

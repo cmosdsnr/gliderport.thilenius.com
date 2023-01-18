@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { auth, db } from '../firebase'
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -10,6 +10,7 @@ import {
     updatePassword,
     onAuthStateChanged
 } from 'firebase/auth'
+import date from "date-and-time"
 
 const AuthContext = React.createContext()
 
@@ -21,6 +22,8 @@ export function useAuth() {
 export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState() //initially undefined, then set to null or currentUser info
     const [loading, setLoading] = useState(true)
+    const [messages, setMessages] = useState([])
+    const [messagesLoaded, setMessagesLoaded] = useState(false)
 
     function signup(email, password) {
         return createUserWithEmailAndPassword(auth, email, password)
@@ -67,8 +70,47 @@ export function AuthProvider({ children }) {
         } else {
             console.log("didn't get record")
         }
+    }
+
+    const saveMessage = async (msg) => {
+        if (currentUser) {
+            let ts = parseInt((new Date()).getTime() / 1000)
+            let formatDate = date.format(new Date(), "YYYY-MM-DD, HH:mm")
+            msg.ts = ts
+            msg.date = formatDate
+            msg.uid = currentUser.uid
+            if (currentUser.firstName.length === 0) {
+                alert("Please go to Dashboard and enter your name first")
+            } else {
+                msg.ownerName = currentUser.firstName + " " + currentUser.lastName
+                const docRef = await addDoc(collection(db, "messages"), msg)
+            }
+        }
 
     }
+
+    const deleteMessage = async (msg) => {
+        if (msg.data.id === currentUser.id) {
+            if (confirm("Do you want to delete this message?"))
+                await deleteDoc(doc(db, "messages", msg.id))
+        }
+    }
+
+    useEffect(() => {
+        const messageRef = collection(db, "messages")
+        const q = query(messageRef, orderBy("ts", "desc"))
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            var tempArr = [];
+            querySnapshot.forEach(function (child) {
+                tempArr.push({ id: child.id, data: child.data() });
+            });
+            setMessages(tempArr);
+            //Change loading status
+            setMessagesLoaded(true);
+        })
+        return unsubscribe
+    }, [])
 
     let first = true;
     useEffect(() => {
@@ -125,6 +167,7 @@ export function AuthProvider({ children }) {
         return unsubscribe
     }, [])
 
+
     const value = {
         currentUser,
         login,
@@ -134,7 +177,11 @@ export function AuthProvider({ children }) {
         updateUserEmail,
         updateUserPassword,
         updateUser,
-        reloadUserInfo
+        reloadUserInfo,
+        messages,
+        messagesLoaded,
+        saveMessage,
+        deleteMessage,
     }
     return (
         <AuthContext.Provider value={value}>
