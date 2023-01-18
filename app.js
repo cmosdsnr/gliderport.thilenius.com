@@ -802,7 +802,7 @@ app.get("/info", (req, res) => {
     } else {
         content += `<tr><td>Most recent addData at:</td><td>${tdLast.toDateString()}</td></tr>`
         content += `<tr><td></td><td>First Record of last added:</td><td>${firstRecord}</td></tr>`
-        content += `<tr><td></td><td>Number of Records added:</td><td>${numberRecords}</td></tr>`
+        content += `<tr><td></td><td>Number of Records added:</td><td>${numberRecords}</td></tr>`;
 
     }
     if (latestHours === 0)
