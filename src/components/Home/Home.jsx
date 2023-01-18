@@ -98,7 +98,7 @@ export const Home = () => {
                             xs={12}
                             style={{ backgroundColor: "lightpink" }}
                         >
-                            This site is still under construction. patience please...</Col></Row>
+                            This site is still under construction. patience please... (anemometer wiring broke again from the storms)</Col></Row>
 
                     {offline ? <Row>
                         <Col
