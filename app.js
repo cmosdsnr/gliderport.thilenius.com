@@ -802,7 +802,7 @@ app.get("/info", (req, res) => {
     } else {
         content += `<tr><td>Most recent addData at:</td><td>${tdLast.toDateString()}</td></tr>`
         content += `<tr><td></td><td>First Record of last added:</td><td>${firstRecord}</td></tr>`
-        content += `<tr><td></td><td>Number of Records added:</td><td>${numberRecords}</td></tr>`;
+        content += `<tr><td></td><td>Number of Records added:</td><td>${numberRecords}</td></tr>`
 
     }
     if (latestHours === 0)
@@ -827,7 +827,8 @@ app.get("/info", (req, res) => {
     sql = "SELECT * FROM `hours` ORDER BY start DESC"
     connection?.query(sql, (err, results, fields) => {
         content += `<h3>Hours has ${results.length} entries</h3>`
-        content += `<p><table>`
+        content += `<p><table style="text-align: center;">`
+        content += `<tr><th>Hour Start</th><th>Hours count</th><th>Gliderport count</th></tr>`
         let l = []
         results.forEach((v, i) => {
             const d = JSON.parse(v.data)
@@ -838,8 +839,8 @@ app.get("/info", (req, res) => {
             sql = "SELECT * FROM gliderport WHERE recorded >= '" + timestampToString(v[0]) +
                 "' AND recorded < '" + timestampToString(v[0] + 3600) + "'"
             connection?.query(sql, (err, results, fields) => {
-                content += `<tr><td>${timestampToString(v[0])}</td><td>${v[1]} items</td><td>gliderport has ${results.length}</td></tr>`
-                if (l.length === i + 1) content += `</table></p>`
+                content += `<tr><td>${timestampToString(v[0]).replace("00:00", "00")}</td><td>${v[1]}</td><td>${results.length}</td></tr>`
+                if (i === l.length - 1) content += `</table></p>`
             })
         })
 
