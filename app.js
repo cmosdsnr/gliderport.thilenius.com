@@ -356,6 +356,16 @@ app.get('/RegenerateAllHours', function (req, res) {
     console.log("Done with regeneration")
     res.send(msg)
 })
+
+
+
+app.get("/HandleHits", (req, res) => {
+    handleHits()
+    connection?.query("SELECT * FROM miscellaneous WHERE id='hit_stats'", function (err, results, fields) {
+        res.send(JSON.parse(results[0].data))
+    })
+})
+
 app.get("/fixHistory", (req, res) => {
     let p = "database:<br/>"
     connection?.query(
@@ -1025,19 +1035,18 @@ const handleHits = async () => {
 
     res = await connection?.promise().query(`SELECT MAX(hit) AS endDate FROM hit_counter WHERE 1`)
     const endDate = (res != undefined) ? (res[0] != undefined ? (Array.isArray(res[0]) ? res[0][0].endDate : 0) : 0) : 0
+    let lastEntry = new Date(endDate)
 
     res = await connection?.promise().query(`SELECT MAX(day) AS maxDate FROM hit_counter_week WHERE 1`)
     let results = res[0]
     dt = new Date()
     if (Array.isArray(results)) {
-        dt = new Date(endDate)
+        dt = new Date(results[0].maxDate)
         dt.setDate(dt.getDate() + 7)
     } else {
         console.log("weeks table is empty")
         dt = new Date(startDate)
     }
-
-    let lastEntry = new Date(endDate)
 
     let startDay = getSQLDate(dt)
     dt.setDate(dt.getDate() + 7)
@@ -1054,13 +1063,12 @@ const handleHits = async () => {
     res = await connection?.promise().query(`SELECT MAX(day) AS maxDate FROM hit_counter_day WHERE 1`)
     results = res[0]
     if (Array.isArray(results)) {
-        dt = new Date(endDate)
+        dt = new Date(results[0].maxDate)
         dt.setDate(dt.getDate() + 1)
     } else {
         console.log("weeks table is empty")
         dt = new Date(startDate)
     }
-
     startDay = getSQLDate(dt)
     dt.setDate(dt.getDate() + 1)
     stopDay = getSQLDate(dt)
