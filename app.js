@@ -463,8 +463,8 @@ app.post("/addData", async (req, res) => {
                 console.log("not yet sent to", d.email)
                 if (d.text.duration === 0 &&
                     cSpeed >= d.text.speed &&
-                    Math.abs(270 - cDir) <= v.text.direction) {
-                    sendTextMessage(v.text.address, v.firstName,
+                    Math.abs(270 - cDir) <= d.text.direction) {
+                    sendTextMessage(d.text.address, d.firstName,
                         {
                             speed: cSpeed,
                             direction: cDir,
@@ -475,8 +475,8 @@ app.post("/addData", async (req, res) => {
                 }
                 if (d.text.duration === 1 &&
                     bSpeed >= d.text.speed &&
-                    Math.abs(270 - bDir) <= v.text.direction) {
-                    sendTextMessage(v.text.address, v.firstName,
+                    Math.abs(270 - bDir) <= d.text.direction) {
+                    sendTextMessage(d.text.address, d.firstName,
                         {
                             speed: bSpeed,
                             direction: bDir,
@@ -487,8 +487,8 @@ app.post("/addData", async (req, res) => {
                 }
                 if (d.text.duration === 2 &&
                     aSpeed >= d.text.speed &&
-                    Math.abs(270 - aDir) <= v.text.direction) {
-                    sendTextMessage(v.text.address, v.firstName,
+                    Math.abs(270 - aDir) <= d.text.direction) {
+                    sendTextMessage(d.text.address, d.firstName,
                         {
                             speed: aSpeed,
                             direction: aDir,
