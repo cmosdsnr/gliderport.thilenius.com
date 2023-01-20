@@ -360,9 +360,16 @@ app.get('/RegenerateAllHours', function (req, res) {
 
 
 app.get("/HandleHits", (req, res) => {
-    handleHits()
+    let retString = handleHits()
     connection?.query("SELECT * FROM miscellaneous WHERE id='hit_stats'", function (err, results, fields) {
-        res.send(JSON.parse(results[0].data))
+        const d = JSON.parse(results[0].data)
+        retString += "***** DB ***** </br>"
+        retString += "Day start           : " + d.day.day + "</br>"
+        retString += "Week start          : " + d.week.day + "</br>"
+        retString += "totals plot length  : " + d.totals.length + "</br>"
+        retString += "last totaled        : " + d.total.date + "</br>"
+        retString += "last Entry : " + lastEntry + "</br>"
+        res.send(retString)
     })
 })
 
@@ -1028,7 +1035,7 @@ setInterval(async () => {
 
 const handleHits = async () => {
     var dt
-
+    var retString = ""
     // Check for needed updates on hit_counter_week
     let res = await connection?.promise().query(`SELECT MIN(hit) AS startDate FROM hit_counter WHERE 1`)
     const startDate = (res != undefined) ? (res[0] != undefined ? (Array.isArray(res[0]) ? res[0][0].startDate : 0) : 0) : 0
@@ -1037,7 +1044,8 @@ const handleHits = async () => {
     const endDate = (res != undefined) ? (res[0] != undefined ? (Array.isArray(res[0]) ? res[0][0].endDate : 0) : 0) : 0
     let lastEntry = new Date(endDate)
 
-    res = await connection?.promise().query(`SELECT MAX(day) AS maxDate FROM hit_counter_week WHERE 1`)
+    retString +=
+        res = await connection?.promise().query(`SELECT MAX(day) AS maxDate FROM hit_counter_week WHERE 1`)
     let results = res[0]
     dt = new Date()
     if (Array.isArray(results)) {
@@ -1052,6 +1060,11 @@ const handleHits = async () => {
     dt.setDate(dt.getDate() + 7)
     let stopDay = getSQLDate(dt)
 
+    retString += "**** WEEK ***** </br>"
+    retString += "start day " + startDay + "</br>"
+    retString += "stop day " + stopDay + "</br>"
+    retString += "dt         : " + dt + "</br>"
+    retString += "last Entry : " + lastEntry + "</br>"
     while (dt < lastEntry) {
         getWeekCount(startDay, stopDay);
         startDay = stopDay
@@ -1073,6 +1086,11 @@ const handleHits = async () => {
     dt.setDate(dt.getDate() + 1)
     stopDay = getSQLDate(dt)
 
+    retString += "***** DAY ***** </br>"
+    retString += "start day " + startDay + "</br>"
+    retString += "stop day " + stopDay + "</br>"
+    retString += "dt         : " + dt + "</br>"
+    retString += "last Entry : " + lastEntry + "</br>"
     while (dt < lastEntry) {
         getDayCount(startDay, stopDay);
         startDay = stopDay
