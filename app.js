@@ -1139,7 +1139,7 @@ const handleHits = async () => {
     replacement.day = y[0][0]
     replacement.day.day = getSQLDate(replacement.day.day)
 
-    await connection?.promise().query(`REPLACE into miscellaneous(id, data) VALUES('hit_stats', '${JSON.stringify(replacement)}')`, () => { })
+    await connection?.promise().query(`REPLACE into miscellaneous(id, data) VALUES('hit_stats', '${JSON.stringify(replacement)}')`)
     return retString
 }
 
