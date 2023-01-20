@@ -463,7 +463,7 @@ app.post("/addData", async (req, res) => {
                 console.log("not yet sent to", d.email)
                 if (d.text.duration === 0 &&
                     cSpeed >= d.text.speed &&
-                    Math.abs(270 - cDir) <= d.text.direction) {
+                    Math.abs(270 - cDir) <= d.text.errorAngle) {
                     sendTextMessage(d.text.address, d.firstName,
                         {
                             speed: cSpeed,
@@ -475,7 +475,7 @@ app.post("/addData", async (req, res) => {
                 }
                 if (d.text.duration === 1 &&
                     bSpeed >= d.text.speed &&
-                    Math.abs(270 - bDir) <= d.text.direction) {
+                    Math.abs(270 - bDir) <= d.text.errorAngle) {
                     sendTextMessage(d.text.address, d.firstName,
                         {
                             speed: bSpeed,
@@ -487,7 +487,7 @@ app.post("/addData", async (req, res) => {
                 }
                 if (d.text.duration === 2 &&
                     aSpeed >= d.text.speed &&
-                    Math.abs(270 - aDir) <= d.text.direction) {
+                    Math.abs(270 - aDir) <= d.text.errorAngle) {
                     sendTextMessage(d.text.address, d.firstName,
                         {
                             speed: aSpeed,
@@ -1145,7 +1145,7 @@ const sendTextMessage = (to, name, data) => {
         mailOptions.text = `Hi ${name}, This message is a test from the gliderport`
     } else {
         mailOptions.text = `${name}, Time to Fly!\nYour Gliderport criteria was met.` +
-            ` Average of last ${data.duration} min, wind is at ${data.direction} deg at ${data.speed} mph` +
+            ` Average of last ${data.duration} min, wind is at ${Math.round(data.direction)} deg at ${Math.round(data.speed / 10)} mph` +
             "\nMake changes at http://live.flytorrey.com"
     }
     transporter.sendMail(mailOptions, function (error, info) {
