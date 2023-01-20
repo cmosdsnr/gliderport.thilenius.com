@@ -359,16 +359,16 @@ app.get('/RegenerateAllHours', function (req, res) {
 
 
 
-app.get("/HandleHits", (req, res) => {
-    let retString = handleHits()
+app.get("/HandleHits", async (req, res) => {
+    let retString = await handleHits()
     connection?.query("SELECT * FROM miscellaneous WHERE id='hit_stats'", function (err, results, fields) {
         const d = JSON.parse(results[0].data)
         retString += "***** DB ***** </br>"
         retString += "Day start           : " + d.day.day + "</br>"
         retString += "Week start          : " + d.week.day + "</br>"
-        // retString += "totals plot length  : " + d.totals.length + "</br>"
-        // retString += "uniques plot length : " + d.uniques.length + "</br>"
-        // retString += "last totaled        : " + d.total.date + "</br>"
+        retString += "totals plot length  : " + d.weeks.totals.length + "</br>"
+        retString += "uniques plot length : " + d.weeks.uniques.length + "</br>"
+        retString += "last totaled        : " + d.total.date + "</br>"
         retString += JSON.stringify(results[0].data)
         res.send(retString)
     })
