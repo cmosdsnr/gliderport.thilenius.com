@@ -52,6 +52,9 @@ export function AuthProvider({ children }) {
     function updateUser(name, value) {
         let delta = {}
         delta[name] = value
+        //reset the sent message flag
+        if (name != 'text') delta.text = currentUser.text
+        delta.text.sent = false
         setCurrentUser({ ...currentUser, ...delta })
         if (name === 'phone') console.log("auth ", currentUser.phone)
         const docRef = doc(db, 'users', currentUser.uid)
