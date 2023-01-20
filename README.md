@@ -51,3 +51,8 @@ local
 git remote add dokku dokku@thilenius.org:gliderport
 git commit -m "message"
 git push dokku master
+
+
+github
+git remote add origin https://github.com/cmosdsnr/gliderport.git
+git push origin master
