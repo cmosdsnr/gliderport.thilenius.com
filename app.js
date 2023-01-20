@@ -366,9 +366,10 @@ app.get("/HandleHits", (req, res) => {
         retString += "***** DB ***** </br>"
         retString += "Day start           : " + d.day.day + "</br>"
         retString += "Week start          : " + d.week.day + "</br>"
-        retString += "totals plot length  : " + d.totals.length + "</br>"
-        retString += "last totaled        : " + d.total.date + "</br>"
-        retString += "last Entry : " + lastEntry + "</br>"
+        // retString += "totals plot length  : " + d.totals.length + "</br>"
+        // retString += "uniques plot length : " + d.uniques.length + "</br>"
+        // retString += "last totaled        : " + d.total.date + "</br>"
+        retString += JSON.stringify(results[0].data)
         res.send(retString)
     })
 })
