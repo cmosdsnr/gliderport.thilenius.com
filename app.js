@@ -1144,9 +1144,9 @@ const sendTextMessage = (to, name, data) => {
     if (data === null) {
         mailOptions.text = `Hi ${name}, This message is a test from the gliderport`
     } else {
-        mailOptions.text = `${name}, Time to Fly!\nYour Gliderport criteria was met.` +
-            ` Average of last ${data.duration} min, wind is at ${Math.round(data.direction)} deg at ${Math.round(data.speed / 10)} mph` +
-            "\nMake changes at http://live.flytorrey.com"
+        mailOptions.text = `${name}, Time to Fly!\n` +
+            `Wind was at ${Math.round(data.direction)} deg at ${Math.round(data.speed / 10)} mph over the past ${data.duration} min, ` +
+            "\nMake changes to your alert <a href='https://live.flytorrey.com'>here</a>"
     }
     transporter.sendMail(mailOptions, function (error, info) {
         if (error) {
