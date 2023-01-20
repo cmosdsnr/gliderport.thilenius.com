@@ -226,7 +226,7 @@ app.use(express.urlencoded({ extended: true, limit: "30mb" }))
 
 
 var corsOptions = {
-    origin: [/gliderport\.thilenius\..*/, /localhost.*/],
+    origin: [/gliderport.*thilenius.*/, /localhost.*/],
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 
