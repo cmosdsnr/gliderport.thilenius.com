@@ -499,7 +499,7 @@ app.post("/addData", async (req, res) => {
                 }
                 if (d.text.sent === true) {
                     console.log("sending text to ", d.email)
-                    await setDoc(doc(db, 'users', document.id), d)
+                    await setDoc(doc(db, 'users', v), d)
                 }
             }
             else {
