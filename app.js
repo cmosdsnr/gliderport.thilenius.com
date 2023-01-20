@@ -363,7 +363,7 @@ app.get("/HandleHits", async (req, res) => {
     let retString = await handleHits()
     connection?.query("SELECT * FROM miscellaneous WHERE id='hit_stats'", function (err, results, fields) {
         const d = JSON.parse(results[0].data)
-        retString += "***** DB ***** </br>"
+        retString += "</br>***** DB ***** </br>"
         retString += "Day start           : " + d.day.day + "</br>"
         retString += "Week start          : " + d.week.day + "</br>"
         retString += "totals plot length  : " + d.weeks.totals.length + "</br>"
@@ -1045,8 +1045,7 @@ const handleHits = async () => {
     const endDate = (res != undefined) ? (res[0] != undefined ? (Array.isArray(res[0]) ? res[0][0].endDate : 0) : 0) : 0
     let lastEntry = new Date(endDate)
 
-    retString +=
-        res = await connection?.promise().query(`SELECT MAX(day) AS maxDate FROM hit_counter_week WHERE 1`)
+    res = await connection?.promise().query(`SELECT MAX(day) AS maxDate FROM hit_counter_week WHERE 1`)
     let results = res[0]
     dt = new Date()
     if (Array.isArray(results)) {
@@ -1140,7 +1139,8 @@ const handleHits = async () => {
     replacement.day = y[0][0]
     replacement.day.day = getSQLDate(replacement.day.day)
 
-    connection?.query(`REPLACE into miscellaneous(id, data) VALUES('hit_stats', '${JSON.stringify(replacement)}')`, () => { })
+    await connection?.promise().query(`REPLACE into miscellaneous(id, data) VALUES('hit_stats', '${JSON.stringify(replacement)}')`, () => { })
+    return retString
 }
 
 const sendTextMessage = (to, name, data) => {
