@@ -87,7 +87,7 @@ export const Home = () => {
                             <Row>
                                 <Col xs={12} className="container" >
                                     <UpdatingImage offline={offline} />
-                                    <p>Live Image every 45 Seconds, click to expand and zoom</p>
+                                    <p>Live Image every 15 Seconds, click to expand and zoom</p>
                                 </Col>
                             </Row>
                         </Col>
