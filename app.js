@@ -671,15 +671,13 @@ app.post("/addData", async (req, res) => {
     // get the last timestamp from code_history
     sql = "SELECT * FROM code_history ORDER BY date DESC LIMIT 1"
     results = (await connection?.promise().query(sql))[0]
-    const date = 24 * 3600 * parseInt(results[0].date / (24 * 3600))
-    debugInfo.codeHistory = { latest: date }
+    const dt = 24 * 3600 * parseInt(results[0].date / (24 * 3600))
     //console.log("   DEBUG: latest code history date reset to ", timestampToString(date), " ", date)
-    const r = { date: date, data: JSON.parse(results[0].data) }
+    const r = { date: dt, data: JSON.parse(results[0].data) }
     // if it exists it will have at least two points, sunrise and sunset
     // pop off sunset (it's always add to the end of a day)
     r.data.codes.pop()
-    debugInfo.CodeHistory.length = r.data.codes.length
-    debugInfo.CodeHistory.date = r.date
+
     // at least sunrise should still be in the array
     tsLast = r.date + 3600 * r.data.limits[0]
     let lc = 0
@@ -690,15 +688,21 @@ app.post("/addData", async (req, res) => {
         lc = r.data.codes[r.data.codes.length - 1][1]
     }
 
-    debugInfo.CodeHistory.tsLast = tsLast
+    debugInfo.codeHistory = {
+        length: r.data.codes.length,
+        date: r.date,
+        tsLast,
+        code: lc,
+        gpResults: 0,
+        days: []
+    }
+
     sql = "SELECT * FROM gliderport WHERE recorded > '" +
         timestampToString(tsLast) + "'"
     results = (await connection?.promise().query(sql))[0]
 
     if (Array.isArray(results)) {
-        debugInfo.CodeHistory.code = lc
         debugInfo.CodeHistory.gpResults = results.length
-        debugInfo.CodeHistory.days = []
         // console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
         //     lc, ", there are ", results.length, " new data points in gliderport")
         let c = 0
@@ -978,7 +982,7 @@ app.get("/info", async (req, res) => {
     content += `updating forecast at: ${debugInfo.ts}</p>`
     content += `found ${debugInfo.openWeather.hours} hours in forecast, starting at ${timestampToString(debugInfo.openWeather.start + offset / 1000)} ending ${timestampToString(debugInfo.openWeather.stop + offset / 1000)}<br/>`
     content += `</p><p>Code history updating<br/>`
-    content += `Last update : ${timestampToString(debugInfo.CodeHistory.latest)} (${debugInfo.CodeHistory.latest})</p>`
+    content += `Last update : ${timestampToString(debugInfo.CodeHistory.date)} (${debugInfo.CodeHistory.latest})</p>`
     content += `Since the last record in code_history at ${timestampToString(debugInfo.CodeHistory.tsLast)} with code ${debugInfo.CodeHistory.code} there are ${debugInfo.CodeHistory.gpResults} new data points in gliderport<br/>`
     debugInfo.CodeHistory.days.forEach((v, i) => {
         content += `add ${v.length} new code(s) to code_history table for day ${timestampToString(v.date)} form ${v.c} points<br/>`
