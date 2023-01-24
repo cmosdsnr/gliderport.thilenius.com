@@ -672,8 +672,7 @@ app.post("/addData", async (req, res) => {
     sql = "SELECT * FROM code_history ORDER BY date DESC LIMIT 1"
     results = (await connection?.promise().query(sql))[0]
     const date = 24 * 3600 * parseInt(results[0].date / (24 * 3600))
-    debugInfo.codeHistory = {}
-    debugInfo.CodeHistory.latest = date
+    debugInfo.codeHistory = { latest: date }
     //console.log("   DEBUG: latest code history date reset to ", timestampToString(date), " ", date)
     const r = { date: date, data: JSON.parse(results[0].data) }
     // if it exists it will have at least two points, sunrise and sunset
