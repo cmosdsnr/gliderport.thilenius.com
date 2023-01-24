@@ -49,9 +49,6 @@ const resetAllSentTexts = () => {
     })
 }
 
-// used to daily update hit counter tables (day of month)
-let d = new Date().getDate()
-
 const timestampToString = (ts) => {
     return new Date(ts * 1000).toISOString().replace("T", " ").replace(/\.[0-9]*Z/, "")
 }
@@ -125,8 +122,9 @@ let connection =
         : null
 
 let sql, onlineStatus
+let debugInfo = {}
 
-connection?.connect(function (err) {
+connection?.connect(async function (err) {
     if (err) throw err
     console.log("Connected!")
     // get server_sent data   
@@ -134,6 +132,12 @@ connection?.connect(function (err) {
         function (err, results, fields) {
             onlineStatus = results[0].online_status
         })
+    //get debugInfo for modification
+    //debugInfo is written each time addData is called
+    //debugInfo is displayed in get info
+    const results = await connection.promise().query("SELECT * FROM miscellaneous WHERE id='debug_info'")
+    if (Array.isArray(results) && Array.isArray(results[0]) && results[0].length > 0)
+        debugInfo = JSON.parse(results[0][0].data)
 })
 
 let lastRecord = "2022-09-05 13:27:20",
@@ -205,8 +209,14 @@ let id = setInterval(() => {
         TodaysDay = new Date().getDate()
         sunData = calculateSunrise(new Date())
         updateSunData()
+        // Update Day and Week hit_counter databases on each new day
+        handleHits()
+        //reset sent text list
+        resetAllSentTexts()
+        debugInfo.sentTexts = []
     }
-}, 3600000)
+}, 1 * 3600 * 1000) // every 1 hours
+
 
 const setLastRecord = async () => {
     const res = await connection?.promise().query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1")
@@ -244,7 +254,6 @@ app.use(fileUpload({
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
 app.post('/uploadVideo', async (req, res) => {
     try {
         if (!req.files) {
@@ -271,8 +280,6 @@ app.post('/uploadVideo', async (req, res) => {
         res.status(500).send(err)
     }
 })
-
-
 app.post("/addVideo", (req, res) => {
     if (req.body.A === undefined) {
         res.json("no A record")
@@ -356,9 +363,6 @@ app.get('/RegenerateAllHours', function (req, res) {
     console.log("Done with regeneration")
     res.send(msg)
 })
-
-
-
 app.get("/HandleHits", async (req, res) => {
     let retString = await handleHits()
     connection?.query("SELECT * FROM miscellaneous WHERE id='hit_stats'", function (err, results, fields) {
@@ -373,7 +377,6 @@ app.get("/HandleHits", async (req, res) => {
         res.send(retString)
     })
 })
-
 app.get("/fixHistory", (req, res) => {
     let p = "database:<br/>"
     connection?.query(
@@ -401,7 +404,8 @@ app.get("/fixHistory", (req, res) => {
 // called to add new wind Data to the db
 app.post("/addData", async (req, res) => {
     console.log("++++++++ Adding Data ++++++++++++")
-    let msg = ""
+    res.send("ok")
+
     //fetch needed info for this post
     results = await connection?.promise().query('SELECT * FROM `server_sent` WHERE `id`=1')
     let sunset = 0, sunrise = 0, tsLast = 0
@@ -411,7 +415,8 @@ app.post("/addData", async (req, res) => {
         sunrise = r.sunrise_timestamp
         tsLast = r.last_forecast
     }
-
+    debugInfo.tsLast = tsLast
+    //add data if it was present
     if ("d" in req.body) {
         const d = JSON.parse(req.body.d)
         sql =
@@ -419,29 +424,30 @@ app.post("/addData", async (req, res) => {
         let e = ","
         firstRecord = d[0][0]
         numberRecords = d.length
-        msg += numberRecords + " records added to gliderport"
-        console.log("   received " + numberRecords + " records from PI3 and added them to the gliderport table")
+        debugInfo.numberRecords = numberRecords
+        // msg += numberRecords + " records added to gliderport"
+        // console.log("   received " + numberRecords + " records from PI3 and added them to the gliderport table")
         // console.log(msg)
-        msg += "<br/>\n"
+        // msg += "<br/>\n"
         d.forEach((v, i) => {
             if (i === d.length - 1) e = ""
             sql += '( "' + v[0] + '", ' + v[1] + ", " + v[2] + ", " + v[3] + ", " + v[4] + ", " + v[5] + ")" + e
         })
-        connection?.query(sql, (err, results, fields) => {
-            setLastRecord()
-            tdLast = new Date()
-            const last = d[d.length - 1]
-            const ts = parseInt(new Date(last[0]).getTime() / 1000)
-            sql =
-                "UPDATE `server_sent` SET `last_record`=" + ts +
-                ", `speed` = " + last[1] +
-                ", `direction` = " + last[2] +
-                ", `humidity` = " + last[3] +
-                ", `pressure` = " + last[4] +
-                ", `temperature` = " + last[5] +
-                " WHERE `id`=1"
-            connection?.query(sql, (err, results, fields) => { })
-        })
+        await connection?.promise().query(sql)
+        setLastRecord()
+        tdLast = new Date()
+        const last = d[d.length - 1]
+        const ts = parseInt(new Date(last[0]).getTime() / 1000)
+        sql =
+            "UPDATE `server_sent` SET `last_record`=" + ts +
+            ", `speed` = " + last[1] +
+            ", `direction` = " + last[2] +
+            ", `humidity` = " + last[3] +
+            ", `pressure` = " + last[4] +
+            ", `temperature` = " + last[5] +
+            " WHERE `id`=1"
+        connection?.query(sql, (err, results, fields) => { })
+
         //check for texts that need sending
         const tsNow = parseInt((Date.now() + offset) / 1000)
         if (tsNow > (3600 + sunrise) && tsNow < (sunset - 3600)) {
@@ -479,7 +485,7 @@ app.post("/addData", async (req, res) => {
             Object.keys(textWatch).forEach(async (v, i) => {
                 const d = textWatch[v]
                 if (d.text.sent != true) {
-                    console.log("not yet sent to", d.email)
+                    // console.log("not yet sent to", d.email)
                     if (d.text.duration === 0 &&
                         cSpeed >= d.text.speed &&
                         Math.abs(270 - cDir) <= d.text.errorAngle) {
@@ -517,7 +523,7 @@ app.post("/addData", async (req, res) => {
                         d.text.sent = true
                     }
                     if (d.text.sent === true) {
-                        console.log("sending text to ", d.email)
+                        // console.log("sending text to ", d.email)
                         await setDoc(doc(db, 'users', v), d)
                     }
                 }
@@ -527,7 +533,7 @@ app.post("/addData", async (req, res) => {
             })
         }
     } else {
-        msg += "addData called with no data\n"
+        // msg += "addData called with no data\n"
         console.log("   addData called with no data")
 
     }
@@ -537,54 +543,61 @@ app.post("/addData", async (req, res) => {
     const twoDaysAgo = thisHour - 48 * 3600
 
     // delete older records
-    connection?.query(`DELETE FROM hours WHERE start < ${twoDaysAgo}`, (err, results, fields) => { })
-    connection?.query(`DELETE FROM hours WHERE start > ${thisHour}`, (err, results, fields) => { })
+    await connection?.promise().query(`DELETE FROM hours WHERE start < ${twoDaysAgo}`)
+    await connection?.promise().query(`DELETE FROM hours WHERE start > ${thisHour}`)
 
     // get latest record (or 2 days ago if there are none)
     sql = `SELECT * FROM hours WHERE start > ${twoDaysAgo} ORDER BY start DESC LIMIT 1`
-    connection?.query(sql, (err, results, fields) => {
-        let hourLength = 0
-        latestHours = twoDaysAgo
+    results = (await connection?.promise().query(sql))[0]
+    let hourLength = 0
+    latestHours = twoDaysAgo
+    if (Array.isArray(results)) {
+        const d = JSON.parse(results[0].data)
+        latestHours = d.start
+        hourLength = d.date.length
+    }
+    // console.log(results[0].data)
+    debugInfo.hourLength = hourLength
+    debugInfo.hours = {}
+    // msg += "latest hour starts at " + latestHours + "\n"
+    // for each hour starting at 'latestHour', thru 'thisHour'
+    for (let i = latestHours; i <= thisHour; i += 3600) {
+        debugInfo.hours[i] = {}
+        const hourInfo = debugInfo.hours[i]
+        const data = {
+            start: i, date: [], speed: [], direction: [],
+            humidity: [], pressure: [], temperature: [],
+        }
+        // msg += "pull from gliderport: records from " + timestampToString(i) + " to " + timestampToString(i + 3600) + "\n"
+        sql = "SELECT * FROM gliderport WHERE recorded >= '" + timestampToString(i) + "' AND recorded < '" + timestampToString(i + 3600) + "'"
+        results = (await connection?.promise().query(sql))[0]
         if (Array.isArray(results)) {
-            const d = JSON.parse(results[0].data)
-            latestHours = d.start
-            hourLength = d.date.length
-        }
-        // console.log(results[0].data)
-        msg += "latest hour starts at " + latestHours + "\n"
-        // for each hour starting at 'latestHour', thru 'thisHour'
-        for (let i = latestHours; i <= thisHour; i += 3600) {
-            const data = {
-                start: i, date: [], speed: [], direction: [],
-                humidity: [], pressure: [], temperature: [],
-            }
-            msg += "pull from gliderport: records from " + timestampToString(i) + " to " + timestampToString(i + 3600) + "\n"
-            sql = "SELECT * FROM gliderport WHERE recorded >= '" + timestampToString(i) + "' AND recorded < '" + timestampToString(i + 3600) + "'"
-            connection?.query(sql, (err, results, fields) => {
-                if (Array.isArray(results)) {
-                    msg += "found " + results.length + "\n"
-                    results.forEach((v, j) => {
-                        data.date.push(
-                            (new Date(v.recorded).getTime() + offset) / 1000 - i
-                        )
-                        data.speed.push(v.speed)
-                        data.direction.push(v.direction)
-                        data.humidity.push(v.humidity)
-                        data.pressure.push(v.pressure)
-                        data.temperature.push(v.temperature)
-                    })
-                } else {
-                    msg += "found none\n"
-                }
-
-                console.log("   latest hour in hours table starts at ", latestHours, " had ",
-                    hourLength, " rows and now has ", data.date.length, " rows")
-                msg += "replacing " + data.start + " with " + data.date.length + " records\n"
-                sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
-                connection?.query(sql, (err, results, fields) => { })
+            // msg += "found " + results.length + "\n"
+            hourInfo.resultsFound = results.length
+            results.forEach((v, j) => {
+                data.date.push(
+                    (new Date(v.recorded).getTime() + offset) / 1000 - i
+                )
+                data.speed.push(v.speed)
+                data.direction.push(v.direction)
+                data.humidity.push(v.humidity)
+                data.pressure.push(v.pressure)
+                data.temperature.push(v.temperature)
             })
+        } else {
+            hourInfo.resultsFound = 0
+            // msg += "found none\n"
         }
-    })
+        hourInfo.l = data.date.length
+        hourInfo.start = data.start
+        // console.log("   latest hour in hours table starts at ", latestHours, " had ",
+        //     hourLength, " rows and now has ", data.date.length, " rows")
+        // msg += "replacing " + data.start + " with " + data.date.length + " records\n"
+        sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')"
+        connection?.query(sql, (err, results, fields) => { })
+
+    }
+
 
     // read the last time we looked for the forecast
     // let tsLast = 0, sunset = 0
@@ -596,10 +609,11 @@ app.post("/addData", async (req, res) => {
     //         }
     const tsNow = parseInt((new Date()).getTime() / 1000)
     // if it's been more than one hours, update the forecast
-    console.log(`it has been ${toHMS((tsLast + 1 * 60 * 60) - tsNow)} sec since last forecast, wait at least 1hr`)
+    debugInfo.now = tsNow
+    // console.log(`it has been ${toHMS((tsLast + 1 * 60 * 60) - tsNow)} sec since last forecast, wait at least 1hr`)
 
     if (tsNow > tsLast + 1 * 60 * 60) {
-        console.log("Attempting to update forecast since last was ", tsLast, " and now is ", tsNow)
+        // console.log("Attempting to update forecast since last was ", tsLast, " and now is ", tsNow)
         // https://api.openweathermap.org/data/2.5/onecall?lat=32.8473&lon=-117.2742&exclude=minutely,daily&units=imperial&appid=483c6b4301f7069cbf4e266bffa6d5ff
 
         const url =
@@ -612,14 +626,19 @@ app.post("/addData", async (req, res) => {
             .then((response) => response.json())
             .then((responseJson) => {
                 if (!responseJson || !responseJson.hourly) {
-                    msg += "OpenWeather Data Offline\n"
+                    // msg += "OpenWeather Data Offline\n"
                     console.log("OpenWeather Data Offline")
                 } else {
                     let forecast = []
                     let todaysCodes = []
                     let lastCode = -1
-                    console.log(`found ${responseJson.hourly.length} hours in forecast, starting at ${timestampToString(responseJson.hourly[0].dt + offset / 1000)} ending ${timestampToString(responseJson.hourly[responseJson.hourly.length - 1].dt + offset / 1000)}`)
-                    console.log(`${responseJson.hourly[0].dt} to ${responseJson.hourly[responseJson.hourly.length - 1].dt}`)
+                    debugInfo.openWeather = {}
+                    debugInfo.openWeather.hours = responseJson.hourly.length
+                    debugInfo.openWeather.ts = tsNow
+                    debugInfo.openWeather.start = responseJson.hourly[0].dt
+                    debugInfo.openWeather.stop = responseJson.hourly[responseJson.hourly.length - 1].dt
+                    // console.log(`found ${responseJson.hourly.length} hours in forecast, starting at ${timestampToString(responseJson.hourly[0].dt + offset / 1000)} ending ${timestampToString(responseJson.hourly[responseJson.hourly.length - 1].dt + offset / 1000)}`)
+                    // console.log(`${responseJson.hourly[0].dt} to ${responseJson.hourly[responseJson.hourly.length - 1].dt}`)
                     responseJson.hourly.forEach((v, i) => {
                         if (v.dt > tsNow) {
                             const code = getCode(v.wind_speed * 10, v.wind_deg, 0)
@@ -630,8 +649,8 @@ app.post("/addData", async (req, res) => {
                             }
                         }
                     })
-                    console.log("forecast: ", forecast)
-                    console.log("todaysCodes: ", todaysCodes)
+                    // console.log("forecast: ", forecast)
+                    // console.log("todaysCodes: ", todaysCodes)
                     connection?.query("UPDATE `server_sent` SET `last_forecast`=" + tsNow + " WHERE `id`=1", (err, results, fields) => { })
                     connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(forecast) + "' WHERE `id`='forecast'")
                     const h = responseJson.hourly
@@ -649,110 +668,121 @@ app.post("/addData", async (req, res) => {
     }
 
     // get the last timestamp from code_history
-    connection?.query(
-        "SELECT * FROM code_history ORDER BY date DESC LIMIT 1",
-        function (err, results, fields) {
-            const date = 24 * 3600 * parseInt(results[0].date / (24 * 3600))
-            console.log("   DEBUG: latest code history date reset to ", timestampToString(date), " ", date)
-            const r = { date: date, data: JSON.parse(results[0].data) }
-            // if it exists it will have at least two points, sunrise and sunset
-            // pop off sunset (it's always add to the end of a day)
-            r.data.codes.pop()
-            // at least sunrise should still be in the array
-            let tsLast = r.date + 3600 * r.data.limits[0]
-            let lc = 0
-            if (r.data.codes.length === 0) {
-                console.log("   ERROR: Found a zero length codes on ", timestampToString(r.date))
-            } else {
-                tsLast += r.data.codes[r.data.codes.length - 1][0]
-                lc = r.data.codes[r.data.codes.length - 1][1]
-            }
+    sql = "SELECT * FROM code_history ORDER BY date DESC LIMIT 1"
+    results = (await connection?.promise().query(sql))[0]
+    const date = 24 * 3600 * parseInt(results[0].date / (24 * 3600))
+    debugInfo.codeHistory = {}
+    debugInfo.CodeHistory.latest = date
+    //console.log("   DEBUG: latest code history date reset to ", timestampToString(date), " ", date)
+    const r = { date: date, data: JSON.parse(results[0].data) }
+    // if it exists it will have at least two points, sunrise and sunset
+    // pop off sunset (it's always add to the end of a day)
+    r.data.codes.pop()
+    debugInfo.CodeHistory.length = r.data.codes.length
+    debugInfo.CodeHistory.date = r.date
+    // at least sunrise should still be in the array
+    tsLast = r.date + 3600 * r.data.limits[0]
+    let lc = 0
+    if (r.data.codes.length === 0) {
+        console.log("   ERROR: Found a zero length codes on ", timestampToString(r.date))
+    } else {
+        tsLast += r.data.codes[r.data.codes.length - 1][0]
+        lc = r.data.codes[r.data.codes.length - 1][1]
+    }
 
-            sql = "SELECT * FROM gliderport WHERE recorded > '" +
-                timestampToString(tsLast) + "'"
-            connection?.query(sql, (err, results, fields) => {
-                if (Array.isArray(results)) {
-                    console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
-                        lc, ", there are ", results.length, " new data points in gliderport")
-                    let c = 0
-                    let lastTs = tsLast + 120 // 2 min after last
-                    results.forEach((v, i) => {
-                        c++
-                        const ts = Math.round(((new Date(v.recorded)).getTime() + offset) / 1000)
-                        // if (i % 1000 === 0) console.log(`   DEBUG: ${ts} : ${r.date + r.data.sun[0]} : ${r.date + r.data.sun[1]}`)
-                        if (ts > r.date + r.data.sun[0]) {
-                            // after sunrise
-                            // if r.data.codes is empty then add sunrise point
-                            if (r.data.codes.length === 0) {
-                                if (i > 0)
-                                    lc = getCode(results[i - 1].speed, results[i - 1].direction)
-                                else
-                                    lc = getCode(v.speed, v.direction)
-                                r.data.codes.push([r.data.sun[0] - 3600 * r.data.limits[0], lc])
-                            }
+    debugInfo.CodeHistory.tsLast = tsLast
+    sql = "SELECT * FROM gliderport WHERE recorded > '" +
+        timestampToString(tsLast) + "'"
+    results = (await connection?.promise().query(sql))[0]
 
-                            if (ts < r.date + r.data.sun[1]) {
-                                //before sunset
-                                // check code for change
-                                const c = getCode(v.speed, v.direction)
-                                // make a code last at least 5min (300s)
-                                if ((c != lc) && (ts - lastTs > 120)) {
-                                    lc = c
-                                    // add to r.data.codes code_history[ts, code]
-                                    r.data.codes.push([ts - 3600 * r.data.limits[0] - r.date, lc])
-                                    lastTs = ts
-                                }
-                            }
-                            // if it's after sunset OR it's the last data point AND there is stuff to save
-                            if (((i === results.length - 1) && (r.data.codes.length > 0)) || ts >= r.date + r.data.sun[1]) {
-                                // add sunset point
-                                r.data.codes.push([r.data.sun[1] - 3600 * r.data.limits[0], 0])
-                                // anything we save should now have at least sunrise AND sunset points (2)
-                                // save this day in code_history
-                                sql = "INSERT INTO `code_history` SET date="
-                                    + r.date
-                                    + ", data='"
-                                    + JSON.stringify(r.data)
-                                    + "' ON DUPLICATE KEY UPDATE data ='"
-                                    + JSON.stringify(r.data) + "'"
-                                connection?.query(sql, () => { })
-                                // console.log(`   DEBUG: saving ${JSON.stringify(r)} `)
-                                console.log("   add ", r.data.codes.length, " new code(s) to code_history table for day ",
-                                    timestampToString(r.date), " form ", c, " points")
-                                c = 0
-
-                                // if (r.date < 2665558000) {
-                                //     let s = "["
-                                //     r.data.codes.forEach((w, j) => {
-                                //         s += '[' + w[0] + ',' + w[1] + '],'
-                                //     })
-                                //     s += ']'
-                                //     console.log("date: ", r.date, ", data: {limits: [ ", r.data.limits[0], ", ",
-                                //         r.data.limits[1], " ], sun: [ ", r.data.sun[0], ", ", r.data.sun[1], " ], code:", s)
-                                // }
-
-                                // create a new day
-                                r.date += 24 * 3600
-                                //make sure the local time is in the next day (sub offset)
-                                const y = new Date((r.date * 1000) - offset)
-                                const sunData = calculateSunrise(y)
-                                // console.log(`   DEBUG: y:${y.getTime() / 1000} r.date: ${r.date} sunrise: ${sunData.sunriseTimestamp}`)
-                                r.data.codes = []
-                                //  sunriseTimestamp is true local sunrise, r.date is midnight UTC, so add the timezone offset
-                                r.data.sun = [sunData.sunriseTimestamp - r.date + offset / 1000, sunData.sunsetTimestamp - r.date + offset / 1000]
-                                r.data.limits = [Math.floor(24 * sunData.sunrise) - 1, Math.floor(24 * sunData.sunset) + 2]
-
-                                // console.log(`   DEBUG: y:${JSON.stringify(r.data)} `)
-                            }
-                        }
-                    })
+    if (Array.isArray(results)) {
+        debugInfo.CodeHistory.code = lc
+        debugInfo.CodeHistory.gpResults = results.length
+        debugInfo.CodeHistory.days = []
+        // console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
+        //     lc, ", there are ", results.length, " new data points in gliderport")
+        let c = 0
+        let lastTs = tsLast + 120 // 2 min after last
+        results.forEach((v, i) => {
+            c++
+            const ts = Math.round(((new Date(v.recorded)).getTime() + offset) / 1000)
+            // if (i % 1000 === 0) console.log(`   DEBUG: ${ts} : ${r.date + r.data.sun[0]} : ${r.date + r.data.sun[1]}`)
+            if (ts > r.date + r.data.sun[0]) {
+                // after sunrise
+                // if r.data.codes is empty then add sunrise point
+                if (r.data.codes.length === 0) {
+                    if (i > 0)
+                        lc = getCode(results[i - 1].speed, results[i - 1].direction)
+                    else
+                        lc = getCode(v.speed, v.direction)
+                    r.data.codes.push([r.data.sun[0] - 3600 * r.data.limits[0], lc])
                 }
-            })
-        }
-    )
-    //     }
-    // )
-    res.send(msg)
+
+                if (ts < r.date + r.data.sun[1]) {
+                    //before sunset
+                    // check code for change
+                    const c = getCode(v.speed, v.direction)
+                    // make a code last at least 5min (300s)
+                    if ((c != lc) && (ts - lastTs > 120)) {
+                        lc = c
+                        // add to r.data.codes code_history[ts, code]
+                        r.data.codes.push([ts - 3600 * r.data.limits[0] - r.date, lc])
+                        lastTs = ts
+                    }
+                }
+                // if it's after sunset OR it's the last data point AND there is stuff to save
+                if (((i === results.length - 1) && (r.data.codes.length > 0)) || ts >= r.date + r.data.sun[1]) {
+                    // add sunset point
+                    r.data.codes.push([r.data.sun[1] - 3600 * r.data.limits[0], 0])
+                    // anything we save should now have at least sunrise AND sunset points (2)
+                    // save this day in code_history
+                    sql = "INSERT INTO `code_history` SET date="
+                        + r.date
+                        + ", data='"
+                        + JSON.stringify(r.data)
+                        + "' ON DUPLICATE KEY UPDATE data ='"
+                        + JSON.stringify(r.data) + "'"
+                    connection?.query(sql, () => { })
+                    // console.log(`   DEBUG: saving ${JSON.stringify(r)} `)
+                    debugInfo.CodeHistory.days.push({
+                        length: r.data.codes.length,
+                        date: r.date,
+                        c
+                    })
+                    // console.log("   add ", r.data.codes.length, " new code(s) to code_history table for day ",
+                    //     timestampToString(r.date), " form ", c, " points")
+                    c = 0
+
+                    // if (r.date < 2665558000) {
+                    //     let s = "["
+                    //     r.data.codes.forEach((w, j) => {
+                    //         s += '[' + w[0] + ',' + w[1] + '],'
+                    //     })
+                    //     s += ']'
+                    //     console.log("date: ", r.date, ", data: {limits: [ ", r.data.limits[0], ", ",
+                    //         r.data.limits[1], " ], sun: [ ", r.data.sun[0], ", ", r.data.sun[1], " ], code:", s)
+                    // }
+
+                    // create a new day
+                    r.date += 24 * 3600
+                    //make sure the local time is in the next day (sub offset)
+                    const y = new Date((r.date * 1000) - offset)
+                    const sunData = calculateSunrise(y)
+                    // console.log(`   DEBUG: y:${y.getTime() / 1000} r.date: ${r.date} sunrise: ${sunData.sunriseTimestamp}`)
+                    r.data.codes = []
+                    //  sunriseTimestamp is true local sunrise, r.date is midnight UTC, so add the timezone offset
+                    r.data.sun = [sunData.sunriseTimestamp - r.date + offset / 1000, sunData.sunsetTimestamp - r.date + offset / 1000]
+                    r.data.limits = [Math.floor(24 * sunData.sunrise) - 1, Math.floor(24 * sunData.sunset) + 2]
+
+                    // console.log(`   DEBUG: y:${JSON.stringify(r.data)} `)
+                }
+            }
+        })
+    }
+    sql = "INSERT INTO `miscellaneous` SET `id`='debug_info', data='" + JSON.stringify(debugInfo) +
+        "' ON DUPLICATE KEY UPDATE data ='" + JSON.stringify(debugInfo) + "';"
+    await connection?.promise().query(sql)
+
 })
 
 const c = {
@@ -822,7 +852,7 @@ app.get("/getLastEntry", (req, res) => {
 })
 
 // called from browser for debug to display latest happenings
-app.get("/info", (req, res) => {
+app.get("/info", async (req, res) => {
     let content = "<p><table>"
     content += `<tr><td>last Record in gliderport table:</td><td>${lastRecord}</td></tr><tr></tr>`
     if (firstRecord === undefined) {
@@ -855,99 +885,114 @@ app.get("/info", (req, res) => {
         "</td></tr></table></p>"
 
     sql = "SELECT * FROM `hours` ORDER BY start DESC"
-    connection?.query(sql, (err, results, fields) => {
-        content += `<h3>Hours has ${results.length} entries</h3>`
-        content += `<p><table style="text-align: center;">`
-        content += `<tr><th>Hour Start</th><th>Hours count</th><th>Gliderport count</th></tr>`
-        let l = []
-        results.forEach((v, i) => {
-            const d = JSON.parse(v.data)
-            l.push([v.start, d.date.length])
-
-        })
-        l.forEach((v, i) => {
-            sql = "SELECT * FROM gliderport WHERE recorded >= '" + timestampToString(v[0]) +
-                "' AND recorded < '" + timestampToString(v[0] + 3600) + "'"
-            connection?.query(sql, (err, results, fields) => {
-                content += `<tr><td>${timestampToString(v[0]).replace("00:00", "00")}</td><td>${v[1]}</td><td>${results.length}</td></tr>`
-                if (i === l.length - 1) content += `</table></p>`
-            })
-        })
-
-        connection.query('SELECT * FROM `server_sent` WHERE `id`=1',
-            function (err, results, fields) {
-                content += `<h3>Server Sent Table</h3><p><table>`
-                const tsNow = parseInt((new Date()).getTime() / 1000)
-                content += `<tr><td><b>Now</b></td><td>(${tsNow})  <b>${timestampToString(tsNow)}</b></td></tr><tr></tr>`
-                for (const [key, value] of Object.entries(results[0])) {
-                    if ('last_record' === key || 'last_image' === key || 'last_forecast' === key ||
-                        'sunrise_timestamp' === key || 'sunset_timestamp' === key) {
-                        let deltaStr = ""
-                        let delta = tsNow - value
-                        let end = "ago"
-                        if (delta < 0) {
-                            delta = -delta
-                            end = "from now"
-                        }
-                        if (delta > 3600) {
-                            deltaStr += parseInt(delta / 3600) + " hr, "
-                            delta -= 3600 * parseInt(delta / 3600)
-                        }
-                        if (delta > 60) {
-                            deltaStr += parseInt(delta / 60) + " min, "
-                            delta -= 60 * parseInt(delta / 60)
-                        }
-                        deltaStr += parseInt(delta) + " sec " + end
-                        content += `<tr><td>${key}</td><td>(${value})  <b>${timestampToString(value)}</b>   (${deltaStr})</td></tr>`
-                    } else
-                        content += `<tr><td>${key}</td><td>${value}</td></tr>`
-                }
-                content += `</table></p>`
-
-                content += `<h3>Code History Table</h3><p><table>`
-                connection?.query(
-                    "SELECT * FROM code_history ORDER BY date DESC LIMIT 10",
-                    function (err, results, fields) {
-                        results.forEach((v, i) => {
-                            const r = { date: v.date, data: JSON.parse(v.data) }
-                            content += `<tr><td>${timestampToString(r.date).replace(/ .*/g, '')}</td><td>${r.data.codes.length} changes</td></tr>`
-                        })
-                        content += `</table></p>`
-                        const r = { date: results[0].date, data: JSON.parse(results[0].data) }
-                        const s = r.data.limits[0]
-                        content += `<h3>Latest Code History Table for ${timestampToString(r.date).replace(/ .*/g, '')} with ${r.data.codes.length} code changes</h3><p><table>`
-                        content += `<tr><td>start</td><td>${s} hr</td><td>${s * 3600} s</td></tr>`
-                        content += `<tr><td>stop</td><td>${r.data.limits[1]} hr</td><td>${r.data.limits[1] * 3600} s</td></tr>`
-                        content += `<tr><td>First at</td><td>${r.data.codes[0][0]}s after start</td><td>${3600 * s + r.data.codes[0][0]} from day start</td></tr>`
-                        content += `<tr><td>Sunrise</td><td>${r.data.sun[0]}s</td></tr>`
-                        const codes = [
-                            "It Is dark",
-                            "Sled ride, bad angle",
-                            "Sled ride, poor angle",
-                            "Sled ride",
-                            "Bad angle",
-                            "Poor angle",
-                            "Good",
-                            "Excellent",
-                            "Use Speed bar!",
-                            "Too windy",
-                            "No data"
-                        ]
-                        r.data.codes.forEach((v, i) => content += `<tr><td>${v[0]}</td><td>${toHMS(v[0] + 3600 * s)}</td><td>${codes[v[1]]} (${v[1]})</td></tr>`)
-                        content += `</table></p>`
-                        res.send(content)
-                    }
-                )
-            }
-        )
+    results = (await connection?.promise().query(sql))[0]
+    content += `<h3>Hours has ${results.length} entries</h3>`
+    content += `<p><table style="text-align: center;">`
+    content += `<tr><th>Hour Start</th><th>Hours count</th><th>Gliderport count</th></tr>`
+    let l = []
+    results.forEach((v, i) => {
+        const d = JSON.parse(v.data)
+        l.push([v.start, d.date.length])
     })
-    console.log("info called")
+    l.forEach(async (v, i) => {
+        sql = "SELECT * FROM gliderport WHERE recorded >= '" + timestampToString(v[0]) +
+            "' AND recorded < '" + timestampToString(v[0] + 3600) + "'"
+        results = (await connection?.promise().query(sql))[0]
+        content += `<tr><td>${timestampToString(v[0]).replace("00:00", "00")}</td><td>${v[1]}</td><td>${results.length}</td></tr>`
+        if (i === l.length - 1) content += `</table></p>`
+    })
+
+    sql = 'SELECT * FROM `server_sent` WHERE `id`=1'
+    results = (await connection?.promise().query(sql))[0]
+    content += `<h3>Server Sent Table</h3><p><table>`
+    const tsNow = parseInt((new Date()).getTime() / 1000)
+    content += `<tr><td><b>Now</b></td><td>(${tsNow})  <b>${timestampToString(tsNow)}</b></td></tr><tr></tr>`
+    for (const [key, value] of Object.entries(results[0])) {
+        if ('last_record' === key || 'last_image' === key || 'last_forecast' === key ||
+            'sunrise_timestamp' === key || 'sunset_timestamp' === key) {
+            let deltaStr = ""
+            let delta = tsNow - value
+            let end = "ago"
+            if (delta < 0) {
+                delta = -delta
+                end = "from now"
+            }
+            if (delta > 3600) {
+                deltaStr += parseInt(delta / 3600) + " hr, "
+                delta -= 3600 * parseInt(delta / 3600)
+            }
+            if (delta > 60) {
+                deltaStr += parseInt(delta / 60) + " min, "
+                delta -= 60 * parseInt(delta / 60)
+            }
+            deltaStr += parseInt(delta) + " sec " + end
+            content += `<tr><td>${key}</td><td>(${value})  <b>${timestampToString(value)}</b>   (${deltaStr})</td></tr>`
+        } else
+            content += `<tr><td>${key}</td><td>${value}</td></tr>`
+    }
+    content += `</table></p>`
+
+    content += `<h3>Code History Table</h3><p><table>`
+    sql = "SELECT * FROM code_history ORDER BY date DESC LIMIT 10"
+    results = (await connection?.promise().query(sql))[0]
+    results.forEach((v, i) => {
+        const r = { date: v.date, data: JSON.parse(v.data) }
+        content += `<tr><td>${timestampToString(r.date).replace(/ .*/g, '')}</td><td>${r.data.codes.length} changes</td></tr>`
+    })
+    content += `</table></p>`
+    const r = { date: results[0].date, data: JSON.parse(results[0].data) }
+    const s = r.data.limits[0]
+    content += `<h3>Latest Code History Table for ${timestampToString(r.date).replace(/ .*/g, '')} with ${r.data.codes.length} code changes</h3><p><table>`
+    content += `<tr><td>start</td><td>${s} hr</td><td>${s * 3600} s</td></tr>`
+    content += `<tr><td>stop</td><td>${r.data.limits[1]} hr</td><td>${r.data.limits[1] * 3600} s</td></tr>`
+    content += `<tr><td>First at</td><td>${r.data.codes[0][0]}s after start</td><td>${3600 * s + r.data.codes[0][0]} from day start</td></tr>`
+    content += `<tr><td>Sunrise</td><td>${r.data.sun[0]}s</td></tr>`
+    const codes = [
+        "It Is dark",
+        "Sled ride, bad angle",
+        "Sled ride, poor angle",
+        "Sled ride",
+        "Bad angle",
+        "Poor angle",
+        "Good",
+        "Excellent",
+        "Use Speed bar!",
+        "Too windy",
+        "No data"
+    ]
+    r.data.codes.forEach((v, i) => content += `<tr><td>${v[0]}</td><td>${toHMS(v[0] + 3600 * s)}</td><td>${codes[v[1]]} (${v[1]})</td></tr>`)
+    content += `</table></p>`
+
+    content += `<h3>Add Data</h3>`
+    content += `<p>received data and hours table<br/>`
+    content += `Last called: ${debugInfo.now}<br/>`
+    content += `Received ${debugInfo.numberRecords} records from PI3 and added them to the gliderport table<br/>`
+    content += `last entry in hours table: ${debugInfo.latestHours}<br/>`
+    Object.keys(debugInfo.hours).forEach((v, i) => {
+        const hourInfo = debugInfo.hours[v]
+        content += `Found ${hourInfo.resultsFound} entries in gliderport for the hour ${v}<br/>`
+        content += `Hour in hours table starts at ${v} had ${hourInfo.start} rows and now has ${hourInfo.l} rows<br/>`
+    })
+    content += `</p><p>Forecast updating<br/>`
+    content += `Last forecast update as recorded in server_sent: ${debugInfo.tsLast}</p>`
+    content += `updating forecast at: ${debugInfo.ts}</p>`
+    content += `found ${debugInfo.openWeather.hours} hours in forecast, starting at ${timestampToString(debugInfo.openWeather.start + offset / 1000)} ending ${timestampToString(debugInfo.openWeather.stop + offset / 1000)}<br/>`
+    content += `</p><p>Code history updating<br/>`
+    content += `Last update : ${timestampToString(debugInfo.CodeHistory.latest)} (${debugInfo.CodeHistory.latest})</p>`
+    content += `Since the last record in code_history at ${timestampToString(debugInfo.CodeHistory.tsLast)} with code ${debugInfo.CodeHistory.code} there are ${debugInfo.CodeHistory.gpResults} new data points in gliderport<br/>`
+    debugInfo.CodeHistory.days.forEach((v, i) => {
+        content += `add ${v.length} new code(s) to code_history table for day ${timestampToString(v.date)} form ${v.c} points<br/>`
+    })
+    content += `</p>`
+    res.send(content)
+    // console.log("info called")
 })
 
 app.get('/current.jpg', function (req, res) {
     res.contentType('image/jpeg');
     res.send(imageBuffer)
 })
+
 app.get('/currentBig.jpg', function (req, res) {
     res.contentType('image/jpeg');
     res.send(imageBigBuffer)
@@ -962,7 +1007,6 @@ app.get("/UpdateStatus", (req, res) => {
 app.get("/ImageAdded", (req, res) => {
     res.send("Ok")
 })
-
 
 app.get("/sendTestSms", (req, res) => {
     if ("to" in req.query && "name" in req.query) {
@@ -1000,7 +1044,6 @@ app.get("/PhoneFinder", (req, res) => {
     }
 })
 
-
 const getTsFromDate = (date) => {
     return parseInt(date.getTime() / 1000)
 }
@@ -1010,7 +1053,6 @@ const getSQLDate = (date) => {
         ('00' + (date.getUTCMonth() + 1)).slice(-2) + '-' +
         ('00' + date.getUTCDate()).slice(-2)
 }
-
 
 const getWeekCount = (start, stop) => {
     let startDay = start
@@ -1033,18 +1075,6 @@ const getDayCount = (start, stop) => {
         )
     )
 }
-
-
-// Update Day and Week hit_counter databases on each new day
-setInterval(async () => {
-    if (d != new Date().getDate()) {
-        //it is a new day of the month
-        d = new Date().getDate()
-        handleHits()
-        resetAllSentTexts()
-    }
-}, 3 * 3600 * 1000) // every 3 hours
-
 
 const handleHits = async () => {
     var dt
@@ -1175,6 +1205,14 @@ const sendTextMessage = (to, name, data) => {
     if (data === null) {
         mailOptions.text = `Hi ${name}, This message is a test from the gliderport`
     } else {
+        debugInfo.sentTexts.push({
+            direction: data.direction,
+            duration: data.duration,
+            speed: data.speed / 10,
+            to,
+            when: parseInt((Date.now() + offset) / 1000)
+
+        })
         mailOptions.text = `${name}, Time to Fly!\n` +
             `Wind was at ${Math.round(data.direction)} deg at ${Math.round(data.speed / 10)} mph over the past ${data.duration} min, ` +
             "\nMake changes to your alert <a href='https://live.flytorrey.com'>here</a>"
