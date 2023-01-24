@@ -702,7 +702,7 @@ app.post("/addData", async (req, res) => {
     results = (await connection?.promise().query(sql))[0]
 
     if (Array.isArray(results)) {
-        debugInfo.CodeHistory.gpResults = results.length
+        debugInfo.codeHistory.gpResults = results.length
         // console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
         //     lc, ", there are ", results.length, " new data points in gliderport")
         let c = 0
@@ -748,7 +748,7 @@ app.post("/addData", async (req, res) => {
                         + JSON.stringify(r.data) + "'"
                     connection?.query(sql, () => { })
                     // console.log(`   DEBUG: saving ${JSON.stringify(r)} `)
-                    debugInfo.CodeHistory.days.push({
+                    debugInfo.codeHistory.days.push({
                         length: r.data.codes.length,
                         date: r.date,
                         c
@@ -982,9 +982,9 @@ app.get("/info", async (req, res) => {
     content += `updating forecast at: ${debugInfo.ts}</p>`
     content += `found ${debugInfo.openWeather.hours} hours in forecast, starting at ${timestampToString(debugInfo.openWeather.start + offset / 1000)} ending ${timestampToString(debugInfo.openWeather.stop + offset / 1000)}<br/>`
     content += `</p><p>Code history updating<br/>`
-    content += `Last update : ${timestampToString(debugInfo.CodeHistory.date)} (${debugInfo.CodeHistory.latest})</p>`
-    content += `Since the last record in code_history at ${timestampToString(debugInfo.CodeHistory.tsLast)} with code ${debugInfo.CodeHistory.code} there are ${debugInfo.CodeHistory.gpResults} new data points in gliderport<br/>`
-    debugInfo.CodeHistory.days.forEach((v, i) => {
+    content += `Last update : ${timestampToString(debugInfo.codeHistory.date)} (${debugInfo.codeHistory.latest})</p>`
+    content += `Since the last record in code_history at ${timestampToString(debugInfo.codeHistory.tsLast)} with code ${debugInfo.codeHistory.code} there are ${debugInfo.codeHistory.gpResults} new data points in gliderport<br/>`
+    debugInfo.codeHistory.days.forEach((v, i) => {
         content += `add ${v.length} new code(s) to code_history table for day ${timestampToString(v.date)} form ${v.c} points<br/>`
     })
     content += `</p>`
