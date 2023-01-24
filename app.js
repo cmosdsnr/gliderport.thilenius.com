@@ -402,6 +402,16 @@ app.get("/fixHistory", (req, res) => {
 app.post("/addData", async (req, res) => {
     console.log("++++++++ Adding Data ++++++++++++")
     let msg = ""
+    //fetch needed info for this post
+    results = await connection?.promise().query('SELECT * FROM `server_sent` WHERE `id`=1')
+    let sunset = 0, sunrise = 0, tsLast = 0
+    if (Array.isArray(results) && Array.isArray(results[0])) {
+        const r = results[0][0]
+        sunset = r.sunset_timestamp
+        sunrise = r.sunrise_timestamp
+        tsLast = r.last_forecast
+    }
+
     if ("d" in req.body) {
         const d = JSON.parse(req.body.d)
         sql =
@@ -434,86 +444,88 @@ app.post("/addData", async (req, res) => {
         })
         //check for texts that need sending
         const tsNow = parseInt((Date.now() + offset) / 1000)
-        const fifteenMin = tsNow - 15 * 60
-        const oneMin = tsNow - 1 * 60
-        const fiveMin = tsNow - 5 * 60
-        sql = "SELECT * FROM `gliderport` WHERE recorded > '" + timestampToString(fifteenMin) + "'"
-        let res = await connection?.promise().query(sql)
-        let aSpeed = 0, bSpeed = 0, cSpeed = 0
-        let aDir = 0, bDir = 0, cDir = 0
-        let aCnt = 0, bCnt = 0, cCnt = 0
-        if (Array.isArray(res[0])) res[0].forEach(e => {
-            aDir += e.direction
-            aSpeed += e.speed
-            aCnt += 1
-            const ts = parseInt((new Date(e.recorded).getTime() + offset) / 1000)
-            if (ts >= fiveMin) {
-                bDir += e.direction
-                bSpeed += e.speed
-                bCnt += 1
-            }
-            if (ts >= oneMin) {
-                cDir += e.direction
-                cSpeed += e.speed
-                cCnt += 1
-            }
-        })
-        aDir /= (aCnt > 0 ? aCnt : 1)
-        aSpeed /= (aCnt > 0 ? aCnt : 1)
-        bDir /= (bCnt > 0 ? bCnt : 1)
-        bSpeed /= (bCnt > 0 ? bCnt : 1)
-        cDir /= (cCnt > 0 ? cCnt : 1)
-        cSpeed /= (cCnt > 0 ? cCnt : 1)
+        if (tsNow > (3600 + sunrise) && tsNow < (sunset - 3600)) {
+            const fifteenMin = tsNow - 15 * 60
+            const oneMin = tsNow - 1 * 60
+            const fiveMin = tsNow - 5 * 60
+            sql = "SELECT * FROM `gliderport` WHERE recorded > '" + timestampToString(fifteenMin) + "'"
+            let res = await connection?.promise().query(sql)
+            let aSpeed = 0, bSpeed = 0, cSpeed = 0
+            let aDir = 0, bDir = 0, cDir = 0
+            let aCnt = 0, bCnt = 0, cCnt = 0
+            if (Array.isArray(res[0])) res[0].forEach(e => {
+                aDir += e.direction
+                aSpeed += e.speed
+                aCnt += 1
+                const ts = parseInt((new Date(e.recorded).getTime() + offset) / 1000)
+                if (ts >= fiveMin) {
+                    bDir += e.direction
+                    bSpeed += e.speed
+                    bCnt += 1
+                }
+                if (ts >= oneMin) {
+                    cDir += e.direction
+                    cSpeed += e.speed
+                    cCnt += 1
+                }
+            })
+            aDir /= (aCnt > 0 ? aCnt : 1)
+            aSpeed /= (aCnt > 0 ? aCnt : 1)
+            bDir /= (bCnt > 0 ? bCnt : 1)
+            bSpeed /= (bCnt > 0 ? bCnt : 1)
+            cDir /= (cCnt > 0 ? cCnt : 1)
+            cSpeed /= (cCnt > 0 ? cCnt : 1)
 
-        Object.keys(textWatch).forEach(async (v, i) => {
-            const d = textWatch[v]
-            if (d.text.sent != true) {
-                console.log("not yet sent to", d.email)
-                if (d.text.duration === 0 &&
-                    cSpeed >= d.text.speed &&
-                    Math.abs(270 - cDir) <= d.text.errorAngle) {
-                    sendTextMessage(d.text.address, d.firstName,
-                        {
-                            speed: cSpeed,
-                            direction: cDir,
-                            duration: "1"
-                        }
-                    )
-                    d.text.sent = true
+            Object.keys(textWatch).forEach(async (v, i) => {
+                const d = textWatch[v]
+                if (d.text.sent != true) {
+                    console.log("not yet sent to", d.email)
+                    if (d.text.duration === 0 &&
+                        cSpeed >= d.text.speed &&
+                        Math.abs(270 - cDir) <= d.text.errorAngle) {
+                        sendTextMessage(d.text.address, d.firstName,
+                            {
+                                speed: cSpeed,
+                                direction: cDir,
+                                duration: "1"
+                            }
+                        )
+                        d.text.sent = true
+                    }
+                    if (d.text.duration === 1 &&
+                        bSpeed >= d.text.speed &&
+                        Math.abs(270 - bDir) <= d.text.errorAngle) {
+                        sendTextMessage(d.text.address, d.firstName,
+                            {
+                                speed: bSpeed,
+                                direction: bDir,
+                                duration: "5"
+                            }
+                        )
+                        d.text.sent = true
+                    }
+                    if (d.text.duration === 2 &&
+                        aSpeed >= d.text.speed &&
+                        Math.abs(270 - aDir) <= d.text.errorAngle) {
+                        sendTextMessage(d.text.address, d.firstName,
+                            {
+                                speed: aSpeed,
+                                direction: aDir,
+                                duration: "15"
+                            }
+                        )
+                        d.text.sent = true
+                    }
+                    if (d.text.sent === true) {
+                        console.log("sending text to ", d.email)
+                        await setDoc(doc(db, 'users', v), d)
+                    }
                 }
-                if (d.text.duration === 1 &&
-                    bSpeed >= d.text.speed &&
-                    Math.abs(270 - bDir) <= d.text.errorAngle) {
-                    sendTextMessage(d.text.address, d.firstName,
-                        {
-                            speed: bSpeed,
-                            direction: bDir,
-                            duration: "5"
-                        }
-                    )
-                    d.text.sent = true
+                else {
+                    // console.log("already sent to", v, " => ", d)
                 }
-                if (d.text.duration === 2 &&
-                    aSpeed >= d.text.speed &&
-                    Math.abs(270 - aDir) <= d.text.errorAngle) {
-                    sendTextMessage(d.text.address, d.firstName,
-                        {
-                            speed: aSpeed,
-                            direction: aDir,
-                            duration: "15"
-                        }
-                    )
-                    d.text.sent = true
-                }
-                if (d.text.sent === true) {
-                    console.log("sending text to ", d.email)
-                    await setDoc(doc(db, 'users', v), d)
-                }
-            }
-            else {
-                // console.log("already sent to", v, " => ", d)
-            }
-        })
+            })
+        }
     } else {
         msg += "addData called with no data\n"
         console.log("   addData called with no data")
@@ -575,171 +587,171 @@ app.post("/addData", async (req, res) => {
     })
 
     // read the last time we looked for the forecast
-    let tsLast = 0, sunset = 0
-    connection.query('SELECT * FROM `server_sent` WHERE `id`=1',
-        function (err, results, fields) {
-            if (Array.isArray(results)) {
-                if (results[0].last_forecast) tsLast = results[0].last_forecast
-                if (results[0].sunset_timestamp) sunset = results[0].sunset_timestamp
-            }
-            const tsNow = parseInt((new Date()).getTime() / 1000)
-            // if it's been more than one hours, update the forecast
-            console.log(`it has been ${toHMS((tsLast + 1 * 60 * 60) - tsNow)} sec since last forecast, wait at least 1hr`)
+    // let tsLast = 0, sunset = 0
+    // connection.query('SELECT * FROM `server_sent` WHERE `id`=1',
+    //     function (err, results, fields) {
+    //         if (Array.isArray(results)) {
+    //             if (results[0].last_forecast) tsLast = results[0].last_forecast
+    //             if (results[0].sunset_timestamp) sunset = results[0].sunset_timestamp
+    //         }
+    const tsNow = parseInt((new Date()).getTime() / 1000)
+    // if it's been more than one hours, update the forecast
+    console.log(`it has been ${toHMS((tsLast + 1 * 60 * 60) - tsNow)} sec since last forecast, wait at least 1hr`)
 
-            if (tsNow > tsLast + 1 * 60 * 60) {
-                console.log("Attempting to update forecast since last was ", tsLast, " and now is ", tsNow)
-                // https://api.openweathermap.org/data/2.5/onecall?lat=32.8473&lon=-117.2742&exclude=minutely,daily&units=imperial&appid=483c6b4301f7069cbf4e266bffa6d5ff
+    if (tsNow > tsLast + 1 * 60 * 60) {
+        console.log("Attempting to update forecast since last was ", tsLast, " and now is ", tsNow)
+        // https://api.openweathermap.org/data/2.5/onecall?lat=32.8473&lon=-117.2742&exclude=minutely,daily&units=imperial&appid=483c6b4301f7069cbf4e266bffa6d5ff
 
-                const url =
-                    "https://api.openweathermap.org/data/2.5/onecall" +
-                    "?lat=32.8473&lon=-117.2742" +
-                    "&exclude=minutely,daily" +
-                    "&units=imperial" +
-                    "&appid=483c6b4301f7069cbf4e266bffa6d5ff"
-                fetch(url)
-                    .then((response) => response.json())
-                    .then((responseJson) => {
-                        if (!responseJson || !responseJson.hourly) {
-                            msg += "OpenWeather Data Offline\n"
-                            console.log("OpenWeather Data Offline")
-                        } else {
-                            let forecast = []
-                            let todaysCodes = []
-                            let lastCode = -1
-                            console.log(`found ${responseJson.hourly.length} hours in forecast, starting at ${timestampToString(responseJson.hourly[0].dt + offset / 1000)} ending ${timestampToString(responseJson.hourly[responseJson.hourly.length - 1].dt + offset / 1000)}`)
-                            console.log(`${responseJson.hourly[0].dt} to ${responseJson.hourly[responseJson.hourly.length - 1].dt}`)
-                            responseJson.hourly.forEach((v, i) => {
-                                if (v.dt > tsNow) {
-                                    const code = getCode(v.wind_speed * 10, v.wind_deg, 0)
-                                    forecast.push([v.dt, code])
-                                    if (lastCode != code && v.dt < sunset) {
-                                        lastCode = code
-                                        todaysCodes.push([(new Date(1000 * v.dt)).getHours(), codesMeaning[code]])
-                                    }
-                                }
-                            })
-                            console.log("forecast: ", forecast)
-                            console.log("todaysCodes: ", todaysCodes)
-                            connection?.query("UPDATE `server_sent` SET `last_forecast`=" + tsNow + " WHERE `id`=1", (err, results, fields) => { })
-                            connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(forecast) + "' WHERE `id`='forecast'")
-                            const h = responseJson.hourly
-                            h.forEach((v, i) => {
-                                let z = v.weather
-                                Object.keys(z[0]).forEach((w, j) => {
-                                    v["weather_" + w] = z[0][w]
-                                })
-                                delete (h[i].weather)
-                            })
-                            connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(h) + "' WHERE `id`='forecast_full'")
-                            connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(todaysCodes) + "' WHERE `id`='todays_codes'")
+        const url =
+            "https://api.openweathermap.org/data/2.5/onecall" +
+            "?lat=32.8473&lon=-117.2742" +
+            "&exclude=minutely,daily" +
+            "&units=imperial" +
+            "&appid=483c6b4301f7069cbf4e266bffa6d5ff"
+        fetch(url)
+            .then((response) => response.json())
+            .then((responseJson) => {
+                if (!responseJson || !responseJson.hourly) {
+                    msg += "OpenWeather Data Offline\n"
+                    console.log("OpenWeather Data Offline")
+                } else {
+                    let forecast = []
+                    let todaysCodes = []
+                    let lastCode = -1
+                    console.log(`found ${responseJson.hourly.length} hours in forecast, starting at ${timestampToString(responseJson.hourly[0].dt + offset / 1000)} ending ${timestampToString(responseJson.hourly[responseJson.hourly.length - 1].dt + offset / 1000)}`)
+                    console.log(`${responseJson.hourly[0].dt} to ${responseJson.hourly[responseJson.hourly.length - 1].dt}`)
+                    responseJson.hourly.forEach((v, i) => {
+                        if (v.dt > tsNow) {
+                            const code = getCode(v.wind_speed * 10, v.wind_deg, 0)
+                            forecast.push([v.dt, code])
+                            if (lastCode != code && v.dt < sunset) {
+                                lastCode = code
+                                todaysCodes.push([(new Date(1000 * v.dt)).getHours(), codesMeaning[code]])
+                            }
                         }
                     })
+                    console.log("forecast: ", forecast)
+                    console.log("todaysCodes: ", todaysCodes)
+                    connection?.query("UPDATE `server_sent` SET `last_forecast`=" + tsNow + " WHERE `id`=1", (err, results, fields) => { })
+                    connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(forecast) + "' WHERE `id`='forecast'")
+                    const h = responseJson.hourly
+                    h.forEach((v, i) => {
+                        let z = v.weather
+                        Object.keys(z[0]).forEach((w, j) => {
+                            v["weather_" + w] = z[0][w]
+                        })
+                        delete (h[i].weather)
+                    })
+                    connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(h) + "' WHERE `id`='forecast_full'")
+                    connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(todaysCodes) + "' WHERE `id`='todays_codes'")
+                }
+            })
+    }
+
+    // get the last timestamp from code_history
+    connection?.query(
+        "SELECT * FROM code_history ORDER BY date DESC LIMIT 1",
+        function (err, results, fields) {
+            const date = 24 * 3600 * parseInt(results[0].date / (24 * 3600))
+            console.log("   DEBUG: latest code history date reset to ", timestampToString(date), " ", date)
+            const r = { date: date, data: JSON.parse(results[0].data) }
+            // if it exists it will have at least two points, sunrise and sunset
+            // pop off sunset (it's always add to the end of a day)
+            r.data.codes.pop()
+            // at least sunrise should still be in the array
+            let tsLast = r.date + 3600 * r.data.limits[0]
+            let lc = 0
+            if (r.data.codes.length === 0) {
+                console.log("   ERROR: Found a zero length codes on ", timestampToString(r.date))
+            } else {
+                tsLast += r.data.codes[r.data.codes.length - 1][0]
+                lc = r.data.codes[r.data.codes.length - 1][1]
             }
 
-            // get the last timestamp from code_history
-            connection?.query(
-                "SELECT * FROM code_history ORDER BY date DESC LIMIT 1",
-                function (err, results, fields) {
-                    const date = 24 * 3600 * parseInt(results[0].date / (24 * 3600))
-                    console.log("   DEBUG: latest code history date reset to ", timestampToString(date), " ", date)
-                    const r = { date: date, data: JSON.parse(results[0].data) }
-                    // if it exists it will have at least two points, sunrise and sunset
-                    // pop off sunset (it's always add to the end of a day)
-                    r.data.codes.pop()
-                    // at least sunrise should still be in the array
-                    let tsLast = r.date + 3600 * r.data.limits[0]
-                    let lc = 0
-                    if (r.data.codes.length === 0) {
-                        console.log("   ERROR: Found a zero length codes on ", timestampToString(r.date))
-                    } else {
-                        tsLast += r.data.codes[r.data.codes.length - 1][0]
-                        lc = r.data.codes[r.data.codes.length - 1][1]
-                    }
+            sql = "SELECT * FROM gliderport WHERE recorded > '" +
+                timestampToString(tsLast) + "'"
+            connection?.query(sql, (err, results, fields) => {
+                if (Array.isArray(results)) {
+                    console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
+                        lc, ", there are ", results.length, " new data points in gliderport")
+                    let c = 0
+                    let lastTs = tsLast + 120 // 2 min after last
+                    results.forEach((v, i) => {
+                        c++
+                        const ts = Math.round(((new Date(v.recorded)).getTime() + offset) / 1000)
+                        // if (i % 1000 === 0) console.log(`   DEBUG: ${ts} : ${r.date + r.data.sun[0]} : ${r.date + r.data.sun[1]}`)
+                        if (ts > r.date + r.data.sun[0]) {
+                            // after sunrise
+                            // if r.data.codes is empty then add sunrise point
+                            if (r.data.codes.length === 0) {
+                                if (i > 0)
+                                    lc = getCode(results[i - 1].speed, results[i - 1].direction)
+                                else
+                                    lc = getCode(v.speed, v.direction)
+                                r.data.codes.push([r.data.sun[0] - 3600 * r.data.limits[0], lc])
+                            }
 
-                    sql = "SELECT * FROM gliderport WHERE recorded > '" +
-                        timestampToString(tsLast) + "'"
-                    connection?.query(sql, (err, results, fields) => {
-                        if (Array.isArray(results)) {
-                            console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
-                                lc, ", there are ", results.length, " new data points in gliderport")
-                            let c = 0
-                            let lastTs = tsLast + 120 // 2 min after last
-                            results.forEach((v, i) => {
-                                c++
-                                const ts = Math.round(((new Date(v.recorded)).getTime() + offset) / 1000)
-                                // if (i % 1000 === 0) console.log(`   DEBUG: ${ts} : ${r.date + r.data.sun[0]} : ${r.date + r.data.sun[1]}`)
-                                if (ts > r.date + r.data.sun[0]) {
-                                    // after sunrise
-                                    // if r.data.codes is empty then add sunrise point
-                                    if (r.data.codes.length === 0) {
-                                        if (i > 0)
-                                            lc = getCode(results[i - 1].speed, results[i - 1].direction)
-                                        else
-                                            lc = getCode(v.speed, v.direction)
-                                        r.data.codes.push([r.data.sun[0] - 3600 * r.data.limits[0], lc])
-                                    }
-
-                                    if (ts < r.date + r.data.sun[1]) {
-                                        //before sunset
-                                        // check code for change
-                                        const c = getCode(v.speed, v.direction)
-                                        // make a code last at least 5min (300s)
-                                        if ((c != lc) && (ts - lastTs > 120)) {
-                                            lc = c
-                                            // add to r.data.codes code_history[ts, code]
-                                            r.data.codes.push([ts - 3600 * r.data.limits[0] - r.date, lc])
-                                            lastTs = ts
-                                        }
-                                    }
-                                    // if it's after sunset OR it's the last data point AND there is stuff to save
-                                    if (((i === results.length - 1) && (r.data.codes.length > 0)) || ts >= r.date + r.data.sun[1]) {
-                                        // add sunset point
-                                        r.data.codes.push([r.data.sun[1] - 3600 * r.data.limits[0], 0])
-                                        // anything we save should now have at least sunrise AND sunset points (2)
-                                        // save this day in code_history
-                                        sql = "INSERT INTO `code_history` SET date="
-                                            + r.date
-                                            + ", data='"
-                                            + JSON.stringify(r.data)
-                                            + "' ON DUPLICATE KEY UPDATE data ='"
-                                            + JSON.stringify(r.data) + "'"
-                                        connection?.query(sql, () => { })
-                                        // console.log(`   DEBUG: saving ${JSON.stringify(r)} `)
-                                        console.log("   add ", r.data.codes.length, " new code(s) to code_history table for day ",
-                                            timestampToString(r.date), " form ", c, " points")
-                                        c = 0
-
-                                        // if (r.date < 2665558000) {
-                                        //     let s = "["
-                                        //     r.data.codes.forEach((w, j) => {
-                                        //         s += '[' + w[0] + ',' + w[1] + '],'
-                                        //     })
-                                        //     s += ']'
-                                        //     console.log("date: ", r.date, ", data: {limits: [ ", r.data.limits[0], ", ",
-                                        //         r.data.limits[1], " ], sun: [ ", r.data.sun[0], ", ", r.data.sun[1], " ], code:", s)
-                                        // }
-
-                                        // create a new day
-                                        r.date += 24 * 3600
-                                        //make sure the local time is in the next day (sub offset)
-                                        const y = new Date((r.date * 1000) - offset)
-                                        const sunData = calculateSunrise(y)
-                                        // console.log(`   DEBUG: y:${y.getTime() / 1000} r.date: ${r.date} sunrise: ${sunData.sunriseTimestamp}`)
-                                        r.data.codes = []
-                                        //  sunriseTimestamp is true local sunrise, r.date is midnight UTC, so add the timezone offset
-                                        r.data.sun = [sunData.sunriseTimestamp - r.date + offset / 1000, sunData.sunsetTimestamp - r.date + offset / 1000]
-                                        r.data.limits = [Math.floor(24 * sunData.sunrise) - 1, Math.floor(24 * sunData.sunset) + 2]
-
-                                        // console.log(`   DEBUG: y:${JSON.stringify(r.data)} `)
-                                    }
+                            if (ts < r.date + r.data.sun[1]) {
+                                //before sunset
+                                // check code for change
+                                const c = getCode(v.speed, v.direction)
+                                // make a code last at least 5min (300s)
+                                if ((c != lc) && (ts - lastTs > 120)) {
+                                    lc = c
+                                    // add to r.data.codes code_history[ts, code]
+                                    r.data.codes.push([ts - 3600 * r.data.limits[0] - r.date, lc])
+                                    lastTs = ts
                                 }
-                            })
+                            }
+                            // if it's after sunset OR it's the last data point AND there is stuff to save
+                            if (((i === results.length - 1) && (r.data.codes.length > 0)) || ts >= r.date + r.data.sun[1]) {
+                                // add sunset point
+                                r.data.codes.push([r.data.sun[1] - 3600 * r.data.limits[0], 0])
+                                // anything we save should now have at least sunrise AND sunset points (2)
+                                // save this day in code_history
+                                sql = "INSERT INTO `code_history` SET date="
+                                    + r.date
+                                    + ", data='"
+                                    + JSON.stringify(r.data)
+                                    + "' ON DUPLICATE KEY UPDATE data ='"
+                                    + JSON.stringify(r.data) + "'"
+                                connection?.query(sql, () => { })
+                                // console.log(`   DEBUG: saving ${JSON.stringify(r)} `)
+                                console.log("   add ", r.data.codes.length, " new code(s) to code_history table for day ",
+                                    timestampToString(r.date), " form ", c, " points")
+                                c = 0
+
+                                // if (r.date < 2665558000) {
+                                //     let s = "["
+                                //     r.data.codes.forEach((w, j) => {
+                                //         s += '[' + w[0] + ',' + w[1] + '],'
+                                //     })
+                                //     s += ']'
+                                //     console.log("date: ", r.date, ", data: {limits: [ ", r.data.limits[0], ", ",
+                                //         r.data.limits[1], " ], sun: [ ", r.data.sun[0], ", ", r.data.sun[1], " ], code:", s)
+                                // }
+
+                                // create a new day
+                                r.date += 24 * 3600
+                                //make sure the local time is in the next day (sub offset)
+                                const y = new Date((r.date * 1000) - offset)
+                                const sunData = calculateSunrise(y)
+                                // console.log(`   DEBUG: y:${y.getTime() / 1000} r.date: ${r.date} sunrise: ${sunData.sunriseTimestamp}`)
+                                r.data.codes = []
+                                //  sunriseTimestamp is true local sunrise, r.date is midnight UTC, so add the timezone offset
+                                r.data.sun = [sunData.sunriseTimestamp - r.date + offset / 1000, sunData.sunsetTimestamp - r.date + offset / 1000]
+                                r.data.limits = [Math.floor(24 * sunData.sunrise) - 1, Math.floor(24 * sunData.sunset) + 2]
+
+                                // console.log(`   DEBUG: y:${JSON.stringify(r.data)} `)
+                            }
                         }
                     })
                 }
-            )
+            })
         }
     )
+    //     }
+    // )
     res.send(msg)
 })
 
