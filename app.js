@@ -433,8 +433,8 @@ app.post("/addData", async (req, res) => {
         tsLast = r.last_forecast
     }
     // align tsLast (want to call forecast a few min after the hour)
-    const minutesIntoHour = tsLast % (24 * 60)
-    if (minutesIntoHour > 5) tsLast -= (60 * (minutesIntoHour - 2))
+    const secondsIntoHour = tsLast % (60 * 60)
+    if (secondsIntoHour > 5 * 60) tsLast -= (secondsIntoHour - 180)
 
     debugInfo.tsLast = tsLast
     //add data if it was present
