@@ -408,7 +408,7 @@ app.post("/addData", async (req, res) => {
 
     //fetch needed info for this post
     sql = 'SELECT * FROM `server_sent` WHERE `id`=1'
-    let results = connection ? await connection.promise().query(sql) : null
+    let results = await connection?.promise().query(sql)
     let sunset = 0, sunrise = 0, tsLast = 0
     if (Array.isArray(results) && Array.isArray(results[0])) {
         const r = results[0][0]
