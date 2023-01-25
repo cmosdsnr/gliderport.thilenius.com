@@ -970,9 +970,9 @@ app.get("/info", async (req, res) => {
 
     content += `<h3>Add Data</h3>`
     content += `<p>Data and Hours table update Info:<br/>`
-    content += `Last called: ${timestampToString(debugInfo.now)}  (${debugInfo.now})<br/>`
+    content += `Last called: ${timestampToString(offset + debugInfo.now)}  (${debugInfo.now})<br/>`
     content += `Received ${debugInfo.numberRecords} records from PI3 and added them to the gliderport table<br/>`
-    content += `last entry in hours table: ${debugInfo.latestHours}<br/>`
+    content += `last entry in hours table: ${timestampToString(debugInfo.latestHours)} (${debugInfo.latestHours})<br/>`
     Object.keys(debugInfo.hours).forEach((v, i) => {
         const hourInfo = debugInfo.hours[v]
         content += `Found ${hourInfo.resultsFound} entries in gliderport for the hour ${timestampToString(v)}<br/>`
