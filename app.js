@@ -232,8 +232,7 @@ let id = setInterval(() => {
 //         interval = setInterval(myFunction, delay)
 //     }
 // }
-
-var interval = setInterval(myFunction, delay)
+// var interval = setInterval(myFunction, delay)
 
 const setLastRecord = async () => {
     const res = await connection?.promise().query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1")
