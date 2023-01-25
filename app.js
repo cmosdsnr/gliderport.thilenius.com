@@ -559,6 +559,7 @@ app.post("/addData", async (req, res) => {
     }
     // console.log(results[0].data)
     debugInfo.hourLength = hourLength
+    debugInfo.latestHours = latestHours
     debugInfo.hours = {}
     // msg += "latest hour starts at " + latestHours + "\n"
     // for each hour starting at 'latestHour', thru 'thisHour'
@@ -968,21 +969,21 @@ app.get("/info", async (req, res) => {
     content += `</table></p>`
 
     content += `<h3>Add Data</h3>`
-    content += `<p>received data and hours table<br/>`
-    content += `Last called: ${debugInfo.now}<br/>`
+    content += `<p>Data and Hours table update Info:<br/>`
+    content += `Last called: ${timestampToString(debugInfo.now)}  (${debugInfo.now})<br/>`
     content += `Received ${debugInfo.numberRecords} records from PI3 and added them to the gliderport table<br/>`
     content += `last entry in hours table: ${debugInfo.latestHours}<br/>`
     Object.keys(debugInfo.hours).forEach((v, i) => {
         const hourInfo = debugInfo.hours[v]
-        content += `Found ${hourInfo.resultsFound} entries in gliderport for the hour ${v}<br/>`
-        content += `Hour in hours table starts at ${v} had ${hourInfo.start} rows and now has ${hourInfo.l} rows<br/>`
+        content += `Found ${hourInfo.resultsFound} entries in gliderport for the hour ${timestampToString(v)}<br/>`
+        content += `Hour in hours table starts at ${v} had ${timestampToString(hourInfo.start)} rows and now has ${timestampToString(hourInfo.l)} rows<br/>`
     })
     content += `</p><p>Forecast updating<br/>`
     content += `Last forecast update as recorded in server_sent: ${debugInfo.tsLast}</p>`
-    content += `updating forecast at: ${debugInfo.ts}</p>`
+    content += `updating forecast at: ${timestampToString(debugInfo.openWeather.ts)} (${debugInfo.openWeather.ts})</p>`
     content += `found ${debugInfo.openWeather.hours} hours in forecast, starting at ${timestampToString(debugInfo.openWeather.start + offset / 1000)} ending ${timestampToString(debugInfo.openWeather.stop + offset / 1000)}<br/>`
     content += `</p><p>Code history updating<br/>`
-    content += `Last update : ${timestampToString(debugInfo.codeHistory.date)} (${debugInfo.codeHistory.latest})</p>`
+    content += `Last update : ${timestampToString(debugInfo.codeHistory.date)} (${debugInfo.codeHistory.date})</p>`
     content += `Since the last record in code_history at ${timestampToString(debugInfo.codeHistory.tsLast)} with code ${debugInfo.codeHistory.code} there are ${debugInfo.codeHistory.gpResults} new data points in gliderport<br/>`
     debugInfo.codeHistory.days.forEach((v, i) => {
         content += `add ${v.length} new code(s) to code_history table for day ${timestampToString(v.date)} form ${v.c} points<br/>`
