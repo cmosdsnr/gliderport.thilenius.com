@@ -433,8 +433,8 @@ app.post("/addData", async (req, res) => {
         tsLast = r.last_forecast
     }
     // align tsLast (want to call forecast a few min after the hour)
-    const minIntoHour = tsLast % (24 * 60)
-    if (minIntoHour > 5) tsLast -= (60 * (minIntoHour - 2))
+    const minutesIntoHour = tsLast % (24 * 60)
+    if (minutesIntoHour > 5) tsLast -= (60 * (minutesIntoHour - 2))
 
     debugInfo.tsLast = tsLast
     //add data if it was present
@@ -999,7 +999,7 @@ app.get("/info", async (req, res) => {
     })
     content += `</p><p>Forecast updating<br/>`
     content += `Next forecast update as recorded in server_sent: ${timestampToString(debugInfo.tsLast + offset + 3600)}<br/><br/>`
-    content += `Last forecast update as recorded in server_sent: ${timestampToString(debugInfo.tsLast + offset)}<br/>`
+    content += `Last forecast update as recorded in server_sent: ${timestampToString(debugInfo.tsLast + offset)} (${debugInfo.tsLast})<br/>`
     content += `found ${debugInfo.openWeather.hours} hours in forecast, starting at ${timestampToString(debugInfo.openWeather.start + offset / 1000)} ending ${timestampToString(debugInfo.openWeather.stop + offset / 1000)}<br/>`
 
     content += `</p><p>Code history updating<br/>`
