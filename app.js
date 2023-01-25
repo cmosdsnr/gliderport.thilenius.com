@@ -978,7 +978,7 @@ app.get("/info", async (req, res) => {
         content += `Hour in hours table starts at ${v} had ${timestampToString(hourInfo.start)} rows and now has ${hourInfo.l} rows<br/>`
     })
     content += `</p><p>Forecast updating<br/>`
-    content += `Next forecast update as recorded in server_sent: ${timestampToString(debugInfo.tsLast + offset + 3600 * 60)}<br/><br/>`
+    content += `Next forecast update as recorded in server_sent: ${timestampToString(debugInfo.tsLast + offset + 3600)}<br/><br/>`
     content += `Last forecast update as recorded in server_sent: ${timestampToString(debugInfo.tsLast + offset)}<br/>`
     content += `found ${debugInfo.openWeather.hours} hours in forecast, starting at ${timestampToString(debugInfo.openWeather.start + offset / 1000)} ending ${timestampToString(debugInfo.openWeather.stop + offset / 1000)}<br/>`
 
