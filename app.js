@@ -217,6 +217,23 @@ let id = setInterval(() => {
     }
 }, 1 * 3600 * 1000) // every 1 hours
 
+// var delay = 1 * 1000
+// const myFunction = () => {
+//     // we want to keep this timer ate about 5min after the hour
+//     const minutesIntoHour = parseInt(((new Date().getTime()) % (1000 * 3600 * 24)) / (60 * 1000))
+//     if (minutesIntoHour > 10) {
+//         clearInterval(interval)
+//         delay = 1000 * 60 * (65 - minutesIntoHour)
+//         interval = setInterval(myFunction, delay)
+//     } else if (delay != 1 * 3600 * 1000) {
+//         // we just finished a shorter interval to align with hours+5min
+//         clearInterval(interval)
+//         delay = 1000 * 60 * 60
+//         interval = setInterval(myFunction, delay)
+//     }
+// }
+
+var interval = setInterval(myFunction, delay)
 
 const setLastRecord = async () => {
     const res = await connection?.promise().query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1")
@@ -416,6 +433,10 @@ app.post("/addData", async (req, res) => {
         sunrise = r.sunrise_timestamp
         tsLast = r.last_forecast
     }
+    // align tsLast (want to call forecast a few min after the hour)
+    const minIntoHour = tsLast % (24 * 60)
+    if (minIntoHour > 5) tsLast -= (60 * (minIntoHour - 2))
+
     debugInfo.tsLast = tsLast
     //add data if it was present
     if ("d" in req.body) {
