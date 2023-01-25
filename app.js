@@ -889,7 +889,7 @@ app.get("/info", async (req, res) => {
         "</td></tr></table></p>"
 
     sql = "SELECT * FROM `hours` ORDER BY start DESC"
-    const results = (await connection?.promise().query(sql))[0]
+    let results = (await connection?.promise().query(sql))[0]
     content += `<h3>Hours has ${results.length} entries</h3>`
     content += `<p><table style="text-align: center;">`
     content += `<tr><th>Hour Start</th><th>Hours count</th><th>Gliderport count</th></tr>`
