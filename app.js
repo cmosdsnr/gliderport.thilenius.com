@@ -572,10 +572,9 @@ app.post("/addData", async (req, res) => {
     // get latest record (or 2 days ago if there are none)
     sql = `SELECT * FROM hours WHERE start > ${twoDaysAgo} ORDER BY start DESC LIMIT 1`
     results = (await connection?.promise().query(sql))[0]
-    console.log(JSON.stringify(results))
     let hourLength = 0
     latestHours = twoDaysAgo
-    if (Array.isArray(results)) {
+    if (Array.isArray(results) && results.length > 0) {
         const d = JSON.parse(results[0].data)
         latestHours = d.start
         hourLength = d.date.length
