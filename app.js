@@ -655,6 +655,7 @@ app.post("/addData", async (req, res) => {
                         if (v.dt > tsNow) {
                             const code = getCode(v.wind_speed * 10, v.wind_deg, 0)
                             forecast.push([v.dt, code])
+                            console.log("forecast: ", v.dt, ", ", sunset)
                             if (lastCode != code && v.dt < sunset) {
                                 lastCode = code
                                 todaysCodes.push([(new Date(1000 * v.dt)).getHours(), codesMeaning[code]])
