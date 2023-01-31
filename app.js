@@ -222,23 +222,6 @@ let id = setInterval(() => {
     }
 }, 1 * 3600 * 1000) // every 1 hours
 
-// var delay = 1 * 1000
-// const myFunction = () => {
-//     // we want to keep this timer ate about 5min after the hour
-//     const minutesIntoHour = parseInt(((new Date().getTime()) % (1000 * 3600 * 24)) / (60 * 1000))
-//     if (minutesIntoHour > 10) {
-//         clearInterval(interval)
-//         delay = 1000 * 60 * (65 - minutesIntoHour)
-//         interval = setInterval(myFunction, delay)
-//     } else if (delay != 1 * 3600 * 1000) {
-//         // we just finished a shorter interval to align with hours+5min
-//         clearInterval(interval)
-//         delay = 1000 * 60 * 60
-//         interval = setInterval(myFunction, delay)
-//     }
-// }
-// var interval = setInterval(myFunction, delay)
-
 const setLastRecord = async () => {
     const res = await connection?.promise().query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1")
     const ts = (new Date(res[0][0].recorded).getTime() + offset) / 1000
@@ -433,8 +416,9 @@ app.post("/addData", async (req, res) => {
     let sunset = 0, sunrise = 0, tsLast = 0
     if (Array.isArray(results) && Array.isArray(results[0])) {
         const r = results[0][0]
-        sunset = r.sunset_timestamp
-        sunrise = r.sunrise_timestamp
+        const s = JSON.parse(r.sun)
+        sunset = s.sunset
+        sunrise = s.sunrise
         tsLast = r.last_forecast
     }
 
