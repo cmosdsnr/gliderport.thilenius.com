@@ -191,7 +191,7 @@ let pingTimer = setInterval(() => {
         }
         sql = "UPDATE `server_sent` SET `online_status_touched`='" + dateString + "' WHERE 1"
         connection?.query(sql, (err, results, fields) => { })
-    }).catch(function (err) {
+    }).catch(function (err) {// console.log(err)
         if (reportEveryMin) console.log('gliderport offline')
         const ts = parseInt((Date.now() + offset) / 1000)
         const dateString = timestampToString(ts)
