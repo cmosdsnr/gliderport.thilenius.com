@@ -191,7 +191,7 @@ let pingTimer = setInterval(() => {
         }
         sql = "UPDATE `server_sent` SET `online_status_touched`='" + dateString + "' WHERE 1"
         connection?.query(sql, (err, results, fields) => { })
-    }).catch(function (err) {// console.log(err)
+    }).catch(function (err) {
         if (reportEveryMin) console.log('gliderport offline')
         const ts = parseInt((Date.now() + offset) / 1000)
         const dateString = timestampToString(ts)
@@ -798,12 +798,18 @@ app.post("/addData", async (req, res) => {
                     r.date += 24 * 3600
                     //make sure the local time is in the next day (sub offset)
                     const y = new Date((r.date * 1000) - offset)
-                    const sunData = calculateSunrise(y)
+                    // La Jola lat/long
+                    const lat = 32.89
+                    const long = -117.25
+                    const sunData = SunCalc.getTimes(y, lat, long)
+                    // const sunData = calculateSunrise(y)
                     // console.log(`   DEBUG: y:${y.getTime() / 1000} r.date: ${r.date} sunrise: ${sunData.sunriseTimestamp}`)
                     r.data.codes = []
                     //  sunriseTimestamp is true local sunrise, r.date is midnight UTC, so add the timezone offset
-                    r.data.sun = [sunData.sunriseTimestamp - r.date + offset / 1000, sunData.sunsetTimestamp - r.date + offset / 1000]
-                    r.data.limits = [Math.floor(24 * sunData.sunrise) - 1, Math.floor(24 * sunData.sunset) + 2]
+                    r.data.sun = [sunData.sunrise - r.date + offset / 1000, sunData.sunset - r.date + offset / 1000]
+                    const sunrise = new Date(sunData.sunrise * 1000)
+                    const sunset = new Date(sunData.sunset * 1000)
+                    r.data.limits = [sunrise.getHours() - 1, Math.floor(24 * sunset.getHours()) + 2]
 
                     // console.log(`   DEBUG: y:${JSON.stringify(r.data)} `)
                 }
