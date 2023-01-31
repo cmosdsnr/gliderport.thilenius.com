@@ -8,12 +8,13 @@ import bodyParser from "body-parser"
 import cors from "cors"
 import fileUpload from 'express-fileupload'
 import nodemailer from "nodemailer"
+import SunCalc from "suncalc"
 
 import { auth, db } from './firebase.js'
 import { onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, collection, query, where } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth'
-import calculateSunrise from "./calculateSunrise.js"
 import { Http2ServerRequest } from "http2"
+import { SDK_VERSION } from "firebase/app"
 dotenv.config()
 
 let DEBUG = true
@@ -51,6 +52,10 @@ const resetAllSentTexts = () => {
 
 const timestampToString = (ts) => {
     return new Date(ts * 1000).toISOString().replace("T", " ").replace(/\.[0-9]*Z/, "")
+}
+
+const timestampToLocalString = (ts) => {
+    return new Date(ts * 1000).toLocaleString()
 }
 
 const toHMS = (s) => {
@@ -152,16 +157,17 @@ let changes = {
 
 // to do with sunrise and sunset
 let TodaysDay = new Date().getDate()
-let sunData = calculateSunrise(new Date())
+let sunData = {}
 
 const updateSunData = () => {
-    const sql = "UPDATE `server_sent` SET `sunrise_raw`=" + sunData.sunrise +
-        ",`sunrise_timestamp`=" + sunData.sunriseTimestamp +
-        ",`sunrise_text`='" + sunData.sunriseText +
-        "',`sunset_raw`=" + sunData.sunset +
-        ",`sunset_timestamp`=" + sunData.sunsetTimestamp +
-        ",`sunset_text`='" + sunData.sunsetText +
-        "' WHERE `id`=1"
+    // La Jola lat/long
+    const lat = 32.89
+    const long = -117.25
+    sunData = SunCalc.getTimes(new Date(), lat, long)
+    let sd = {}
+    Object.keys(sunData).map((v, i) => sd[v] = parseInt(sunData[v].getTime() / 1000))
+    // console.table(sd)
+    const sql = "UPDATE `server_sent` SET `sun`='" + JSON.stringify(sd) + "' WHERE `id`=1"
     connection?.query(sql, function (err, results, fields) { })
 }
 updateSunData()
@@ -207,7 +213,6 @@ let pingTimer = setInterval(() => {
 let id = setInterval(() => {
     if (TodaysDay != new Date().getDate()) {
         TodaysDay = new Date().getDate()
-        sunData = calculateSunrise(new Date())
         updateSunData()
         // Update Day and Week hit_counter databases on each new day
         handleHits()
@@ -897,19 +902,6 @@ app.get("/info", async (req, res) => {
         content += `<tr><td></td><td>Latest Hours table timestamp is:</td><td>${latestHours}</td><td>${timestampToString(latestHours)}</td></tr>`
     content += `</table></p>`
 
-    content +=
-        "<p><table><tr><td>Sunrise</td><td>" +
-        sunData.sunriseTime?.toLocaleString("en-US", {
-            timeZone: "America/Los_Angeles",
-        }) +
-        "</td></tr>"
-    content +=
-        "<tr><td>Sunset</td><td>" +
-        sunData.sunsetTime?.toLocaleString("en-US", {
-            timeZone: "America/Los_Angeles",
-        }) +
-        "</td></tr></table></p>"
-
     sql = "SELECT * FROM `hours` ORDER BY start DESC"
     let results = (await connection?.promise().query(sql))[0]
     content += `<h3>Hours has ${results.length} entries</h3>`
@@ -930,31 +922,37 @@ app.get("/info", async (req, res) => {
 
     sql = 'SELECT * FROM `server_sent` WHERE `id`=1'
     results = (await connection?.promise().query(sql))[0]
+
     content += `<h3>Server Sent Table</h3><p><table>`
     const tsNow = parseInt((new Date()).getTime() / 1000)
     content += `<tr><td><b>Now</b></td><td>(${tsNow})  <b>${timestampToString(tsNow)}</b></td></tr><tr></tr>`
     for (const [key, value] of Object.entries(results[0])) {
-        if ('last_record' === key || 'last_image' === key || 'last_forecast' === key ||
-            'sunrise_timestamp' === key || 'sunset_timestamp' === key) {
-            let deltaStr = ""
-            let delta = tsNow - value
-            let end = "ago"
-            if (delta < 0) {
-                delta = -delta
-                end = "from now"
-            }
-            if (delta > 3600) {
-                deltaStr += parseInt(delta / 3600) + " hr, "
-                delta -= 3600 * parseInt(delta / 3600)
-            }
-            if (delta > 60) {
-                deltaStr += parseInt(delta / 60) + " min, "
-                delta -= 60 * parseInt(delta / 60)
-            }
-            deltaStr += parseInt(delta) + " sec " + end
-            content += `<tr><td>${key}</td><td>(${value})  <b>${timestampToString(value)}</b>   (${deltaStr})</td></tr>`
+        if (key === 'sun') {
+            results[0][key] = JSON.parse(results[0][key])
+            Object.keys(results[0][key]).forEach((k) => {
+                content += `<tr><td>${k}</td><td>${timestampToLocalString(results[0][key][k])}</td></tr>`
+            })
         } else
-            content += `<tr><td>${key}</td><td>${value}</td></tr>`
+            if ('last_record' === key || 'last_image' === key || 'last_forecast' === key) {
+                let deltaStr = ""
+                let delta = tsNow - value
+                let end = "ago"
+                if (delta < 0) {
+                    delta = -delta
+                    end = "from now"
+                }
+                if (delta > 3600) {
+                    deltaStr += parseInt(delta / 3600) + " hr, "
+                    delta -= 3600 * parseInt(delta / 3600)
+                }
+                if (delta > 60) {
+                    deltaStr += parseInt(delta / 60) + " min, "
+                    delta -= 60 * parseInt(delta / 60)
+                }
+                deltaStr += parseInt(delta) + " sec " + end
+                content += `<tr><td>${key}</td><td>(${value})  <b>${timestampToString(value)}</b>   (${deltaStr})</td></tr>`
+            } else
+                content += `<tr><td>${key}</td><td>${value}</td></tr>`
     }
     content += `</table></p>`
 
