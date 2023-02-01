@@ -7,8 +7,7 @@ export default function Video() {
     const { videoWidth, videoHeight, numberConnections, } = useData()
 
     useEffect(() => {
-        let videoUrl = 'wss://gliderportvideo.thilenius.org'
-        // let videoUrl = 'ws://localhost:8081'
+        let videoUrl = import.meta.env.VITE_VIDEO_SERVER_URL
         let videoWrapper = document.getElementById("videoWrapper");
         setTooMany(numberConnections >= 10)
         let player = numberConnections < 10 ? new JSMpeg.VideoElement(videoWrapper, videoUrl) : null

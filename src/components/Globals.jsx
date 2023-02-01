@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react"
 
-// (window.location.protocol === "https:") ? "https://gliderport.thilenius.com/" : "http://gliderport.thilenius.com/";
-export const phpLoc = "https://live.flytorrey.com/php/"
+// export const phpLoc = "https://live.flytorrey.com/php/"
 
 export const clone = (obj) => {
     if (obj === null || typeof obj !== 'object') {

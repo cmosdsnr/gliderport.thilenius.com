@@ -239,13 +239,12 @@ export function DataProvider({ children }) {
     const ws = useRef<WebSocket | null>(null)
 
     useEffect(() => {
-        console.log("chart length:", chart.length, " ", import.meta.env.VITE_VIDEO_SERVER_URL)
+        console.log("chart length:", chart.length)
     }, [chart])
 
     // Connect to the socket server
     useEffect(() => {
-        ws.current = new WebSocket("wss://gliderportsocketserver.thilenius.org/ws")
-        // ws.current = new WebSocket("ws://localhost:8081/ws")
+        ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL)
         ws.current.onopen = () => {
             console.log("ws opened")
             loadData("CurrentData")
@@ -258,7 +257,7 @@ export function DataProvider({ children }) {
             console.log("ws closed")
             // try to open again
             setLoading(true)
-            ws.current = new WebSocket("wss://gliderportsocketserver.thilenius.org/ws")
+            ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL)
         }
         const wsCurrent = ws.current;
         return () => {

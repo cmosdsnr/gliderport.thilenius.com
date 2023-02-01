@@ -71,7 +71,7 @@ export const PhoneNumberInput = (props) => {
         if (numbersOnly.length === 10) {
             // it's a full 10-digit new number, check the validity and carrier
             // debugger
-            const url = "https://gliderportupdateserver.thilenius.org/PhoneFinder?area=" + numbersOnly.slice(0, 3)
+            const url = import.meta.env.VITE_UPDATE_SERVER_URL + '/PhoneFinder?area=' + numbersOnly.slice(0, 3)
                 + "&prefix=" + numbersOnly.slice(3, 6)
                 + "&number=" + numbersOnly.slice(6, 10)
             fetch(url)

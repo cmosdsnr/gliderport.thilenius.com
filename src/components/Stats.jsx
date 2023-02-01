@@ -275,7 +275,7 @@ export default function Stats() {
                 <Card>
                     <Card.Body>
                         <video ref={videoRef} controls id="video1" preload="none">
-                            <source src={"https://gliderportupdateserver.thilenius.org/" + selectedVideo + ".mp4"} type="video/mp4" />
+                            <source src={import.meta.env.VITE_UPDATE_SERVER_URL + '/' + selectedVideo + ".mp4"} type="video/mp4" />
                             Your browser does not support the video tag.
                         </video>
                         <div id="demo">Start</div>

@@ -12,7 +12,6 @@ import WindDial from "./WindDial"
 import Status from "../Status"
 import Plots from "../Plots"
 import UpdatingImage from "./UpdatingImage"
-import { phpLoc } from "../Globals"
 
 // *********************************************
 export const Home = () => {

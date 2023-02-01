@@ -51,7 +51,7 @@ export default function Dashboard() {
     }
 
     const sendTestSms = () => {
-        const url = 'https://gliderportupdateserver.thilenius.org/sendTestSms?name=' + currentUser.firstName + '&to=' + currentUser.text.address
+        const url = import.meta.env.VITE_UPDATE_SERVER_URL + '/sendTestSms?name=' + currentUser.firstName + '&to=' + currentUser.text.address
         console.log(url)
         fetch(url)
         alert("Please check your phone for the test SMS")
