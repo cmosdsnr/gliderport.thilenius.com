@@ -138,9 +138,7 @@ export function useData() {
 }
 
 export function DataProvider({ children }) {
-
     const [loading, setLoading] = useState(true)
-
     const [posts, setPosts] = useState<Post[]>([])
     const [donors, setDonors] = useState<Donor[]>([])
     const [history, setHistory] = useState<Day[]>([])
@@ -165,28 +163,23 @@ export function DataProvider({ children }) {
     const [videoWidth, setVideoWidth] = useState(0)
     const [videoHeight, setVideoHeight] = useState(0)
     const [numberConnections, setNumberConnections] = useState(0)
+
     const handleChart = (d: Reading[]) => {
         setChart(d)
         setLatest(d[d.length - 1])
-        console.log(d)
+        // console.log(d)
         // debugger
     }
 
-
     const handleCurrentData = (d: CurrentData) => {
         setSun({ rise: d.sunrise, set: d.sunset })
-        const tsNow = (new Date()).getTime() / 1000
-        // if ((tsNow < d.sunrise - 15 * 60) || (tsNow > d.sunset + 15 * 60)) setItIsDark(true)
         setOffline(d.onlineStatus === 0)
         setLastCheck(d.onlineStatusTouched)
-
-        // setLastImage(d.lastImage)
         setLastForecast(d.lastForecast)
         setVideoWidth(d.videoWidth)
         setVideoHeight(d.videoHeight)
         setNumberConnections(d.numberConnections)
     }
-
 
     const handleVideos = (d: VideoItem) => {
         let vids: string[] = []
@@ -246,11 +239,8 @@ export function DataProvider({ children }) {
     const ws = useRef<WebSocket | null>(null)
 
     useEffect(() => {
-        console.log("chart length:", chart.length)
-        // if (chart?.length > 0) debugger
+        console.log("chart length:", chart.length, " ", import.meta.env.VITE_VIDEO_SERVER_URL)
     }, [chart])
-
-
 
     // Connect to the socket server
     useEffect(() => {
