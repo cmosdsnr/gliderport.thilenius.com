@@ -1,3 +1,3 @@
-git add .\app.js
+git add .\app.ts
 git commit -m "wip"
 git push dokku master

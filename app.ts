@@ -735,6 +735,13 @@ app.post("/addData", async (req, res) => {
       bSpeed /= bCnt > 0 ? bCnt : 1;
       cDir /= cCnt > 0 ? cCnt : 1;
       cSpeed /= cCnt > 0 ? cCnt : 1;
+      aDir = Math.round(aDir);
+      bDir = Math.round(bDir);
+      cDir = Math.round(cDir);
+      aSpeed = Math.round(aSpeed) / 10;
+      bSpeed = Math.round(bSpeed) / 10;
+      cSpeed = Math.round(cSpeed) / 10;
+
       console.log("Speeds: ", aSpeed, bSpeed, ", ", cSpeed, "  Dir: ", aDir, ", ", bDir, ", ", ", ", cDir);
 
       Object.keys(textWatch).forEach(async (v, i) => {
@@ -1575,15 +1582,13 @@ const sendTextMessage = (to: string, name: string, data: any) => {
     debugInfo.sentTexts.push({
       direction: data.direction,
       duration: data.duration,
-      speed: data.speed / 10,
+      speed: data.speed,
       to,
       when: Math.floor((Date.now() + offset) / 1000),
     });
     mailOptions.html =
       `${name}, Time to Fly!\n` +
-      `Wind was at ${Math.round(data.direction)} deg at ${Math.round(data.speed / 10)} mph over the past ${
-        data.duration
-      } min, ` +
+      `Wind was at ${data.direction} deg at ${data.speed} mph over the past ${data.duration} min, ` +
       "\nMake changes to your alert <a href='https://live.flytorrey.com'>here</a>";
   }
   transporter.sendMail(mailOptions, function (error, info) {
