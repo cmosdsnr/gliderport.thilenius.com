@@ -366,15 +366,14 @@ export default class AddData {
             if (v.dt > this.tsNow) {
               const code = this.#getCode(v.wind_speed * 10, v.wind_deg);
               forecast.push([v.dt, code]);
-              console.log("forecast: ", v.dt, ", ", this.sunset);
+              //   console.log("forecast: ", v.dt, ", ", this.sunset);
               if (lastCode != code && v.dt < this.sunset) {
                 lastCode = code;
                 todaysCodes.push([new Date(1000 * v.dt).getHours(), this.#codesMeaning[code]]);
               }
             }
           });
-          // console.log("forecast: ", forecast)
-          // console.log("todaysCodes: ", todaysCodes)
+          // last_forecast will be teh next tsLast
           this.connection.query(
             "UPDATE `server_sent` SET `last_forecast`=" + this.tsNow + " WHERE `id`=1",
             (err, results, fields) => {}
@@ -532,8 +531,8 @@ export default class AddData {
     } else console.log("   addData called with no data");
 
     // if it's been more than one hours, update the forecast
-    console.log("   tsNow: ", this.tsNow, " tsLast: ", tsLast);
-    if (this.tsNow > tsLast + 1 * 0.6 * 60) this.#updateForecast();
+    // console.log("   tsNow: ", this.tsNow, " tsLast: ", tsLast);
+    if (this.tsNow > tsLast + 1 * 60 * 60) this.#updateForecast();
 
     this.#updateCodeHistory();
   };
