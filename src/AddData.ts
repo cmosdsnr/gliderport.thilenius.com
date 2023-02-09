@@ -533,7 +533,7 @@ export default class AddData {
 
     // if it's been more than one hours, update the forecast
     console.log("   tsNow: ", this.tsNow, " tsLast: ", tsLast);
-    if (this.tsNow > tsLast + 1 * 60 * 60) this.#updateForecast();
+    if (this.tsNow > tsLast + 1 * 0.6 * 60) this.#updateForecast();
 
     this.#updateCodeHistory();
   };
