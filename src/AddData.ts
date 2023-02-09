@@ -366,7 +366,7 @@ export default class AddData {
             if (v.dt > this.tsNow) {
               const code = this.#getCode(v.wind_speed * 10, v.wind_deg);
               forecast.push([v.dt, code]);
-              //   console.log("forecast: ", v.dt, ", ", this.sunset);
+              console.log("forecast: ", v.dt, ", ", this.sunset);
               if (lastCode != code && v.dt < this.sunset) {
                 lastCode = code;
                 todaysCodes.push([new Date(1000 * v.dt).getHours(), this.#codesMeaning[code]]);
