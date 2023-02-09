@@ -151,7 +151,7 @@ export default class AddData {
       sql += '( "' + v[0] + '", ' + v[1] + ", " + v[2] + ", " + v[3] + ", " + v[4] + ", " + v[5] + ")" + e;
     });
     await this.connection.promise().query(sql);
-    console.table(d);
+    // console.table(d);
     this.setLastRecord();
     globals.tdLast = new Date();
     const last = d[d.length - 1];
