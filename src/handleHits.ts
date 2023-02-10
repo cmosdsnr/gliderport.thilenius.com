@@ -147,8 +147,13 @@ export const handleHits = async (connection: mysql.Connection) => {
   }
 
   let wks;
-  if (t.week.day === "") wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1`);
-  else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > ${t.week.day}`);
+  if (t.week.day === "") {
+    console.log("Regenerating all weeks!!");
+    wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1`);
+    t.weeks.totals = [];
+    t.weeks.uniques = [];
+    t.total.unique = 0;
+  } else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > ${t.week.day}`);
   if (Array.isArray(wks) && Array.isArray(wks[0])) {
     //there are new weeks
     (wks[0] as HitTable[]).forEach((v, i) => {
