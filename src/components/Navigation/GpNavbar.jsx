@@ -8,7 +8,7 @@ import { faHome, faVideo, faDonate, faInfoCircle, faTty, faAtom, faWind, faSignI
 import { useAuth } from '../../contexts/AuthContext'
 
 
-import "../../css/style.css"
+
 import paraglider from "../../images/paraglider.png?as=png&width=40"
 
 function NavImageText({ icon, name }) {

@@ -1,12 +1,13 @@
+import * as d3 from 'd3'
 
-function int_to_hex(num) {
+function int_to_hex(num: number): string {
     var hex = Math.round(num).toString(16);
     if (hex.length === 1)
         hex = '0' + hex;
     return hex;
 }
 
-export function blendColors(color1, color2, percentage) {
+export function blendColors(color1: null | string, color2: null | string, percentage: null | number): string {
     // check input
     color1 = color1 || '#000000';
     color2 = color2 || '#ffffff';
@@ -22,21 +23,18 @@ export function blendColors(color1, color2, percentage) {
         color2 = color2.substring(1);
 
 
-    color1 = [parseInt(color1[0] + color1[1], 16), parseInt(color1[2] + color1[3], 16), parseInt(color1[4] + color1[5], 16)];
-    color2 = [parseInt(color2[0] + color2[1], 16), parseInt(color2[2] + color2[3], 16), parseInt(color2[4] + color2[5], 16)];
+    const c1 = [parseInt(color1[0] + color1[1], 16), parseInt(color1[2] + color1[3], 16), parseInt(color1[4] + color1[5], 16)];
+    const c2 = [parseInt(color2[0] + color2[1], 16), parseInt(color2[2] + color2[3], 16), parseInt(color2[4] + color2[5], 16)];
 
     // 4: blend
-    var color3 = [
-        (1 - percentage) * color1[0] + percentage * color2[0],
-        (1 - percentage) * color1[1] + percentage * color2[1],
-        (1 - percentage) * color1[2] + percentage * color2[2]
+    const c3 = [
+        (1 - percentage) * c1[0] + percentage * c2[0],
+        (1 - percentage) * c1[1] + percentage * c2[1],
+        (1 - percentage) * c1[2] + percentage * c2[2]
     ];
 
     // 5: convert to hex
-    color3 = '#' + int_to_hex(color3[0]) + int_to_hex(color3[1]) + int_to_hex(color3[2]);
-
-    // return hex
-    return color3;
+    return '#' + int_to_hex(c3[0]) + int_to_hex(c3[1]) + int_to_hex(c3[2]);
 }
 
 export const colors = [
@@ -45,7 +43,7 @@ export const colors = [
     ["#d4c9c9", "#adbdcc", "#add4d4", "#99c699", "#d5deba"]  //bad
 ]
 
-export function getGradients(svgDefs, dataMax) {
+export function getGradients(svgDefs: d3.Selection<SVGDefsElement, unknown, null, undefined>, dataMax: number) {
 
     const transitions = [[0, 1], [1, 2], [2, 1], [1, 0], [0, 2], [2, 0]]
 

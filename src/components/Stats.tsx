@@ -1,27 +1,23 @@
 import React, { useState, useEffect, useRef } from "react"
 import * as d3 from 'd3'
 import { Row, Col, Card } from "react-bootstrap"
-import { useData } from '../contexts/DataContext'
-import { Vids } from './Globals.jsx'
-import '../css/stats.css'
 import Modal from "react-modal"
+import { Weeks, useData } from '../contexts/DataContext'
+import '../css/stats.css'
 
-export default function Stats() {
-    const [years, setYears] = useState([])
-    const [yearFilter, setYearFilter] = useState("0")
-    const [monthFilter, setMonthFilter] = useState(-1)
-    const [filterValue, setFilterValue] = useState("2022")
-    const [modalIsOpen, setModalIsOpen] = useState(false)
-    const [selectedVideo, setSelectedVideo] = useState(null)
-    const [changeText, setChangeText] = useState(null)
-    const [changeId, setChangeId] = useState(null)
-    const [player, setPlayer] = useState(null)
+export default function StatsPage() {
+    const [yearFilter, setYearFilter] = useState<string>("0")
+    const [monthFilter, setMonthFilter] = useState<number>(-1)
+    const [filterValue, setFilterValue] = useState<string>("2022")
+    const [modalIsOpen, setModalIsOpen] = useState<boolean>(false)
+    const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
+    const [changeText, setChangeText] = useState<JSX.Element>(<></>)
+    const [changeId, setChangeId] = useState<number>(0)
 
-    const videoRef = useRef(null)
-    const canvas = useRef(null)
+    const videoRef = useRef<HTMLVideoElement>(null)
     const { loadData, videos, hitStats, } = useData()
 
-    let abbrMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    let abbrMonths: String[] = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
     // link up the visitor data
     useEffect(() => {
@@ -44,36 +40,36 @@ export default function Stats() {
     // var lineInc = 2,
     //     majMarkDegree = 10,
     //     degreeInc = 30,
-    //     compassrose = document.getElementById("compassrose"),
+    //     compassRose = document.getElementById("compassRose"),
     //     xmlns = "http://www.w3.org/2000/svg",
     //     xlink = "http://www.w3.org/1999/xlink";
     // if (lineInc > 0) {
     //     for (i = 0; i < 360; i += lineInc) {
     //         var newline = document.createElementNS(xmlns, 'use');
     //         if (i % majMarkDegree == 0) {
-    //             newline.setAttributeNS(xlink, 'xlink:href', '#majline');
+    //             newline.setAttributeNS(xlink, 'xlink:href', '#majLine');
     //         } else {
-    //             newline.setAttributeNS(xlink, 'xlink:href', '#roseline');
+    //             newline.setAttributeNS(xlink, 'xlink:href', '#roseLine');
     //         }
     //         newline.setAttributeNS(null, 'transform', 'rotate(' + i + ' 250 250)');
-    //         compassrose.appendChild(newline);
+    //         compassRose.appendChild(newline);
     //     }
     // }
-    // var writeDegs = document.createElementNS(xmlns, 'text'),
+    // var writeDegrees = document.createElementNS(xmlns, 'text'),
     //     currentDeg = 0,
     //     writeOffset = 0;
     // for (i = 0; i < 99; i += (degreeInc / 360) * 100) {
     //     var degree = document.createElementNS(xmlns, 'textPath');
-    //     degree.setAttributeNS(xlink, 'xlink:href', '#rosecircle');
+    //     degree.setAttributeNS(xlink, 'xlink:href', '#roseCircle');
     //     var length = Math.log(i) * Math.LOG10E + 1 | 0;
     //     if (length > 1) { writeOffset = 1; }
     //     degree.setAttributeNS(null, 'startOffset', (i - writeOffset) + "%");
     //     degree.textContent = 360 - currentDeg;
     //     if (degree.textContent == 360) degree.textContent = 0;
-    //     writeDegs.appendChild(degree);
+    //     writeDegrees.appendChild(degree);
     //     currentDeg += degreeInc;
     // }
-    // compassrose.appendChild(writeDegs);
+    // compassRose.appendChild(writeDegrees);
 
 
     return (
@@ -125,7 +121,9 @@ export default function Stats() {
                             </center>
                         </Col>
                     </Row>
-                    <Row><Col xs={12} ><StatPlot data={hitStats?.weeks} /></Col></Row>
+                    <Row><Col xs={12} >
+                        {hitStats?.weeks ? <StatPlot data={hitStats.weeks} /> : <></>}
+                    </Col></Row>
 
                     <Row className="blueBorder">
                         <Col xs={12}>
@@ -194,7 +192,7 @@ export default function Stats() {
                                             key={i}
                                             xs={3}
                                             className="videos"
-                                            onClick={e => setSelectedVideo(e.target.textContent)}
+                                            onClick={e => { setSelectedVideo((e.target as HTMLElement).textContent) }}
                                         >
                                             {v}
                                         </Col>
@@ -233,7 +231,7 @@ export default function Stats() {
                             <h2>Changes & Updates</h2>
                         </center>
                         <Col xs={2}>
-                            {changes.map((v, i) => {
+                            {changes.map((v: Change, i) => {
                                 return (<h5 key={i}
                                     style={{ backgroundColor: changeId === i ? "lightblue" : "white" }}
                                     onMouseEnter={() => { setChangeId(i); setChangeText(v.html) }}>{v.date}</h5>)
@@ -242,21 +240,6 @@ export default function Stats() {
                         </Col>
                         <Col xs={10}>{changeText}</Col>
                     </Row>
-                    {/* <center>
-                        <h2>Changes & Updates</h2>
-                    </center>
-
-                    <Accordion>
-                        {changes.map((v, i) => {
-                            return (
-                                <AccordionItem key={i} eventKey={i} className="Bordered">
-                                    <div className="card-header">
-                                        <h5 className="mb-0">{v.date}</h5>
-                                    </div>
-                                    <div className="card-body">{v.html}</div>
-                                </AccordionItem>)
-                        })}
-                    </Accordion> */}
                 </Col>
             </Row>
 
@@ -281,7 +264,7 @@ export default function Stats() {
                         <div id="demo">Start</div>
                         <div className="compass">
                             <svg viewBox="0 0 500 500" transform="rotate(3)">
-                                <g id="compassrose" transform="scale(1,0.4), rotate(95,250,250)">
+                                <g id="compassRose" transform="scale(1,0.4), rotate(95,250,250)">
                                     <g id="movieArrow" className="arrow" transform="rotate(0,250,250)">
                                         <line id="movieArrowLine" x1="250" y1="250" x2="250" y2="440" />
                                         <polygon points="250,440 245,420 255,420" style={{ fill: 'black' }} />
@@ -289,9 +272,9 @@ export default function Stats() {
                                 </g>
                                 <defs>
                                     <symbol>
-                                        <line x1="40" y1="250" x2="50" y2="250" id="roseline" />
-                                        <line x1="40" y1="250" x2="60" y2="250" id="majline" />
-                                        <path d="M10,250a240,240 0 1,0 480,0a240,240 0 1,0 -480,0" id="rosecircle" />
+                                        <line x1="40" y1="250" x2="50" y2="250" id="roseLine" />
+                                        <line x1="40" y1="250" x2="60" y2="250" id="majLine" />
+                                        <path d="M10,250a240,240 0 1,0 480,0a240,240 0 1,0 -480,0" id="roseCircle" />
                                     </symbol>
                                 </defs>
                             </svg>
@@ -305,16 +288,18 @@ export default function Stats() {
     )
 }
 
+type Points = [number, number]
 
+interface StatPlotProps {
+    data: Weeks;
+}
 
-const StatPlot = props => {
-    const { data, ...rest } = props
-    // const { data, ...rest } = props
+const StatPlot = ({ data }: StatPlotProps): JSX.Element => {
     const chartRef = useRef(null)
 
-    const [plotData, setPlotData] = useState([])
+    const [plotData, setPlotData] = useState<Points[]>([])
     const [width, setWidth] = useState(0)
-    const rowRef = useRef(null)
+    const rowRef = useRef<HTMLElement>(null)
 
     const margin = { top: 10, right: 60, bottom: 60, left: 25 }
 
@@ -334,17 +319,15 @@ const StatPlot = props => {
         }
     }, [])
 
-
     useEffect(() => {
         if (data) {
-            const start = parseInt(new Date(data.start + "08:00:00").getTime() / 1000)
+            const start: number = Math.floor((new Date(data.start + "08:00:00")).getTime() / 1000)
             //  data.last - data.data.length * 7 * 24 * 3600
-            let d = []
-            data.totals.forEach((v, i) => d.push([start + i * 7 * 24 * 3600, parseInt(v)]));
+            let d: Points[] = []
+            data.totals?.forEach((v, i) => d.push([start + i * 7 * 24 * 3600, v]));
             setPlotData(d)
         }
     }, [data])
-
 
     useEffect(() => {
         // if there is no width or no data we should not be here
@@ -362,7 +345,7 @@ const StatPlot = props => {
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
 
         const numberOfWeeks = plotData.length
-        const stepWeeks = parseInt(numberOfWeeks / (width / 40))
+        const stepWeeks = Math.floor(numberOfWeeks / (width / 40))
         let tickValues = []
         for (let i = 0; i < 1 + ((width - margin.left) / 40); i++) { tickValues.push(plotData[0][0] + i * stepWeeks * 7 * 24 * 3600) }
 
@@ -371,8 +354,9 @@ const StatPlot = props => {
         var y = d3.scaleLinear().range([height, 0])
 
         // Scale the range of the data
-        x.domain(d3.extent(plotData, function (d) { return d[0] }))
-        y.domain([0, d3.max(plotData, function (d) { return d[1] })])
+        const [u, v] = d3.extent(plotData, function (d) { return d[0] })
+        if (u != undefined && v != undefined) x.domain([u, v])
+        y.domain([0, d3.max(plotData, function (d) { return d[1] }) as number])
 
         // draw bottom X axis 
         svg.append("g")
@@ -385,7 +369,7 @@ const StatPlot = props => {
                     .tickValues(tickValues)
                     .tickFormat(function (d) {
                         let td = new Date()
-                        td.setTime(1000 * d)
+                        td.setTime(1000 * (d as number))
                         const m = td.getMonth() + 1
                         const a = td.getDate()
                         const y = td.getFullYear() - 2000
@@ -419,12 +403,12 @@ const StatPlot = props => {
         // // Define the line
         var hitsLine = d3.line()
             .x(function (d) {
-                if (d.length === 0) return 0
+                // if (d.length === 0) return 0
                 const a = x(d[0])
                 return a
             })
             .y(function (d) {
-                if (d.length === 0) return 0
+                // if (d.length === 0) return 0
                 const a = y(d[1])
                 return a
             })
@@ -440,47 +424,32 @@ const StatPlot = props => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [plotData, width]) // Redraw chart if data or size changes
 
-
     return (
         <Row>
             <Col xs={12} ref={rowRef} className="greyBackground" style={{ paddingTop: '15px' }}>
-                <div ref={chartRef} {...rest} />
+                <div ref={chartRef} />
             </Col>
         </Row>
     )
 }
 
-
-function Accordion({ children }) {
-
-    const [currentKey, setCurrentKey] = useState(-1)
-
-    const childrenWithProps = React.Children.map(children, child => {
-
-        if (React.isValidElement(child)) {
-            return React.cloneElement(child, { currentKey, setCurrentKey });
-        }
-        return child;
-    });
-
-    return <div>{childrenWithProps}</div>
+type Change = {
+    date: string,
+    html: JSX.Element
 }
-function AccordionItem({ children, eventKey, currentKey, setCurrentKey }) {
 
-    return (
-        <>
-            <div onMouseEnter={() => setCurrentKey(eventKey)} onMouseLeave={() => setCurrentKey(-1)} >
-                {children[0]}
 
-                {currentKey === eventKey ? <>{children[1]}</> : null}
-            </div>
 
+const changes: Change[] = [
+    {
+        date: "2/2/23", html: <>
+            <h4> minor revision</h4>
+            <ol>
+                <li>Converted to typeScript</li>
+
+            </ol>
         </>
-    );
-}
-
-
-const changes = [
+    },
     {
         date: "1/7/23", html: <>
             <h4> semi-major revision</h4>
@@ -504,7 +473,7 @@ const changes = [
                 <li>Site re-writer in React JS</li>
                 <li>Site moved to live.flytorrey.com</li>
                 <li>Site uses firebase authentication and login</li>
-                <li>Still has issues/incompletes on logged in pages</li>
+                <li>Still has issues on logged in pages</li>
                 <li>Uses raspberry Pi 3 data collector at gliderport</li>
                 <li>Raspberry Pi 3 is still connected to ESP module</li>
             </ol>
@@ -534,7 +503,7 @@ const changes = [
         date: "1/31/20", html:
             <ol>
                 <li>Wind speed is now accurate. Direction is fairly accurate but may need adjustment</li>
-                <li>Images are transfered directly to the new hosting site</li>
+                <li>Images are transferred directly to the new hosting site</li>
                 <li>ESP32 seems to be solid now and uploading data reliably</li>
                 <li>I keep an archive of all past days pictures, in case that's ever needed</li>
                 <li>Site now also automatically emails me if pictures ever stop uploading for faster
@@ -545,11 +514,13 @@ const changes = [
         date: "1/20/20", html:
             <ol>
                 <li>The wind velocity is off. (I believe by a factor of 2?)</li>
-                <li>The issue is kown & I need to repace a part at the gliderport. I will get to it</li>
-                <li>Slowly shifting the data colection to the new server... there may be outages</li>
-                <li>I reduced the native image size to make loading much faster. You should not notice any
-                    degradation in the image</li>
-                <li>The ESP is losing it network conection after a day or two. Not sure why yet.</li>
+                <li>The issue is known & I need to replace a part at the gliderport. I will get to it</li>
+                <li>Slowly shifting the data collection to the new server... there may be outages</li>
+                <li>
+                    I reduced the native image size to make loading much faster. You should not notice any
+                    degradation in the image
+                </li>
+                <li>The ESP is losing it network connection after a day or two. Not sure why yet.</li>
                 <li>Angle has not been fine tuned yet.</li>
                 <li>These are the last steps...</li>
             </ol>
@@ -557,14 +528,14 @@ const changes = [
     {
         date: "1/15/20", html:
             <ol>
-                <li>The New TPG Eletronic box has been installed</li>
+                <li>The New TPG Electronic box has been installed</li>
                 <li>The radio, serial-to-audio box, back-up power source are no longer connected</li>
                 <li>I replaced the hub and ultimeter with the new 100 model</li>
-                <li>Inserted in the data line is the ESP32 box, wiht display</li>
-                <li>30 second interval data is sucessfully being transmitted to the database<br />
+                <li>Inserted in the data line is the ESP32 box, with display</li>
+                <li>30 second interval data is successfully being transmitted to the database<br />
                     Note that no data is transmitted if the temp/dir/speed are unchanged since the last
                     reading</li>
-                <li>The site only has options to see Scripps peir data or the ESP32</li>
+                <li>The site only has options to see Scripps pier data or the ESP32</li>
                 <li>Arrow and status are now ESP32 based</li>
                 <li>As of right now everything seems to be working</li>
                 <li><b>THE ANGLE MAY BE ASKEW (I HAD TO GUESS THE OFFSET) PLEASE GIVE ME FEEDBACK HOW MANY
@@ -586,7 +557,7 @@ const changes = [
                 <li>The TPG electronics went down. Corrosion on the antenna caused packet transmission
                     errors. Power resets caused improper modes. Long story short, it’s all working again.
                 </li>
-                <li>Raspbery PI handeling images had a software meltdown, and needed to be reformated.</li>
+                <li>Raspberry PI handling images had a software meltdown, and needed to be reformated.</li>
                 <li>The website is moving to a more robust server platform. This may cause some outages.
                 </li>
                 <li>I’ve added tabs to the webpage & moved things around.</li>

@@ -1,18 +1,25 @@
 import React, { useRef, useEffect } from 'react'
 
-const Canvas = props => {
+interface CanvasProps {
+    draw: (context: CanvasRenderingContext2D) => void
+    data: any
+    width: number
+    height: number
+}
 
-    const { draw, data, width, height, ...rest } = props
-    const canvasRef = useRef(null)
+const Canvas = ({ draw, data, width, height }: CanvasProps, ...rest: any[]) => {
+
+    const canvasRef = useRef<HTMLCanvasElement>(null)
 
     useEffect(() => {
         const canvas = canvasRef.current
-        if (!canvas | !width) {
+        if (!canvas || !width) {
             if (!canvas) { console.log("no canvas:" + canvas) }
             if (!width) { console.log("no width:" + width) }
             return
         }
-        const context = canvas.getContext('2d')
+        const context: CanvasRenderingContext2D | null = canvas.getContext('2d')
+        if (context === null) return
         context.canvas.width = width
         context.canvas.height = height
         if (data && (data === 1 || data.limits)) draw(context)

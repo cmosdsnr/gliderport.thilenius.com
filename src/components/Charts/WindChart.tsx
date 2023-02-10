@@ -1,14 +1,17 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, MouseEvent } from 'react'
 import * as d3 from 'd3'
 import { Col } from "react-bootstrap"
-import { useFilter } from '../../contexts/FilterContext'
+import { useFilter, Limits, FilterReturnDataType } from '../../contexts/FilterContext'
 import { getGradients } from './ColorGradients'
 import Legend from "./Legend"
 import { useData } from '../../contexts/DataContext'
 
+interface WindChartProps {
+    clientWidth: number,
+    label: string,
+}
 
-const WindChart = props => {
-    const { clientWidth, label } = props
+const WindChart = ({ clientWidth, label }: WindChartProps): JSX.Element => {
 
     const {
         chart
@@ -16,7 +19,7 @@ const WindChart = props => {
 
     const chartRef = useRef(null)
 
-    const [limits, setLimits] = useState()
+    const [limits, setLimits] = useState<null | Limits>(null)
     const [showLegend, setShowLegend] = useState(false)
     const [width, setWidth] = useState(0)
     const [height, setHeight] = useState(0)
@@ -25,26 +28,26 @@ const WindChart = props => {
 
     const [direction, setDirection] = useState([[0, 0]])
     const [min, setMin] = useState([[0, 0]])
-    const [max, setMax] = useState([[0, 0]])
+    const [max, setMax] = useState<[number, number][]>([[0, 0]])
     const { filterData, fillForFilter } = useFilter()
     const margin = { top: 10, right: 60, bottom: 30, left: 30 }
 
     useEffect(() => {
         setWidth(clientWidth - margin.left - margin.right)
-        setHeight(parseInt(clientWidth / 5) - margin.top - margin.bottom)
+        setHeight(Math.floor(clientWidth / 5) - margin.top - margin.bottom)
         setSvgWidth(clientWidth)
-        setSvgHeight(parseInt(clientWidth / 5))
+        setSvgHeight(Math.floor(clientWidth / 5))
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clientWidth])
 
     useEffect(() => {
         if (width > 0 && chart?.length > 1) {
             // debugger
-            const { fTop, fBottom, limits } = filterData(chart, width);
+            const { fTop, fBottom, limits }: FilterReturnDataType = filterData(chart, width);
             setLimits(limits)
             setMax(fTop)
             setMin(fBottom)
-            let { filled } = fillForFilter(chart, width, "Direction")
+            let { filled } = fillForFilter(chart, width, "direction")
             setDirection(filled)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -55,6 +58,7 @@ const WindChart = props => {
     useEffect(() => {
         // if there is no width we should not be here
         if (!width) { return }
+        if (!limits) { return }
 
         // grab, clear and resize char container
         var svgContainer = d3.select(chartRef.current)
@@ -69,7 +73,7 @@ const WindChart = props => {
 
         var timeSinceLastHourMark = limits.tsStart % (1 * 60 * 60)
         var td = new Date((limits.tsStart - timeSinceLastHourMark) * 1000);
-        var tickCnt = 1 + parseInt((timeSinceLastHourMark + (limits.tsStop - limits.tsStart)) / (2 * 3600))
+        var tickCnt = 1 + Math.floor((timeSinceLastHourMark + (limits.tsStop - limits.tsStart)) / (2 * 3600))
         var tickValues = []
 
         // Add X axis --> it is a date format
@@ -87,10 +91,9 @@ const WindChart = props => {
                     .axisBottom(x)
                     .tickSize(-height)
                     .tickValues(tickValues)
-                    .tickFormat(function (d) {
+                    .tickFormat((d: any): string => {
                         td.setTime(1000 * d)
                         const hrs = td.getUTCHours()
-                        // console.log(td.toString())
                         if (hrs === 0) {
                             return "12am " + td.toDateString()
                         } else {
@@ -102,7 +105,7 @@ const WindChart = props => {
         // Add Y axis
         const dataMax = d3.max(max, function (d) { return d[1] })
         var y = d3.scaleLinear()
-            .domain([0, dataMax > 12 ? dataMax : 12])
+            .domain([0, dataMax != undefined && dataMax > 12 ? dataMax : 12])
             .range([(height + 5), 0])
         svg.append("g")
             .attr("transform", "translate(" + margin.left + ",5)")
@@ -127,12 +130,12 @@ const WindChart = props => {
             cp.append("path")
                 .datum(max)
                 .attr("d", d3.area()
-                    .x(function (d) { return x(d[0]) })
-                    .y0(function (d, i) { return y(min[i][1]) })
-                    .y1(function (d) { return y(d[1]) })
+                    .x(function (d: any): any { return x(d[0]) })
+                    .y0(function (d: any, i: any): any { const t = d[0]; return y(min[i][1]) })
+                    .y1(function (d: any): any { return y(d[1]) })
                 )
 
-        getGradients(svgDefs, dataMax)
+        getGradients(svgDefs, dataMax ? dataMax : 12)
         const dir = Math.abs(direction[0][1] - 270)
         var state = dir > 40 ? 2 : (dir > 33 ? 1 : 0)
         var cnt = 0;
@@ -201,7 +204,7 @@ const WindChart = props => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [min, max]) // Redraw chart if data changes
 
-    const toggleLegend = (e) => {
+    const toggleLegend = (e: MouseEvent) => {
         e.preventDefault();
         if (showLegend) {
             setShowLegend(false)

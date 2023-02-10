@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react"
 import { useData } from '../../contexts/DataContext'
-import { codes } from '../Globals'
 
 const Today = props => {
     const { ...rest } = props

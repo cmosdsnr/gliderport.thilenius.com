@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useData } from '../../contexts/DataContext'
 
-const CurrentTable = props => {
-    const { ...rest } = props
+const CurrentTable = ({ ...rest }) => {
 
     const { sun, passedSeconds, latest, printDate } = useData()
 
@@ -28,8 +27,8 @@ const CurrentTable = props => {
         if (latest?.time) {
             var dt = new Date(latest ? 1000 * latest.time : 0)
             let ps = passedSeconds > 0 ? passedSeconds : 0
-            let passedMinutes = parseInt(passedSeconds / 60)
-            let passedHours = parseInt(passedSeconds / 3600)
+            let passedMinutes = Math.floor(passedSeconds / 60)
+            let passedHours = Math.floor(passedSeconds / 3600)
             var ls = "Latest Reading: "
             ls += (1 + dt.getUTCMonth()) + "/" + dt.getUTCDate() + "/" + dt.getUTCFullYear() +
                 ' at ' + dt.getUTCHours().toString() + ":" + (dt.getUTCMinutes() < 10 ? "0" : "") + dt.getUTCMinutes().toString()
@@ -91,7 +90,7 @@ const CurrentTable = props => {
         <table style={{ width: '100%', ...rest }} >
             <tbody>
                 <tr>
-                    <td colSpan="4" className="bold">
+                    <td colSpan={4} className="bold">
                         <center>{lastSeen}</center><br />
                     </td>
                 </tr>

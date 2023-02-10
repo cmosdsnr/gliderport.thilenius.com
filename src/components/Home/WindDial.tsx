@@ -1,37 +1,40 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, WheelEvent } from 'react'
 import * as d3 from 'd3'
+import { Reading } from '../../contexts/DataContext'
 
-const WindDial = props => {
+interface WindDialProps {
+    passedSeconds: number
+    picRef: React.RefObject<HTMLDivElement>
+    data: Reading[]
+}
 
-    const { passedSeconds, picRef, data, ...rest } = props
-    const divRef = useRef(null)
-    const [lastSeen, setLastSeen] = useState("")
-    // const [divMargins, setDivMargins] = useState({ paddingLeft: 0, paddingTop: 0 })
-    const svgWidth = useRef(0)
+const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
+
+    const divRef = useRef<HTMLDivElement>(null)
+    const [lastSeen, setLastSeen] = useState<string>("")
+
+    const svgWidth = useRef<number>(0)
     const sizeInPx = 400
     const ArrowColor = '#660000'
 
-    const [hovering, setHovering] = useState(false);
-    // const [zoomFactor, setZoomFactor] = useState(1);
-    const zoomFactor = useRef(1);
+    const [hovering, setHovering] = useState<boolean>(false);
+    const zoomFactor = useRef<number>(1);
 
-    const handleMouseEnter = useCallback((e) => {
+    const handleMouseEnter = useCallback(() => {
         if (!hovering) {
-            // e.target.style.border = '1px solid red';
             setHovering(true)
             document.body.style.overflow = "hidden"
         }
     }, [hovering])
 
-    const handleMouseLeave = useCallback((e) => {
+    const handleMouseLeave = useCallback(() => {
         if (!!hovering) {
-            // e.target.style.border = '1px solid white';
             setHovering(false)
             document.body.style.overflow = "scroll"
         }
     }, [hovering])
 
-    const zoom = (e) => {
+    const zoom = (e: WheelEvent<HTMLDivElement>) => {
         if (zoomFactor.current < 3 && e.deltaY < 0) zoomFactor.current = zoomFactor.current + 0.1
         if (zoomFactor.current > 1 && e.deltaY > 0) zoomFactor.current = zoomFactor.current - 0.1
     }
@@ -58,10 +61,10 @@ const WindDial = props => {
 
 
     useEffect(() => {
-        const hours = parseInt(passedSeconds / 3600)
+        const hours = Math.floor(passedSeconds / 3600)
         if (hours > 0) setLastSeen(hours + " hours ago")
         else {
-            const minutes = parseInt(passedSeconds / 60)
+            const minutes = Math.floor(passedSeconds / 60)
             if (minutes > 0) setLastSeen(minutes + " minute ago")
             else {
                 setLastSeen(passedSeconds + " seconds ago")
@@ -198,8 +201,8 @@ const WindDial = props => {
         }
         // Draw the arrows
         if (data.length > 10) {
-            var lxmin = 1000, lymin = 1000
-            var lxmax = -1000, lymax = -1000
+            var lxMin = 1000, lyMin = 1000
+            var lxMax = -1000, lyMax = -1000
             for (let i = 0; i < 10; i++) {
                 // debugger
                 var lx = 22.5 * data[data.length - 10 + i].speed * Math.cos((360 + 90 - data[data.length - 10 + i].direction) * Math.PI / 180)
@@ -220,15 +223,15 @@ const WindDial = props => {
                     .attr("y2", y(ly) + 3)
                     .style("stroke-width", 1)
                     .style("stroke", ArrowColor)
-                if (lx > lxmax) lxmax = lx
-                if (ly > lymax) lymax = ly
-                if (lx < lxmin) lxmin = lx
-                if (ly < lymin) lymin = ly
+                if (lx > lxMax) lxMax = lx
+                if (ly > lyMax) lyMax = ly
+                if (lx < lxMin) lxMin = lx
+                if (ly < lyMin) lyMin = ly
             }
-            cx = (lxmax + lxmin) / 2
-            cy = (lymax + lymin) / 2
-            var rx = (lxmax - cx) * 1.5
-            var ry = (lymax - cy) * 1.5
+            cx = (lxMax + lxMin) / 2
+            cy = (lyMax + lyMin) / 2
+            var rx = (lxMax - cx) * 1.5
+            var ry = (lyMax - cy) * 1.5
 
             // console.log(cx + " " + cy + " " + rx + " " + ry)
             svg.append('ellipse')
@@ -250,7 +253,7 @@ const WindDial = props => {
             markerBoxHeight = 10,
             refX = 10,
             refY = 5,
-            arrowPoints = [[0, 0], [0, 10], [10, 5]]
+            arrowPoints: [number, number][] = [[0, 0], [0, 10], [10, 5]]
 
         // if (data.direction.length > 2) debugger
         // draw line and arrow
@@ -348,7 +351,6 @@ const WindDial = props => {
                         divRef.current.clientHeight > sizeInPx ? (divRef.current.clientHeight - sizeInPx) / 2 : 0
             }}
             ref={divRef}
-            {...rest}
         />
 
     )

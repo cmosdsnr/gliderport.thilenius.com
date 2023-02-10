@@ -463,3 +463,9 @@ background-color: rgb(32, 32, 197);
     background-color: #50a8b9;
     color: #6e2258 !important;
 }
+
+.homePanel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

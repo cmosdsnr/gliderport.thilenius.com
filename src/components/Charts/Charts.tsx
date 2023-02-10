@@ -1,14 +1,14 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { Row } from "react-bootstrap"
-import WindChart from "./Charts/WindChart"
-import SimpleChart from "./Charts/SimpleChart"
+import WindChart from "./WindChart"
+import SimpleChart from "./SimpleChart"
 
 
-const Plots = props => {
-    const { ...rest } = props
+const Charts = ({ ...rest }): JSX.Element => {
 
-    const [clientWidth, setClientWidth] = useState(0)
-    const rowRef = useRef(null)
+
+    const [clientWidth, setClientWidth] = useState<number>(0)
+    const rowRef = useRef<HTMLElement>(null)
 
 
     useEffect(() => {
@@ -37,4 +37,4 @@ const Plots = props => {
         </Row>
     )
 }
-export default Plots
+export default Charts

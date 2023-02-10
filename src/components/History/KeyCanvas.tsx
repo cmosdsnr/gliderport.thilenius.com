@@ -2,11 +2,15 @@ import React from "react"
 import Canvas from "./Canvas"
 import { codes } from "../Globals"
 
-export const KeyCanvas = ({ width }) => {
+interface KeyCanvasProps {
+    width: number
+}
 
-    const drawKey = (ctx) => {
+export const KeyCanvas = ({ width }: KeyCanvasProps) => {
 
-        var widthA, widthB;
+    const drawKey = (ctx: CanvasRenderingContext2D) => {
+
+        var widthA, widthB = 0;
         var cntA,
             cntB = 0;
         var w;
@@ -14,7 +18,7 @@ export const KeyCanvas = ({ width }) => {
         if (width < 1400) {
             // cntA = parseInt(codes.length / 2);
             // cntB = codes.length - cntA;
-            cntA = parseInt(11 / 2);
+            cntA = Math.floor(11 / 2);
             cntB = 11 - cntA;
             widthA = width / cntA;
             widthB = width / cntB;

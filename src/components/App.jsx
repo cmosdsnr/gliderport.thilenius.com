@@ -20,6 +20,8 @@ import Stats from "./Stats"
 import Contribute from "./Contribute"
 import Contact from "./Contact"
 
+import "../css/style.css"
+
 document.title = import.meta.env.VITE_PAGE_NAME
 function App() {
     const [showSignUpModal, setShowSignUpModal] = useState(false)

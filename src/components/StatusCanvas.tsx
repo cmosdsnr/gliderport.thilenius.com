@@ -1,16 +1,22 @@
 import React, { useRef, useEffect } from "react"
 
-const StatusCanvas = (props) => {
+interface CanvasProps {
+    data: any
+    width: number
+    full: boolean
+}
 
-    const { width, data, full, ...rest } = props
-    const canvasRef = useRef()
-    const RectWidthRef = useRef()
-    const RectStartRef = useRef()
+const StatusCanvas: React.FC<CanvasProps> = props => {
+
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+    const RectWidthRef = useRef<number>(0)
+    const RectStartRef = useRef<number>(0)
     const height = 30
 
     useEffect(() => {
-        const draw = (context, full) => {
-            var drawSection = function (startRatio, endRatio, context, status) {
+        const draw = (context: CanvasRenderingContext2D, full: boolean) => {
+
+            var drawSection = function (startRatio: number, endRatio: number, context: CanvasRenderingContext2D, status: number) {
                 context.beginPath();
                 context.fillStyle = (status === 0) ? "red" : (status === 2 ? "LightGrey" : "LightGreen");
                 context.rect(RectStartRef.current + startRatio * RectWidthRef.current, 0, (endRatio - startRatio) * RectWidthRef.current, 12);
@@ -18,7 +24,7 @@ const StatusCanvas = (props) => {
                 context.closePath();
             }
 
-            var AddHashMarks = function (context, full) {
+            var AddHashMarks = function (context: CanvasRenderingContext2D, full: boolean) {
                 context.beginPath();
                 if (!full) {
                     for (var i = 0; i <= 24; i += 2) {
@@ -32,17 +38,17 @@ const StatusCanvas = (props) => {
                         context.moveTo(RectStartRef.current + (i * RectWidthRef.current / 24), 0);
                         context.lineTo(RectStartRef.current + (i * RectWidthRef.current / 24), 18);
                         context.stroke()
-                        context.fillText(i, RectStartRef.current + (i * RectWidthRef.current / 24) - context.measureText(i).width / 2, 29)
+                        context.fillText(i.toString(), RectStartRef.current + (i * RectWidthRef.current / 24) - context.measureText(i.toString()).width / 2, 29)
                     }
                 }
                 context.closePath();
             }
 
             context.fillStyle = "black"
-            context.fillText(data.date, 10, 18)
+            context.fillText(props.data.date, 10, 18)
 
             var from, to
-            var status = data.start
+            var status = props.data.start
             if (full) {
                 let dt = new Date()
                 to = dt.getTime() / 1000
@@ -52,23 +58,23 @@ const StatusCanvas = (props) => {
                 drawSection(0, to, context, status)
                 drawSection(to, 1, context, 2)
             } else {
-                drawSection(0, (data.changes.length === 0) ? 1 : data.changes[0] / (24 * 3600), context, status)
+                drawSection(0, (props.data.changes.length === 0) ? 1 : props.data.changes[0] / (24 * 3600), context, status)
             }
-            data.changes.forEach((element, i) => {
+            props.data.changes.forEach((element: number, i: number) => {
                 status = (status === 1) ? 0 : 1
-                from = data.changes[i] / (24 * 3600)
-                if (i === data.changes.length - 1) {
+                from = props.data.changes[i] / (24 * 3600)
+                if (i === props.data.changes.length - 1) {
                     //last one
                     if (full) {
                         let dt = new Date()
-                        to = (parseInt(dt.getTime() / 1000) % (24 * 3600)) / (24 * 3600)
+                        to = (Math.floor(dt.getTime() / 1000) % (24 * 3600)) / (24 * 3600)
                         drawSection(from, to, context, status)
                         drawSection(to, 1, context, 2)
                     } else {
                         drawSection(from, 1, context, status)
                     }
                 } else {
-                    to = data.changes[i + 1] / (24 * 3600)
+                    to = props.data.changes[i + 1] / (24 * 3600)
                     drawSection(from, to, context, status)
                 }
             })
@@ -78,25 +84,26 @@ const StatusCanvas = (props) => {
 
         const canvas = canvasRef.current
 
-        if (!canvas | !width) {
+        if (!canvas || !props.width) {
             if (!canvas) { console.log("no canvas:" + canvas) }
-            if (!width) { console.log("no width:" + width) }
+            if (!props.width) { console.log("no width:" + props.width) }
             return
         }
         const context = canvas.getContext('2d')
-        context.canvas.width = width
+        if (!context) { return }
+        context.canvas.width = props.width
         context.canvas.height = height
         context.strokeStyle = "black";
         context.lineWidth = 1;
         context.font = "12px Verdana"
-        RectWidthRef.current = width - 7 - (context.measureText(data.date).width + 40)
-        RectStartRef.current = (context.measureText(data.date).width + 40)
+        RectWidthRef.current = props.width - 7 - (context.measureText(props.data.date).width + 40)
+        RectStartRef.current = (context.measureText(props.data.date).width + 40)
 
-        if (data) { draw(context, full) }
+        if (props.data) { draw(context, props.full) }
 
-    }, [data, width, full])
+    }, [props.data, props.width, props.full])
 
-    return <canvas ref={canvasRef} {...rest} />
+    return <canvas ref={canvasRef} />
 }
 
 export default StatusCanvas

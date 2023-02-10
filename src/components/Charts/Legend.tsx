@@ -2,9 +2,10 @@ import React, { useEffect, useState, useRef } from 'react'
 import * as d3 from 'd3'
 import { colors, blendColors } from './ColorGradients'
 
+
 export default function Legend() {
     const [svgWidth, setSvgWidth] = useState(0)
-    const rowRef = useRef(null)
+    const rowRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         const resizeAndDraw = () => {
@@ -27,7 +28,7 @@ export default function Legend() {
         var svgContainer = d3.select(rowRef.current)
         svgContainer.selectAll("*").remove()
 
-        var generateWedgeString = function (startX, startY, startAngle, endAngle, radius) {
+        var generateWedgeString = function (startX: number, startY: number, startAngle: number, endAngle: number, radius: number): string {
             var x1 = startX + radius * Math.cos(Math.PI * startAngle / 180);
             var y1 = startY + radius * Math.sin(Math.PI * startAngle / 180);
             var x2 = startX + radius * Math.cos(Math.PI * endAngle / 180);
@@ -105,7 +106,7 @@ export default function Legend() {
             markerBoxHeight = 10,
             refX = 10,
             refY = 5,
-            arrowPoints = [[0, 0], [0, 10], [10, 5]]
+            arrowPoints: [number, number][] = [[0, 0], [0, 10], [10, 5]]
 
         svgDefs.append('marker')
             .attr('id', 'arrow')

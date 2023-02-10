@@ -1,20 +1,21 @@
 import React, { useEffect, useState, useRef } from 'react'
 import * as d3 from 'd3'
 import { Col } from "react-bootstrap"
-import { useFilter } from '../../contexts/FilterContext'
-import { useData } from '../../contexts/DataContext'
+import { useData, Reading } from '../../contexts/DataContext'
+import { useFilter, Limits, FillReturnDataType } from '../../contexts/FilterContext'
+interface SimpleChartProps {
+    clientWidth: number,
+    label: string,
+}
 
-const SimpleChart = props => {
-    const { clientWidth, label } = props
+const SimpleChart = ({ clientWidth, label }: SimpleChartProps): JSX.Element => {
 
-    const {
-        chart
-    } = useData()
+    const { chart } = useData()
 
-    const chartRef = useRef(null)
+    const chartRef = useRef<HTMLDivElement>(null)
 
-    const [limits, setLimits] = useState({})
-    const [filled, setFilled] = useState([])
+    const [limits, setLimits] = useState<Limits>({ tsStart: 0, tsStop: 0, yMin: 0, yMax: 0 })
+    const [filled, setFilled] = useState<[number, number][][]>([])
     const [width, setWidth] = useState(0)
     const [height, setHeight] = useState(0)
     const [svgWidth, setSvgWidth] = useState(0)
@@ -27,19 +28,19 @@ const SimpleChart = props => {
     useEffect(() => {
         if (clientWidth > 0) {
             setWidth(clientWidth - margin.left - margin.right)
-            setHeight(parseInt(clientWidth / 5) - margin.top - margin.bottom)
+            setHeight(Math.floor(clientWidth / 5) - margin.top - margin.bottom)
             setSvgWidth(clientWidth)
-            setSvgHeight(parseInt(clientWidth / 5))
+            setSvgHeight(Math.floor(clientWidth / 5))
         }
     }, [clientWidth, margin.left, margin.right, margin.top, margin.bottom])
 
 
     useEffect(() => {
         if (width > 0 && chart?.length > 1) {
-            // debugger
-            const { filled, limits } = fillData(chart, width, label)
-            setFilled(filled)
-            setLimits(limits)
+            let key: keyof Reading = label.toLowerCase() as keyof Reading
+            const { filled, limits }: FillReturnDataType = fillData(chart, width, key)
+            if (filled) setFilled(filled)
+            if (limits) setLimits(limits)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [chart, width])
@@ -63,7 +64,7 @@ const SimpleChart = props => {
         var timeSinceLastHourMark = limits.tsStart % (1 * 60 * 60)
         var td = new Date((limits.tsStart - timeSinceLastHourMark) * 1000);
         var hrs = td.getHours()
-        var tickCnt = 1 + parseInt((timeSinceLastHourMark + (limits.tsStop - limits.tsStart)) / (2 * 60 * 60)), tickValues = []
+        var tickCnt = 1 + Math.floor((timeSinceLastHourMark + (limits.tsStop - limits.tsStart)) / (2 * 60 * 60)), tickValues = []
         for (let i = 0; i < tickCnt; i++) { tickValues.push(limits.tsStart - timeSinceLastHourMark + (i + 0.5) * (60 * 60 * 2)) }
 
         // Add X axis --> it is a date format
@@ -82,7 +83,7 @@ const SimpleChart = props => {
                     .tickSize(-height)
                     .tickValues(tickValues)
                     .tickFormat(function (d) {
-                        td.setTime(1000 * d)
+                        td.setTime(1000 * (d as number))
                         hrs = td.getUTCHours()
                         if (hrs === 0) {
                             return "12am " + td.toDateString()
@@ -153,14 +154,14 @@ const SimpleChart = props => {
                 .attr("stroke-width", 1.5)
                 .attr("d", d3.line()
                     .x(function (d) {
-                        if (d.length === 0) return 0
+                        // if (d.length === 0) return 0
                         if (isNaN(d[0]) || isNaN(d[1]))
                             console.log("NaN at " + i + " d[0]:" + d[0] + " d[1]:" + d[1] + " label:" + label)
                         const a = x(d[0])
                         return a
                     })
                     .y(function (d) {
-                        if (d.length === 0) return 0
+                        // if (d.length === 0) return 0
                         const a = y(d[1])
                         return a
                     })

@@ -3,10 +3,14 @@ import { useData } from '../../contexts/DataContext'
 import Viewer from 'react-viewer'
 
 import OutOfOrder from "../../images/OutOfOrder.jpg"
-import OffTime from "../../images/OffTime.jpg"
+
 import { useInterval, b64toBlob } from "../Globals"
 
-export default function UpdatingImage({ offline }) {
+interface Props {
+    offline: boolean
+}
+
+export default function UpdatingImage({ offline }: Props) {
 
     const [visible, setVisible] = React.useState<boolean>(false)
     const [imgSrc, setImgSrc] = useState<string>("")
@@ -66,13 +70,13 @@ export default function UpdatingImage({ offline }) {
             console.log("image effect: offline")
             setImgSrcLarge(OutOfOrder)
         }
-        else if (image === null) {
+        else if (bigImage === null) {
             console.log("image effect: null image")
             setImgSrcLarge(OutOfOrder)
         }
         else {
             // console.log("image effect: new image added")
-            const blob = b64toBlob(image, "image/jpeg")
+            const blob = b64toBlob(bigImage, "image/jpeg")
             if (blob != null) {
                 const blobUrl = URL.createObjectURL(blob)
                 setImgSrcLarge(blobUrl)

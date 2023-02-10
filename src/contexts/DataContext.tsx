@@ -1,5 +1,5 @@
-import React, { createContext, useState, useEffect, useContext, useRef } from 'react'
-import { phpLoc, useInterval } from '../components/Globals'
+import React, { createContext, useState, useEffect, useContext, useRef, Dispatch, SetStateAction } from 'react'
+import { useInterval } from '../components/Globals'
 
 // Donor format from WebSocket Server
 type Donor = {
@@ -24,7 +24,7 @@ type Day = {
 }
 
 // 
-type Reading = {
+export type Reading = {
     time: number,
     speed: number,
     direction: number,
@@ -32,19 +32,25 @@ type Reading = {
     pressure: number,
     temperature: number
 }
-const emptyReading = { time: 0, speed: 0, direction: 0, humidity: 0, pressure: 0, temperature: 0 }
+const emptyReading: Reading = { time: 0, speed: 0, direction: 0, humidity: 0, pressure: 0, temperature: 0 }
 
-interface Stats {
+export interface Weeks {
+    totals: number[],
+    uniques: number[],
+    start: string
+}
+
+export interface Stats {
     lastReset?: string,
     total?: {
         date: string,
         count: number,
         unique: number
     },
-    day?: { count: number, unique: number },
-    week?: { count: number, unique: number },
-    month?: { count: number, unique: number },
-    weeks?: { data: number[], last: number }
+    day?: { day: string, unique: number, total: number },
+    week?: { day: string, unique: number, total: number },
+    month?: { unique: number, total: number },
+    weeks?: Weeks,
 }
 
 interface Forecast {
@@ -64,9 +70,7 @@ interface VideoData {
     videoYears: string[]
 }
 
-interface HitStats {
 
-}
 
 type TimeStamp = number
 
@@ -100,7 +104,7 @@ type CurrentData = {
 }
 
 type ImageData = null | {
-    A: Buffer,
+    A: string,
 }
 
 interface DataContextInterface {
@@ -112,14 +116,14 @@ interface DataContextInterface {
     latest: Reading,
     status: Array<number>,
     lastCheck: TimeStamp,
-    forecast: Forecast,
+    forecast: Array<Forecast>,
     forecastFull: any,
     videos: VideoData,
-    hitStats: HitStats | null,
+    hitStats: Stats | null,
     passedSeconds: number,
-    offline: Boolean,
-    image: Buffer | null,
-    bigImage: Buffer | null,
+    offline: boolean,
+    image: string | null,
+    bigImage: string | null,
     lastForecast: TimeStamp,
     sun: Sun,
     videoWidth: number,
@@ -127,7 +131,7 @@ interface DataContextInterface {
     numberConnections: number,
     //functions 
     loadData: (name: string) => void,
-    printDate: (ts: TimeStamp) => String,
+    printDate: (ts: TimeStamp) => string,
 }
 
 // const DataContext = createContext<DataContextInterface | null>(null)
@@ -137,7 +141,7 @@ export function useData() {
     return useContext(DataContext)
 }
 
-export function DataProvider({ children }) {
+export function DataProvider({ children }: any) {
     const [loading, setLoading] = useState(true)
     const [posts, setPosts] = useState<Post[]>([])
     const [donors, setDonors] = useState<Donor[]>([])
@@ -145,20 +149,20 @@ export function DataProvider({ children }) {
     const [chart, setChart] = useState<Reading[]>([])
     const [latest, setLatest] = useState<Reading>(emptyReading)
     const [status, setStatus] = useState<number[]>([])
-    const [forecast, setForecast] = useState<Forecast>([])
-    const [forecastFull, setForecastFull] = useState<Forecast>([])
+    const [forecast, setForecast] = useState<Forecast[]>([])
+    const [forecastFull, setForecastFull] = useState<Forecast[]>([])
     const [hitStats, setHitStats] = useState<Stats>({})
     const [passedSeconds, setPassedSeconds] = useState(0)
     const [offline, setOffline] = useState(false)
-    const [image, setImage] = useState<Buffer | null>(null)
-    const [bigImage, setBigImage] = useState<Buffer | null>(null)
+    const [image, setImage] = useState<string | null>(null)
+    const [bigImage, setBigImage] = useState<string | null>(null)
     const [lastForecast, setLastForecast] = useState(0)
     const [sun, setSun] = useState<Sun>({ rise: 0, set: 0 })
     const [videos, setVideos] = useState<VideoData>({ videos: [], videoYears: [] })
     const [updateForecast, setUpdateForecast] = useState(0)
     const [reFetch, setReFetch] = useState(0)
     const [restartEventSource, setRestartEventSource] = useState()
-    const [loaded, setLoaded] = useState<Boolean>(false)
+    const [loaded, setLoaded] = useState<boolean>(false)
     const [lastCheck, setLastCheck] = useState<TimeStamp>(1658263194)
     const [videoWidth, setVideoWidth] = useState(0)
     const [videoHeight, setVideoHeight] = useState(0)
@@ -237,7 +241,9 @@ export function DataProvider({ children }) {
     }
 
     const ws = useRef<WebSocket | null>(null)
-
+    useEffect(() => {
+        console.table(hitStats)
+    }, [hitStats])
     useEffect(() => {
         console.log("chart length:", chart.length)
     }, [chart])
@@ -294,7 +300,47 @@ export function DataProvider({ children }) {
                     console.log(messageBody.subCommand + ": unknown SubCommand returned")
                     return
                 }
-                const cmd = subCommands[messageBody.subCommand]
+
+                // Posts: setPosts,
+                // Donors: setDonors,
+                // History: setHistory,
+                // Chart: handleChart,
+                // Status: setStatus,
+                // Forecast: setForecast,
+                // ForecastFull: setForecastFull,
+                // Videos: handleVideos,
+                // Stats: setHitStats,
+                // CurrentData: handleCurrentData,
+                // Image: handleImage,
+                // BigImage: handleBigImage,
+
+                let cmd
+
+                if (messageBody.subCommand === "Posts")
+                    cmd = subCommands.Posts
+                else if (messageBody.subCommand === "Donors")
+                    cmd = subCommands.Donors
+                else if (messageBody.subCommand === "History")
+                    cmd = subCommands.History
+                else if (messageBody.subCommand === "Chart")
+                    cmd = subCommands.Chart
+                else if (messageBody.subCommand === "Status")
+                    cmd = subCommands.Status
+                else if (messageBody.subCommand === "Forecast")
+                    cmd = subCommands.Forecast
+                else if (messageBody.subCommand === "ForecastFull")
+                    cmd = subCommands.ForecastFull
+                else if (messageBody.subCommand === "Videos")
+                    cmd = subCommands.Videos
+                else if (messageBody.subCommand === "Stats")
+                    cmd = subCommands.Stats
+                else if (messageBody.subCommand === "CurrentData")
+                    cmd = subCommands.CurrentData
+                else if (messageBody.subCommand === "Image")
+                    cmd = subCommands.Image
+                else
+                    cmd = subCommands.BigImage
+
 
                 if (messageBody.error) {
                     console.log("error: " + messageBody.subCommand + " : " + messageBody.error)
@@ -325,7 +371,7 @@ export function DataProvider({ children }) {
 
                 // console.log(messageBody.data)
                 // note: speed, temp, and pressure are transmitted in the proper scale
-                // scaling of raw database data is done in the socketserver (temp/10, speed/10 etc)
+                // scaling of raw database data is done in the socketServer (temp/10, speed/10 etc)
                 if ('lastRecord' in d) {
                     let newRecord: Reading = { ...latest }
                     newRecord.time = d.lastRecord
@@ -359,7 +405,7 @@ export function DataProvider({ children }) {
         setPassedSeconds(passedSeconds + interval)
     }, interval * 1000)
 
-    const printDate = (ts: TimeStamp): String => {
+    const printDate = (ts: TimeStamp): string => {
         const dt = new Date(1000 * ts)
         return (
             (1 + dt.getMonth()).toString() + "/" +

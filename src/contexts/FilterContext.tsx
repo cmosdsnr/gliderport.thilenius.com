@@ -1,16 +1,45 @@
-import React, { useEffect, useContext } from 'react'
+import React, { useEffect, useContext, createContext } from 'react'
+import { Reading } from '../contexts/DataContext'
 
-const FilterContext = React.createContext()
+export type Limits = {
+    tsStart: number,
+    tsStop: number,
+    yMin: number,
+    yMax: number
+}
+export type FillReturnDataType = {
+    filled: null | [number, number][][],
+    limits: null | Limits
+}
+export type FffReturnDataType = {
+    filled: [number, number][],
+    limits: null | Limits
+}
+export type FilterReturnDataType = {
+    filtered: [number, number][],
+    fTop: [number, number][],
+    fBottom: [number, number][],
+    limits: null | Limits
+}
+
+interface FilterContextInterface {
+    //functions 
+    filterData: (rawData: Reading[], width: number) => FilterReturnDataType,
+    fillForFilter: (data: Reading[], width: number, label: keyof Reading) => FffReturnDataType,
+    fillData: (data: Reading[], width: number, label: keyof Reading) => FillReturnDataType,
+}
+
+const FilterContext = createContext<FilterContextInterface>({} as FilterContextInterface);
 
 export function useFilter() {
     return useContext(FilterContext)
 }
 
-export function FilterProvider({ children }) {
+export function FilterProvider({ children }: any) {
 
 
     //  http://t-filter.engineerjs.com/    
-    const filter11 = [
+    const filter11: number[] = [
         -0.08515745644422122,
         0.0379292561786139,
         0.09900577545371485,
@@ -20,7 +49,7 @@ export function FilterProvider({ children }) {
     ];
 
     // 50 tap filter 
-    const filter50 = [
+    const filter50: number[] = [
         -0.0005519179729534347, 0.00022990491087123774, 0.000964556512193067, 0.0022138703609847045, 0.003878845712614388,
         0.005693192999363724, 0.00721855318134903, 0.007895582221179556, 0.007162749119392511, 0.004604203567927476,
         0.00012325138554789477, -0.005925557649769567, -0.012670720599984047, -0.01876694130424985, -0.022558133515158917,
@@ -30,7 +59,7 @@ export function FilterProvider({ children }) {
 
 
     // 100 tap filter  50/90/1000 (50 numbers as it's symmetrical)
-    const filter100 = [
+    const filter100: number[] = [
         -0.00013939454546656245, 0.0013626915351227131, 0.001137183610719298, 0.0014717070174845809, 0.001899687436787478,
         0.0023658885321655525, 0.002849654086548567, 0.003329108224967885, 0.0037764258647993406, 0.004169102510364373,
         0.004473492218561496, 0.004661085969179788, 0.004702542172013141, 0.004571025365101064, 0.00424501427975504,
@@ -42,10 +71,10 @@ export function FilterProvider({ children }) {
         0.029997925799487044, 0.035764843809626516, 0.04137203957287865, 0.046673327631637535, 0.05152673232270508,
         0.05579967786768862, 0.0593731198539503, 0.06214641629190559, 0.0640407266214166, 0.06500163538254261];
 
-    const filterSelect = 3
-    var filter = filterSelect === 0 ? filter11 : filterSelect === 2 ? filter50 : filter100
+    const filterSelect: number = 3
+    var filter = (filterSelect === 0) ? filter11 : (filterSelect === 2 ? filter50 : filter100)
 
-    const halfFilter = parseInt(filter.length)
+    const halfFilterLength = filter.length
 
 
     useEffect(() => {
@@ -61,15 +90,17 @@ export function FilterProvider({ children }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    function fillData(data, width, label) {        // fill the filled array with data
+
+    // fill and return the "filled" array with data
+    function fillData(data: Reading[], width: number, label: keyof Reading): FillReturnDataType {
         // maximum of 'width' points
         // create array segments removing spans of > 15m of no data
         if (width === 0 || data?.length === 0) { return { filled: null, limits: null } }
-        const l = label.toLowerCase()
+        const l = label
         // debugger
         let min = data[0][l], max = data[0][l]
 
-        var filled = []
+        var filled: [number, number][][] = []
         const tStart = data[0].time
         const tStop = data[data.length - 1].time
         const tDuration = tStop - tStart
@@ -116,7 +147,7 @@ export function FilterProvider({ children }) {
                     if (dj > max) max = dj
                     if (dj < min) min = dj
                     // go to step right after t[j]
-                    step += stepSize * (1 + parseInt((tj - step) / stepSize))
+                    step += stepSize * (1 + Math.floor((tj - step) / stepSize))
                 } else {
                     // interpolate between k and j
                     const pt = dk + (dj - dk) * ((step - tk) / (tj - tk))
@@ -127,37 +158,36 @@ export function FilterProvider({ children }) {
             }
             step += stepSize
         }
-        if (label === "Direction") {
+        if (label === "direction") {
             min = 0
             max = 450
         }
-        if (label === "Humidity") {
+        if (label === "humidity") {
             min = min - 20 < 0 ? 0 : min - 20
             max = min + 20 > 100 ? 100 : max + 20
         }
-        if (label === "Pressure") {
+        if (label === "pressure") {
             min -= 1
             max += 1
         }
-        if (label === "Temperature") {
+        if (label === "temperature") {
             min -= 10
             max += 10
         }
         return { filled, limits: { tsStart: tStart, tsStop: step - stepSize, yMin: min, yMax: max } }
     }
 
-
-    function fillForFilter(data, width, label) {
+    function fillForFilter(data: Reading[], width: number, label: keyof Reading): FffReturnDataType {
         // fill the filled array with data
         // exactly 'width' points
         // one array segment with equally spaced points
 
-        if (width === 0 || data?.length === 0) { return { filled: null, limits: null } }
-        const l = label.toLowerCase()
+        if (width === 0 || data?.length === 0) { return { filled: [], limits: null } }
+        const l = label
 
         let min = data[0][l], max = data[0][l]
 
-        var filled = []
+        var filled: [number, number][] = []
         const tStart = data[0].time
         const tStop = data[data.length - 1].time
         const tDuration = tStop - tStart
@@ -199,10 +229,9 @@ export function FilterProvider({ children }) {
         return { filled, limits: { tsStart: tStart, tsStop: step - stepSize, yMin: min, yMax: max } }
     }
 
-
-    function filterData(rawData, width) {
-        var filtered = []
-        var { filled, limits } = fillForFilter(rawData, width, "speed")
+    function filterData(rawData: Reading[], width: number): FilterReturnDataType {
+        var filtered: [number, number][] = []
+        var { filled, limits }: FffReturnDataType = fillForFilter(rawData, width, "speed")
         // filter the data
         filled.forEach(function (v, i) {
             var g = 0
@@ -212,7 +241,7 @@ export function FilterProvider({ children }) {
                 lastValid = -2
             } else {
                 for (let j = 0; j < filter.length; j++) {
-                    var k = i - halfFilter + j;
+                    var k = i - halfFilterLength + j;
                     if (k < 0) { k = 0 }
                     if (k >= filled.length) { k = filled.length - 1 }
                     if (filled[k][1] < 0) {
@@ -230,8 +259,8 @@ export function FilterProvider({ children }) {
         })
         //find the spread
         const range = 300 // seconds to look forward and back for min/max
-        var top = []
-        var bottom = []
+        var top: [number, number][] = []
+        var bottom: [number, number][] = []
         var l = 0, h = 0
         filled.forEach(function (v, i) {
             while ((h < (filled.length - 1)) && ((v[0] + range) > filled[h][0])) { h++ }
@@ -249,13 +278,13 @@ export function FilterProvider({ children }) {
             top.push([v[0], max])
             bottom.push([v[0], min])
         })
-        var fTop = []
-        var fBottom = []
+        var fTop: [number, number][] = []
+        var fBottom: [number, number][] = []
 
         top.forEach(function (v, i) {
             var g = 0;
             for (let j = 0; j < filter.length; j++) {
-                var k = i - halfFilter + j;
+                var k = i - halfFilterLength + j;
                 if (k < 0) { k = 0 }
                 if (k >= top.length) { k = top.length - 1 }
                 g += filter[j] * top[k][1];
@@ -266,7 +295,7 @@ export function FilterProvider({ children }) {
         bottom.forEach(function (v, i) {
             var g = 0;
             for (let j = 0; j < filter.length; j++) {
-                var k = i - halfFilter + j;
+                var k = i - halfFilterLength + j;
                 if (k < 0) { k = 0 }
                 if (k >= bottom.length) { k = bottom.length - 1 }
                 g += filter[j] * bottom[k][1];
@@ -283,6 +312,7 @@ export function FilterProvider({ children }) {
         fillForFilter,
         fillData,
     }
+
     return (
         <FilterContext.Provider value={value}>
             {children}

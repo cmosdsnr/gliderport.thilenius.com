@@ -3,10 +3,10 @@ import { Row, Col } from "react-bootstrap"
 import StatusCanvas from "./StatusCanvas"
 import { useData } from '../contexts/DataContext'
 
-export default function Status() {
-    const [lastStatus, setLastStatus] = useState(0)
-    const rowRef = useRef()
-    const width = useRef()
+export default function Status(): JSX.Element {
+    const [lastStatus, setLastStatus] = useState<string>("")
+    const rowRef = useRef<HTMLDivElement>(null)
+    const width = useRef<number>(0)
 
     const {
         status,
