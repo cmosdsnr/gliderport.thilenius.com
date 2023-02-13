@@ -248,8 +248,7 @@ export function DataProvider({ children }: any) {
         console.log("chart length:", chart.length)
     }, [chart])
 
-    // Connect to the socket server
-    useEffect(() => {
+    const startWebSocket = () => {
         ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL)
         ws.current.onopen = () => {
             console.log("ws opened")
@@ -261,13 +260,29 @@ export function DataProvider({ children }: any) {
         }
         ws.current.onclose = () => {
             console.log("ws closed")
-            // try to open again
             setLoading(true)
-            ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL)
         }
+    }
+
+    // Connect to the socket server
+    useEffect(() => {
+        startWebSocket();
+        // ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL)
+        // ws.current.onopen = () => {
+        //     console.log("ws opened")
+        //     loadData("CurrentData")
+        //     loadData("Chart")
+        //     // testAll()
+        //     setLoading(false)
+        //     setPassedSeconds(0)
+        // }
+        // ws.current.onclose = () => {
+        //     console.log("ws closed")
+        //     setLoading(true)
+        // }
         const wsCurrent = ws.current;
         return () => {
-            wsCurrent.close();
+            if (wsCurrent) wsCurrent.close();
         };
     }, [])
 
@@ -289,6 +304,7 @@ export function DataProvider({ children }: any) {
     }
 
     // process returned messages fetchData || update || image || ping
+    // ws.current.onmessage must be redefined when chart changes
     useEffect(() => {
         if (ws.current != null) ws.current.onmessage = (webSocketMessage) => {
 
@@ -398,11 +414,14 @@ export function DataProvider({ children }: any) {
                 console.log("keep alive ping received")
             }
         };
-    }, [chart])
+    }, [chart, ws.current])
 
     const interval = 10 //seconds
     useInterval(() => {
         setPassedSeconds(passedSeconds + interval)
+        if (loading)
+            // try to open again
+            startWebSocket();
     }, interval * 1000)
 
     const printDate = (ts: TimeStamp): string => {

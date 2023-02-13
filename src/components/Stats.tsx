@@ -24,6 +24,9 @@ export default function StatsPage() {
         loadData("Videos")
         loadData("Stats")
     }, [])
+    useEffect(() => {
+        console.table(hitStats?.weeks)
+    }, [hitStats])
 
     useEffect(() => {
         let m = monthFilter > -1 ? ("-" + (monthFilter >= 9 ? "" : "0") + (monthFilter + 1).toString() + "-") : ""
@@ -326,6 +329,7 @@ const StatPlot = ({ data }: StatPlotProps): JSX.Element => {
             let d: Points[] = []
             data.totals?.forEach((v, i) => d.push([start + i * 7 * 24 * 3600, v]));
             setPlotData(d)
+            debugger
         }
     }, [data])
 
@@ -399,7 +403,6 @@ const StatPlot = ({ data }: StatPlotProps): JSX.Element => {
             .attr("transform", "rotate(-90)")
             .text("Hits Per Week");
 
-
         // // Define the line
         var hitsLine = d3.line()
             .x(function (d) {
@@ -437,8 +440,6 @@ type Change = {
     date: string,
     html: JSX.Element
 }
-
-
 
 const changes: Change[] = [
     {
