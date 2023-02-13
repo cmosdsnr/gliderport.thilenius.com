@@ -9,8 +9,8 @@ import fileUpload from "express-fileupload";
 import SunCalc from "suncalc";
 
 import { auth, db } from "./src/firebase.js";
-import { onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, collection, query, where } from "firebase/firestore";
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+import { onSnapshot, doc, setDoc, collection, query, where } from "firebase/firestore";
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
 import { globals } from "./src/globals";
 import { sendTextMessage } from "./src/sendTextMessage.js";
@@ -268,92 +268,14 @@ app.post("/updateBigImage", (req, res) => {
 
 app.get("/RegenerateAllHours", function (req, res) {
   console.log("regenerate all hours");
-  const dtd = (Date.now() + globals.offset) / 1000; //+ 60 * tdLast.getTimezoneOffset()
-  const thisHour = 3600 * Math.floor(dtd / 3600);
-  const twoDaysAgo = thisHour - 48 * 3600;
-  const dt = new Date(twoDaysAgo * 1000);
-  let start = twoDaysAgo;
-  let stop = twoDaysAgo + 3600;
-  let data: DataType = {
-    start: twoDaysAgo,
-    date: [],
-    speed: [],
-    direction: [],
-    humidity: [],
-    pressure: [],
-    temperature: [],
-  };
-  let msg = "pull from gliderport: records from " + timestampToString(twoDaysAgo) + "<br/>\n";
-  console.log("pull from gliderport: records from " + timestampToString(twoDaysAgo));
-  sql = "SELECT * FROM gliderport WHERE recorded > '" + timestampToString(twoDaysAgo) + "'";
-  console.log(sql);
-  connection?.query(sql, (err, results, fields) => {
-    if (Array.isArray(results)) {
-      console.log("found " + results.length + " results");
-      msg += "found " + results.length + "<br/>\n";
-      if (Array.isArray(results)) {
-        msg += "found " + results.length + "<br/>\n";
-        (results as GliderportTable[]).forEach((v, j) => {
-          let ts = Math.floor((new Date(v.recorded).getTime() + globals.offset) / 1000);
-          if (ts >= stop) {
-            //save the hour
-            sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')";
-            connection?.query(sql, (err, results, fields) => {});
-            msg += "Saved hr " + data.start + " with " + data.date.length + " records<br/>";
-            console.log("Saved hr " + data.start + " with " + data.date.length + " records");
-            // reset the data
-            start = stop;
-            stop += 3600;
-            data = {
-              start: start,
-              date: [],
-              speed: [],
-              direction: [],
-              humidity: [],
-              pressure: [],
-              temperature: [],
-            };
-          }
-          data.date.push(ts - start);
-          data.speed.push(v.speed);
-          data.direction.push(v.direction);
-          data.humidity.push(v.humidity);
-          data.pressure.push(v.pressure);
-          data.temperature.push(v.temperature);
-        });
-      }
-    }
-  });
-  console.log("Done with regeneration");
-  res.send(msg);
+  if (connection) d.updateHoursTable(false);
+  res.send("done");
 });
 
 // For testing, not usually called.
 app.get("/HandleHits", async (req, res) => {
   if (connection) res.send(await handleHits(connection));
   else res.send("no connection to database");
-});
-
-app.get("/fixHistory", (req, res) => {
-  let p = "database:<br/>";
-  connection?.query("SELECT * FROM code_history ORDER BY date DESC LIMIT 100", function (err, results, fields) {
-    if (Array.isArray(results))
-      (results as CodeHistoryTable[]).forEach((v, i) => {
-        // console.log(v)
-        const r: CodeHistoryTable = { date: v.date, data: JSON.parse(v.data as string) };
-        let dt = new Date(r.date * 1000);
-        if (dt.getHours() === 23) {
-          sql = "DELETE FROM code_history where `date`=" + v.date + ";";
-          connection?.query(sql, (err, results, fields) => {});
-          p += sql + "<br/>";
-          v.date += 3600;
-          sql = "INSERT into code_history (`date`, `data`) value(" + v.date + ",'" + v.data + "')";
-          connection?.query(sql, (err, results, fields) => {});
-          p += sql + "<br/>";
-        }
-      });
-    res.send(p);
-  });
 });
 
 // called to add new wind Data to the db

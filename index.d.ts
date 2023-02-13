@@ -10,6 +10,11 @@ type CodeHistoryTable = {
   data: string;
 };
 
+type HoursTable = {
+  date: number;
+  data: string;
+};
+
 type CodeHistoryData = {
   date: number;
   data: {

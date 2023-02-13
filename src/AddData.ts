@@ -264,7 +264,7 @@ export default class AddData {
     });
   };
 
-  #updateHoursTable = async () => {
+  updateHoursTable = async (forceRegeneration = false) => {
     //let's work on hours Db
     const dtd = (Date.now() + globals.offset) / 1000; //+ 60 * tdLast.getTimezoneOffset()
     const thisHour = 3600 * Math.floor(dtd / 3600);
@@ -274,15 +274,17 @@ export default class AddData {
     await this.connection.promise().query(`DELETE FROM hours WHERE start < ${twoDaysAgo}`);
     await this.connection.promise().query(`DELETE FROM hours WHERE start > ${thisHour}`);
 
-    // get latest record (or 2 days ago if there are none)
-    let sql = `SELECT * FROM hours WHERE start > ${twoDaysAgo} ORDER BY start DESC LIMIT 1`;
-    let results = await this.connection.promise().query(sql);
     let hourLength = 0;
-    globals.latestHours = twoDaysAgo;
-    if (Array.isArray(results) && Array.isArray(results[0]) && results[0].length > 0) {
-      const d = JSON.parse((results[0][0] as any).data);
-      globals.latestHours = d.start;
-      hourLength = d.date.length;
+    if (!forceRegeneration) {
+      // get latest record (or 2 days ago if there are none)
+      const sql = `SELECT * FROM hours WHERE start > ${twoDaysAgo} ORDER BY start DESC LIMIT 1`;
+      const results = await this.connection.promise().query(sql);
+      globals.latestHours = twoDaysAgo;
+      if (Array.isArray(results) && Array.isArray(results[0]) && results[0].length > 0) {
+        const d = JSON.parse((results[0][0] as HoursTable).data);
+        globals.latestHours = d.start;
+        hourLength = d.date.length;
+      }
     }
     // console.log(results[0].data)
     globals.debugInfo.hourLength = hourLength;
@@ -311,7 +313,7 @@ export default class AddData {
         "' AND recorded < '" +
         timestampToString(i + 3600) +
         "'";
-      let results = await this.connection.promise().query(sql);
+      const results = await this.connection.promise().query(sql);
 
       if (Array.isArray(results) && Array.isArray(results[0]) && results[0].length > 0) {
         hourInfo.resultsFound = (results[0] as any[]).length;
@@ -527,7 +529,7 @@ export default class AddData {
     if (req && "d" in req) {
       await this.#insertData(req.d as string);
       if (this.tsNow > 3600 + sunrise && this.tsNow < sunset - 3600) this.#checkForTexts();
-      this.#updateHoursTable();
+      this.updateHoursTable();
     } else console.log("   addData called with no data");
 
     // if it's been more than one hours, update the forecast
