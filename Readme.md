@@ -1,22 +1,20 @@
-server
-dokku apps:create gliderportupdateserver
-dokku mysql:link gliderport gliderportupdateserver
+# Gliderport Update server
 
-local
-git remote add dokku dokku@thilenius.org:gliderportupdateserver
-git commit -m "message"
-git push dokku master
+## A node server used to:
+####Check every hour if it's a new day and update sunrise/set data (updateSunData)
+####Respond to the following calls:
+ 1. '/getLastEntry'  : called from Pi3: return the last entry in gliderport db
+  2. '/ImageAdded'    : called from Pi3 at gliderport: Update the time the last image was added to now in the server_sent table
+  3. '/addData'       : called from Pi3: with new record(s)
+  4. '/updateSmallImage' : called from Pi3: Update the small image data
+  5. '/updateBigImage' :  called from Pi3: Update the large image data
 
-github
-git remote add origin https://github.com/cmosdsnr/gliderportupdateserver.git
-git push origin master
+ ####For Debug
+  1. '/current.jpg    : browser call to get latest small image
+  2. '/currentBig.jpg : browser call to get latest small image
+  3. '/info           : browser call to get lots of info about current situation
 
-local tunnel to exposed database port:
-ssh -L 26669:127.0.0.1:26669 stephen@thilenius.org
+#Database
+This server uses a SQL database created with docker and locally accessed. ( same as socketserver)
 
-regenerate hit stats           :   https://gliderportupdateserver.thilenius.org/HandleHits
-regenerate hours table         :   https://gliderportupdateserver.thilenius.org/RegenerateAllHours
-page with lots of info about Db:   https://gliderportupdateserver.thilenius.org/info
-see code                       :   https://gliderportupdateserver.thilenius.org/fixHistory
-fetch current image            :   https://gliderportupdateserver.thilenius.org/current.jpg
-fetch current image            :   https://gliderportupdateserver.thilenius.org/currentBig.jpg
+
