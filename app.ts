@@ -267,7 +267,11 @@ app.post("/updateBigImage", (req, res) => {
   imageBigBuffer = Buffer.from(req.body.A, "base64");
   const ts = Math.floor(new Date().getTime() / 1000);
   connection?.query(`UPDATE server_sent SET last_image=${ts} WHERE id=1`, () => {});
-  connection?.query("UPDATE images SET d=? WHERE id=2", imageBigBuffer, () => {});
+  connection?.query("UPDATE images SET d=? WHERE id=2", imageBigBuffer, function (err, results, fields) {
+    console.log(results); // results contains rows returned by server
+    console.log(fields); // fields contains extra meta data about results, if available
+    console.log(err);
+  });
   res.send("Ok");
 });
 
