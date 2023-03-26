@@ -122,7 +122,7 @@ const updateSunData = () => {
 updateSunData();
 
 //call every minute
-const reportEveryMin = false;
+const reportEveryMin = true;
 let pingTimer = setInterval(() => {
   const url = "https://104.36.31.118/";
   ping(url)
