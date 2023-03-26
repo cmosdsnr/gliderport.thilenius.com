@@ -124,7 +124,7 @@ updateSunData();
 //call every minute
 const reportEveryMin = true;
 let pingTimer = setInterval(() => {
-  const url = "https://104.36.31.118/";
+  const url = "http://104.36.31.118:8080/";
   ping(url)
     .then(function (delta: number) {
       if (reportEveryMin) console.log("gliderport online in " + delta + "ms");
