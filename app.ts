@@ -1,7 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
 import mysql from "mysql2";
-import ping from "web-pingjs";
 import fs from "fs";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -20,6 +19,7 @@ import { handleHits } from "./src/handleHits";
 import AddData from "./src/AddData";
 
 import OffTime from "./src/images/offTime.jpg";
+
 dotenv.config();
 
 //log in to firebase
@@ -123,11 +123,15 @@ updateSunData();
 
 //call every minute
 const reportEveryMin = true;
+const controller = new AbortController();
+const url = "http://104.36.31.118/";
+
 let pingTimer = setInterval(() => {
-  const url = "http://104.36.31.118:8080/";
-  ping(url)
-    .then(function (delta: number) {
-      if (reportEveryMin) console.log("gliderport online in " + delta + "ms");
+  const ids = setTimeout(() => controller.abort(), 2000);
+  fetch(url, { signal: controller.signal })
+    .then((response) => {
+      clearTimeout(ids);
+      if (reportEveryMin) console.log("gliderport is online");
       const ts = Math.floor((Date.now() + globals.offset) / 1000);
       const dateString = timestampToString(ts);
       if (onlineStatus === 0) {
@@ -142,8 +146,8 @@ let pingTimer = setInterval(() => {
       sql = "UPDATE `server_sent` SET `online_status_touched`='" + dateString + "' WHERE 1";
       connection?.query(sql, (err, results, fields) => {});
     })
-    .catch(function (error: any) {
-      if (reportEveryMin) console.log("gliderport offline: " + error);
+    .catch((error) => {
+      if (reportEveryMin) console.log("gliderport is offline");
       const ts = Math.floor((Date.now() + globals.offset) / 1000);
       const dateString = timestampToString(ts);
       if (onlineStatus === 1) {
