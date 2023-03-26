@@ -123,10 +123,10 @@ updateSunData();
 
 //call every minute
 const reportEveryMin = false;
-const controller = new AbortController();
 const url = "http://104.36.31.118:8080/";
 
 let pingTimer = setInterval(() => {
+  const controller = new AbortController();
   const ids = setTimeout(() => controller.abort(), 2000);
   fetch(url, { signal: controller.signal })
     .then((response) => {
@@ -147,6 +147,7 @@ let pingTimer = setInterval(() => {
       connection?.query(sql, (err, results, fields) => {});
     })
     .catch((error) => {
+      clearTimeout(ids);
       if (reportEveryMin) console.log("gliderport is offline");
       const ts = Math.floor((Date.now() + globals.offset) / 1000);
       const dateString = timestampToString(ts);
