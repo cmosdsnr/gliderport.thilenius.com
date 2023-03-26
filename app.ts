@@ -124,7 +124,7 @@ updateSunData();
 //call every minute
 const reportEveryMin = true;
 const controller = new AbortController();
-const url = "http://104.36.31.118/";
+const url = "http://104.36.31.118:8080/";
 
 let pingTimer = setInterval(() => {
   const ids = setTimeout(() => controller.abort(), 2000);
