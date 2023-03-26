@@ -263,7 +263,7 @@ app.post("/updateSmallImage", (req, res) => {
   res.json("Ok");
 });
 app.post("/updateBigImage", (req, res) => {
-  console.log(req.body.A);
+  console.log(req.body.A.slice(0, 100));
   imageBigBuffer = Buffer.from(req.body.A, "base64");
   const ts = Math.floor(new Date().getTime() / 1000);
   connection?.query(`UPDATE server_sent SET last_image=${ts} WHERE id=1`, () => {});
