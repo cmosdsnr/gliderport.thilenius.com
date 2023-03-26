@@ -122,7 +122,7 @@ const updateSunData = () => {
 updateSunData();
 
 //call every minute
-const reportEveryMin = true;
+const reportEveryMin = false;
 const controller = new AbortController();
 const url = "http://104.36.31.118:8080/";
 
