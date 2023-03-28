@@ -404,7 +404,6 @@ export default class AddData {
   };
 
   #updateCodeHistory = async () => {
-    return;
     // get the last timestamp from code_history
     let r: any;
     let sql = "SELECT * FROM code_history ORDER BY date DESC LIMIT 1";
@@ -529,12 +528,11 @@ export default class AddData {
       // pop off sunset (it's always add to the end of a day)
       r.data.codes.pop();
     } else {
-      // if it doesn't exist, create it
+      // if table is empty, create it
       r = this.#createNewDay(24 * 3600 * Math.floor(this.tsNow / (24 * 3600)));
       console.log("code_history table is empty, creating it");
     }
     console.table(r);
-    return;
     // at least sunrise should still be in the array
     let tsLast = r.date + 3600 * r.data.limits[0];
     let lc = 0;
@@ -558,6 +556,11 @@ export default class AddData {
     results = await this.connection.promise().query(sql);
 
     if (Array.isArray(results) && Array.isArray(results[0])) {
+      console.log(results[0].length);
+      console.log(results[0][0].recorded);
+      console.log(results[0][results[0].length - 1].recorded);
+      //DELETE FROM `code_history` WHERE date >= 1675209600;
+
       globals.debugInfo.codeHistory.gpResults = results.length;
       // console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
       //     lc, ", there are ", results.length, " new data points in gliderport")
@@ -651,6 +654,6 @@ export default class AddData {
     // console.log("   tsNow: ", this.tsNow, " tsLast: ", tsLast);
     if (this.tsNow > tsLast + 1 * 60 * 60) this.#updateForecast();
 
-    this.#updateCodeHistory();
+    //this.#updateCodeHistory();
   };
 }
