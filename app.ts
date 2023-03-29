@@ -282,12 +282,6 @@ app.get("/RegenerateAllHours", function (req, res) {
   res.send("done");
 });
 
-app.get("/testH", function (req, res) {
-  console.log("test History");
-  if (connection) d.updateCodeHistoryNew();
-  res.send("done");
-});
-
 // For testing, not usually called.
 app.get("/HandleHits", async (req, res) => {
   if (connection) res.send(await handleHits(connection));

@@ -93,14 +93,16 @@ export default class AddData {
   };
 
   #createNewDay = (ts: number): CodeHistoryData => {
-    //make sure the local time is in the next day (sub globals.offset)
-    const y = new Date(ts * 1000 - globals.offset);
+    // ts is 12AM GMT
+    // y must have a local time in the day that we want to get sunrise/sunset for
+    // so we add 12 hours to ts to get a local time in the day we want
+    const y = new Date((ts + 3600 * 12) * 1000);
     // La Jola lat/long
     const lat = 32.89;
     const long = -117.25;
     const sunData = SunCalc.getTimes(y, lat, long);
     const sunrise = Math.floor(sunData.sunrise.getTime() / 1000);
-    const sunset = Math.floor(sunData.sunrise.getTime() / 1000);
+    const sunset = Math.floor(sunData.sunset.getTime() / 1000);
     // const sunData = calculateSunrise(y)
     // console.log(`   DEBUG: y:${y.getTime() / 1000} r.date: ${r.date} sunrise: ${sunData.sunriseTimestamp}`)
     let r: CodeHistoryData = {
@@ -108,7 +110,7 @@ export default class AddData {
       data: {
         codes: [],
         sun: [sunrise - ts + globals.offset / 1000, sunset - ts + globals.offset / 1000],
-        limits: [sunData.sunrise.getHours() - 1, Math.floor(24 * sunData.sunset.getHours()) + 2],
+        limits: [sunData.sunrise.getHours() - 1, sunData.sunset.getHours() + 2],
       },
     };
     return r;
@@ -403,9 +405,7 @@ export default class AddData {
       });
   };
 
-  #updateCodeHistory = async () => {};
-
-  updateCodeHistoryNew = async () => {
+  updateCodeHistory = async () => {
     // get the last timestamp from code_history
     let r: any;
     let sql = "SELECT * FROM code_history ORDER BY date DESC LIMIT 1";
@@ -446,24 +446,22 @@ export default class AddData {
     results = await this.connection.promise().query(sql);
 
     if (Array.isArray(results) && Array.isArray(results[0])) {
-      console.log(results[0].length);
-      console.log(results[0][0].recorded);
-      console.log(results[0][results[0].length - 1].recorded);
-      //DELETE FROM `code_history` WHERE date >= 1675209600;
-
-      globals.debugInfo.codeHistory.gpResults = results.length;
-      // console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
-      //     lc, ", there are ", results.length, " new data points in gliderport")
-      let c = 0;
-      let lastTs = tsLast + 120; // 2 min after last
-      let res = results[0] as {
+      const res = results[0] as {
         recorded: string;
         speed: number;
         direction: number;
       }[];
+      globals.debugInfo.codeHistory.gpResults = res.length;
+      // console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
+      //     lc, ", there are ", results.length, " new data points in gliderport")
+      let c = 0;
+      let lastTs = tsLast + 120; // 2 min after last
+
       res.forEach((v, i) => {
         c++;
+        //get the GMT for the event
         const ts = Math.round((new Date(v.recorded).getTime() + globals.offset) / 1000);
+
         // if (i % 1000 === 0) console.log(`   DEBUG: ${ts} : ${r.date + r.data.sun[0]} : ${r.date + r.data.sun[1]}`)
         if (ts > r.date + r.data.sun[0]) {
           // after sunrise
@@ -486,6 +484,7 @@ export default class AddData {
               lastTs = ts;
             }
           }
+
           // if it's after sunset OR it's the last data point AND there is stuff to save
           if ((i === res.length - 1 && r.data.codes.length > 0) || ts >= r.date + r.data.sun[1]) {
             // add sunset point
