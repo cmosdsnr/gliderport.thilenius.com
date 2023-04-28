@@ -145,14 +145,19 @@ export const handleHits = async (connection: mysql.Connection) => {
       .replace("T", " ")
       .replace(/\.[0-9]*Z/, "");
   }
+  console.log(t.weeks.totals.length);
+  t.week.day = "";
+  //   return;
+  // make sure we have all the fields
+  if (t.weeks === undefined) t.weeks = { start: 0, totals: [], uniques: [] };
+  if (t.weeks.uniques === undefined) t.weeks.uniques = [];
+  if (t.weeks.totals === undefined) t.weeks.totals = [];
+  if (t.total.unique === undefined) t.total.unique = 0;
 
   let wks;
   if (t.week.day === "") {
     console.log("Regenerating all weeks!!");
     wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1`);
-    t.weeks.totals = [];
-    t.weeks.uniques = [];
-    t.total.unique = 0;
   } else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > ${t.week.day}`);
   if (Array.isArray(wks) && Array.isArray(wks[0])) {
     //there are new weeks
