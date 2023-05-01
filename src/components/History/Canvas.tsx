@@ -5,17 +5,17 @@ interface CanvasProps {
     data: any
     width: number
     height: number
+    rest?: any[]
 }
 
-const Canvas = ({ draw, data, width, height }: CanvasProps, ...rest: any[]) => {
+const Canvas = ({ draw, data, width, height, ...rest }: CanvasProps) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
-
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas || !width) {
-            if (!canvas) { console.log("no canvas:" + canvas) }
-            if (!width) { console.log("no width:" + width) }
+            if (!canvas) console.log("no canvas provided")
+            else console.log("no width provided")
             return
         }
         const context: CanvasRenderingContext2D | null = canvas.getContext('2d')

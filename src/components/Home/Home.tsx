@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
-import { Row, Col } from "react-bootstrap"
+import { Row, Col, Button } from "react-bootstrap"
 
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
@@ -16,7 +16,7 @@ import UpdatingImage from "./UpdatingImage"
 // *********************************************
 export const Home = () => {
     const picRef = useRef(null)
-    const { chart, passedSeconds, offline } = useData()
+    const { chart, passedSeconds, offline, loadData } = useData()
 
     //display the bootstrap grid size, for development
     const showGridSize: boolean = false

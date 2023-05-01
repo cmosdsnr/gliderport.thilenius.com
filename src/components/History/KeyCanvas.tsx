@@ -7,7 +7,6 @@ interface KeyCanvasProps {
 }
 
 export const KeyCanvas = ({ width }: KeyCanvasProps) => {
-
     const drawKey = (ctx: CanvasRenderingContext2D) => {
 
         var widthA, widthB = 0;

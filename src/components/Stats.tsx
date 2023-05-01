@@ -329,7 +329,7 @@ const StatPlot = ({ data }: StatPlotProps): JSX.Element => {
             let d: Points[] = []
             data.totals?.forEach((v, i) => d.push([start + i * 7 * 24 * 3600, v]));
             setPlotData(d)
-            debugger
+            // debugger
         }
     }, [data])
 
@@ -338,7 +338,7 @@ const StatPlot = ({ data }: StatPlotProps): JSX.Element => {
         if (plotData.length === 0 || width === 0) { return }
 
         const height = 0.6 * width
-
+        // debugger
         // // Adds the svg canvas
         var svgContainer = d3.select(chartRef.current)
         svgContainer.selectAll("*").remove()

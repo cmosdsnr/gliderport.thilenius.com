@@ -16,12 +16,17 @@ interface Post {
 }
 
 // Code History format from WebSocket Server
-type Day = {
-    date: number,
-    codes: number[],
-    sun: [number, number],
-    limits: [number, number],
+export type Day = {
+    date: number,              //time stamp of midnight, UTC
+    codes: CodePoint[],
+    sun: [number, number],     //seconds into day for sunrise and sunset
+    limits: [number, number],  //hour numbers for start and stop of the plot e.g. [5,19]
 }
+
+export type CodePoint = [
+    number, // seconds into day
+    number, // code
+]
 
 // 
 export type Reading = {

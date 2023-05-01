@@ -1,16 +1,22 @@
 import React from "react"
 import Canvas from "./Canvas"
 import { codes, codeDef, formatDate } from "../Globals"
+import { Day } from '../../contexts/DataContext'
 
-export const LineCanvas = ({ width, data }) => {
+interface LineCanvasProps {
+    width: number
+    data: Day
+}
 
-    const drawLine = (ctx) => {
-        const drawLineTick = (ctx, percentageOffset, text) => {
+export const LineCanvas = ({ width, data }: LineCanvasProps) => {
+
+    const drawLine = (ctx: CanvasRenderingContext2D) => {
+        const drawLineTick = (ctx: CanvasRenderingContext2D, percentageOffset: number, text: number) => {
             var x = percentageOffset * width
             ctx.moveTo(x, 30)
             ctx.lineTo(x, 35)
             ctx.stroke()
-            ctx.fillText(text, x - ctx.measureText(text).width / 2, 45)
+            ctx.fillText(text.toString(), x - ctx.measureText(text.toString()).width / 2, 45)
         }
 
         var i
@@ -39,7 +45,6 @@ export const LineCanvas = ({ width, data }) => {
         let dbCodes = data.codes;
         //console.log(dbCodes)
         dbCodes.forEach(pt => {
-            //console.log(pt)
             const time = pt[0]
             const code = prev
             prev = pt[1]

@@ -6,11 +6,10 @@ import CircleCanvas from "./CircleCanvas"
 import KeyCanvas from "./KeyCanvas"
 import { useData } from '../../contexts/DataContext'
 
-
 export default function History() {
 
-    const containerRef = useRef(null)
-    const containerKeyRef = useRef(null)
+    const containerRef = useRef<HTMLInputElement>()
+    const containerKeyRef = useRef<HTMLInputElement>()
     const [clockFormat, setClockFormat] = useState(false)
     const [toggleText, setToggleText] = useState("Toggle to Clock Format")
     const [circleWidth, setCircleWidth] = useState(100)
@@ -25,15 +24,15 @@ export default function History() {
     }, [])
 
     useEffect(() => {
-        console.log(history)
+        if (history) console.log(history)
     }, [history])
 
     const resizeAndDraw = () => {
 
         const container = containerRef.current
         const containerKey = containerKeyRef.current
-
-        if (!container | !containerKey) {
+        console.log(typeof container)
+        if (!container || !containerKey) {
             if (!container) { console.log("no container") }
             if (!containerKey) { console.log("no containerKey") }
             return
