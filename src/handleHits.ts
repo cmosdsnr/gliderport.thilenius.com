@@ -145,9 +145,7 @@ export const handleHits = async (connection: mysql.Connection) => {
       .replace("T", " ")
       .replace(/\.[0-9]*Z/, "");
   }
-  console.log(t.weeks.totals.length);
-  t.week.day = "";
-  //   return;
+
   // make sure we have all the fields
   if (t.weeks === undefined) t.weeks = { start: 0, totals: [], uniques: [] };
   if (t.weeks.uniques === undefined) t.weeks.uniques = [];
