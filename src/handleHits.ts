@@ -130,11 +130,17 @@ export const handleHits = async (connection: mysql.Connection) => {
     };
   }
 
+  retString += "***** LOADED FROM hit_Stats ***** </br>";
+  retString += "weeks totals: " + t.weeks.totals.length + "</br>";
+  retString += "weeks uniques: " + t.weeks.totals.length + "</br>";
+
   const row = await connection.promise().query(`select count(*) AS count from hit_counter where 1`);
   let count = 0;
   if (Array.isArray(row) && Array.isArray(row[0])) {
     t.total.count = (row[0][0] as { count: number }).count;
   }
+  retString += "hit_counter has: " + t.total.count + "</br>";
+
   const latest = await connection.promise().query(`SELECT MAX(hit) AS latest FROM hit_counter WHERE 1`);
   if (Array.isArray(latest) && Array.isArray(latest[0])) {
     dt = (latest[0][0] as { latest: Date }).latest;
@@ -151,14 +157,19 @@ export const handleHits = async (connection: mysql.Connection) => {
   if (t.weeks.uniques === undefined) t.weeks.uniques = [];
   if (t.weeks.totals === undefined) t.weeks.totals = [];
   if (t.total.unique === undefined) t.total.unique = 0;
-
   let wks;
-  if (1 || t.week.day === "") {
+  if (t.week.day === "") {
     console.log("Regenerating all weeks!!");
+    t.weeks = { start: 0, totals: [], uniques: [] };
+    t.total.unique = 0;
     wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1`);
   } else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > ${t.week.day}`);
   if (Array.isArray(wks) && Array.isArray(wks[0])) {
     //there are new weeks
+    console.log(t.weeks.totals.length + "old total weeks");
+    console.log(t.weeks.uniques.length + "old total weeks");
+    retString += "loaded " + wks.length + " new weeks to add</br>";
+    console.log(wks.length + "new weeks");
     (wks[0] as HitTable[]).forEach((v, i) => {
       t.weeks.totals.push(v.total);
       t.weeks.uniques.push(v.unique);
@@ -170,6 +181,7 @@ export const handleHits = async (connection: mysql.Connection) => {
     t.week.unique = w.unique;
   }
 
+  retString += "going to save " + t.weeks.totals.length + " weeks into misc/hit_stats</br>";
   const m = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1 LIMIT 4`);
   if (Array.isArray(m) && Array.isArray(m[0])) {
     t.month.total = 0;
