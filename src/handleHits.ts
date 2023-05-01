@@ -153,7 +153,7 @@ export const handleHits = async (connection: mysql.Connection) => {
   if (t.total.unique === undefined) t.total.unique = 0;
 
   let wks;
-  if (t.week.day === "") {
+  if (1 || t.week.day === "") {
     console.log("Regenerating all weeks!!");
     wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1`);
   } else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > ${t.week.day}`);
