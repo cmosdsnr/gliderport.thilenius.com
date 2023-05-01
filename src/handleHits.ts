@@ -163,7 +163,7 @@ export const handleHits = async (connection: mysql.Connection) => {
     t.weeks = { start: 0, totals: [], uniques: [] };
     t.total.unique = 0;
     wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1`);
-  } else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > ${t.week.day}`);
+  } else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > '${t.week.day}'`);
   if (Array.isArray(wks) && Array.isArray(wks[0])) {
     //there are new weeks
     console.log(t.weeks.totals.length + "old total weeks");
