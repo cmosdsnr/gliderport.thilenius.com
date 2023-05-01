@@ -168,8 +168,8 @@ export const handleHits = async (connection: mysql.Connection) => {
     //there are new weeks
     console.log(t.weeks.totals.length + "old total weeks");
     console.log(t.weeks.uniques.length + "old total weeks");
-    retString += "loaded " + wks.length + " new weeks to add</br>";
-    console.log(wks.length + "new weeks");
+    retString += "loaded " + wks[0].length + " new weeks to add from: " + t.week.day + "</br>";
+    console.log(wks[0].length + "new weeks");
     (wks[0] as HitTable[]).forEach((v, i) => {
       t.weeks.totals.push(v.total);
       t.weeks.uniques.push(v.unique);
