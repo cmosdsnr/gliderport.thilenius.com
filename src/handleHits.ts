@@ -164,7 +164,7 @@ export const handleHits = async (connection: mysql.Connection) => {
     t.total.unique = 0;
     wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1`);
   } else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > '${t.week.day}'`);
-  if (Array.isArray(wks) && Array.isArray(wks[0]) && wks[0].length > 0) {
+  if (Array.isArray(wks) && Array.isArray(wks[0]) && wks[0].length) {
     //there are new weeks
     console.log(t.weeks.totals.length + "old total weeks");
     console.log(t.weeks.uniques.length + "old total weeks");
@@ -195,7 +195,7 @@ export const handleHits = async (connection: mysql.Connection) => {
   const y = await connection.promise().query(`SELECT * FROM hit_counter_day ORDER BY day DESC LIMIT 1`);
   if (Array.isArray(y) && Array.isArray(y[0])) {
     const x = y[0][0] as HitTable;
-    t.day = {week
+    t.day = {
       day: getSQLDate(x.day),
       total: x.total,
       unique: x.unique,
