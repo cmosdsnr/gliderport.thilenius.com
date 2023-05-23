@@ -19,7 +19,7 @@ import { handleHits } from "./src/handleHits";
 import AddData from "./src/AddData";
 
 import OffTime from "./src/images/offTime.jpg";
-
+//
 dotenv.config();
 
 //log in to firebase
