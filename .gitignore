@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env*
+go*.bat
+
+/storage
