@@ -66,7 +66,15 @@ export const Home = () => {
                         xs={12}
                         style={{ backgroundColor: "lightpink" }}
                     >
-                        This site is still under construction. patience please...</Col></Row>
+                        Hardware failures at the gliderport ... I am working on it. ETA: 6/23</Col>
+                </Row>
+                <Row>
+                    <Col
+                        xs={12}
+                        style={{ backgroundColor: "lightpink" }}
+                    >
+                        This site is still under construction. patience please...</Col>
+                </Row>
 
                 {offline ? <Row>
                     <Col
