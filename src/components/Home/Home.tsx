@@ -61,13 +61,13 @@ export const Home = () => {
                     </Col>
 
                 </Row>
-                <Row>
+                {/* <Row>
                     <Col
                         xs={12}
                         style={{ backgroundColor: "lightpink" }}
                     >
                         Hardware failures at the gliderport ... I am working on it. ETA: 6/23</Col>
-                </Row>
+                </Row> */}
                 <Row>
                     <Col
                         xs={12}
