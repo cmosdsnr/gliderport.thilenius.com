@@ -24,6 +24,6 @@ dist-ssr
 *.sw?
 
 .env*
-go*.bat
-
+go*
+*lock.json
 /storage
