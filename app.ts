@@ -63,9 +63,10 @@ console.log("offset ", globals.offset);
 //  e. '/updateBigImage' :  called from Pi3: Update the large image data
 //
 // For Debug
-//  a. '/current.jpg    : browser call to get latest small image
-//  b. '/currentBig.jpg : browser call to get latest small image
-//  c. '/info           : browser call to get lots of info about current situation
+//  a. '/current.jpg'    : browser call to get latest small image
+//  b. '/currentBig.jpg' : browser call to get latest small image
+//  c. '/info'           : browser call to get lots of info about current situation
+//  d. '/UpdateSun'      : browser call to update sunrise/set data
 //
 //   DEFUNCT procedures
 //  a. '/ImageAdded'    : DEFUNCT, Image data is now added directly thru AddData
@@ -304,6 +305,14 @@ app.get("/getLastEntry", (req, res) => {
 app.get("/info", async (req, res) => {
   if (connection) res.send(await info(connection));
   else res.send("<h1>No connection to database</h1>");
+});
+
+// called from browser for debug to display latest happenings
+app.get("/UpdateSun", async (req, res) => {
+  if (connection) {
+    updateSunData();
+    res.send("<h4>Updated Sun Data</h4>");
+  } else res.send("<h1>No connection to database</h1>");
 });
 
 // peak at current image
