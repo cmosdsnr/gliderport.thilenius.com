@@ -66,7 +66,7 @@ export const Home = () => {
                         xs={12}
                         style={{ backgroundColor: "lightpink" }}
                     >
-                        Hardware failures at the gliderport ... I am working on it. ETA: 6/23</Col>
+                        Hardware failures at the gliderport .... I am working on it. ETA: 6/23</Col>
                 </Row> */}
                 <Row>
                     <Col
