@@ -30,6 +30,7 @@ export default function UpdatingImage({ offline }: Props) {
         // if it is before sunrise...
         if ((tsNow < sun?.rise - 15 * 60) || (tsNow > sun?.set + 15 * 60)) {
             let SecondsToSunrise = sun.rise - tsNow
+            console.log("SecondsToSunrise: ", SecondsToSunrise, " Sunrise: ", sun.rise, " tsNow: ", tsNow)
             if (tsNow > sun.set) SecondsToSunrise += 24 * 3600
             const h = Math.floor(SecondsToSunrise / 3600)
             const m = Math.floor(SecondsToSunrise / 60 - h * 60)
