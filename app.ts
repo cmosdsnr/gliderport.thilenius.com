@@ -311,6 +311,10 @@ app.get("/info", async (req, res) => {
 app.get("/UpdateSun", async (req, res) => {
   if (connection) {
     updateSunData();
+    let x = "<h4>Updated Sun Data</h4>";
+    Object.keys(sunData).map(async (v, i) => {
+      x += `${v}: ${sunData[v]}<br>`;
+    });
     res.send("<h4>Updated Sun Data</h4>");
   } else res.send("<h1>No connection to database</h1>");
 });
