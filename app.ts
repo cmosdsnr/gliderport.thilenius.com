@@ -311,11 +311,11 @@ app.get("/info", async (req, res) => {
 app.get("/UpdateSun", async (req, res) => {
   if (connection) {
     updateSunData();
-    let x = "<h4>Updated Sun Data</h4><h5>";
+    let x = "<h4>Updated Sun Data<br>";
     Object.keys(sunData).map(async (v, i) => {
       x += `${v}: ${sunData[v]}<br>`;
     });
-    x += "</h5>";
+    x += "</h3>";
     res.send(x);
   } else res.send("<h1>No connection to database</h1>");
 });
