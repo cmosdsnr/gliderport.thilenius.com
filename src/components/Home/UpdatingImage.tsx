@@ -26,6 +26,9 @@ export default function UpdatingImage({ offline }: Props) {
     // update 'time passed' numbers on screen
     const interval = 10 //seconds
     useInterval(() => {
+        const n = new Date();
+        const s = new Date(sun.rise * 1000);
+        console.log("now: ", n.getDate(), " sunrise: ", s.getDate())
         const tsNow = (new Date()).getTime() / 1000
         // if it is before sunrise...
         if ((tsNow < sun?.rise - 15 * 60) || (tsNow > sun?.set + 15 * 60)) {
