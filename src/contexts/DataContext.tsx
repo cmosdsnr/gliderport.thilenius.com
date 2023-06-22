@@ -403,13 +403,14 @@ export function DataProvider({ children }: any) {
                     if ('temperature' in d) newRecord.temperature = d.temperature
                     setChart([...chart, newRecord])
                     setLatest(newRecord)
+                    setPassedSeconds(0)
                 }
 
                 if ('videoWidth' in d) setVideoWidth(d.videoWidth)
                 if ('videoHeight' in d) setVideoHeight(d.videoHeight)
                 if ('numberConnections' in d) setNumberConnections(d.numberConnections)
 
-                setPassedSeconds(0)
+
             }
             if (messageBody.command === 'image') {
                 // console.log("image message received, length: ", messageBody.data.length)
