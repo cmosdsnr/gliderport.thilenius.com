@@ -123,6 +123,28 @@ const updateSunData = (ts = 0) => {
 };
 updateSunData();
 
+//call every hour
+let id = setInterval(() => {
+  const now = new Date().getTime() / 1000;
+  const sunSet = new Date(sunData.sunset).getTime() / 1000;
+  console.log("now: ", now, " sunSet: ", sunSet);
+  console.log("now: ", new Date());
+  console.log("sunset: ", new Date(sunData.sunset));
+  // if (TodaysDay != new Date().getDate()) {
+  //    TodaysDay = new Date().getDate();
+  // if it is >= 1 hr after sun set
+  if (connection && now > sunSet + 1 * 3600) {
+    console.log("updating sun data for ", sunSet + 12 * 3600);
+    // 12 hours past sunset will always be in the next day
+    updateSunData(sunSet + 12 * 3600);
+    // Update Day and Week hit_counter databases on each new day
+    handleHits(connection);
+    //reset sent text list
+    resetAllSentTexts();
+    debugInfo.sentTexts = [];
+  }
+}, 1 * 3600 * 1000); // every 1 hours
+
 //call every minute
 const reportEveryMin = false;
 const url = "http://104.36.31.118:8080/";
@@ -166,28 +188,6 @@ let pingTimer = setInterval(() => {
       connection?.query(sql, (err, results, fields) => {});
     });
 }, 60000);
-
-//call every hour
-let id = setInterval(() => {
-  const now = new Date().getTime() / 1000;
-  const sunSet = new Date(sunData.sunset).getTime() / 1000;
-  console.log("now: ", now, " sunSet: ", sunSet);
-  console.log("now: ", new Date());
-  console.log("sunset: ", new Date(sunData.sunset));
-  // if (TodaysDay != new Date().getDate()) {
-  //    TodaysDay = new Date().getDate();
-  // if it is 2 hrs after sun set
-  if (connection && now > sunSet + 2 * 3600) {
-    console.log("updating sun data for ", sunSet + 12 * 3600);
-    // 12 hours past sunset will always be in the next day
-    updateSunData(sunSet + 12 * 3600);
-    // Update Day and Week hit_counter databases on each new day
-    handleHits(connection);
-    //reset sent text list
-    resetAllSentTexts();
-    debugInfo.sentTexts = [];
-  }
-}, 1 * 3600 * 1000); // every 1 hours
 
 d.setLastRecord();
 
