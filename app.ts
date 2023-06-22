@@ -109,11 +109,12 @@ let changes = {
 let TodaysDay = new Date().getDate();
 let sunData: SunCalc.GetTimesResult;
 
-const updateSunData = () => {
+const updateSunData = (ts = 0) => {
   // La Jola lat/long
   const lat = 32.89;
   const long = -117.25;
-  sunData = SunCalc.getTimes(new Date(), lat, long);
+  const d = ts > 0 ? new Date(ts * 1000) : new Date();
+  sunData = SunCalc.getTimes(d, lat, long);
   let sd: any = {};
   for (const [k, v] of Object.entries(sunData)) sd[k] = Math.floor(v.getTime() / 1000);
   //   for (const [k, v] of Object.entries(sd)) console.log(k, v);
@@ -168,11 +169,20 @@ let pingTimer = setInterval(() => {
 
 //call every hour
 let id = setInterval(() => {
-  if (TodaysDay != new Date().getDate()) {
-    TodaysDay = new Date().getDate();
-    updateSunData();
+  const now = new Date().getTime() / 1000;
+  const sunSet = new Date(sunData.sunset).getTime() / 1000;
+  console.log("now: ", now, " sunSet: ", sunSet);
+  console.log("now: ", new Date());
+  console.log("sunset: ", new Date(sunData.sunset));
+  // if (TodaysDay != new Date().getDate()) {
+  //    TodaysDay = new Date().getDate();
+  // if it is 2 hrs after sun set
+  if (connection && now > sunSet + 2 * 3600) {
+    console.log("updating sun data for ", sunSet + 12 * 3600);
+    // 12 hours past sunset will always be in the next day
+    updateSunData(sunSet + 12 * 3600);
     // Update Day and Week hit_counter databases on each new day
-    if (connection) handleHits(connection);
+    handleHits(connection);
     //reset sent text list
     resetAllSentTexts();
     debugInfo.sentTexts = [];
@@ -311,7 +321,7 @@ app.get("/info", async (req, res) => {
 app.get("/UpdateSun", async (req, res) => {
   if (connection) {
     updateSunData();
-    let x = "<h4>Updated Sun Data<br>";
+    let x = "<h3>Updated Sun Data<br>";
     Object.keys(sunData).map(async (v, i) => {
       x += `${v}: ${sunData[v]}<br>`;
     });
