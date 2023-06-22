@@ -26,15 +26,11 @@ export default function UpdatingImage({ offline }: Props) {
     // update 'time passed' numbers on screen
     const interval = 10 //seconds
     useInterval(() => {
-        const n = new Date();
-        const s = new Date(sun.rise * 1000);
-        console.log("now: ", n.getDate(), " sunrise: ", s.getDate())
-        const tsNow = (new Date()).getTime() / 1000
+        let tsNow = (new Date()).getTime() / 1000;
         // if it is before sunrise...
-        if ((tsNow < sun?.rise - 15 * 60) || (tsNow > sun?.set + 15 * 60)) {
-            let SecondsToSunrise = sun.rise - tsNow
+        if (tsNow < sun?.rise) {
+            const SecondsToSunrise = sun.rise - tsNow
             console.log("SecondsToSunrise: ", SecondsToSunrise, " Sunrise: ", sun.rise, " tsNow: ", tsNow)
-            if (tsNow > sun.set) SecondsToSunrise += 24 * 3600
             const h = Math.floor(SecondsToSunrise / 3600)
             const m = Math.floor(SecondsToSunrise / 60 - h * 60)
             setTimeToSunrise("Sunrise in " + (h > 0 ? h + " hours, " : "") + m + " minutes")
