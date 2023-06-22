@@ -175,7 +175,10 @@ export function DataProvider({ children }: any) {
 
     const handleChart = (d: Reading[]) => {
         setChart(d)
-        setLatest(d[d.length - 1])
+        if (Array.isArray(d) && d.length > 0) {
+            setLatest(d[d.length - 1])
+            setPassedSeconds(((new Date()).getTime() / 1000) - d[d.length - 1].time)
+        }
         // console.log(d)
         // debugger
     }
@@ -198,23 +201,21 @@ export function DataProvider({ children }: any) {
                 const end = new Date(v[1] + " 12:00:00")
                 while (dt <= end) {
                     //push the date
-                    const yyyy = dt.getFullYear()
-                    let mm = dt.getMonth() + 1 as string | number // Months start at 0!
-                    if (mm < 10) mm = '0' + mm;
-                    let dd = dt.getDate() as string | number
-                    if (dd < 10) dd = '0' + dd;
-                    vids.push(yyyy + '-' + mm + '-' + dd)
+                    vids.push(
+                        dt.getFullYear() + '-'
+                        + ('0' + (dt.getMonth() + 1)).slice(-2) + '-'
+                        + ('0' + dt.getDate()).slice(-2)
+                    )
                     //add a day
                     dt.setDate(dt.getDate() + 1)
                 }
             } else {
-                let dt = new Date(v + " 12:00:00")
-                const yyyy = dt.getFullYear()
-                let mm = dt.getMonth() + 1 as string | number // Months start at 0!
-                if (mm < 10) mm = '0' + mm;
-                let dd = dt.getDate() as string | number
-                if (dd < 10) dd = '0' + dd;
-                vids.push(yyyy + '-' + mm + '-' + dd)
+                const dt = new Date(v + " 12:00:00")
+                vids.push(
+                    dt.getFullYear() + '-'
+                    + ('0' + (dt.getMonth() + 1)).slice(-2) + '-'
+                    + ('0' + dt.getDate()).slice(-2)
+                )
             }
         })
         setVideos({ videos: vids, videoYears: d.years })
@@ -362,7 +363,6 @@ export function DataProvider({ children }: any) {
                 else
                     cmd = subCommands.BigImage
 
-
                 if (messageBody.error) {
                     console.log("error: " + messageBody.subCommand + " : " + messageBody.error)
                     return
@@ -374,8 +374,6 @@ export function DataProvider({ children }: any) {
                 // if (chart.length > 1) debugger
                 // if (messageBody.subCommand === "CurrentData") debugger
                 cmd(messageBody.data)
-
-
             }
             // if (messageBody.command === 'update') debugger
             if (messageBody.command === 'update' && chart?.length > 0) {
@@ -388,7 +386,6 @@ export function DataProvider({ children }: any) {
 
                 // if ('lastImage' in d) setLastImage(d.lastImage)
                 if ('lastForecast' in d) setLastForecast(d.lastForecast)
-
 
                 // console.log(messageBody.data)
                 // note: speed, temp, and pressure are transmitted in the proper scale
@@ -405,12 +402,9 @@ export function DataProvider({ children }: any) {
                     setLatest(newRecord)
                     setPassedSeconds(0)
                 }
-
                 if ('videoWidth' in d) setVideoWidth(d.videoWidth)
                 if ('videoHeight' in d) setVideoHeight(d.videoHeight)
                 if ('numberConnections' in d) setNumberConnections(d.numberConnections)
-
-
             }
             if (messageBody.command === 'image') {
                 // console.log("image message received, length: ", messageBody.data.length)
