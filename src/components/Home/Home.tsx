@@ -79,7 +79,7 @@ export const Home = () => {
                 {offline ? <Row>
                     <Col
                         xs={12}
-                        style={{ backgroundColor: "#fcd76f" }}
+                        style={{ backgroundColor: "#bf65f0" }}
                     >
                         Gliderport is offline</Col></Row> : null}
                 <Row style={{ paddingTop: "30px", backgroundColor: "rgb(255,255,200)" }}>
