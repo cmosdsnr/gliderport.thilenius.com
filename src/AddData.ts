@@ -405,7 +405,7 @@ export default class AddData {
       });
   };
 
-  updateCodeHistory = async () => {
+  #updateCodeHistory = async () => {
     // get the last timestamp from code_history
     let r: any;
     let sql = "SELECT * FROM code_history ORDER BY date DESC LIMIT 1";
@@ -452,8 +452,15 @@ export default class AddData {
         direction: number;
       }[];
       globals.debugInfo.codeHistory.gpResults = res.length;
-      // console.log("   Since the last record in code_history at ", timestampToString(tsLast), " with code ",
-      //     lc, ", there are ", results.length, " new data points in gliderport")
+      console.log(
+        "   Since the last record in code_history at ",
+        timestampToString(tsLast),
+        " with code ",
+        lc,
+        ", there are ",
+        results.length,
+        " new data points in gliderport"
+      );
       let c = 0;
       let lastTs = tsLast + 120; // 2 min after last
 
@@ -543,6 +550,6 @@ export default class AddData {
     // console.log("   tsNow: ", this.tsNow, " tsLast: ", tsLast);
     if (this.tsNow > tsLast + 1 * 60 * 60) this.#updateForecast();
 
-    //this.#updateCodeHistory();
+    this.#updateCodeHistory();
   };
 }
