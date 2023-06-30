@@ -67,7 +67,7 @@ const StatusCanvas: React.FC<CanvasProps> = props => {
                     //last one
                     if (full) {
                         let dt = new Date()
-                        to = (Math.floor(dt.getTime() / 1000) % (24 * 3600)) / (24 * 3600)
+                        to = ((Math.floor(dt.getTime() / 1000) + 60 * dt.getTimezoneOffset()) % (24 * 3600)) / (24 * 3600)
                         drawSection(from, to, context, status)
                         drawSection(to, 1, context, 2)
                     } else {
