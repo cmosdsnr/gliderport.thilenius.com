@@ -7,9 +7,9 @@ import cors from "cors";
 import fileUpload from "express-fileupload";
 import SunCalc from "suncalc";
 
-// import { auth, db } from "./src/firebase.js";
-// import { onSnapshot, doc, setDoc, collection, query, where } from "firebase/firestore";
-// import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "./src/firebase.js";
+import { onSnapshot, doc, setDoc, collection, query, where } from "firebase/firestore";
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
 import { globals } from "./src/globals";
 import { sendTextMessage } from "./src/sendTextMessage.js";
@@ -23,30 +23,30 @@ import OffTime from "./src/images/offTime.jpg";
 dotenv.config();
 
 //log in to firebase
-// signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123");
+signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123");
 
-// onAuthStateChanged(auth, async (user) => {
-//   if (user) {
-//     // console.log("user", JSON.stringify(user));
-//     const usersRef = collection(db, "users");
-//     const q = query(usersRef, where("text.enabled", "==", true));
-//     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-//       console.log(new Date().toISOString(), ": snapshot update");
-//       globals.textWatch = {};
-//       querySnapshot.forEach((document) => {
-//         const d = document.data();
-//         globals.textWatch[document.id] = d;
-//       });
-//     });
-//   }
-// });
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    // console.log("user", JSON.stringify(user));
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("text.enabled", "==", true));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      console.log(new Date().toISOString(), ": snapshot update");
+      globals.textWatch = {};
+      querySnapshot.forEach((document) => {
+        const d = document.data();
+        globals.textWatch[document.id] = d;
+      });
+    });
+  }
+});
 
 const resetAllSentTexts = () => {
   Object.keys(globals.textWatch).map(async (v, i) => {
     const d = globals.textWatch[v];
     d.text.sent = false;
     console.log("resetting ", d.email);
-    // await setDoc(doc(db, "users", v), d);
+    await setDoc(doc(db, "users", v), d);
   });
 };
 
