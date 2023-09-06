@@ -3,7 +3,7 @@ import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 import dotenv from "dotenv"
 dotenv.config()
-
+console.log("TEST: " + process.env.FIREBASE_API_KEY)
 // const app = initializeApp({
 //     apiKey: process.env.FIREBASE_API_KEY,
 //     authDomain: process.env.FIREBASE_AUTH_DOMAIN,
