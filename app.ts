@@ -25,21 +25,21 @@ dotenv.config();
 //log in to firebase
 signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123");
 
-// onAuthStateChanged(auth, async (user) => {
-//   if (user) {
-//     // console.log("user", JSON.stringify(user))
-//     const usersRef = collection(db, "users");
-//     const q = query(usersRef, where("text.enabled", "==", true));
-//     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-//       console.log(new Date().toISOString(), ": snapshot update");
-//       globals.textWatch = {};
-//       querySnapshot.forEach((document) => {
-//         const d = document.data();
-//         globals.textWatch[document.id] = d;
-//       });
-//     });
-//   }
-// });
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    // console.log("user", JSON.stringify(user));
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("text.enabled", "==", true));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      console.log(new Date().toISOString(), ": snapshot update");
+      globals.textWatch = {};
+      querySnapshot.forEach((document) => {
+        const d = document.data();
+        globals.textWatch[document.id] = d;
+      });
+    });
+  }
+});
 
 const resetAllSentTexts = () => {
   Object.keys(globals.textWatch).map(async (v, i) => {
