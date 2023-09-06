@@ -7,9 +7,9 @@ import cors from "cors";
 import fileUpload from "express-fileupload";
 import SunCalc from "suncalc";
 
-import { auth, db } from "./src/firebase.js";
-import { onSnapshot, doc, setDoc, collection, query, where } from "firebase/firestore";
-import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+// import { auth, db } from "./src/firebase.js";
+// import { onSnapshot, doc, setDoc, collection, query, where } from "firebase/firestore";
+// import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
 import { globals } from "./src/globals";
 import { sendTextMessage } from "./src/sendTextMessage.js";
@@ -46,7 +46,7 @@ const resetAllSentTexts = () => {
     const d = globals.textWatch[v];
     d.text.sent = false;
     console.log("resetting ", d.email);
-    await setDoc(doc(db, "users", v), d);
+    // await setDoc(doc(db, "users", v), d);
   });
 };
 
