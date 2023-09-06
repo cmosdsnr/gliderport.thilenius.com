@@ -1,5 +1,5 @@
 # Gliderport frontend
-## served on a Dokku server (at Alec's house)
+## served on a Dokku server (on Buddbliss)
 
 - uses Vite frontend
 - uses Firebase Authentication (will change to pocketBase)
