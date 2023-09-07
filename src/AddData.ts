@@ -422,7 +422,7 @@ export default class AddData {
       r = this.#createNewDay(24 * 3600 * Math.floor(this.tsNow / (24 * 3600)));
       console.log("code_history table is empty, creating it");
     }
-    console.table(r);
+    // console.table(r);
     // at least sunrise should still be in the array
     let tsLast = r.date + 3600 * r.data.limits[0];
     let lc = 0;
