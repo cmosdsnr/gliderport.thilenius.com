@@ -206,7 +206,7 @@ var corsOptions = {
 };
 //
 app.use(cors(corsOptions));
-app.use(express.static("/app/storage"));
+app.use(express.static("/app/video"));
 
 // enable files upload
 app.use(
@@ -230,7 +230,7 @@ app.post("/uploadVideo", async (req, res) => {
       });
     } else {
       let video = req.files.video as fileUpload.UploadedFile;
-      video.mv("/app/storage/" + video.name);
+      video.mv("/app/video/" + video.name);
 
       //send response
       res.send({
@@ -262,7 +262,7 @@ app.post("/addVideo", (req, res) => {
     return;
   }
   console.log("name: ", req.body.name, " base64: ", req.body.A.length, " binary: ", videoBuffer.length);
-  fs.writeFile(`/app/storage/${req.body.name}.mp4`, videoBuffer, (err) => {
+  fs.writeFile(`/app/video/${req.body.name}.mp4`, videoBuffer, (err) => {
     if (err) throw err;
     res.json("Ok");
   });
@@ -322,9 +322,14 @@ app.get("/UpdateSun", async (req, res) => {
   if (connection) {
     updateSunData();
     let x = "<h3>Updated Sun Data<br>";
-    Object.keys(sunData).map(async (v, i) => {
-      x += `${v}: ${sunData[v]}<br>`;
-    });
+    let k: keyof SunCalc.GetTimesResult;
+    for (k in sunData) {
+      x += `${k}: ${sunData[k]}<br>`;
+    }
+    // for (const [k, v] of Object.entries(sunData)) x += `${v}: ${sunData[v]}<br>`
+    // Object.keys(sunData).map(async (v, i) => {
+    //   x += `${v}: ${sunData[v]}<br>`;
+    // });
     x += "</h3>";
     res.send(x);
   } else res.send("<h1>No connection to database</h1>");
