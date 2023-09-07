@@ -151,7 +151,7 @@ const url = "http://104.36.31.118:8080/";
 
 let pingTimer = setInterval(() => {
   const controller = new AbortController();
-  const ids = setTimeout(() => controller.abort(), 2000);
+  const ids = setTimeout(() => controller.abort(), 4000);
   fetch(url, { signal: controller.signal })
     .then((response) => {
       clearTimeout(ids);
