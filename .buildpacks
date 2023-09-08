@@ -1,2 +1,2 @@
 heroku-community/nodejs
-heroku-community/nginx
+https://github.com/dokku/heroku-buildpack-nginx.git
