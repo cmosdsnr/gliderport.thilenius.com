@@ -152,9 +152,11 @@ const url = "http://104.36.31.118:8080/";
 let pingTimer = setInterval(() => {
   const controller = new AbortController();
   const ids = setTimeout(() => controller.abort(), 4000);
+  let cnt = 0;
   fetch(url, { signal: controller.signal })
     .then((response) => {
       clearTimeout(ids);
+      cnt = 0;
       if (reportEveryMin) console.log("gliderport is online");
       const ts = Math.floor((Date.now() + globals.offset) / 1000);
       const dateString = timestampToString(ts);
@@ -172,6 +174,7 @@ let pingTimer = setInterval(() => {
     })
     .catch((error) => {
       clearTimeout(ids);
+      if (cnt++ < 5) return;
       if (reportEveryMin) console.log("gliderport is offline");
       const ts = Math.floor((Date.now() + globals.offset) / 1000);
       const dateString = timestampToString(ts);
