@@ -22,33 +22,33 @@ export const info = async (connection: mysql.Connection): Promise<string> => {
     }</td><td>${timestampToString(globals.latestHours)}</td></tr>`;
   content += `</table></p>`;
 
-  //   let sql = "SELECT * FROM `hours` ORDER BY start DESC";
-  //   let results = await connection.promise().query(sql);
-  //   let hrs = [] as { start: number; data: string }[];
+  let sql = "SELECT * FROM `hours` ORDER BY start DESC";
+  let results = await connection.promise().query(sql);
+  let hrs = [] as { start: number; data: string }[];
 
-  //   if (Array.isArray(results) && Array.isArray(results[0])) hrs = results[0] as { start: number; data: string }[];
-  //   content += `<h3>Hours has ${hrs.length} entries</h3>`;
-  //   content += `<p><table style="text-align: center;">`;
-  //   content += `<tr><th>Hour Start</th><th>Hours count</th><th>Gliderport count</th></tr>`;
-  //   let l: [number, number][] = [];
-  //   hrs.forEach((v, i) => {
-  //     const d = JSON.parse(v.data) as { start: number; date: number[] };
-  //     l.push([v.start, d.date.length]);
-  //   });
-  //   l.forEach(async (v, i) => {
-  //     sql =
-  //       "SELECT * FROM gliderport WHERE recorded >= '" +
-  //       timestampToString(v[0]) +
-  //       "' AND recorded < '" +
-  //       timestampToString(v[0] + 3600) +
-  //       "'";
-  //     results = await connection.promise().query(sql);
-  //     let numRecords = Array.isArray(results) && Array.isArray(results[0]) ? results[0].length : 0;
-  //     content += `<tr><td>${timestampToString(v[0]).replace("00:00", "00")}</td><td>${
-  //       v[1]
-  //     }</td><td>${numRecords}</td></tr>`;
-  //     if (i === l.length - 1) content += `</table></p>`;
-  //   });
+  if (Array.isArray(results) && Array.isArray(results[0])) hrs = results[0] as { start: number; data: string }[];
+  content += `<h3>Hours has ${hrs.length} entries</h3>`;
+  content += `<p><table style="text-align: center;">`;
+  content += `<tr><th>Hour Start</th><th>Hours count</th><th>Gliderport count</th></tr>`;
+  let l: [number, number][] = [];
+  hrs.forEach((v, i) => {
+    const d = JSON.parse(v.data) as { start: number; date: number[] };
+    l.push([v.start, d.date.length]);
+  });
+  l.forEach(async (v, i) => {
+    sql =
+      "SELECT * FROM gliderport WHERE recorded >= '" +
+      timestampToString(v[0]) +
+      "' AND recorded < '" +
+      timestampToString(v[0] + 3600) +
+      "'";
+    results = await connection.promise().query(sql);
+    let numRecords = Array.isArray(results) && Array.isArray(results[0]) ? results[0].length : 0;
+    content += `<tr><td>${timestampToString(v[0]).replace("00:00", "00")}</td><td>${
+      v[1]
+    }</td><td>${numRecords}</td></tr>`;
+    if (i === l.length - 1) content += `</table></p>`;
+  });
 
   //   content += `<h3>Server Sent Table</h3>`;
   //   sql = "SELECT * FROM `server_sent` WHERE `id`=1";
