@@ -35,57 +35,60 @@ export const info = async (connection: mysql.Connection): Promise<string> => {
     const d = JSON.parse(v.data) as { start: number; date: number[] };
     l.push([v.start, d.date.length]);
   });
-  l.forEach(async (v, i) => {
+  for (let i = 0; i < l.length; i++) {
+    const v = l[i];
+    //   l.forEach(async (v, i) => {
     sql =
-      "SELECT * FROM gliderport WHERE recorded >= '" +
+      "SELECT COUNT(*) as count FROM gliderport WHERE recorded >= '" +
       timestampToString(v[0]) +
       "' AND recorded < '" +
       timestampToString(v[0] + 3600) +
       "'";
     results = await connection.promise().query(sql);
-    let numRecords = Array.isArray(results) && Array.isArray(results[0]) ? results[0].length : 0;
+    // console.log(results[0][0].count);
+    let numRecords = Array.isArray(results) && Array.isArray(results[0]) ? results[0][0].count : 0;
     content += `<tr><td>${timestampToString(v[0]).replace("00:00", "00")}</td><td>${
       v[1]
     }</td><td>${numRecords}</td></tr>`;
     if (i === l.length - 1) content += `</table></p>`;
-  });
+  }
 
   content += `<h3>Server Sent Table</h3>`;
   sql = "SELECT * FROM `server_sent` WHERE `id`=1";
   results = await connection.promise().query(sql);
-  if (Array.isArray(results) && Array.isArray(results[0])) {
-    const r = results[0][0] as ServerSentTable;
-    content += `<p><table>`;
-    const tsNow = Math.floor(new Date().getTime() / 1000);
-    content += `<tr><td><b>Now</b></td><td>(${tsNow})  <b>${timestampToString(tsNow)}</b></td></tr><tr></tr>`;
-    for (const [key, value] of Object.entries(results[0])) {
-      if (key === "sun") {
-        let s = JSON.parse(r.sun);
-        Object.keys(s).forEach((k) => {
-          content += `<tr><td>${k}</td><td>${timestampToLocalString(s[k])}</td></tr>`;
-        });
-      } else if ("last_record" === key || "last_image" === key || "last_forecast" === key) {
-        let deltaStr = "";
-        let delta = tsNow - value;
-        let end = "ago";
-        if (delta < 0) {
-          delta = -delta;
-          end = "from now";
-        }
-        if (delta > 3600) {
-          deltaStr += Math.floor(delta / 3600) + " hr, ";
-          delta -= 3600 * Math.floor(delta / 3600);
-        }
-        if (delta > 60) {
-          deltaStr += Math.floor(delta / 60) + " min, ";
-          delta -= 60 * Math.floor(delta / 60);
-        }
-        deltaStr += Math.floor(delta) + " sec " + end;
-        content += `<tr><td>${key}</td><td>(${value})  <b>${timestampToString(value)}</b>   (${deltaStr})</td></tr>`;
-      } else content += `<tr><td>${key}</td><td>${value}</td></tr>`;
-    }
-    content += `</table></p>`;
-  }
+  // if (Array.isArray(results) && Array.isArray(results[0])) {
+  //     const r = results[0][0] as ServerSentTable;
+  //     content += `<p><table>`;
+  //     const tsNow = Math.floor(new Date().getTime() / 1000);
+  //     content += `<tr><td><b>Now</b></td><td>(${tsNow})  <b>${timestampToString(tsNow)}</b></td></tr><tr></tr>`;
+  //     for (const [key, value] of Object.entries(results[0])) {
+  //       if (key === "sun") {
+  //         let s = JSON.parse(r.sun);
+  //         Object.keys(s).forEach((k) => {
+  //           content += `<tr><td>${k}</td><td>${timestampToLocalString(s[k])}</td></tr>`;
+  //         });
+  //       } else if ("last_record" === key || "last_image" === key || "last_forecast" === key) {
+  //         let deltaStr = "";
+  //         let delta = tsNow - value;
+  //         let end = "ago";
+  //         if (delta < 0) {
+  //           delta = -delta;
+  //           end = "from now";
+  //         }
+  //         if (delta > 3600) {
+  //           deltaStr += Math.floor(delta / 3600) + " hr, ";
+  //           delta -= 3600 * Math.floor(delta / 3600);
+  //         }
+  //         if (delta > 60) {
+  //           deltaStr += Math.floor(delta / 60) + " min, ";
+  //           delta -= 60 * Math.floor(delta / 60);
+  //         }
+  //         deltaStr += Math.floor(delta) + " sec " + end;
+  //         content += `<tr><td>${key}</td><td>(${value})  <b>${timestampToString(value)}</b>   (${deltaStr})</td></tr>`;
+  //       } else content += `<tr><td>${key}</td><td>${value}</td></tr>`;
+  //     }
+  //     content += `</table></p>`;
+  //   }
   //   content += `<h3>Code History Table (last 10 overview)</h3><p>`;
   //   sql = "SELECT * FROM code_history ORDER BY date DESC LIMIT 10";
   //   results = await connection.promise().query(sql);
