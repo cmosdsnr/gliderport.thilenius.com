@@ -111,7 +111,7 @@ export const info = async (connection: mysql.Connection): Promise<string> => {
   //       3600 * s + r.data.codes[0][0]
   //     } from day start</td></tr>`;
   //     content += `<tr><td>Sunrise</td><td>${r.data.sun[0]}s</td></tr>`;
-
+  //
   //     const codes = [
   //       "It Is dark",
   //       "Sled ride, bad angle",
