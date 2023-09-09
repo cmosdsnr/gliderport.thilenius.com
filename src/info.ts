@@ -86,9 +86,9 @@ export const info = async (connection: mysql.Connection): Promise<string> => {
     }
     content += `</table></p>`;
   }
-  content += `<h3>Code History Table (last 10 overview)</h3><p>`;
-  sql = "SELECT * FROM code_history ORDER BY date DESC LIMIT 10";
-  results = await connection.promise().query(sql);
+  //   content += `<h3>Code History Table (last 10 overview)</h3><p>`;
+  //   sql = "SELECT * FROM code_history ORDER BY date DESC LIMIT 10";
+  //   results = await connection.promise().query(sql);
   //   if (Array.isArray(results) && Array.isArray(results[0])) {
   //     let res: CodeHistoryTable[] = results[0] as CodeHistoryTable[];
   //     content += `<table>`;
