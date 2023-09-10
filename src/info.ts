@@ -7,19 +7,18 @@ export const info = async (connection: mysql.Connection): Promise<string> => {
   content += `<tr><td>last Record in gliderport table:</td><td>${globals.lastRecord}</td></tr><tr></tr>`;
   if (globals.firstRecord === null) {
     content += `<tr><td>Most recent addData at:</td><td>Never Called</td></tr>`;
-    content += `<tr><td></td><td>First Record of last added:</td><td>Never Called</td></tr>`;
-    content += `<tr><td></td><td>Number of Records added:</td><td>Never Called</td></tr>`;
+    content += `<tr><td>First Record of last added:</td><td>Never Called</td></tr>`;
+    content += `<tr><td>Number of Records added:</td><td>Never Called</td></tr>`;
   } else {
     content += `<tr><td>Most recent addData at:</td><td>${globals.tdLast.toDateString()}</td></tr>`;
-    content += `<tr><td></td><td>First Record of last added:</td><td>${globals.firstRecord}</td></tr>`;
-    content += `<tr><td></td><td>Number of Records added:</td><td>${globals.numberRecords}</td></tr>`;
+    content += `<tr><td>First Record of last added:</td><td>${globals.firstRecord}</td></tr>`;
+    content += `<tr><td>Number of Records added:</td><td>${globals.numberRecords}</td></tr>`;
   }
-  if (globals.latestHours === 0)
-    content += `<tr><td></td><td>Latest Hours table timestamp is:</td><td>Never Called</td></tr>`;
+  if (globals.latestHours === 0) content += `<tr><td>Latest Hours table timestamp is:</td><td>Never Called</td></tr>`;
   else
-    content += `<tr><td></td><td>Latest Hours table timestamp is:</td><td>${
+    content += `<tr><td>Latest Hours table timestamp is:</td><td>${globals.latestHours}</td><td>${timestampToString(
       globals.latestHours
-    }</td><td>${timestampToString(globals.latestHours)}</td></tr>`;
+    )}</td></tr>`;
   content += `</table></p>`;
 
   let sql = "SELECT * FROM `hours` ORDER BY start DESC";

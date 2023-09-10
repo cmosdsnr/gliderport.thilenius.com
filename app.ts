@@ -35,6 +35,7 @@ onAuthStateChanged(auth, async (user) => {
       globals.textWatch = {};
       querySnapshot.forEach((document) => {
         const d = document.data();
+        console.log(document.id, " ", d);
         globals.textWatch[document.id] = d;
       });
     });
