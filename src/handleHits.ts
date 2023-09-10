@@ -2,54 +2,65 @@ import mysql from "mysql2";
 import { getSQLDate } from "./timeConversion";
 import { globals } from "./globals";
 
-const getWeekCount = (start: string, stop: string, connection: mysql.Connection) => {
+const getWeekCount = async (start: string, stop: string, connection: mysql.Connection) => {
   let startDay = start;
   let stopDay = stop;
   console.log("******** Adding a week hit count from: ", startDay, " to: ", stopDay);
-  connection.query(
-    `select count(*) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`,
-    (err, c, fields) =>
-      connection.query(
-        `select count(DISTINCT IP) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`,
-        (err, d, fields) => {
-          if (Array.isArray(c) && Array.isArray(d))
-            connection.query(
-              "INSERT INTO hit_counter_week (`day`, total, `unique`) VALUES ('" +
-                startDay +
-                "', " +
-                (c[0] as { count: number }).count +
-                ", " +
-                (d[0] as { count: number }).count +
-                ")"
-            );
-        }
-      )
-  );
+  const res_t = await connection
+    .promise()
+    .query(
+      `select count(*) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`
+    );
+  const res_u = await connection
+    .promise()
+    .query(
+      `select count(DISTINCT IP) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`
+    );
+  console.table(res_t[0]);
+  console.table(res_u[0]);
+  if (Array.isArray(res_t) && Array.isArray(res_u))
+    if (Array.isArray(res_t[0]) && Array.isArray(res_u[0]))
+      await connection
+        .promise()
+        .query(
+          "INSERT INTO hit_counter_week (`day`, total, `unique`) VALUES ('" +
+            startDay +
+            "', " +
+            (res_t[0][0] as { count: number }).count +
+            ", " +
+            (res_u[0][0] as { count: number }).count +
+            ")"
+        );
 };
 
-const getDayCount = (start: string, stop: string, connection: mysql.Connection) => {
+const getDayCount = async (start: string, stop: string, connection: mysql.Connection) => {
   let startDay = start;
   let stopDay = stop;
   console.log("******** Adding a day hit count from: ", startDay, " to: ", stopDay);
-  connection.query(
-    `select count(*) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`,
-    (err, c, fields) =>
-      connection.query(
-        `select count(DISTINCT IP) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`,
-        (err, d, fields) => {
-          if (Array.isArray(c) && Array.isArray(d))
-            connection.query(
-              "INSERT INTO hit_counter_day (`day`, total, `unique`) VALUES ('" +
-                startDay +
-                "', " +
-                (c[0] as { count: number }).count +
-                ", " +
-                (d[0] as { count: number }).count +
-                ")"
-            );
-        }
-      )
-  );
+  const res_t = await connection
+    .promise()
+    .query(
+      `select count(*) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`
+    );
+
+  const res_u = await connection
+    .promise()
+    .query(
+      `select count(DISTINCT IP) AS count from hit_counter where hit > '${startDay} 08:00:00' AND hit < '${stopDay} 08:00:00'`
+    );
+  if (Array.isArray(res_t) && Array.isArray(res_u))
+    if (Array.isArray(res_t[0]) && Array.isArray(res_u[0]))
+      await connection
+        .promise()
+        .query(
+          "INSERT INTO hit_counter_day (`day`, total, `unique`) VALUES ('" +
+            startDay +
+            "', " +
+            (res_t[0][0] as { count: number }).count +
+            ", " +
+            (res_u[0][0] as { count: number }).count +
+            ")"
+        );
 };
 
 export const handleHits = async (connection: mysql.Connection) => {
@@ -83,7 +94,7 @@ export const handleHits = async (connection: mysql.Connection) => {
   retString += "dt         : " + dt + "</br>";
   retString += "last Entry : " + lastEntry + "</br>";
   while (dt < lastEntry) {
-    getWeekCount(startDay, stopDay, connection);
+    await getWeekCount(startDay, stopDay, connection);
     startDay = stopDay;
     dt.setDate(dt.getDate() + 7);
     stopDay = getSQLDate(dt);
@@ -95,9 +106,10 @@ export const handleHits = async (connection: mysql.Connection) => {
     dt = new Date((res[0][0] as { maxDate: number }).maxDate);
     dt.setDate(dt.getDate() + 1);
   } else {
-    console.log("weeks table is empty");
+    console.log("day table is empty");
     dt = new Date(startDate);
   }
+
   startDay = getSQLDate(dt);
   dt.setDate(dt.getDate() + 1);
   stopDay = getSQLDate(dt);
@@ -108,7 +120,7 @@ export const handleHits = async (connection: mysql.Connection) => {
   retString += "dt         : " + dt + "</br>";
   retString += "last Entry : " + lastEntry + "</br>";
   while (dt < lastEntry) {
-    getDayCount(startDay, stopDay, connection);
+    await getDayCount(startDay, stopDay, connection);
     startDay = stopDay;
     dt.setDate(dt.getDate() + 1);
     stopDay = getSQLDate(dt);
@@ -157,51 +169,51 @@ export const handleHits = async (connection: mysql.Connection) => {
   if (t.weeks.uniques === undefined) t.weeks.uniques = [];
   if (t.weeks.totals === undefined) t.weeks.totals = [];
   if (t.total.unique === undefined) t.total.unique = 0;
-  let wks;
-  if (t.week.day === "") {
-    console.log("Regenerating all weeks!!");
-    t.weeks = { start: 0, totals: [], uniques: [] };
-    t.total.unique = 0;
-    wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1`);
-  } else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > '${t.week.day}'`);
-  if (Array.isArray(wks) && Array.isArray(wks[0]) && wks[0].length) {
-    //there are new weeks
-    console.log(t.weeks.totals.length + "old total weeks");
-    console.log(t.weeks.uniques.length + "old total weeks");
-    retString += "loaded " + wks[0].length + " new weeks to add from: " + t.week.day + "</br>";
-    console.log(wks[0].length + "new weeks");
-    (wks[0] as HitTable[]).forEach((v, i) => {
-      t.weeks.totals.push(v.total);
-      t.weeks.uniques.push(v.unique);
-      t.total.unique += v.unique;
-    });
-    const w = wks[0][wks[0].length - 1] as HitTable;
-    t.week.day = getSQLDate(w.day);
-    t.week.total = w.total;
-    t.week.unique = w.unique;
-  }
+  //   let wks;
+  //   if (t.week.day === "") {
+  //     console.log("Regenerating all weeks!!");
+  //     t.weeks = { start: 0, totals: [], uniques: [] };
+  //     t.total.unique = 0;
+  //     wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1`);
+  //   } else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > '${t.week.day}'`);
+  //   if (Array.isArray(wks) && Array.isArray(wks[0]) && wks[0].length) {
+  //     //there are new weeks
+  //     console.log(t.weeks.totals.length + "old total weeks");
+  //     console.log(t.weeks.uniques.length + "old total weeks");
+  //     retString += "loaded " + wks[0].length + " new weeks to add from: " + t.week.day + "</br>";
+  //     console.log(wks[0].length + "new weeks");
+  //     (wks[0] as HitTable[]).forEach((v, i) => {
+  //       t.weeks.totals.push(v.total);
+  //       t.weeks.uniques.push(v.unique);
+  //       t.total.unique += v.unique;
+  //     });
+  //     const w = wks[0][wks[0].length - 1] as HitTable;
+  //     t.week.day = getSQLDate(w.day);
+  //     t.week.total = w.total;
+  //     t.week.unique = w.unique;
+  //   }
 
-  retString += "going to save " + t.weeks.totals.length + " weeks into misc/hit_stats</br>";
-  const m = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1 LIMIT 4`);
-  if (Array.isArray(m) && Array.isArray(m[0])) {
-    t.month.total = 0;
-    t.month.unique = 0;
-    (m[0] as HitTable[]).forEach((v, i) => {
-      t.month.unique += v.unique;
-      t.month.total += v.total;
-    });
-  }
+  //   retString += "going to save " + t.weeks.totals.length + " weeks into misc/hit_stats</br>";
+  //   const m = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1 LIMIT 4`);
+  //   if (Array.isArray(m) && Array.isArray(m[0])) {
+  //     t.month.total = 0;
+  //     t.month.unique = 0;
+  //     (m[0] as HitTable[]).forEach((v, i) => {
+  //       t.month.unique += v.unique;
+  //       t.month.total += v.total;
+  //     });
+  //   }
 
-  const y = await connection.promise().query(`SELECT * FROM hit_counter_day ORDER BY day DESC LIMIT 1`);
-  if (Array.isArray(y) && Array.isArray(y[0])) {
-    const x = y[0][0] as HitTable;
-    t.day = {
-      day: getSQLDate(x.day),
-      total: x.total,
-      unique: x.unique,
-    };
-  }
-  await connection.promise().query(`REPLACE into miscellaneous(id, data) VALUES('hit_stats', '${JSON.stringify(t)}')`);
+  //   const y = await connection.promise().query(`SELECT * FROM hit_counter_day ORDER BY day DESC LIMIT 1`);
+  //   if (Array.isArray(y) && Array.isArray(y[0])) {
+  //     const x = y[0][0] as HitTable;
+  //     t.day = {
+  //       day: getSQLDate(x.day),
+  //       total: x.total,
+  //       unique: x.unique,
+  //     };
+  //   }
+  //   await connection.promise().query(`REPLACE into miscellaneous(id, data) VALUES('hit_stats', '${JSON.stringify(t)}')`);
 
   retString += "</br>***** DB ***** </br>";
   retString += "Day start           : " + t.day.day + "</br>";
@@ -209,6 +221,6 @@ export const handleHits = async (connection: mysql.Connection) => {
   retString += "totals plot length  : " + t.weeks.totals.length + "</br>";
   retString += "uniques plot length : " + t.weeks.uniques.length + "</br>";
   retString += "last totaled        : " + t.total.date + "</br>";
-
+  console.log(retString);
   return retString;
 };
