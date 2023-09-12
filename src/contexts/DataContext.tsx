@@ -134,6 +134,7 @@ interface DataContextInterface {
     videoWidth: number,
     videoHeight: number,
     numberConnections: number,
+    message: [string | null, string | null],
     //functions 
     loadData: (name: string) => void,
     printDate: (ts: TimeStamp) => string,
@@ -172,6 +173,7 @@ export function DataProvider({ children }: any) {
     const [videoWidth, setVideoWidth] = useState(0)
     const [videoHeight, setVideoHeight] = useState(0)
     const [numberConnections, setNumberConnections] = useState(0)
+    const [message, setMessage] = useState<[string | null, string | null]>([null, null])
 
     const handleChart = (d: Reading[]) => {
         setChart(d)
@@ -244,6 +246,7 @@ export function DataProvider({ children }: any) {
         CurrentData: handleCurrentData,
         Image: handleImage,
         BigImage: handleBigImage,
+        Message: setMessage,
     }
 
     const ws = useRef<WebSocket | null>(null)
@@ -258,6 +261,7 @@ export function DataProvider({ children }: any) {
         ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL)
         ws.current.onopen = () => {
             console.log("ws opened")
+            loadData("Message")
             loadData("CurrentData")
             loadData("Chart")
             // testAll()
@@ -474,6 +478,7 @@ export function DataProvider({ children }: any) {
         //functions 
         loadData,
         printDate,
+        message,
     }
     return (
         <DataContext.Provider value={value}>

@@ -16,7 +16,7 @@ import UpdatingImage from "./UpdatingImage"
 // *********************************************
 export const Home = () => {
     const picRef = useRef(null)
-    const { chart, passedSeconds, offline, loadData } = useData()
+    const { chart, passedSeconds, offline, loadData, message } = useData()
 
     //display the bootstrap grid size, for development
     const showGridSize: boolean = false
@@ -73,6 +73,8 @@ export const Home = () => {
                         xs={12}
                         style={{ backgroundColor: "lightpink" }}
                     >
+                        {message[0] != null ? message[0] : null}
+                        {message[1] != null ? '<br/>' + message[1] : null}
                         This site is still under construction. patience please...<br />wind data is not recording properly at the moment. Working on it when I have time. </Col>
                 </Row>
 
