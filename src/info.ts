@@ -45,7 +45,8 @@ export const info = async (connection: mysql.Connection): Promise<string> => {
       "'";
     results = await connection.promise().query(sql);
     // console.log(results[0][0].count);
-    let numRecords = Array.isArray(results) && Array.isArray(results[0]) ? results[0][0].count : 0;
+    let numRecords =
+      Array.isArray(results) && Array.isArray(results[0]) ? (results[0][0] as { count: number }).count : 0;
     content += `<tr><td>${timestampToString(v[0]).replace("00:00", "00")}</td><td>${
       v[1]
     }</td><td>${numRecords}</td></tr>`;
