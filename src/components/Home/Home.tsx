@@ -73,9 +73,11 @@ export const Home = () => {
                         xs={12}
                         style={{ backgroundColor: "lightpink" }}
                     >
+                        {/* Messages are in the miscellaneous database */}
                         {message[0] != null ? message[0] : null}
-                        {message[1] != null ? '<br/>' + message[1] : null}
-                        This site is still under construction. patience please...<br />wind data is not recording properly at the moment. Working on it when I have time. </Col>
+                        {message[1] != null ? <><br /> {message[1]}</> : null}
+                        {/* This site is still under construction. patience please...<br />wind data is not recording properly at the moment. Working on it when I have time.  */}
+                    </Col>
                 </Row>
 
                 {offline ? <Row>

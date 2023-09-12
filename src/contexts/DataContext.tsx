@@ -233,6 +233,10 @@ export function DataProvider({ children }: any) {
         console.log("Initial fetch of big image")
     }
 
+    const handleMessage = (msg: [string | null, string | null]) => {
+        setMessage(msg)
+        console.log("Message received")
+    }
     const subCommands = {
         Posts: setPosts,
         Donors: setDonors,
@@ -246,8 +250,9 @@ export function DataProvider({ children }: any) {
         CurrentData: handleCurrentData,
         Image: handleImage,
         BigImage: handleBigImage,
-        Message: setMessage,
+        Message: handleMessage,
     }
+
 
     const ws = useRef<WebSocket | null>(null)
     useEffect(() => {
@@ -362,6 +367,8 @@ export function DataProvider({ children }: any) {
                     cmd = subCommands.Stats
                 else if (messageBody.subCommand === "CurrentData")
                     cmd = subCommands.CurrentData
+                else if (messageBody.subCommand === "Message")
+                    cmd = subCommands.Message
                 else if (messageBody.subCommand === "Image")
                     cmd = subCommands.Image
                 else
@@ -372,7 +379,6 @@ export function DataProvider({ children }: any) {
                     return
                 }
                 console.log("Fetch Data message received for " + messageBody.subCommand)
-
                 // console.log('✅ function is defined');
                 // console.log('⛔️ ', cmd, ' function is NOT defined')
                 // if (chart.length > 1) debugger
