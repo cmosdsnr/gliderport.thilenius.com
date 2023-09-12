@@ -73,7 +73,7 @@ export const Home = () => {
                         xs={12}
                         style={{ backgroundColor: "lightpink" }}
                     >
-                        This site is still under construction. patience please...</Col>
+                        This site is still under construction. patience please...<br />wind data is not recording properly at the moment. Working on it when I have time. </Col>
                 </Row>
 
                 {offline ? <Row>

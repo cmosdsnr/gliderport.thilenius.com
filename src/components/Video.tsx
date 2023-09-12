@@ -7,6 +7,7 @@ export default function Video() {
     const { videoWidth, videoHeight, numberConnections, } = useData()
 
     useEffect(() => {
+        // let videoUrl = import.meta.env.VITE_VIDEO_SERVER_URL
         let videoUrl = import.meta.env.VITE_VIDEO_SERVER_URL
         let videoWrapper = document.getElementById("videoWrapper");
         setTooMany(numberConnections >= 10)
