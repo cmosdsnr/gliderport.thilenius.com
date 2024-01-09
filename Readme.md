@@ -1,5 +1,8 @@
 # Gliderport Update server
 
+dokku storage:mount gliderportupdateserver /media/cmosdsnr/passport/gliderport/video:/app/video
+dokku storage:report gliderportupdateserver
+dokku ps:restart gliderportupdateserver
 ## A node server used to:
 
 #### Check every hour if it's a new day and update sunrise/set data (updateSunData)
