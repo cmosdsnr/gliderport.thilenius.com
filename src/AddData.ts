@@ -149,6 +149,8 @@ export default class AddData {
     globals.numberRecords = d.length;
     globals.debugInfo.numberRecords = globals.numberRecords;
     d.forEach((v, i) => {
+      if (v[4] < -32768) v[4] = -32768;
+      if (v[4] > 32767) v[4] = 32767;
       if (i === d.length - 1) e = "";
       sql += '( "' + v[0] + '", ' + v[1] + ", " + v[2] + ", " + v[3] + ", " + v[4] + ", " + v[5] + ")" + e;
     });
@@ -157,6 +159,9 @@ export default class AddData {
     this.setLastRecord();
     globals.tdLast = new Date();
     const last = d[d.length - 1];
+    // make sure the pressure is in bounds of an SQL smallint
+    if (last[4] < -32768) last[4] = -32768;
+    if (last[4] > 32767) last[4] = 32767;
     const ts = Math.floor(new Date(last[0]).getTime() / 1000);
     sql =
       "UPDATE `server_sent` SET `last_record`=" +
