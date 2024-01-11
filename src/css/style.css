@@ -8,7 +8,7 @@
 }
 
 #myContainer {   /*used in site nav*/
-    background-image: url('../images/banner.jpg');
+    /* background-image: url('../images/banner.jpg'); */
     background-repeat: repeat;
     background-position: 0 0;
 }

@@ -10,6 +10,7 @@ import { useAuth } from '../../contexts/AuthContext'
 
 
 import paraglider from "../../images/paraglider.png?as=png&width=40"
+import banner from "../../images/banner.jpg?as=jpg&width=500"
 
 function NavImageText({ icon, name }) {
     return (<Nav.Link
@@ -115,6 +116,7 @@ export default function GpNavbar({ showSignUpModal, setShowSignUpModal, showLogi
                 id="myContainer"
                 style={{
                     backgroundPosition: BannerStyle,
+                    backgroundImage: banner
                 }}
             >
                 <Navbar.Brand as={Link} to="/">
