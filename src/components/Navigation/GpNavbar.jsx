@@ -116,7 +116,7 @@ export default function GpNavbar({ showSignUpModal, setShowSignUpModal, showLogi
                 id="myContainer"
                 style={{
                     backgroundPosition: BannerStyle,
-                    backgroundImage: banner
+                    backgroundImage: `url(${banner})`
                 }}
             >
                 <Navbar.Brand as={Link} to="/">
