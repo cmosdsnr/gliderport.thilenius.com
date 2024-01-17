@@ -141,8 +141,8 @@ export default class AddData {
     return { sunset, sunrise, tsLast };
   };
 
-  #insertData = async (data: string) => {
-    const d: [string, number, number, number, number, number][] = JSON.parse(data);
+  #insertData = async (data) => {
+    const d: [string, number, number, number, number, number][] = data;
     let sql = "INSERT INTO gliderport (recorded, speed, direction, humidity, pressure, temperature ) VALUES ";
     let e = ",";
     globals.firstRecord = d[0][0];
