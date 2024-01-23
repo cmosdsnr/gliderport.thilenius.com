@@ -123,6 +123,7 @@ const updateSunData = (ts = 0) => {
   connection?.query(sql, function (err, results, fields) {});
 };
 updateSunData();
+if (connection) handleHits(connection);
 
 //call every hour
 let id = setInterval(() => {
