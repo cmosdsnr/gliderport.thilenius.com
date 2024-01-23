@@ -169,51 +169,51 @@ export const handleHits = async (connection: mysql.Connection) => {
   if (t.weeks.uniques === undefined) t.weeks.uniques = [];
   if (t.weeks.totals === undefined) t.weeks.totals = [];
   if (t.total.unique === undefined) t.total.unique = 0;
-  //   let wks;
-  //   if (t.week.day === "") {
-  //     console.log("Regenerating all weeks!!");
-  //     t.weeks = { start: 0, totals: [], uniques: [] };
-  //     t.total.unique = 0;
-  //     wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1`);
-  //   } else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > '${t.week.day}'`);
-  //   if (Array.isArray(wks) && Array.isArray(wks[0]) && wks[0].length) {
-  //     //there are new weeks
-  //     console.log(t.weeks.totals.length + "old total weeks");
-  //     console.log(t.weeks.uniques.length + "old total weeks");
-  //     retString += "loaded " + wks[0].length + " new weeks to add from: " + t.week.day + "</br>";
-  //     console.log(wks[0].length + "new weeks");
-  //     (wks[0] as HitTable[]).forEach((v, i) => {
-  //       t.weeks.totals.push(v.total);
-  //       t.weeks.uniques.push(v.unique);
-  //       t.total.unique += v.unique;
-  //     });
-  //     const w = wks[0][wks[0].length - 1] as HitTable;
-  //     t.week.day = getSQLDate(w.day);
-  //     t.week.total = w.total;
-  //     t.week.unique = w.unique;
-  //   }
+  let wks;
+  if (t.week.day === "") {
+    console.log("Regenerating all weeks!!");
+    t.weeks = { start: 0, totals: [], uniques: [] };
+    t.total.unique = 0;
+    wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1`);
+  } else wks = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE day > '${t.week.day}'`);
+  if (Array.isArray(wks) && Array.isArray(wks[0]) && wks[0].length) {
+    //there are new weeks
+    console.log(t.weeks.totals.length + "old total weeks");
+    console.log(t.weeks.uniques.length + "old total weeks");
+    retString += "loaded " + wks[0].length + " new weeks to add from: " + t.week.day + "</br>";
+    console.log(wks[0].length + "new weeks");
+    (wks[0] as HitTable[]).forEach((v, i) => {
+      t.weeks.totals.push(v.total);
+      t.weeks.uniques.push(v.unique);
+      t.total.unique += v.unique;
+    });
+    const w = wks[0][wks[0].length - 1] as HitTable;
+    t.week.day = getSQLDate(w.day);
+    t.week.total = w.total;
+    t.week.unique = w.unique;
+  }
 
-  //   retString += "going to save " + t.weeks.totals.length + " weeks into misc/hit_stats</br>";
-  //   const m = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1 LIMIT 4`);
-  //   if (Array.isArray(m) && Array.isArray(m[0])) {
-  //     t.month.total = 0;
-  //     t.month.unique = 0;
-  //     (m[0] as HitTable[]).forEach((v, i) => {
-  //       t.month.unique += v.unique;
-  //       t.month.total += v.total;
-  //     });
-  //   }
+  retString += "going to save " + t.weeks.totals.length + " weeks into misc/hit_stats</br>";
+  const m = await connection.promise().query(`SELECT * FROM hit_counter_week WHERE 1 LIMIT 4`);
+  if (Array.isArray(m) && Array.isArray(m[0])) {
+    t.month.total = 0;
+    t.month.unique = 0;
+    (m[0] as HitTable[]).forEach((v, i) => {
+      t.month.unique += v.unique;
+      t.month.total += v.total;
+    });
+  }
 
-  //   const y = await connection.promise().query(`SELECT * FROM hit_counter_day ORDER BY day DESC LIMIT 1`);
-  //   if (Array.isArray(y) && Array.isArray(y[0])) {
-  //     const x = y[0][0] as HitTable;
-  //     t.day = {
-  //       day: getSQLDate(x.day),
-  //       total: x.total,
-  //       unique: x.unique,
-  //     };
-  //   }
-  //   await connection.promise().query(`REPLACE into miscellaneous(id, data) VALUES('hit_stats', '${JSON.stringify(t)}')`);
+  const y = await connection.promise().query(`SELECT * FROM hit_counter_day ORDER BY day DESC LIMIT 1`);
+  if (Array.isArray(y) && Array.isArray(y[0])) {
+    const x = y[0][0] as HitTable;
+    t.day = {
+      day: getSQLDate(x.day),
+      total: x.total,
+      unique: x.unique,
+    };
+  }
+  await connection.promise().query(`REPLACE into miscellaneous(id, data) VALUES('hit_stats', '${JSON.stringify(t)}')`);
 
   retString += "</br>***** DB ***** </br>";
   retString += "Day start           : " + t.day.day + "</br>";
