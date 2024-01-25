@@ -109,6 +109,7 @@ let changes = {
 // to do with sunrise and sunset
 let TodaysDay = new Date().getDate();
 let sunData: SunCalc.GetTimesResult;
+let reportEveryMin = false; //for debugging the online status test
 
 const updateSunData = (ts = 0) => {
   // La Jola lat/long
@@ -148,7 +149,7 @@ let id = setInterval(() => {
 }, 1 * 3600 * 1000); // every 1 hours
 
 //call every minute
-const reportEveryMin = false;
+
 const url = "http://104.36.31.118:8080/";
 
 let pingTimer = setInterval(() => {
@@ -290,6 +291,12 @@ app.post("/updateBigImage", (req, res) => {
     // console.log(err);
   });
   res.send("Ok");
+});
+
+app.get("/ReportEveryMinute", function (req, res) {
+  reportEveryMin = !reportEveryMin;
+  console.log("changing reportEveryMin to " + reportEveryMin);
+  res.send("changing reportEveryMin to " + reportEveryMin);
 });
 
 app.get("/RegenerateAllHours", function (req, res) {
