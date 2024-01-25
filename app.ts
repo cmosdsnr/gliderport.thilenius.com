@@ -65,9 +65,10 @@ console.log("offset ", globals.offset);
 //
 // For Debug
 //  a. '/current.jpg'    : browser call to get latest small image
-//  b. '/currentBig.jpg' : browser call to get latest small image
+//  b. '/currentBig.jpg' : browser call to get latest large image
 //  c. '/info'           : browser call to get lots of info about current situation
 //  d. '/UpdateSun'      : browser call to update sunrise/set data
+//  e. '/ReportEveryMinute' : browser call to toggle reporting of online status
 //
 //   DEFUNCT procedures
 //  a. '/ImageAdded'    : DEFUNCT, Image data is now added directly thru AddData
