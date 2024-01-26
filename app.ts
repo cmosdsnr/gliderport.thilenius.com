@@ -157,6 +157,8 @@ let pingTimer = setInterval(() => {
   const controller = new AbortController();
   const ids = setTimeout(() => controller.abort(), 4000);
   let cnt = 0;
+
+  if (reportEveryMin) console.log("Timer called");
   fetch(url, { signal: controller.signal })
     .then((response) => {
       clearTimeout(ids);
@@ -178,6 +180,7 @@ let pingTimer = setInterval(() => {
     })
     .catch((error) => {
       clearTimeout(ids);
+      if (reportEveryMin) console.log("count is ", cnt);
       if (cnt++ < 5) return;
       if (reportEveryMin) console.log("gliderport is offline");
       const ts = Math.floor((Date.now() + globals.offset) / 1000);
