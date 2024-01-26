@@ -153,10 +153,11 @@ let id = setInterval(() => {
 
 const url = "http://104.36.31.118:8080/";
 
+let cnt = 0;
+
 let pingTimer = setInterval(() => {
   const controller = new AbortController();
   const ids = setTimeout(() => controller.abort(), 4000);
-  let cnt = 0;
 
   if (reportEveryMin) console.log("Timer called");
   fetch(url, { signal: controller.signal })
