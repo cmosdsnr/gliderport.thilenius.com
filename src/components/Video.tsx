@@ -4,7 +4,7 @@ import { useData } from '../contexts/DataContext'
 
 export default function Video() {
     const [tooMany, setTooMany] = useState(false)
-    const { videoWidth, videoHeight, numberConnections, } = useData()
+    const { videoWidth, videoHeight, numberConnections, offline } = useData()
 
     useEffect(() => {
         // let videoUrl = import.meta.env.VITE_VIDEO_SERVER_URL
@@ -23,12 +23,15 @@ export default function Video() {
     //width: "3840px", height: "2160px",
     return (
         <>
-            <center><h5>size: {videoWidth}x{videoHeight} number of players: {numberConnections} of 10</h5></center>
-            {tooMany ? <h3>Too many connections. Please try again later</h3> :
-                <div id="videoWrapper" style={{
-                    width: "960px", height: "540px", margin: "auto", marginTop: "30px"
-                }} />
-            }
+            {offline ? <h3>Not available when the Gliderport is offline</h3> :
+                <>
+                    <center><h5>size: {videoWidth}x{videoHeight} number of players: {numberConnections} of 10</h5></center>
+                    {tooMany ? <h3>Too many connections. Please try again later</h3> :
+                        <div id="videoWrapper" style={{
+                            width: "960px", height: "540px", margin: "auto", marginTop: "30px"
+                        }} />
+                    }
+                </>}
         </>
 
     )

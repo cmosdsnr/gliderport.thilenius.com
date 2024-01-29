@@ -29,8 +29,9 @@ export default function UpdatingImage({ offline }: Props) {
         let tsNow = (new Date()).getTime() / 1000;
         // if it is before sunrise...
         if (tsNow < sun?.rise) {
-            const SecondsToSunrise = sun.rise - tsNow
-            console.log("SecondsToSunrise: ", SecondsToSunrise, " Sunrise: ", sun.rise, " tsNow: ", tsNow)
+            const SecondsToSunrise = Math.round(sun.rise - tsNow)
+            console.log("SecondsToSunrise: ", SecondsToSunrise, " Sunrise: ",
+                sun.rise, " tsNow: ", Math.round(tsNow))
             const h = Math.floor(SecondsToSunrise / 3600)
             const m = Math.floor(SecondsToSunrise / 60 - h * 60)
             setTimeToSunrise("Sunrise in " + (h > 0 ? h + " hours, " : "") + m + " minutes")
