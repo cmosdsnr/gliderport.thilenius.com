@@ -3,7 +3,7 @@ export var globals: globals = {
   textWatch: {},
   offset: 0,
   firstRecord: null,
-  lastRecord: "2022-09-05 13:27:20",
+  lastRecord: "0",
   tdLast: new Date(),
   numberRecords: 0,
   latestHours: 0,

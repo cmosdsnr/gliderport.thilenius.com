@@ -201,6 +201,7 @@ let pingTimer = setInterval(() => {
 }, 60000);
 
 d.setLastRecord();
+console.log("last record set to: ", globals.lastRecord);
 
 const app = express();
 
@@ -318,14 +319,15 @@ app.get("/HandleHits", async (req, res) => {
 
 // called to add new wind Data to the db
 app.post("/addData", async (req, res) => {
-  res.send("ok");
   if (connection) d.add(req.body);
   else console.log("can't add data, no connection to database");
+  res.send("ok");
 });
 
 // called by gliderport Pi3 to see what needs updating
 app.get("/getLastEntry", (req, res) => {
-  res.send(globals.lastRecord);
+  if (globals.lastRecord === "0") res.send("Error");
+  else res.send(globals.lastRecord);
 });
 
 // called from browser for debug to display latest happenings
