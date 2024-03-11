@@ -52,7 +52,7 @@ const resetAllSentTexts = () => {
 };
 
 process.env.TZ = "America/Los_Angeles";
-globals.offset = -60000 * new Date().getTimezoneOffset();
+globals.offset = -60000 * new Date().getTimezoneOffset(); //to ms 60s/min*1000ms/s
 console.log("offset ", globals.offset);
 // A node server used to:
 // 1. check every hour if it's a new day and update sunrise/set data (updateSunData)

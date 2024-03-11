@@ -275,7 +275,7 @@ export default class AddData {
 
   updateHoursTable = async (forceRegeneration = false) => {
     //let's work on hours Db
-    const dtd = (Date.now() + globals.offset) / 1000; //+ 60 * tdLast.getTimezoneOffset()
+    const dtd = (Date.now() + globals.offset) / 1000;
     const thisHour = 3600 * Math.floor(dtd / 3600);
     const twoDaysAgo = thisHour - 48 * 3600;
 
@@ -550,7 +550,15 @@ export default class AddData {
     if (req && "d" in req) {
       console.log("addData d.length: ", req.d.length);
       console.log("addData first one: ", req.d[0][0]);
-      await this.#insertData(req.d);
+
+      // if we switched to daylight savings time, there may be overlapping time
+      let latest = new Date(globals.lastRecord);
+      let s = new Date(req.d[0][0]);
+      while (req.d.length > 0 && s < latest) {
+        req.d.shift();
+        s = new Date(req.d[0][0]);
+      }
+      if (req.d.length > 0) await this.#insertData(req.d);
 
       if (this.tsNow > 3600 + sunrise && this.tsNow < sunset - 3600) this.#checkForTexts();
       this.updateHoursTable();
