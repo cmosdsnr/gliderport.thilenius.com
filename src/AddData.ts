@@ -548,7 +548,7 @@ export default class AddData {
 
     //add data if it was present
     if (req && "d" in req) {
-      //   console.log("d.length: ", req.d.length);
+      console.log("addData d.length: ", req.d.length);
       await this.#insertData(req.d);
       if (this.tsNow > 3600 + sunrise && this.tsNow < sunset - 3600) this.#checkForTexts();
       this.updateHoursTable();
