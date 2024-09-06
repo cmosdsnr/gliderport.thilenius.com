@@ -127,8 +127,10 @@ interface DataContextInterface {
     hitStats: Stats | null,
     passedSeconds: number,
     offline: boolean,
-    image: string | null,
-    bigImage: string | null,
+    image1: string | null,
+    bigImage1: string | null,
+    image2: string | null,
+    bigImage2: string | null,
     lastForecast: TimeStamp,
     sun: Sun,
     videoWidth: number,
@@ -160,8 +162,10 @@ export function DataProvider({ children }: any) {
     const [hitStats, setHitStats] = useState<Stats>({})
     const [passedSeconds, setPassedSeconds] = useState(0)
     const [offline, setOffline] = useState(false)
-    const [image, setImage] = useState<string | null>(null)
-    const [bigImage, setBigImage] = useState<string | null>(null)
+    const [image1, setImage1] = useState<string | null>(null)
+    const [bigImage1, setBigImage1] = useState<string | null>(null)
+    const [image2, setImage2] = useState<string | null>(null)
+    const [bigImage2, setBigImage2] = useState<string | null>(null)
     const [lastForecast, setLastForecast] = useState(0)
     const [sun, setSun] = useState<Sun>({ rise: 0, set: 0 })
     const [videos, setVideos] = useState<VideoData>({ videos: [], videoYears: [] })
@@ -223,13 +227,23 @@ export function DataProvider({ children }: any) {
         setVideos({ videos: vids, videoYears: d.years })
     }
 
-    const handleImage = (d: ImageData) => {
+    const handleImage1 = (d: ImageData) => {
         if (d === null || d.A === undefined) return
-        setImage(d.A)
+        setImage1(d.A)
     }
 
-    const handleBigImage = (d: ImageData) => {
-        setBigImage((d === null ? null : d.A))
+    const handleBigImage1 = (d: ImageData) => {
+        setBigImage1((d === null ? null : d.A))
+        console.log("Initial fetch of big image")
+    }
+
+    const handleImage2 = (d: ImageData) => {
+        if (d === null || d.A === undefined) return
+        setImage2(d.A)
+    }
+
+    const handleBigImage2 = (d: ImageData) => {
+        setBigImage2((d === null ? null : d.A))
         console.log("Initial fetch of big image")
     }
 
@@ -248,8 +262,10 @@ export function DataProvider({ children }: any) {
         Videos: handleVideos,
         Stats: setHitStats,
         CurrentData: handleCurrentData,
-        Image: handleImage,
-        BigImage: handleBigImage,
+        Image1: handleImage1,
+        BigImage1: handleBigImage1,
+        Image2: handleImage2,
+        BigImage2: handleBigImage2,
         Message: handleMessage,
     }
 
@@ -368,10 +384,15 @@ export function DataProvider({ children }: any) {
                     cmd = subCommands.CurrentData
                 else if (messageBody.subCommand === "Message")
                     cmd = subCommands.Message
-                else if (messageBody.subCommand === "Image")
-                    cmd = subCommands.Image
+                else if (messageBody.subCommand === "Image1")
+                    cmd = subCommands.Image1
+                else if (messageBody.subCommand === "BigImage1")
+                    cmd = subCommands.BigImage1
+                else if (messageBody.subCommand === "Image2")
+                    cmd = subCommands.Image2
                 else
-                    cmd = subCommands.BigImage
+                    cmd = subCommands.BigImage2
+
 
                 if (messageBody.error) {
                     console.log("error: " + messageBody.subCommand + " : " + messageBody.error)
@@ -415,9 +436,13 @@ export function DataProvider({ children }: any) {
                 if ('videoHeight' in d) setVideoHeight(d.videoHeight)
                 if ('numberConnections' in d) setNumberConnections(d.numberConnections)
             }
-            if (messageBody.command === 'image') {
+            if (messageBody.command === 'image1') {
                 // console.log("image message received, length: ", messageBody.data.length)
-                setImage(messageBody.data)
+                setImage1(messageBody.data)
+            }
+            if (messageBody.command === 'image2') {
+                // console.log("image message received, length: ", messageBody.data.length)
+                setImage2(messageBody.data)
             }
             if (messageBody.command === 'ping') {
                 console.log("keep alive ping received")
@@ -473,8 +498,10 @@ export function DataProvider({ children }: any) {
         hitStats,
         passedSeconds,
         offline,
-        image,
-        bigImage,
+        image1,
+        bigImage1,
+        image2,
+        bigImage2,
         lastForecast,
         sun,
         videoWidth,

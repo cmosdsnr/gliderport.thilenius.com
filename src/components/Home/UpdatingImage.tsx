@@ -15,10 +15,11 @@ export default function UpdatingImage({ offline }: Props) {
     const [visible, setVisible] = React.useState<boolean>(false)
     const [imgSrc, setImgSrc] = useState<string>("")
     const [imgSrcLarge, setImgSrcLarge] = useState<string>("")
+    const [camera, setCamera] = useState(1)
 
     const [timeToSunrise, setTimeToSunrise] = useState<String>("")
 
-    const { sun, image, bigImage, loadData } = useData()
+    const { sun, image1, bigImage1, image2, bigImage2, loadData } = useData()
     const imgRef = useRef(null)
 
     const outOfOrder = false;
@@ -42,10 +43,12 @@ export default function UpdatingImage({ offline }: Props) {
 
     // load initial image
     useEffect(() => {
-        loadData("Image")
+        loadData("Image1")
+        loadData("Image2")
     }, [])
 
     useEffect(() => {
+        const image = camera == 1 ? image1 : image2;
         // night image is set by gliderport PI3 into the database
         if (offline) {
             console.log("image effect: offline")
@@ -63,9 +66,12 @@ export default function UpdatingImage({ offline }: Props) {
                 setImgSrc(blobUrl)
             }
         }
-    }, [image, offline])
+    }, [image1, image2, offline, camera])
+
+
 
     useEffect(() => {
+        const bigImage = camera == 1 ? bigImage1 : bigImage2;
         // night image is set by gliderport PI3 into the database
         if (offline) {
             console.log("image effect: offline")
@@ -83,11 +89,14 @@ export default function UpdatingImage({ offline }: Props) {
                 setImgSrcLarge(blobUrl)
             }
         }
-    }, [bigImage, offline])
+    }, [bigImage1, bigImage2, offline, camera])
+
+
 
     return (
         <>
             <img ref={imgRef} onClick={() => { loadData("BigImage"); setVisible(true) }} src={imgSrc} className="img-fluid" alt="" />
+            <button onClick={() => { setCamera(camera == 1 ? 2 : 1) }}>Switch to Camera {camera == 1 ? 2 : 1}</button>
             <Viewer
                 visible={visible}
                 onClose={() => { setVisible(false); }}
