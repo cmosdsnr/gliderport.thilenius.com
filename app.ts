@@ -64,11 +64,13 @@ console.log("offset ", globals.offset);
 //  e. '/updateBigImage' :  called from Pi3: Update the large image data
 //
 // For Debug
-//  a. '/current.jpg'    : browser call to get latest small image
-//  b. '/currentBig.jpg' : browser call to get latest large image
-//  c. '/info'           : browser call to get lots of info about current situation
-//  d. '/UpdateSun'      : browser call to update sunrise/set data
-//  e. '/ReportEveryMinute' : browser call to toggle reporting of online status
+//  a. '/current1.jpg'      : browser call to get latest small image (left Camera)
+//  b. '/currentBig1.jpg'   : browser call to get latest large image (left Camera)
+//  c. '/current2.jpg'      : browser call to get latest small image (Right Camera)
+//  d. '/currentBig2.jpg'   : browser call to get latest large image (Right Camera)
+//  e. '/info'              : browser call to get lots of info about current situation
+//  f. '/UpdateSun'         : browser call to update sunrise/set data
+//  g. '/ReportEveryMinute' : browser call to toggle reporting of online status
 //
 //   DEFUNCT procedures
 //  a. '/ImageAdded'    : DEFUNCT, Image data is now added directly thru AddData
@@ -280,18 +282,38 @@ app.post("/addVideo", (req, res) => {
   });
 });
 
-let imageBuffer: Buffer, imageBigBuffer: Buffer;
-app.post("/updateSmallImage", (req, res) => {
-  imageBuffer = Buffer.from(req.body.A, "base64");
-  connection?.query("UPDATE images SET d=? WHERE `id`=1", imageBuffer, () => {});
+let imageBuffer1: Buffer, imageBigBuffer1: Buffer;
+let imageBuffer2: Buffer, imageBigBuffer2: Buffer;
+
+app.post("/updateSmallImage1", (req, res) => {
+  imageBuffer1 = Buffer.from(req.body.A, "base64");
+  connection?.query("UPDATE images SET d=? WHERE `id`=1", imageBuffer1, () => {});
   res.json("Ok");
 });
-app.post("/updateBigImage", (req, res) => {
+app.post("/updateBigImage1", (req, res) => {
   //   console.log("updating big image");
-  imageBigBuffer = Buffer.from(req.body.A, "base64");
+  imageBigBuffer1 = Buffer.from(req.body.A, "base64");
   const ts = Math.floor(new Date().getTime() / 1000);
   connection?.query(`UPDATE server_sent SET last_image=${ts} WHERE id=1`, () => {});
-  connection?.query("UPDATE images SET d=? WHERE id=2", imageBigBuffer, function (err, results, fields) {
+  connection?.query("UPDATE images SET d=? WHERE id=2", imageBigBuffer1, function (err, results, fields) {
+    // console.log(results); // results contains rows returned by server
+    // console.log(fields); // fields contains extra meta data about results, if available
+    // console.log(err);
+  });
+  res.send("Ok");
+});
+
+app.post("/updateSmallImage2", (req, res) => {
+  imageBuffer2 = Buffer.from(req.body.A, "base64");
+  connection?.query("UPDATE images SET d=? WHERE `id`=1", imageBuffer2, () => {});
+  res.json("Ok");
+});
+app.post("/updateBigImage2", (req, res) => {
+  //   console.log("updating big image");
+  imageBigBuffer2 = Buffer.from(req.body.A, "base64");
+  const ts = Math.floor(new Date().getTime() / 1000);
+  connection?.query(`UPDATE server_sent SET last_image=${ts} WHERE id=3`, () => {});
+  connection?.query("UPDATE images SET d=? WHERE id=4", imageBigBuffer2, function (err, results, fields) {
     // console.log(results); // results contains rows returned by server
     // console.log(fields); // fields contains extra meta data about results, if available
     // console.log(err);
@@ -355,15 +377,27 @@ app.get("/UpdateSun", async (req, res) => {
 });
 
 // peak at current image
-app.get("/current.jpg", function (req, res) {
+app.get("/current1.jpg", function (req, res) {
   res.contentType("image/jpeg");
-  res.send(imageBuffer);
+  res.send(imageBuffer1);
 });
 
 // peak at current image
-app.get("/currentBig.jpg", function (req, res) {
+app.get("/currentBig1.jpg", function (req, res) {
   res.contentType("image/jpeg");
-  res.send(imageBigBuffer);
+  res.send(imageBigBuffer1);
+});
+
+// peak at current image
+app.get("/current2.jpg", function (req, res) {
+  res.contentType("image/jpeg");
+  res.send(imageBuffer2);
+});
+
+// peak at current image
+app.get("/currentBig2.jpg", function (req, res) {
+  res.contentType("image/jpeg");
+  res.send(imageBigBuffer2);
 });
 
 app.get("/sendTestSms", (req, res) => {
