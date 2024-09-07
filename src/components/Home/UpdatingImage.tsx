@@ -101,7 +101,7 @@ export default function UpdatingImage({ offline }: Props) {
     return (
         <>
             <img ref={imgRef} onClick={() => { loadData("BigImage"); setVisible(true) }} src={imgSrc} className="img-fluid" alt="" />
-            <Button className="btn btn-info" style={{ marginTop: "5px" }} onClick={() => { setCamera(camera == 1 ? 2 : 1) }}>{camera == 2 ? <FontAwesomeIcon icon={faArrowLeft} /> : null}Switch to Camera {camera == 1 ? 2 : 1}{camera == 1 ? <FontAwesomeIcon icon={faArrowRight} /> : null}</Button>
+            <Button className="btn btn-info" style={{ marginTop: "5px" }} onClick={() => { setCamera(camera == 1 ? 2 : 1) }}>{camera == 2 ? <FontAwesomeIcon icon={faArrowLeft} /> : null}  Switch to Camera {camera == 1 ? 2 : 1}  {camera == 1 ? <FontAwesomeIcon icon={faArrowRight} /> : null}</Button>
             <Viewer
                 visible={visible}
                 onClose={() => { setVisible(false); }}
