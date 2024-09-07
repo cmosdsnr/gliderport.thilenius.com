@@ -305,7 +305,7 @@ app.post("/updateBigImage1", (req, res) => {
 
 app.post("/updateSmallImage2", (req, res) => {
   imageBuffer2 = Buffer.from(req.body.A, "base64");
-  connection?.query("UPDATE images SET d=? WHERE `id`=1", imageBuffer2, () => {});
+  connection?.query("UPDATE images SET d=? WHERE `id`=3", imageBuffer2, () => {});
   res.json("Ok");
 });
 app.post("/updateBigImage2", (req, res) => {
