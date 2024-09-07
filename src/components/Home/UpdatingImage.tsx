@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useData } from '../../contexts/DataContext'
 import Viewer from 'react-viewer'
-
 import OutOfOrder from "../../images/OutOfOrder.jpg"
-
 import { useInterval, b64toBlob } from "../Globals"
+import Button from "react-bootstrap/Button";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+
+
+
+
 
 interface Props {
     offline: boolean
@@ -96,7 +101,7 @@ export default function UpdatingImage({ offline }: Props) {
     return (
         <>
             <img ref={imgRef} onClick={() => { loadData("BigImage"); setVisible(true) }} src={imgSrc} className="img-fluid" alt="" />
-            <button onClick={() => { setCamera(camera == 1 ? 2 : 1) }}>Switch to Camera {camera == 1 ? 2 : 1}</button>
+            <Button className="btn btn-info" style={{ marginTop: "5px" }} onClick={() => { setCamera(camera == 1 ? 2 : 1) }}>{camera == 2 ? <FontAwesomeIcon icon={faArrowLeft} /> : null}Switch to Camera {camera == 1 ? 2 : 1}{camera == 1 ? <FontAwesomeIcon icon={faArrowRight} /> : null}</Button>
             <Viewer
                 visible={visible}
                 onClose={() => { setVisible(false); }}

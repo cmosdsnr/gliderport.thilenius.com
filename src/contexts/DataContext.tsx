@@ -470,8 +470,10 @@ export function DataProvider({ children }: any) {
         )
     }
     const testAll = () => {
-        loadData("Image")
-        loadData("BigImage")
+        loadData("Image1")
+        loadData("Image2")
+        loadData("BigImage1")
+        loadData("BigImage2")
         loadData("Posts")
         loadData("Donors")
         loadData("History")
