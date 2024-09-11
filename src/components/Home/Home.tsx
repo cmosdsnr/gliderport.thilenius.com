@@ -13,6 +13,8 @@ import Status from "../Status"
 import Charts from "../Charts/Charts"
 import UpdatingImage from "./UpdatingImage"
 
+import '../../css/home.css';
+
 // *********************************************
 export const Home = () => {
     const picRef = useRef(null)
@@ -69,22 +71,14 @@ export const Home = () => {
                         Hardware failures at the gliderport .... I am working on it. ETA: 6/23</Col>
                 </Row> */}
                 <Row>
-                    <Col
-                        xs={12}
-                        style={{ backgroundColor: "lightpink" }}
-                    >
-                        {/* Messages are in the miscellaneous database */}
+                    <Col xs={12} className="message-row">
                         {message[0] != null ? message[0] : null}
                         {message[1] != null ? <><br /> {message[1]}</> : null}
-                        {/* This site is still under construction. patience please...<br />wind data is not recording properly at the moment. Working on it when I have time.  */}
                     </Col>
                 </Row>
 
                 {offline ? <Row>
-                    <Col
-                        xs={12}
-                        style={{ backgroundColor: "#bf65f0" }}
-                    >
+                    <Col xs={12} className="offline-row">
                         Gliderport is offline</Col></Row> : null}
                 <Row style={{ paddingTop: "30px", backgroundColor: "rgb(255,255,200)" }}>
                     <Col

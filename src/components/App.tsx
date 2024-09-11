@@ -1,9 +1,9 @@
 import React, { useState } from "react"
 import { Container } from "react-bootstrap"
-import { AuthProvider } from "../contexts/AuthContext";
-import { DataProvider } from "../contexts/DataContext";
-import { FilterProvider } from "../contexts/FilterContext";
-import { BrowserRouter as Router, Switch, Route, Redirect } from "react-router-dom";
+import { AuthProvider } from "../contexts/AuthContext"
+import { DataProvider } from "../contexts/DataContext"
+import { FilterProvider } from "../contexts/FilterContext"
+import { BrowserRouter as Router, Switch, Route, Redirect } from "react-router-dom"
 import Dashboard from "./Dashboard"
 import PrivateRoute from './Navigation/PrivateRoute'
 import ForgotPassword from './Navigation/ForgotPassword'
@@ -22,12 +22,14 @@ import Contact from "./Contact"
 
 import "../css/style.css"
 
-document.title = import.meta.env.VITE_PAGE_NAME
-function App() {
-    const [showSignUpModal, setShowSignUpModal] = useState(false)
-    const [showLoginModal, setShowLoginModal] = useState(false)
 
-    const openSignUpModal = () => setShowSignUpModal(true)
+document.title = import.meta.env.VITE_PAGE_NAME
+
+const App: React.FC = () => {
+    const [showSignUpModal, setShowSignUpModal] = useState<boolean>(false)
+    const [showLoginModal, setShowLoginModal] = useState<boolean>(false)
+
+    const openSignUpModal = (): void => setShowSignUpModal(true)
 
     return (
         <AuthProvider>
@@ -62,8 +64,6 @@ function App() {
                                 <PrivateRoute exact path="/dashboard" component={Dashboard} />
                                 <PrivateRoute exact path="/update-profile" component={UpdateProfile} />
 
-                                <Route exact path="/socket"><WebSocket /></Route>
-
                                 <Route exact path="/login"><Login setShowLoginModal={setShowLoginModal} /></Route>
                                 <Route exact path="/sign-up"><SignUp setShowSignUpModal={setShowSignUpModal} /></Route>
                                 <PrivateRoute exact path="/logout" component={Logout} />
@@ -86,4 +86,5 @@ function App() {
         </AuthProvider>
     )
 }
+
 export default App;

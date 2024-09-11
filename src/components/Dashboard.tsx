@@ -1,73 +1,85 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { Card, Button, Alert, Row, Col } from 'react-bootstrap'
-import { useAuth } from '../contexts/AuthContext'
-import { Link, useHistory } from 'react-router-dom'
-import { PhoneNumberInput } from './PhoneNumber'
-import TextField from '@mui/material/TextField'
+import React, { useState, useEffect, useRef } from 'react';
+import { Card, Button, Alert, Row, Col } from 'react-bootstrap';
+import { useAuth } from '../contexts/AuthContext';
+import { useHistory } from 'react-router-dom';
+import { PhoneNumberInput } from './PhoneNumber';
+import TextField from '@mui/material/TextField';
 import { ToggleSlider } from "react-toggle-slider";
 
+interface UserText {
+    speed: number;
+    direction: number;
+    enabled: boolean;
+    duration: number;
+    address?: string;
+    provider?: string;
+    errorAngle?: number;
+}
 
-/**
- * Hook that alerts clicks outside of the passed ref
- */
-function useOutsideAlerter(ref, setEditing) {
-    useEffect(() => {
-        /**
-         * Alert if clicked on outside of element
-         */
-        function handleClickOutside(event) {
-            if (ref.current && !ref.current.contains(event.target)) {
-                setEditing(0);
-            }
-        }
-        // Bind the event listener
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            // Unbind the event listener on clean up
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [ref]);
+interface CurrentUser {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    text: UserText;
 }
 
 
+
+function useOutsideAlerter(ref: React.RefObject<HTMLDivElement>, setEditing: React.Dispatch<React.SetStateAction<number>>) {
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (ref.current && !ref.current.contains(event.target as Node)) {
+                setEditing(0);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [ref, setEditing]);
+}
+
 export default function Dashboard() {
-    const [error, setError] = useState("")
-    const [editing, setEditing] = useState(0)
-    const editRef = useRef()
+    const [error, setError] = useState<string>("");
+    const [editing, setEditing] = useState<number>(0);
+    const editRef = useRef<HTMLDivElement>(null);
 
     useOutsideAlerter(editRef, setEditing);
-    const { currentUser, logout, updateUser } = useAuth()
-    const history = useHistory()
+    const { currentUser, logout, updateUser } = useAuth();
+    const history = useHistory();
 
     async function handleLogout() {
-        setError('')
+        setError('');
         try {
-            await logout()
-            history.pushState('/Login')
-
+            await logout();
+            history.push('/Login');
         } catch {
-            setError('Failed to log out')
+            setError('Failed to log out');
         }
     }
 
     const sendTestSms = () => {
-        const url = import.meta.env.VITE_UPDATE_SERVER_URL + '/sendTestSms?name=' + currentUser.firstName + '&to=' + currentUser.text.address
-        console.log(url)
-        fetch(url)
-        alert("Please check your phone for the test SMS")
+        if (currentUser) {
+            const url = `${import.meta.env.VITE_UPDATE_SERVER_URL}/sendTestSms?name=${currentUser.firstName}&to=${currentUser.text.address}`;
+            console.log(url);
+            fetch(url);
+            alert("Please check your phone for the test SMS");
+        }
     }
 
-    const updateUserText = (obj) => {
-        let t = { ...currentUser.text, ...obj }
-        if (!t.speed) t.speed = 10
-        if (!t.direction) t.direction = 10
-        if (!t.enabled) t.enabled = false
-        if (!t.duration) t.duration = 0
-        updateUser('text', t)
+    const updateUserText = (obj: Partial<UserText>) => {
+        if (currentUser) {
+            let t: UserText = { ...currentUser.text, ...obj };
+            if (!t.speed) t.speed = 10;
+            if (!t.direction) t.direction = 10;
+            if (!t.enabled) t.enabled = false;
+            if (!t.duration) t.duration = 0;
+            updateUser('text', t);
+        }
     }
 
     return (
-
         <Row>
             <Col xs={3}>
                 <div className='w-100 mx-auto pt-4'>
@@ -148,7 +160,7 @@ export default function Dashboard() {
                                                 </label>
                                             </Col>
                                             <Col xs={12}>
-                                                {currentUser.text.address?.length > 0 ?
+                                                {(currentUser.text.address?.length ?? 0) > 0 ?
                                                     <>
                                                         <Row><Col xs={4} style={{ marginBottom: "5px" }}><strong>Provider:</strong></Col><Col xs={6}>{currentUser.text.provider}</Col></Row>
                                                         <Row className="smsAddress">
@@ -164,11 +176,11 @@ export default function Dashboard() {
                                                                 </span>
                                                             </Col>
                                                         </Row>
-                                                        {currentUser.text?.address?.length > 0 ?
+                                                        {currentUser.text.address && (
                                                             <>
                                                                 <Row>Enable Text Alerts: <ToggleSlider active={currentUser.text.enabled} onToggle={state => updateUserText({ enabled: state })} /></Row>
-                                                            </> : null}
-
+                                                            </>
+                                                        )}
                                                         {currentUser.text.enabled ?
                                                             <>
                                                                 <Row>

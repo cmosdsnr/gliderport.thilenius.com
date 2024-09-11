@@ -4,13 +4,19 @@ import Modal from "react-modal"
 import { useAuth } from '../../contexts/AuthContext'
 import { useHistory } from 'react-router-dom'
 
-export default function SignUpModal({ modalIsOpen, setModalIsOpen, setShowLoginModal }) {
-    const emailRef = useRef()
-    const passwordRef = useRef()
-    const passwordConfirmRef = useRef()
+interface SignUpModalProps {
+    modalIsOpen: boolean;
+    setModalIsOpen: (isOpen: boolean) => void;
+    setShowLoginModal: (show: boolean) => void;
+}
+
+export default function SignUpModal({ modalIsOpen, setModalIsOpen, setShowLoginModal }: SignUpModalProps) {
+    const emailRef = useRef<HTMLInputElement>(null)
+    const passwordRef = useRef<HTMLInputElement>(null)
+    const passwordConfirmRef = useRef<HTMLInputElement>(null)
     const { signup } = useAuth()
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string>('')
+    const [loading, setLoading] = useState<boolean>(false)
     const history = useHistory()
 
 
@@ -19,8 +25,9 @@ export default function SignUpModal({ modalIsOpen, setModalIsOpen, setShowLoginM
         setModalIsOpen(false)
     }
 
-    async function handleSubmit(e) {
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
+        if (!passwordRef.current || !passwordConfirmRef.current || !emailRef.current) return
         console.log(passwordRef.current.value)
         if (passwordConfirmRef.current.value !== passwordRef.current.value) {
             return setError('Passwords do not match')

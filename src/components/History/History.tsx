@@ -5,6 +5,7 @@ import LineCanvas from "./LineCanvas"
 import CircleCanvas from "./CircleCanvas"
 import KeyCanvas from "./KeyCanvas"
 import { useData } from '../../contexts/DataContext'
+import '../../css/history.css';
 
 export default function History() {
 
@@ -63,53 +64,47 @@ export default function History() {
 
     return (
         <>
-            <Row style={{ textAlign: "center", paddingBottom: "20px" }}>
+            <Row className="history-container">
                 <Col sm={3}>
                     <button
-                        style={{ margin: "5px" }}
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-primary btn-sm history-button"
                         onClick={toggleFormat}
                     >
                         {toggleText}
                     </button>
                 </Col>
                 <Col sm={6}>
-                    <h4>8 Day History with 2 day Forecast</h4>
+                    <h4 className="history-title">8 Day History with 2 day Forecast</h4>
                 </Col>
             </Row>
-            <Row ref={containerKeyRef} style={{ paddingBottom: "20px" }}>
+            <Row ref={containerKeyRef} className="key-container">
                 <KeyCanvas width={keyWidth} />
             </Row>
 
             {!clockFormat ? (
-                <div style={{ paddingBottom: "20px" }}>
-                    {history?.map((day, i) => {
-                        return (
-                            <Row key={i} ref={containerRef} >
-                                <LineCanvas width={keyWidth} data={day} />
-                            </Row>
-                        )
-                    })}
+                <div className="line-history-container">
+                    {history?.map((day, i) => (
+                        <Row key={i} ref={containerRef}>
+                            <LineCanvas width={keyWidth} data={day} />
+                        </Row>
+                    ))}
                 </div>
             ) : (
-                <Row style={{ paddingBottom: "20px" }}>
-                    {history?.map((day, i) => {
-                        return (
-                            < Col
-                                ref={containerRef}
-                                key={i}
-                                xs={12}
-                                md={6}
-                                lg={{ span: 4, offset: 0 }}
-                                xl={{ span: 3, offset: 0 }}
-                            >
-                                <CircleCanvas width={circleWidth} data={day} />
-                            </Col>
-                        )
-                    })}
+                <Row className="circle-history-container">
+                    {history?.map((day, i) => (
+                        <Col
+                            ref={containerRef}
+                            key={i}
+                            xs={12}
+                            md={6}
+                            lg={{ span: 4, offset: 0 }}
+                            xl={{ span: 3, offset: 0 }}
+                        >
+                            <CircleCanvas width={circleWidth} data={day} />
+                        </Col>
+                    ))}
                 </Row>
-            )
-            }
+            )}
         </>
     )
 }

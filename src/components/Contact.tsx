@@ -2,10 +2,9 @@ import React from "react";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
+import '../css/contact.css';
 
-
-export default function Contact() {
-
+const Contact: React.FC = () => {
     return (
         <Container fluid>
             <div className="selectionBox">
@@ -32,7 +31,7 @@ export default function Contact() {
                         <p>
                             <b>I CAN NOT help you with:</b>
                         </p>
-                        <ul>
+                        <ul className="contact-list">
                             <li>Where the wind will be in the future</li>
                             <li>When is a good time to fly</li>
                             <li>
@@ -40,8 +39,7 @@ export default function Contact() {
                                 open
                             </li>
                             <li>
-                                Please go to
-                                <a href="https://www.flytorrey.com/">
+                                <a href="https://www.flytorrey.com/" className="contact-link">
                                     {" "}
                                     Torrey Pines Gliderport Site{" "}
                                 </a>
@@ -76,6 +74,8 @@ export default function Contact() {
                 </Row>
             </div>
         </Container>
-    )
-}
+    );
+};
+
+export default Contact;
 

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, WheelEvent } from 'react'
 import * as d3 from 'd3'
 import { Reading } from '../../contexts/DataContext'
+import '../../css/windDial.css';
 
 interface WindDialProps {
     passedSeconds: number
@@ -308,7 +309,7 @@ const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
 
         fontSize = 14
         //rotate(-45 " + x(0) + " " + y(0) + ")")
-        var block = svg.append('g').style("font", fontSize + "px times").attr("clip-path", "url(#wdClip)").attr("transform", "translate(0,0) rotate(-45 " + xa(10) + " " + ya(10) + ")")
+        var block = svg.append('g').attr("class", "wind-dial-text").attr("clip-path", "url(#wdClip)").attr("transform", "translate(0,0) rotate(-45 " + xa(10) + " " + ya(10) + ")")
         block.append("text").attr("x", x(0) - fontSize / 2).attr("y", y(-1 * 90) - fontSize / 2).text("4")
         block.append("text").attr("x", x(0) - fontSize / 2).attr("y", y(-2 * 90) - fontSize / 2).text("8")
         block.append("text").attr("x", x(0) - fontSize / 2).attr("y", y(-3 * 90) - fontSize / 2).text("12")
@@ -316,24 +317,24 @@ const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
         block.append("text").attr("x", x(0) - fontSize / 2).attr("y", y(-5 * 90) - fontSize / 2).text("20")
 
 
-        block = svg.append('g').style("font", fontSize + "px times").attr("transform", "translate(0,0) rotate(-45 " + xa(10) + " " + ya(10) + ")")
+        block = svg.append('g').attr("class", "wind-dial-mph").attr("transform", "translate(0,0) rotate(-45 " + xa(10) + " " + ya(10) + ")")
         block.append("text").attr("x", xa(0) - fontSize / 2).attr("y", ya(-500) - fontSize).text("mph")
 
 
-        svg.append("text").attr("x", xa(-500)).attr("y", ya(470)).text("Latest Reading: ").style("font", "15px times")
-        svg.append("text").attr("x", xa(-500)).attr("y", ya(430)).text(lastSeen).style("font", "15px times")
-        svg.append("text").attr("x", xa(350) - 0).attr("y", ya(460)).text("Speed:").style("font", "12px times")
-        svg.append("text").attr("x", xa(350) - 20).attr("y", ya(460) + 21).text(speed + " mph").style("font", "20px times")
-        svg.append("text").attr("x", xa(350) - 10).attr("y", ya(460) + 46).text("Direction:").style("font", "12px times")
-        svg.append("text").attr("x", xa(350) - 20).attr("y", ya(460) + 67).text(direction + " Deg").style("font", "20px times")
+        svg.append("text").attr("class", "wind-dial-latest-reading").attr("x", xa(-500)).attr("y", ya(470)).text("Latest Reading: ")
+        svg.append("text").attr("class", "wind-dial-latest-reading").attr("x", xa(-500)).attr("y", ya(430)).text(lastSeen)
+        svg.append("text").attr("class", "wind-dial-speed").attr("x", xa(350) - 0).attr("y", ya(460)).text("Speed:")
+        svg.append("text").attr("x", xa(350) - 20).attr("y", ya(460) + 21).text(speed + " mph")
+        svg.append("text").attr("x", xa(350) - 10).attr("y", ya(460) + 46).text("Direction:")
+        svg.append("text").attr("x", xa(350) - 20).attr("y", ya(460) + 67).text(direction + " Deg")
 
 
-        svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400)).text("Cliff \u27C2 wind:").style("font", "16px times")
-        svg.append("text").attr("x", xa(-490) + 90).attr("y", ya(-400)).text((Math.cos((direction - 265) * Math.PI / 180) * speed).toFixed(1) + " mph").style("font", "16px times")
+        svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400)).text("Cliff \u27C2 wind:")
+        svg.append("text").attr("x", xa(-490) + 90).attr("y", ya(-400)).text((Math.cos((direction - 265) * Math.PI / 180) * speed).toFixed(1) + " mph")
         const cross = Math.abs(Math.sin((direction - 265) * Math.PI / 180) * speed).toFixed(1)
         const crossDir = Math.sin((direction - 265) * Math.PI / 180) > 0 ? 'S' : 'N'
-        svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400) + 18).text("Cross wind:").style("font", "16px times")
-        svg.append("text").attr("x", xa(-490) + 90).attr("y", ya(-400) + 18).text(cross + " mph " + crossDir).style("font", "16px times")
+        svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400) + 18).text("Cross wind:")
+        svg.append("text").attr("x", xa(-490) + 90).attr("y", ya(-400) + 18).text(cross + " mph " + crossDir)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data, lastSeen])
 

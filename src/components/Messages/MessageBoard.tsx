@@ -1,6 +1,6 @@
 import React from 'react'
 import PostMessage from './PostMessage'
-import MessagesDisplay from './MessagesDisplay'
+import DisplayMessages from './DisplayMessages'
 import date from 'date-and-time';
 import "../../css/message.css"
 
@@ -11,7 +11,7 @@ export default function MessageBoard() {
         <div className="msgBoardC" style={{ width: "80%", margin: "40px auto" }}>
             <h1>Feel free to post for all pilots to see!</h1>
             <PostMessage />
-            <MessagesDisplay />
+            <DisplayMessages />
         </div>
     );
 }

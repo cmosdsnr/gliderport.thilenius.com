@@ -2,17 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom'
 import Nav from "react-bootstrap/Nav"
 import Navbar from "react-bootstrap/Navbar"
-// import NavDropdown from "react-bootstrap/NavDropdown"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHome, faVideo, faDonate, faInfoCircle, faTty, faAtom, faWind, faSignInAlt, faSignOutAlt, faUserPlus } from '@fortawesome/free-solid-svg-icons'
 import { useAuth } from '../../contexts/AuthContext'
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 
 
+import paraglider from "../../images/paraglider.png";
+import banner from "../../images/banner.jpg"
 
-import paraglider from "../../images/paraglider.png?as=png&width=40"
-import banner from "../../images/banner.jpg?as=jpg&width=500"
+interface NavImageTextProps {
+    icon: IconDefinition | null;
+    name: string;
+}
 
-function NavImageText({ icon, name }) {
+function NavImageText({ icon, name }: NavImageTextProps) {
     return (<Nav.Link
         as={Link}
         to={"/" + name}
@@ -23,13 +27,27 @@ function NavImageText({ icon, name }) {
     </Nav.Link>)
 }
 
-export default function GpNavbar({ showSignUpModal, setShowSignUpModal, showLoginModal, setShowLoginModal }) {
-    const [BannerStyle, setBannerStyle] = useState("-500px 500px")
-    const [BannerTimer, setBannerTimer] = useState()
+interface Page {
+    icon: IconDefinition;
+    name: string;
+    loggedIn?: boolean;
+    loggedOut?: boolean;
+}
 
-    const { currentUser } = useAuth()
+interface GpNavbarProps {
+    showSignUpModal: boolean;
+    setShowSignUpModal: React.Dispatch<React.SetStateAction<boolean>>;
+    showLoginModal: boolean;
+    setShowLoginModal: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-    const pages = [
+export default function GpNavbar({ showSignUpModal, setShowSignUpModal, showLoginModal, setShowLoginModal }: GpNavbarProps) {
+    const [bannerStyle, setBannerStyle] = useState("-500px 500px");
+    const [bannerTimer, setBannerTimer] = useState<number>(0);
+
+    const { currentUser } = useAuth();
+
+    const pages: Page[] = [
         {
             icon: faHome,
             name: "Home",
@@ -91,22 +109,21 @@ export default function GpNavbar({ showSignUpModal, setShowSignUpModal, showLogi
     ];
 
     useEffect(() => {
-        if (!BannerTimer) {
-            //console.log("start Timer")
-            var pos = 500
-            setBannerTimer(setInterval(() => {
-                pos--
-                if (pos < 0) { pos = 500 }
-                setBannerStyle(-pos + "px " + pos + "px")
-            }, 100))
+        if (!bannerTimer) {
+            let pos = 500;
+            const timer = setInterval(() => {
+                pos--;
+                if (pos < 0) { pos = 500; }
+                setBannerStyle(`-${pos}px ${pos}px`);
+            }, 100);
+            setBannerTimer(timer);
         }
-        return (() => {
-            if (BannerTimer) {
-                console.log("clear the timer")
-                clearInterval(BannerTimer)
+        return () => {
+            if (bannerTimer > 0) {
+                clearInterval(bannerTimer);
             }
-        })
-    }, [BannerTimer])
+        };
+    }, [bannerTimer]);
 
     return (
         <div>
@@ -115,7 +132,7 @@ export default function GpNavbar({ showSignUpModal, setShowSignUpModal, showLogi
                 expand="md"
                 id="myContainer"
                 style={{
-                    backgroundPosition: BannerStyle,
+                    backgroundPosition: bannerStyle,
                     backgroundImage: `url(${banner})`
                 }}
             >

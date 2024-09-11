@@ -1,15 +1,15 @@
 import React from "react";
-import Message from "./Message";
-import { useAuth } from '../../contexts/AuthContext'
+import DisplayMessage from "./DisplayMessage";
+import { useAuth, MessageItem } from '../../contexts/AuthContext'
 
-export default function MessagesDisplay() {
-    const { currentUser, messages, messagesLoaded } = useAuth()
+export default function DisplayMessages(): JSX.Element {
+    const { messages, messagesLoaded } = useAuth()
 
-    function getMessages() {
+    function getMessages(): JSX.Element | JSX.Element[] {
         if (messagesLoaded) {
-            return messages.map(function (msgItem, i) {
-                return <Message key={i} msgItem={msgItem} />;
-            });
+            return messages.map((msgItem: MessageItem, i: number) => (
+                <DisplayMessage key={i} msgItem={msgItem} />
+            ));
         } else {
             return <div>Loading...</div>;
         }

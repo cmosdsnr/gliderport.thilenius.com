@@ -78,17 +78,13 @@ export default function StatsPage() {
     return (
         <>
             <Row>
-                <Col
-                    xs={12}
-                    md={6}
-                    style={{ paddingBottom: '30px' }}
-                >
+                <Col xs={12} md={6} className="stats-col">
                     <Row>
                         {/* {showTable ? ( */}
                         <Col xs={12} className="greyBackground">
                             <h4>Site Statistics:</h4>
                             <center>
-                                <table style={{ marginTop: '15px' }}>
+                                <table className="stats-table">
                                     <tbody>
                                         <tr>
                                             <th></th>
@@ -187,7 +183,7 @@ export default function StatsPage() {
                             })}
                         </Col>
 
-                        <Col xs={12} style={{ height: '200px', overflow: 'auto', padding: '2%', marginTop: "20px", border: "3px solid orange" }} >
+                        <Col xs={12} className="stats-video-container">
                             <Row className="small">
                                 {videos.videos.filter(video => video.includes(filterValue)).map((v, i) => {
                                     return (
@@ -443,6 +439,15 @@ type Change = {
 
 const changes: Change[] = [
     {
+        date: "9/7/24", html: <>
+            <h4> minor revision</h4>
+            <ol>
+                <li>Added second camera</li>
+                <li>Cleaned code with Cursor AI</li>
+            </ol>
+        </>
+    },
+    {
         date: "2/2/23", html: <>
             <h4> minor revision</h4>
             <ol>
@@ -556,12 +561,12 @@ const changes: Change[] = [
         date: "12/30/19", html:
             <ol>
                 <li>The TPG electronics went down. Corrosion on the antenna caused packet transmission
-                    errors. Power resets caused improper modes. Long story short, it’s all working again.
+                    errors. Power resets caused improper modes. Long story short, it's all working again.
                 </li>
                 <li>Raspberry PI handling images had a software meltdown, and needed to be reformated.</li>
                 <li>The website is moving to a more robust server platform. This may cause some outages.
                 </li>
-                <li>I’ve added tabs to the webpage & moved things around.</li>
+                <li>I've added tabs to the webpage & moved things around.</li>
             </ol>
     },
     {

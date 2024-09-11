@@ -2,8 +2,15 @@ import React, { useRef, useState } from 'react'
 import { Form, Button, Card, Alert } from 'react-bootstrap'
 import { useAuth } from '../../contexts/AuthContext'
 
-export default function ForgotPassword({ showSignUpModal, setShowSignUpModal, showLoginModal, setShowLoginModal }) {
-    const emailRef = useRef()
+interface ForgotPasswordProps {
+    showSignUpModal: boolean;
+    setShowSignUpModal: (show: boolean) => void;
+    showLoginModal: boolean;
+    setShowLoginModal: (show: boolean) => void;
+}
+
+export default function ForgotPassword({ showSignUpModal, setShowSignUpModal, showLoginModal, setShowLoginModal }: ForgotPasswordProps) {
+    const emailRef = useRef<HTMLInputElement>(null)
     const { resetPassword } = useAuth()
     const [error, setError] = useState('')
     const [message, setMessage] = useState('')
@@ -12,13 +19,13 @@ export default function ForgotPassword({ showSignUpModal, setShowSignUpModal, sh
     const openLoginModal = () => { setShowLoginModal(true) }
     const openSignUpModal = () => { setShowSignUpModal(true) }
 
-    async function handleSubmit(e) {
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
         try {
             setMessage('')
             setError('')
             setLoading(true)
-            await resetPassword(emailRef.current.value)
+            await resetPassword(emailRef.current?.value || '')
             setMessage('Check your inbox for password reset')
         } catch {
             setError('Failed to reset password')

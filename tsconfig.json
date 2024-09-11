@@ -16,5 +16,6 @@
     "jsx": "react",
       "target": "ESNext",
       "types": ["vite/client"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types", "./src/types"]
   }

@@ -1,16 +1,19 @@
-import { useEffect, useState } from "react"
-import Row from "react-bootstrap/Row"
-import Col from "react-bootstrap/Col"
-import { useData } from '../contexts/DataContext'
+import React, { useEffect } from "react";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import { useData } from '../contexts/DataContext';
 
-export default function Contribute() {
-    const { loadData, donors } = useData()
+interface Donor {
+    name: string;
+}
+
+export default function Contribute(): JSX.Element {
+    const { loadData, donors } = useData();
 
     useEffect(() => {
-        loadData("Donors")
+        loadData("Donors");
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-
+    }, []);
 
     return (
         <div className="selectionBox">
@@ -40,14 +43,12 @@ export default function Contribute() {
             </Row>
 
             <Row style={{ fontWeight: "bold" }}>
-                {donors.map((donor, i) => {
-                    return (
-                        <Col key={i} sm={6} md={4} lg={3}>
-                            {donor.name}
-                        </Col>
-                    );
-                })}
+                {donors.map((donor, i) => (
+                    <Col key={i} sm={6} md={4} lg={3}>
+                        {donor.name}
+                    </Col>
+                ))}
             </Row>
         </div>
-    )
+    );
 }

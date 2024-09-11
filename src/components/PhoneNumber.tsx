@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, ChangeEvent } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-// import { useInterval } from "./Globals"
 
-const provider = {
+interface Provider {
+    [key: string]: [string, string, string]
+}
+
+const provider: Provider = {
     'alltel': ['mms.alltelwireless.com', 'Alltel', 'NotFoundYet'],
     'att': ['mms.att.net', 'AT&T', 'NotFoundYet'],
     'boost': ['myboostmobile.com', 'Boost Mobile', 'NotFoundYet'],
@@ -23,18 +26,19 @@ const provider = {
     'bellmobility': ['txt.bellmobility.ca', 'Bell Mobility Canada', 'Bell Mobility']
 }
 
+interface PhoneNumberInputProps {
+    updateUserText: (data: { address: string, provider: string }) => void
+    [key: string]: any
+}
 
-export const PhoneNumberInput = (props) => {
+interface User {
+    phone: string
+}
+
+export const PhoneNumberInput: React.FC<PhoneNumberInputProps> = (props) => {
     const { updateUserText, ...rest } = props
-    //use a local copy of phone to avoid thrashing the database
-    const [phone, setPhone] = useState("")
+    const [phone, setPhone] = useState<string>("")
     const { currentUser, updateUser } = useAuth()
-
-
-    // const report = () => console.log("cu:", currentUser.phone, " p:", phone)
-    // const interval = useInterval(() => {
-    //     report()
-    // }, 5000)
 
     useEffect(() => {
         setPhone(currentUser.phone)
@@ -44,7 +48,7 @@ export const PhoneNumberInput = (props) => {
         console.log("phone changed: ", phone)
     }, [phone])
 
-    const handleChange = (e) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setPhone(e.target.value)
         const fn = formatPhoneNumber(e.target.value)
         if (fn.length === 14) {
@@ -54,7 +58,7 @@ export const PhoneNumberInput = (props) => {
         }
     }
 
-    const formatPhoneNumber = (value) => {
+    const formatPhoneNumber = (value: string): string => {
         if (!value) return ""
         const numbersOnly = value.replace(/[^\d]/g, '')
         if (numbersOnly.length < 4)
@@ -65,27 +69,23 @@ export const PhoneNumberInput = (props) => {
             return `(${numbersOnly.slice(0, 3)}) ${numbersOnly.slice(3, 6)}-${numbersOnly.slice(6, 10)}`
     }
 
-
-    const gatewayPhoneNumber = (value) => {
+    const gatewayPhoneNumber = (value: string): void => {
         const numbersOnly = value.replace(/[^\d]/g, '')
         if (numbersOnly.length === 10) {
-            // it's a full 10-digit new number, check the validity and carrier
-            // debugger
-            const url = import.meta.env.VITE_UPDATE_SERVER_URL + '/PhoneFinder?area=' + numbersOnly.slice(0, 3)
-                + "&prefix=" + numbersOnly.slice(3, 6)
-                + "&number=" + numbersOnly.slice(6, 10)
+            const url = `${import.meta.env.VITE_UPDATE_SERVER_URL}/PhoneFinder?area=${numbersOnly.slice(0, 3)}&prefix=${numbersOnly.slice(3, 6)}&number=${numbersOnly.slice(6, 10)}`
             fetch(url)
                 .then(response => response.text())
                 .then(carrier => {
-                    if (carrier.length > 0 && provider[carrier] != undefined)
-                        updateUserText({ address: numbersOnly + '@' + provider[carrier][0], provider: provider[carrier][1] })
-                    else {
+                    if (carrier.length > 0 && provider[carrier] !== undefined) {
+                        updateUserText({ address: `${numbersOnly}@${provider[carrier][0]}`, provider: provider[carrier][1] })
+                    } else {
                         console.log(`Received (${carrier.length} bytes): "${carrier}" which is not in provider object`)
                     }
                 })
         }
     }
+
     return (
-        <input {...rest} onChange={e => handleChange(e)} value={phone} />
+        <input {...rest} onChange={handleChange} value={phone} />
     )
 }

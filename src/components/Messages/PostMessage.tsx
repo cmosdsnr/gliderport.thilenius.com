@@ -1,19 +1,20 @@
-import React, { useState } from "react"
-import { useAuth } from '../../contexts/AuthContext'
+import React, { useState, ChangeEvent, FormEvent } from "react"
+import { useAuth, Message } from '../../contexts/AuthContext'
+
 
 export default function PostMessage() {
-    const [msgItems, setMsgItems] = useState({ msg: "" });
+    const [msgItems, setMsgItems] = useState<Partial<Message>>({ msg: "" });
 
-    const { currentUser, saveMessage } = useAuth()
+    const { saveMessage } = useAuth()
 
     //Dynamically Update States for the form
-    function updateFormEdits(event) {
+    function updateFormEdits(event: ChangeEvent<HTMLTextAreaElement>) {
         const { name, value } = event.target;
         setMsgItems(prevState => ({ ...prevState, [name]: value }));
     }
 
     //Submit a new post
-    function postFormUpdate(e) {
+    function postFormUpdate(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         saveMessage(msgItems)
     }

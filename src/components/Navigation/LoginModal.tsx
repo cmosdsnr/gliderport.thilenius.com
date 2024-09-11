@@ -6,12 +6,12 @@ import Modal from "react-modal"
 
 Modal.setAppElement('#root')
 
-export const Login = ({ setShowLoginModal }) => {
+export const Login = ({ setShowLoginModal }: { setShowLoginModal: (show: boolean) => void }) => {
     setShowLoginModal(true)
     useHistory().push("/")
     return (<></>)
 }
-export const SignUp = ({ setShowSignUpModal }) => {
+export const SignUp = ({ setShowSignUpModal }: { setShowSignUpModal: (show: boolean) => void }) => {
     setShowSignUpModal(true)
     useHistory().push("/")
     return (<></>)
@@ -23,7 +23,7 @@ export const Logout = () => {
     async function handleLogout() {
         try {
             await logout()
-            history.pushState('/Home')
+            history.push('/Home')
         } catch {
         }
     }
@@ -31,26 +31,34 @@ export const Logout = () => {
     return (<></>)
 }
 
-export default function LoginModal({ modalIsOpen, setModalIsOpen, openSignUpModal }) {
-    const emailRef = useRef()
-    const passwordRef = useRef()
-    const { login } = useAuth()
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
-    const history = useHistory()
+interface LoginModalProps {
+    modalIsOpen: boolean;
+    setModalIsOpen: (isOpen: boolean) => void;
+    openSignUpModal: () => void;
+}
 
-    async function handleSubmit(e) {
-        e.preventDefault()
-        try {
-            setError('')
-            setLoading(true)
-            await login(emailRef.current.value, passwordRef.current.value)
-            setModalIsOpen(false)
-            history.push("/")
-        } catch {
-            setError('Failed to log in')
+export default function LoginModal({ modalIsOpen, setModalIsOpen, openSignUpModal }: LoginModalProps) {
+    const emailRef = useRef<HTMLInputElement>(null);
+    const passwordRef = useRef<HTMLInputElement>(null);
+    const { login } = useAuth();
+    const [error, setError] = useState<string>('');
+    const [loading, setLoading] = useState<boolean>(false);
+    const history = useHistory();
+
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+        if (emailRef.current && passwordRef.current) {
+            e.preventDefault()
+            try {
+                setError('')
+                setLoading(true)
+                await login(emailRef.current.value, passwordRef.current.value)
+                setModalIsOpen(false)
+                history.push("/")
+            } catch {
+                setError('Failed to log in')
+            }
+            setLoading(false)
         }
-        setLoading(false)
     }
 
     const handleSignUp = () => {

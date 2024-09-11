@@ -3,19 +3,22 @@ import { Row, Col } from "react-bootstrap"
 import Nav from "react-bootstrap/Nav"
 import Navbar from "react-bootstrap/Navbar"
 
-import hub from "../images/Equipment/Camera/Hub.jpg?as=jpg&width=400"
-import shelf1 from "../images/Equipment/Camera/shelf1.jpg?as=jpg&width=400"
-import shelf2 from "../images/Equipment/Camera/shelf2.jpg?as=jpg&width=400"
-import adapter from "../images/Equipment/Camera/POEadapter.jpg?as=jpg&width=400"
+import hub from "../images/Equipment/Camera/Hub.jpg"
 
-import Ultimeter2000 from "../images/Equipment/Pi/Ultimeter2000.jpg?as=jpg&width=400"
-import UM2000ConnectionBox from "../images/Equipment/Pi/UM2000ConnectionBox.jpg?as=jpg&width=400"
-import RaspberryPi3 from "../images/Equipment/Pi/RaspberryPi3.jpg?as=jpg&width=400"
-import RaspberryAndESP32 from "../images/Equipment/Pi/RaspberryAndESP32.jpg?as=jpg&width=400"
-import ESP32Box from "../images/Equipment/Pi/ESP32Box.jpg?as=jpg&width=400"
+import Ultimeter2000 from "../images/Equipment/Pi/Ultimeter2000.jpg"
+import UM2000ConnectionBox from "../images/Equipment/Pi/UM2000ConnectionBox.jpg"
+import RaspberryPi3 from "../images/Equipment/Pi/RaspberryPi3.jpg"
+import RaspberryAndESP32 from "../images/Equipment/Pi/RaspberryAndESP32.jpg"
+import ESP32Box from "../images/Equipment/Pi/ESP32Box.jpg"
 
-const MyPill = (props) => {
-    const { no, name, handleClick, page } = props
+interface MyPillProps {
+    no: number;
+    name: string;
+    handleClick: (arg: { no: number }) => void;
+    page: number;
+}
+
+const MyPill: React.FC<MyPillProps> = ({ no, name, handleClick, page }) => {
     return (
         <center>
             <Nav.Item onClick={() => { handleClick({ no }) }} className={page === no ? "eqNav active" : "eqNav"}>{name}</Nav.Item>
@@ -23,9 +26,8 @@ const MyPill = (props) => {
     )
 }
 
-export default function Equipment() {
-
-    const [page, setPage] = useState(0)
+export default function Equipment(): JSX.Element {
+    const [page, setPage] = useState<number>(0)
 
     return (<Row>
         <Col xs={12} md={3}>
@@ -65,7 +67,7 @@ export default function Equipment() {
     )
 }
 
-const Manuals = (props) => {
+const Manuals: React.FC = () => {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>
             <ul>
@@ -117,45 +119,18 @@ const Manuals = (props) => {
 }
 
 
-const Camera = (props) => {
+const Camera: React.FC = () => {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>
             <div>
                 <h1>Gliderport Camera Setup</h1>
-                <p>The gliderport camera is a 4K Ultra HD Resolution 8MP Outdoor Metal IP Camera, model LNB8111BW</p>
-                <p>The camera sits atop the highest pole at the gliderport. The pole can be lowered by removing the top of
-                    the two ground level bolts holding the pole in place. After the top bolt is removed, the pole can swing
-                    down.</p>
+                <p>The gliderports 2 cameras are a 4K Ultra HD Resolution 8MP Outdoor Metal IP Camera, model E841CAB by Lorex</p>
+                <p>The cameras are on a 5ft pole on the roof</p>
                 <p>The camera is powered over the ethernet cable, called PoE</p>
-                <p>The camera cable routes down and into the kitchen, where it plugs into a PoE power adapter plugged into
-                    the outlet. This device adds power to the ethernet cable:</p>
+                <p>A waterproof box is mounted under the solar panels on the roof which receives power and ethernet.
+                    There is a PoE switch inside, and two powered ethernet wires route out to the cameras </p>
             </div>
-            <div className="pic picRotate">
-                <img alt='' src={adapter} className="img-fluid" style={{ height: "100%" }} />
-            </div>
-            <div>
-                <p>The other cable in the PoE Power adapter goes to the switch (white box with lights sitting at the front
-                    of the shelf). The left power led should be on as well as 2 of the numbered lights. It doesn't matter
-                    which two, it's the two ports in back that the cables are plugged into:</p>
-            </div>
-            <div className="pic picRotate">
-                <img alt='' src={hub} className="img-fluid" style={{ height: "100%" }} />
-            </div>
-            <div className="pic picRotate">
-                <img alt='' src={shelf1} className="img-fluid" style={{ height: "100%" }} />
-            </div>
-            <div className="pic picRotate">
-                <img alt='' src={shelf2} className="img-fluid" style={{ height: "100%" }} />
-            </div>
-            <div>
-                <p>The other cable in the PoE Power adapter goes to the switch (white box with lights sitting at the front
-                    of the shelf):</p>
-                <p>The Hub has a second cable that routes along the ceiling to the office and plugs into a switch there</p>
-                <p>The camera's internal IP is 192.168.88.48 </p>
-                <p>The camera's (i.e. the gliderports) external IP is 104.36.31.118 however this is not always working. Port
-                    80 was forwarded with some effort and assistance to the local IP.</p>
-                <p>Camera username and password are known by me & staff</p>
-            </div>
+
 
             <div className="pic picRotate">
                 <img alt='' src={hub} className="img-fluid" style={{ height: "100%" }} />
@@ -181,7 +156,7 @@ const Camera = (props) => {
 }
 
 
-const Radio = (props) => {
+const Radio: React.FC = () => {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>
             <h1>Radio Setup</h1>
@@ -201,13 +176,13 @@ const Radio = (props) => {
     )
 }
 
-const Netatmo = (props) => {
+const Netatmo: React.FC = () => {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}><h1>Netatmo Setup</h1></Col>
     )
 }
 
-const Surfline = (props) => {
+const Surfline: React.FC = () => {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>
             <h1>Surfline</h1>
@@ -218,13 +193,13 @@ const Surfline = (props) => {
         </Col>
     )
 }
-const Internet = (props) => {
+const Internet: React.FC = () => {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}><h1>Gliderport Software</h1></Col>
     )
 }
 
-const Esp32 = (props) => {
+const Esp32: React.FC = () => {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>
             <h1>ESP32 setup</h1>
@@ -238,7 +213,7 @@ const Esp32 = (props) => {
     )
 }
 
-const Raspberry = (props) => {
+const Raspberry: React.FC = () => {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>Raspberry</Col>
     )
