@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, WheelEvent } from 'react'
 import * as d3 from 'd3'
 import { Reading } from '../../contexts/DataContext'
-import './windDial.css';
+import '../../css/windDial.css';
 
 interface WindDialProps {
     passedSeconds: number
