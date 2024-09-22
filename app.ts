@@ -282,14 +282,23 @@ app.post("/addVideo", (req, res) => {
   });
 });
 
+let imageBuffer: Buffer;
 let imageBuffer1: Buffer, imageBigBuffer1: Buffer;
 let imageBuffer2: Buffer, imageBigBuffer2: Buffer;
+
+app.post("/updateImage", (req, res) => {
+  imageBuffer = Buffer.from(req.body.A, "base64");
+  let index = req.body.size + 2 * (req.body.camera - 1);
+  connection?.query("UPDATE images SET d=? WHERE `id`=" + index, imageBuffer1, () => {});
+  res.json("Ok");
+});
 
 app.post("/updateSmallImage1", (req, res) => {
   imageBuffer1 = Buffer.from(req.body.A, "base64");
   connection?.query("UPDATE images SET d=? WHERE `id`=1", imageBuffer1, () => {});
   res.json("Ok");
 });
+
 app.post("/updateBigImage1", (req, res) => {
   //   console.log("updating big image");
   imageBigBuffer1 = Buffer.from(req.body.A, "base64");
@@ -311,8 +320,8 @@ app.post("/updateSmallImage2", (req, res) => {
 app.post("/updateBigImage2", (req, res) => {
   //   console.log("updating big image");
   imageBigBuffer2 = Buffer.from(req.body.A, "base64");
-  const ts = Math.floor(new Date().getTime() / 1000);
-  connection?.query(`UPDATE server_sent SET last_image=${ts} WHERE id=3`, () => {});
+  //   const ts = Math.floor(new Date().getTime() / 1000);
+  //   connection?.query(`UPDATE server_sent SET last_image=${ts} WHERE id=3`, () => {});
   connection?.query("UPDATE images SET d=? WHERE id=4", imageBigBuffer2, function (err, results, fields) {
     // console.log(results); // results contains rows returned by server
     // console.log(fields); // fields contains extra meta data about results, if available
