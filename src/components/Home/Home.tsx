@@ -12,6 +12,7 @@ import WindDial from "./WindDial"
 import Status from "../Status"
 import Charts from "../Charts/Charts"
 import UpdatingImage from "./UpdatingImage"
+import KoFiWidget from './KoFiWidget';
 
 import '../../css/home.css';
 
@@ -110,7 +111,9 @@ export const Home = () => {
                                 Courtesy of Torrey Pines, Rich Parry and Stephen Thilenius, Safe Flying!<br />
                                 Comments and suggestions welcome: <a href="/Contact">Contact me</a>
                                 <br />
-                                <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Support me on Ko-fi', '#72a4f2', 'O5O818HM4U');kofiwidget2.draw();</script>
+                                <a href='https://ko-fi.com/O5O818HM4U' target='_blank'><img height='36' style={{ border: "0px", height: "36px" }} src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
+                                <KoFiWidget />
                             </p>
                         </center>
                     </Col>
