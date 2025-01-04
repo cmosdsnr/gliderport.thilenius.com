@@ -109,6 +109,8 @@ export const Home = () => {
                             <p>
                                 Courtesy of Torrey Pines, Rich Parry and Stephen Thilenius, Safe Flying!<br />
                                 Comments and suggestions welcome: <a href="/Contact">Contact me</a>
+                                <br />
+                                <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Support me on Ko-fi', '#72a4f2', 'O5O818HM4U');kofiwidget2.draw();</script>
                             </p>
                         </center>
                     </Col>
