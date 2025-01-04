@@ -111,7 +111,7 @@ export const Home = () => {
                                 {/* Courtesy of Torrey Pines, Rich Parry and Stephen Thilenius, Safe Flying!<br />
                                 Comments and suggestions welcome: <a href="/Contact">Contact me</a>
                                 <br /> */}
-                                If you enjoy this site, find it useful, please consider leaving me a donation!
+                                If you enjoy this site, find it useful, and would like me to continue supporting it, please consider leaving me a donation!<br /><br />
                                 <a href='https://ko-fi.com/O5O818HM4U' target='_blank'><img height='36' style={{ border: "0px", height: "36px" }} src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
                                 <KoFiWidget />
