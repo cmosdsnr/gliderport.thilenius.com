@@ -263,6 +263,10 @@ export function DataProvider({ children }: any) {
 
     const handleClients = (d: Client[]) => {
         setClients(d);
+        console.log("clients")
+        Object.keys(d[0]).forEach((key) => {
+            console.log(key)
+        })
     }
 
     const subCommands = {
