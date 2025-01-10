@@ -397,6 +397,8 @@ export function DataProvider({ children }: any) {
                     cmd = subCommands.ForecastFull
                 else if (messageBody.subCommand === "Videos")
                     cmd = subCommands.Videos
+                else if (messageBody.subCommand === "Clients")
+                    cmd = subCommands.Clients
                 else if (messageBody.subCommand === "Stats")
                     cmd = subCommands.Stats
                 else if (messageBody.subCommand === "CurrentData")
