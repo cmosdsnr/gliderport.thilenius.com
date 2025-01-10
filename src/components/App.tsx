@@ -19,7 +19,7 @@ import SignUpModal from "./Navigation/SignUpModal"
 import Stats from "./Stats"
 import Contribute from "./Contribute"
 import Contact from "./Contact"
-import Diagnostics from "./Diagnostics" // Add this import
+import Diagnostics from "./Diagnostics" 
 
 import "../css/style.css"
 
