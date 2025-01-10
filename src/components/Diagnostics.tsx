@@ -19,13 +19,19 @@ const Diagnostics: React.FC = () => {
             {clients.map((client, i) => {
                 return (
                     <div key={i}>
-                        <p>no {i}</p>
-
-                        {Object.keys(client).map((key, j) => {
-                            return (
-                                <p key={j}>{key}: {client[key as keyof typeof client]}</p>
-                            )
-                        })}
+                        <h2>Client {i + 1}</h2>
+                        <table>
+                            <tbody>
+                                {Object.keys(client).map((key, j) => {
+                                    return (
+                                        <tr key={j}>
+                                            <td>{key}</td>
+                                            <td>{client[key as keyof typeof client]}</td>
+                                        </tr>
+                                    )
+                                })}
+                            </tbody>
+                        </table>
                     </div>
                 )
             })}
