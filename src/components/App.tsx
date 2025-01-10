@@ -19,6 +19,7 @@ import SignUpModal from "./Navigation/SignUpModal"
 import Stats from "./Stats"
 import Contribute from "./Contribute"
 import Contact from "./Contact"
+import Diagnostics from "./Diagnostics" // Add this import
 
 import "../css/style.css"
 
@@ -62,6 +63,7 @@ const App: React.FC = () => {
                                 <Route exact path="/contact"><Contact /></Route>
                                 <PrivateRoute exact path="/contribute" component={Contribute} />
                                 <PrivateRoute exact path="/dashboard" component={Dashboard} />
+                                <PrivateRoute exact path="/diagnostics" component={Diagnostics} />
                                 <PrivateRoute exact path="/update-profile" component={UpdateProfile} />
 
                                 <Route exact path="/login"><Login setShowLoginModal={setShowLoginModal} /></Route>

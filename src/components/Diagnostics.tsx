@@ -11,7 +11,7 @@ const Diagnostics: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        console.log("Clients: ", JSON.stringify(clients));
+        console.log("Clients in diagnostics: ", JSON.stringify(clients));
     }, [clients]);
 
     return (
@@ -21,12 +21,13 @@ const Diagnostics: React.FC = () => {
                 return (
                     <div key={i}>
                         <p>no {i}</p>
-                        {Object.keys(client).map((key, j) => {
+                        <p>{JSON.stringify(client)}</p>
+                        {/* {Object.keys(client).map((key, j) => {
                             return (
 
-                                <p>{key}: {client[key]}</p>
+                                <p>{key}: {JSON.stringify(client)}</p>
                             )
-                        })}
+                        })} */}
                     </div>
                 )
             }
