@@ -263,10 +263,7 @@ export function DataProvider({ children }: any) {
 
     const handleClients = (d: Client[]) => {
         setClients(d);
-        console.log("clients")
-        Object.keys(d[0]).forEach((key) => {
-            console.log(key)
-        })
+        console.log("clients: ", JSON.stringify(d));
     }
 
     const subCommands = {
@@ -300,18 +297,18 @@ export function DataProvider({ children }: any) {
     const startWebSocket = () => {
         ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL)
         ws.current.onopen = () => {
-            console.log("ws opened")
-            loadData("Message")
-            loadData("CurrentData")
-            loadData("Chart")
+            console.log("ws opened");
+            loadData("Message");
+            loadData("CurrentData");
+            loadData("Chart");
             loadData("Clients");
             // testAll()
-            setLoading(false)
-            setPassedSeconds(0)
+            setLoading(false);
+            setPassedSeconds(0);
         }
         ws.current.onclose = () => {
-            console.log("ws closed")
-            setLoading(true)
+            console.log("ws closed");
+            setLoading(true);
         }
     }
 

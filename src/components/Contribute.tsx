@@ -13,11 +13,7 @@ export default function Contribute(): JSX.Element {
     useEffect(() => {
         loadData("Donors");
         loadData("Clients");
-        clients.forEach((client) => {
-            Object.keys(client).forEach((key) => {
-                console.log(key, client[key]);
-            })
-        });
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
