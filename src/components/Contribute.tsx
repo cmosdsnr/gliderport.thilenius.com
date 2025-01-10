@@ -13,9 +13,13 @@ export default function Contribute(): JSX.Element {
     useEffect(() => {
         loadData("Donors");
         loadData("Clients");
-
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        console.log("Clients: ", JSON.stringify(clients));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [clients]);
 
     return (
         <div className="selectionBox">
