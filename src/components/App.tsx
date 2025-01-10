@@ -63,7 +63,7 @@ const App: React.FC = () => {
                                 <Route exact path="/contact"><Contact /></Route>
                                 <PrivateRoute exact path="/contribute" component={Contribute} />
                                 <PrivateRoute exact path="/dashboard" component={Dashboard} />
-                                <PrivateRoute exact path="/diagnostics" component={Diagnostics} />
+                                <Route exact path="/diagnostics" component={Diagnostics} />
                                 <PrivateRoute exact path="/update-profile" component={UpdateProfile} />
 
                                 <Route exact path="/login"><Login setShowLoginModal={setShowLoginModal} /></Route>
