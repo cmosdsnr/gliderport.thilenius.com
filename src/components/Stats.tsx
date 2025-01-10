@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react"
 import * as d3 from 'd3'
-import { Row, Col, Card } from "react-bootstrap"
+import { Row, Col, Card, Button } from "react-bootstrap"
 import Modal from "react-modal"
 import { Weeks, useData } from '../contexts/DataContext'
 import '../css/stats.css'
@@ -13,6 +13,7 @@ export default function StatsPage() {
     const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
     const [changeText, setChangeText] = useState<JSX.Element>(<></>)
     const [changeId, setChangeId] = useState<number>(0)
+    const [camera, setCamera] = useState<number>(1)
 
     const videoRef = useRef<HTMLVideoElement>(null)
     const { loadData, videos, hitStats, } = useData()
@@ -125,10 +126,15 @@ export default function StatsPage() {
                     </Col></Row>
 
                     <Row className="blueBorder">
-                        <Col xs={12}>
+                        <Col xs={8}>
                             <center>
                                 <h4>Past Videos</h4>
                             </center>
+                        </Col>
+                        <Col xs={4}>
+                            <h5>Camera</h5>
+                            <Button style={{ backgroundColor: camera == 1 ? "blue" : "lightgray" }} onClick={() => setCamera(1)}>A</Button>
+                            <Button style={{ backgroundColor: camera == 2 ? "blue" : "lightgray" }} onClick={() => setCamera(2)}>B</Button>
                         </Col>
                         <Col xs={12}>
                             years:

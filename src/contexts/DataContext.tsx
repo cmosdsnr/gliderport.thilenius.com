@@ -112,8 +112,16 @@ type ImageData = null | {
     A: string,
 }
 
+type Client = {
+    id: number,
+    name: string,
+    amount: number,
+    date: string
+}
+
 interface DataContextInterface {
     //states
+    clients: Array<Client>,
     donors: Array<Donor>,
     posts: Array<Post>,
     history: Array<Day>,
@@ -160,6 +168,7 @@ export function DataProvider({ children }: any) {
     const [forecast, setForecast] = useState<Forecast[]>([])
     const [forecastFull, setForecastFull] = useState<Forecast[]>([])
     const [hitStats, setHitStats] = useState<Stats>({})
+    const [clients, setClients] = useState<Client[]>([])
     const [passedSeconds, setPassedSeconds] = useState(0)
     const [offline, setOffline] = useState(false)
     const [image1, setImage1] = useState<string | null>(null)
@@ -251,12 +260,21 @@ export function DataProvider({ children }: any) {
         setMessage(msg)
         console.log("Message received")
     }
+
+    const handleClients = (d: Client[]) => {
+        setClients(d);
+        Object.keys(d[0]).forEach((key) => {
+            console.log(key)
+        })
+    }
+
     const subCommands = {
         Posts: setPosts,
         Donors: setDonors,
         History: setHistory,
         Chart: handleChart,
         Status: setStatus,
+        Clients: handleClients,
         Forecast: setForecast,
         ForecastFull: setForecastFull,
         Videos: handleVideos,
@@ -285,6 +303,7 @@ export function DataProvider({ children }: any) {
             loadData("Message")
             loadData("CurrentData")
             loadData("Chart")
+            loadData("Clients");
             // testAll()
             setLoading(false)
             setPassedSeconds(0)
@@ -487,6 +506,7 @@ export function DataProvider({ children }: any) {
 
     const value: DataContextInterface = {
         //states
+        clients,
         donors,
         posts,
         history,
