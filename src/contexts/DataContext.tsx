@@ -116,7 +116,8 @@ type Client = {
     id: number,
     name: string,
     amount: number,
-    date: string
+    date: string,
+    [key: string]: any // Add this index signature
 }
 
 interface DataContextInterface {

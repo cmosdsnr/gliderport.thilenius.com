@@ -5,7 +5,6 @@ const Diagnostics: React.FC = () => {
 
     const { loadData, clients } = useData();
 
-
     useEffect(() => {
         loadData("Clients");
     }, []);
@@ -22,16 +21,14 @@ const Diagnostics: React.FC = () => {
                     <div key={i}>
                         <p>no {i}</p>
                         <p>{JSON.stringify(client)}</p>
-                        {/* {Object.keys(client).map((key, j) => {
+                        {Object.keys(client).map((key, j) => {
                             return (
-
-                                <p>{key}: {JSON.stringify(client)}</p>
+                                <p key={j}>{key}: {client[key as keyof typeof client]}</p>
                             )
-                        })} */}
+                        })}
                     </div>
                 )
-            }
-            )}
+            })}
         </div>
     );
 }
