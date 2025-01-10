@@ -1,5 +1,12 @@
 import React, { useEffect } from 'react';
 
+// Add this type declaration
+declare global {
+    interface Window {
+        kofiWidgetOverlay: any;
+    }
+}
+
 const KoFiWidget = () => {
     useEffect(() => {
         // Create a script element for the widget
@@ -7,7 +14,7 @@ const KoFiWidget = () => {
         script.src = 'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
         script.async = true;
         script.onload = () => {
-            if (window.kofiWidgetOverlay ) {
+            if (window.kofiWidgetOverlay) {
                 window.kofiWidgetOverlay.draw('gpwebsite', {
                     'type': 'floating-chat',
                     'floating-chat.donateButton.text': 'Support me',
