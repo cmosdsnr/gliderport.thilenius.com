@@ -8,10 +8,15 @@ interface Donor {
 }
 
 export default function Contribute(): JSX.Element {
-    const { loadData, donors } = useData();
+    const { loadData, donors, clients } = useData();
 
     useEffect(() => {
         loadData("Donors");
+        clients.forEach((client) => {
+            Object.keys(client).forEach((key) => {
+                console.log(key, client[key]);
+            })
+        });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -20,7 +25,7 @@ export default function Contribute(): JSX.Element {
             <Row>
                 <p>
                     I have been very pleased to see this site grow in use over the
-                    years, and have enjoyed programing and changing it. I very much
+                    years, and have enjoyed programming and changing it. I very much
                     appreciate any feedback, ideas for improvement, and especially if
                     people let me know when the camera stops working or other issues
                     occur. I don't necessarily look at my own site every day so don't
