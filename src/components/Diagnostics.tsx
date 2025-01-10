@@ -20,7 +20,7 @@ const Diagnostics: React.FC = () => {
                 return (
                     <div key={i}>
                         <p>no {i}</p>
-                        <p>{JSON.stringify(client)}</p>
+
                         {Object.keys(client).map((key, j) => {
                             return (
                                 <p key={j}>{key}: {client[key as keyof typeof client]}</p>
