@@ -274,6 +274,7 @@ export function DataProvider({ children }: any) {
         Chart: handleChart,
         Status: setStatus,
         Clients: handleClients,
+        UnloadClients: () => { },
         Forecast: setForecast,
         ForecastFull: setForecastFull,
         Videos: handleVideos,
@@ -302,7 +303,6 @@ export function DataProvider({ children }: any) {
             loadData("Message");
             loadData("CurrentData");
             loadData("Chart");
-            loadData("Clients");
             // testAll()
             setLoading(false);
             setPassedSeconds(0);

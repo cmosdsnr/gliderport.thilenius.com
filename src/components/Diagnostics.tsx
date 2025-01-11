@@ -7,6 +7,9 @@ const Diagnostics: React.FC = () => {
 
     useEffect(() => {
         loadData("Clients");
+        return () => {
+            loadData("UnloadClients");
+        };
     }, []);
 
     useEffect(() => {
