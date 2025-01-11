@@ -1,2 +1,2 @@
-./buildpacks/nodejs
+buildpacks/nodejs
 https://github.com/dokku/buildpack-nginx.git
