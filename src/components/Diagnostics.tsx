@@ -20,8 +20,8 @@ const Diagnostics: React.FC = () => {
                 {clients.map((client, i) => {
                     return (
                         <div key={i}>
-                            <h5>Client {i + 1}</h5>
-                            <table style={{ width: '100%', border: '1px solid black', borderCollapse: 'collapse' }}>
+                            <h5 style={{ textAlign: 'center' }}>Client {i + 1}</h5>
+                            <table style={{ width: '100%', border: '3px solid black', borderCollapse: 'collapse' }}>
                                 <tbody>
                                     {Object.keys(client).map((key, j) => {
                                         return (
