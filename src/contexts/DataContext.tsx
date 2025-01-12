@@ -274,7 +274,6 @@ export function DataProvider({ children }: any) {
         Chart: handleChart,
         Status: setStatus,
         Clients: handleClients,
-        UnloadClients: () => { },
         Forecast: setForecast,
         ForecastFull: setForecastFull,
         Videos: handleVideos,
@@ -303,6 +302,7 @@ export function DataProvider({ children }: any) {
             loadData("Message");
             loadData("CurrentData");
             loadData("Chart");
+            loadData("Clients");
             // testAll()
             setLoading(false);
             setPassedSeconds(0);
@@ -466,6 +466,10 @@ export function DataProvider({ children }: any) {
             }
             if (messageBody.command === 'ping') {
                 console.log("keep alive ping received")
+            }
+            if (messageBody.command === 'UpdateClients') {
+                console.log("UpdateClients message received")
+                handleClients(messageBody.data);
             }
         };
     }, [chart, ws.current])
