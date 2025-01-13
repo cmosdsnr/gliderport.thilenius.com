@@ -2,6 +2,7 @@ import React from "react";
 import DisplayMessage from "./DisplayMessage";
 import { useAuth, MessageItem } from '../../contexts/AuthContext'
 
+
 export default function DisplayMessages(): JSX.Element {
     const { messages, messagesLoaded } = useAuth()
 
@@ -28,6 +29,6 @@ export default function DisplayMessages(): JSX.Element {
             <h2>Messages</h2>
 
             {getMessages()}
-        </div>
+        </div >
     );
 }

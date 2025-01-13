@@ -1,9 +1,13 @@
 import React from "react";
 import { useAuth, Message, MessageItem } from '../../contexts/AuthContext'
 import "../../css/message.css"
+interface DisplayMessageProps {
 
+    msgItem: MessageItem;
 
-export default function DisplayMessage(msgItem: MessageItem) {
+}
+
+export default function DisplayMessage({ msgItem }: DisplayMessageProps) {
     const { currentUser, deleteMessage } = useAuth()
 
     return (
