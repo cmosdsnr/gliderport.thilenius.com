@@ -7,9 +7,6 @@ const Diagnostics: React.FC = () => {
 
     useEffect(() => {
         loadData("Clients");
-        return () => {
-            loadData("UnloadClients");
-        };
     }, []);
 
     useEffect(() => {
@@ -20,25 +17,26 @@ const Diagnostics: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{ width: '70%' }}>
                 <h1>Diagnostics</h1>
-                {clients.map((client, i) => {
-                    return (
-                        <div key={i}>
-                            <h5 style={{ textAlign: 'center' }}>Client {i + 1}</h5>
-                            <table style={{ width: '100%', border: '3px solid black', borderCollapse: 'collapse' }}>
-                                <tbody>
-                                    {Object.keys(client).map((key, j) => {
-                                        return (
-                                            <tr key={j}>
-                                                <td style={{ border: '1px solid black', padding: '8px' }}>{key}</td>
-                                                <td style={{ border: '1px solid black', padding: '8px' }}>{client[key as keyof typeof client]}</td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    )
-                })}
+                <table style={{ width: '100%', border: '1px solid black', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr>
+                            <th style={{ border: '1px solid black', padding: '8px' }}>Client No</th>
+                            {clients.length > 0 && Object.keys(clients[0]).map((key, j) => (
+                                <th key={j} style={{ border: '1px solid black', padding: '8px' }}>{key}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {clients.map((client, i) => (
+                            <tr key={i}>
+                                <td style={{ border: '1px solid black', padding: '8px' }}>{i + 1}</td>
+                                {Object.keys(client).map((key, j) => (
+                                    <td key={j} style={{ border: '1px solid black', padding: '8px' }}>{client[key as keyof typeof client]}</td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
