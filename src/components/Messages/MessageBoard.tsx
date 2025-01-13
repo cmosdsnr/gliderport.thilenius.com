@@ -10,7 +10,7 @@ export default function MessageBoard() {
     return (
         <div className="msgBoardC" style={{ width: "80%", margin: "40px auto" }}>
             <h1>Feel free to post for all pilots to see!</h1>
-            {/* <PostMessage /> */}
+            <PostMessage />
             <DisplayMessages />
         </div>
     );

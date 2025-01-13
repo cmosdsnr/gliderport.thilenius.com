@@ -7,7 +7,7 @@ export default function DisplayMessages(): JSX.Element {
     const { messages, messagesLoaded } = useAuth()
 
     function getMessages(): JSX.Element | JSX.Element[] {
-        if (messagesLoaded) {
+        if (messagesLoaded && messages) {
             return messages.map((msgItem: MessageItem, i: number) => (
                 <DisplayMessage key={i} msgItem={msgItem} />
             ));
