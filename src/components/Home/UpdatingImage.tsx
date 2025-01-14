@@ -4,11 +4,13 @@ import Viewer from 'react-viewer'
 import OutOfOrder from "../../images/OutOfOrder.jpg"
 import { useInterval, b64toBlob } from "../Globals"
 import Button from "react-bootstrap/Button";
+import { Row, Col } from "react-bootstrap";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 
 
 
+import switch_camera from "../../images/switch-camera.png";
 
 
 interface Props {
@@ -99,9 +101,33 @@ export default function UpdatingImage({ offline }: Props) {
 
 
     return (
-        <>
-            <img ref={imgRef} onClick={() => { loadData(camera == 1 ? "BigImage1" : "BigImage2"); setVisible(true) }} src={imgSrc} className="img-fluid" alt="" />
-            <Button className="btn btn-info" style={{ marginTop: "5px" }} onClick={() => { setCamera(camera == 1 ? 2 : 1) }}>{camera == 2 ? <FontAwesomeIcon icon={faArrowLeft} /> : null}  Switch to Camera {camera == 1 ? 2 : 1}  {camera == 1 ? <FontAwesomeIcon icon={faArrowRight} /> : null}</Button>
+        <Row style={{
+            marginBottom: "15px",
+        }} >
+            <Row>
+                <img ref={imgRef} onClick={() => { loadData(camera == 1 ? "BigImage1" : "BigImage2"); setVisible(true) }} src={imgSrc} className="img-fluid" alt=""
+                    style={{
+                        marginBottom: "15px",
+                    }} />
+            </Row>
+            <Row>
+                <Col xs={6} >
+                    <span style={{
+                        border: "1px solid black",
+                        borderRadius: "8px",
+                        padding: "18px",
+                        backgroundColor: "rgba(7, 190, 250, 0.8)",
+
+                    }} onClick={() => { setCamera(camera == 1 ? 2 : 1) }}>
+                        <img src={switch_camera} alt="Switch Camera" onClick={() => { setCamera(camera == 1 ? 2 : 1) }} style={{ width: '50px', height: '50px' }} />
+                        <span style={{ marginLeft: 10 }} >go to {camera == 1 ? "left" : "right"} camera</span>
+                    </span>
+                </Col>
+                <Col xs={6} >
+                    Live Image every 15 Seconds, click to expand and zoom
+                </Col>
+            </Row>
+            {/* <Button className="btn btn-info" style={{ marginTop: "5px" }} onClick={() => { setCamera(camera == 1 ? 2 : 1) }}>{camera == 2 ? <FontAwesomeIcon icon={faArrowLeft} /> : null}  Switch to Camera {camera == 1 ? 2 : 1}  {camera == 1 ? <FontAwesomeIcon icon={faArrowRight} /> : null}</Button> */}
             <Viewer
                 visible={visible}
                 onClose={() => { setVisible(false); }}
@@ -116,6 +142,6 @@ export default function UpdatingImage({ offline }: Props) {
             }
             <span className="bottom-left">{timeToSunrise}</span>
             {outOfOrder ? <p className="ooo" >Temporarily Out of Order</p> : null}
-        </>
+        </Row>
     )
 }

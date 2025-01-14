@@ -329,12 +329,12 @@ const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
         svg.append("text").attr("x", xa(350) - 20).attr("y", ya(460) + 67).text(direction + " Deg")
 
 
-        svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400)).text("Cliff \u27C2 wind:")
-        svg.append("text").attr("x", xa(-490) + 90).attr("y", ya(-400)).text((Math.cos((direction - 265) * Math.PI / 180) * speed).toFixed(1) + " mph")
+        svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400)).text("Cliff \u27C2 wind: " + (Math.cos((direction - 265) * Math.PI / 180) * speed).toFixed(1) + " mph")
+        // svg.append("text").attr("x", xa(-490) + 90).attr("y", ya(-400)).text((Math.cos((direction - 265) * Math.PI / 180) * speed).toFixed(1) + " mph")
         const cross = Math.abs(Math.sin((direction - 265) * Math.PI / 180) * speed).toFixed(1)
         const crossDir = Math.sin((direction - 265) * Math.PI / 180) > 0 ? 'S' : 'N'
-        svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400) + 18).text("Cross wind:")
-        svg.append("text").attr("x", xa(-490) + 90).attr("y", ya(-400) + 18).text(cross + " mph " + crossDir)
+        svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400) + 18).text("Cross wind: " + cross + " mph " + crossDir)
+        // svg.append("text").attr("x", xa(-490) + 90).attr("y", ya(-400) + 18).text(cross + " mph " + crossDir)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data, lastSeen])
 
