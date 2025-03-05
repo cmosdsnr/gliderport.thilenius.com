@@ -521,7 +521,7 @@ app.get("/fileList", (req, res) => {
             res.send(results);
             return;
           }
-          results.images[year].debug = months;
+          console.log(JSON.stringify(months));
 
           months.forEach((month) => {
             // scan that directory for 'nn' format directories (two numbers) that are directories themselves
