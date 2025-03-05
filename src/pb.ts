@@ -42,15 +42,15 @@ export const pbInit = () => {
       // if (!fs.existsSync(logsDir)) console.log("ERROR!!! could not find server directory", logsDir);
       connected = await testConnection(firstPass);
 
-      if (!connected) {
-        url = "https://pocketbase.thilenius.com";
-        // let res = await fetch(url);
-        pb = new PocketBase(url);
-        pb.autoCancellation(false);
-        //   logsDir = __dirname + `/../public/logs/`;
-        //   if (!fs.existsSync(logsDir)) console.log("ERROR!!! could not find local directory", logsDir);
-        connected = await testConnection(false);
-      }
+      //   if (!connected) {
+      //     url = "https://pocketbase.thilenius.com";
+      //     // let res = await fetch(url);
+      //     pb = new PocketBase(url);
+      //     pb.autoCancellation(false);
+      //     //   logsDir = __dirname + `/../public/logs/`;
+      //     //   if (!fs.existsSync(logsDir)) console.log("ERROR!!! could not find local directory", logsDir);
+      //     connected = await testConnection(false);
+      //   }
       firstPass = false;
       if (!connected) {
         console.log("Retrying in 15 seconds...");
