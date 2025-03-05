@@ -424,11 +424,11 @@ function getFileDate(filePath: string): Date | null {
 
 interface ImageStats {
   earliestFile: string;
-  earliestTime: Date | string;
+  earliestTime?: number;
   isContinuous: boolean;
   formatType: number; // 0:image1000.jpg 1:image10000.jpg 2:image-1/2-10000.jpg
   lastFile: string;
-  lastTime: Date | string;
+  lastTime?: number;
   numFiles: number;
   numMissing: number;
   error?: string;
@@ -443,14 +443,15 @@ function getImageStats(directoryPath: string): ImageStats {
     isContinuous: true,
     numFiles: 0,
     numMissing: 0,
-    earliestTime: new Date(),
-    lastTime: new Date(0),
     earliestFile: "",
     lastFile: "",
     formatType: -1,
     smallestIndex: 999999,
     largestIndex: 0,
   };
+  let ed = new Date();
+  let ld = new Date(0);
+
   try {
     const files = fs.readdirSync(directoryPath);
     files.forEach((file: string) => {
@@ -466,12 +467,12 @@ function getImageStats(directoryPath: string): ImageStats {
       }
       const fileDate = getFileDate(directoryPath + "/" + file);
       if (fileDate) {
-        if (fileDate < results.earliestTime) {
-          results.earliestTime = fileDate;
+        if (fileDate < ed) {
+          ed = fileDate;
           results.earliestFile = file;
         }
-        if (fileDate > results.lastTime) {
-          results.lastTime = fileDate;
+        if (fileDate > ld) {
+          ld = fileDate;
           results.lastFile = file;
         }
       }
@@ -490,8 +491,8 @@ function getImageStats(directoryPath: string): ImageStats {
         results.numMissing++;
       }
     }
-    results.earliestTime = (results.earliestTime as Date).toLocaleTimeString();
-    results.lastTime = (results.lastTime as Date).toLocaleTimeString();
+    results.earliestTime = ed.getTime();
+    results.lastTime = ld.getTime();
     return results;
   } catch (err: any) {
     console.error(err);
