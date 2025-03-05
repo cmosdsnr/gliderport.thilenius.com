@@ -19,7 +19,32 @@ import { handleHits } from "./src/handleHits";
 import AddData from "./src/AddData";
 
 import OffTime from "./src/images/offTime.jpg";
+import { format } from "path";
+
+// A node server used to:
+// 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
+// 2. respond to the following calls:
+//  a. '/getLastEntry'  : called from Pi3: return the last entry in gliderport db
+//  b. '/ImageAdded'    : called from Pi3: Update the time the last image was added to now in the server_sent table
+//  c. '/addData'       : called from Pi3: with new record(s)
+//  d. '/updateSmallImage' : called from Pi3: Update the small image data
+//  e. '/updateBigImage' :  called from Pi3: Update the large image data
 //
+// For Debug
+//  a. '/current1.jpg'      : browser call to get latest small image (left Camera)
+//  b. '/currentBig1.jpg'   : browser call to get latest large image (left Camera)
+//  c. '/current2.jpg'      : browser call to get latest small image (Right Camera)
+//  d. '/currentBig2.jpg'   : browser call to get latest large image (Right Camera)
+//  e. '/info'              : browser call to get lots of info about current situation
+//  f. '/UpdateSun'         : browser call to update sunrise/set data
+//  g. '/ReportEveryMinute' : browser call to toggle reporting of online status
+//  h. '/fileList'          : browser call to get list of files in /app/video
+//   DEFUNCT procedures
+//  a. '/ImageAdded'    : DEFUNCT, Image data is now added directly thru AddData
+//                          WAS: called from Pi3: Update the time the last image was added to now in the server_sent table
+//  b. '/UpdateStatus'  : DEFUNCT, status is checked locally now
+//                          WAS: called from Pi4: Online status was checked so update those fields in server_sent and network_status
+
 dotenv.config();
 
 //log in to firebase
@@ -54,29 +79,6 @@ const resetAllSentTexts = () => {
 process.env.TZ = "America/Los_Angeles";
 globals.offset = -60000 * new Date().getTimezoneOffset(); //to ms 60s/min*1000ms/s
 console.log("offset ", globals.offset);
-// A node server used to:
-// 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
-// 2. respond to the following calls:
-//  a. '/getLastEntry'  : called from Pi3: return the last entry in gliderport db
-//  b. '/ImageAdded'    : called from Pi3: Update the time the last image was added to now in the server_sent table
-//  c. '/addData'       : called from Pi3: with new record(s)
-//  d. '/updateSmallImage' : called from Pi3: Update the small image data
-//  e. '/updateBigImage' :  called from Pi3: Update the large image data
-//
-// For Debug
-//  a. '/current1.jpg'      : browser call to get latest small image (left Camera)
-//  b. '/currentBig1.jpg'   : browser call to get latest large image (left Camera)
-//  c. '/current2.jpg'      : browser call to get latest small image (Right Camera)
-//  d. '/currentBig2.jpg'   : browser call to get latest large image (Right Camera)
-//  e. '/info'              : browser call to get lots of info about current situation
-//  f. '/UpdateSun'         : browser call to update sunrise/set data
-//  g. '/ReportEveryMinute' : browser call to toggle reporting of online status
-//
-//   DEFUNCT procedures
-//  a. '/ImageAdded'    : DEFUNCT, Image data is now added directly thru AddData
-//                          WAS: called from Pi3: Update the time the last image was added to now in the server_sent table
-//  b. '/UpdateStatus'  : DEFUNCT, status is checked locally now
-//                          WAS: called from Pi4: Online status was checked so update those fields in server_sent and network_status
 
 let sql: string = "";
 let onlineStatus: number = 0;
@@ -152,9 +154,7 @@ let id = setInterval(() => {
 }, 1 * 3600 * 1000); // every 1 hours
 
 //call every minute
-
 const url = "http://104.36.31.118:8080/";
-
 let cnt = 0;
 
 let pingTimer = setInterval(() => {
@@ -234,53 +234,6 @@ app.use(
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
-app.post("/uploadVideo", async (req, res) => {
-  try {
-    if (!req.files) {
-      res.send({
-        status: false,
-        message: "No file uploaded",
-      });
-    } else {
-      let video = req.files.video as fileUpload.UploadedFile;
-      video.mv("/app/video/" + video.name);
-
-      //send response
-      res.send({
-        status: true,
-        message: "File is uploaded",
-        data: {
-          name: video.name,
-          mimetype: video.mimetype,
-          size: video.size,
-        },
-      });
-    }
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
-app.post("/addVideo", (req, res) => {
-  if (req.body.A === undefined) {
-    res.json("no A record");
-    return;
-  }
-  if (req.body.name === undefined) {
-    res.json("no name record");
-    return;
-  }
-  var videoBuffer = Buffer.from(req.body.A, "base64");
-  if (videoBuffer.length < 1000) {
-    res.json("no valid data A");
-    return;
-  }
-  console.log("name: ", req.body.name, " base64: ", req.body.A.length, " binary: ", videoBuffer.length);
-  fs.writeFile(`/app/video/${req.body.name}.mp4`, videoBuffer, (err) => {
-    if (err) throw err;
-    res.json("Ok");
-  });
-});
 
 let imageBuffer: Buffer;
 let imageBuffer1: Buffer, imageBigBuffer1: Buffer;
@@ -448,4 +401,147 @@ app.get("/PhoneFinder", (req, res) => {
   } else {
     res.send("none");
   }
+});
+
+function isDirectory(path: string): boolean {
+  try {
+    return fs.statSync(path).isDirectory();
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+}
+
+function getFileDate(filePath: string): Date | null {
+  try {
+    const stats = fs.statSync(filePath);
+    return stats.mtime;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+
+interface ImageStats {
+  earliestFile: string;
+  earliestTime: Date;
+  isContinuous: boolean;
+  formatType: number; // 0:image1000.jpg 1:image10000.jpg 2:image-1/2-10000.jpg
+  lastFile: string;
+  lastTime: Date;
+  numFiles: number;
+  numMissing: number;
+  error?: string;
+  smallestIndex: number;
+  largestIndex: number;
+}
+
+function getImageStats(directoryPath: string): ImageStats {
+  let index: boolean[] = Array(9999).fill(false);
+
+  const results: ImageStats = {
+    isContinuous: true,
+    numFiles: 0,
+    numMissing: 0,
+    earliestTime: new Date(),
+    lastTime: new Date(0),
+    earliestFile: "",
+    lastFile: "",
+    formatType: -1,
+    smallestIndex: 999999,
+    largestIndex: 0,
+  };
+  try {
+    const files = fs.readdirSync(directoryPath);
+    files.forEach((file: string) => {
+      results.numFiles++;
+      if (results.formatType === -1) {
+        if (file.match(/image\d{4}.jpg/)) {
+          results.formatType = 0;
+        } else if (file.match(/image\d{5}.jpg/)) {
+          results.formatType = 1;
+        } else if (file.match(/image-\d-\d{5}.jpg/)) {
+          results.formatType = 2;
+        }
+      }
+      const fileDate = getFileDate(directoryPath + "/" + file);
+      if (fileDate) {
+        if (fileDate < results.earliestTime) {
+          results.earliestTime = fileDate;
+          results.earliestFile = file;
+        }
+        if (fileDate > results.lastTime) {
+          results.lastTime = fileDate;
+          results.lastFile = file;
+        }
+      }
+      const filePath = `${directoryPath}/${file}`;
+      //extract the 4 or 5 digit number from the name
+      let num = parseInt(file.match(/\d{4,5}/)![0]);
+      if (results.formatType == 0) num -= 1000;
+      else num -= 10000;
+      index[num] = true;
+      if (num > results.largestIndex) results.largestIndex = num;
+      if (num < results.smallestIndex) results.smallestIndex = num;
+    });
+    for (let i = results.smallestIndex; i <= results.largestIndex; i++) {
+      if (!index[i]) {
+        results.isContinuous = false;
+        results.numMissing++;
+      }
+    }
+    return results;
+  } catch (err: any) {
+    console.error(err);
+    results.error = err.message;
+    return results;
+  }
+}
+
+app.get("/fileList", (req, res) => {
+  let results: any = { images: {}, videos: {} };
+  //scan the /app/gliderport directory for directories of the form 20xx where xx are numbers
+  fs.readdir("/app/gliderport", (err, files) => {
+    if (err) {
+      console.log(err.message);
+      results.error = err.message;
+      res.send(results);
+      return;
+    }
+    files.forEach((year) => {
+      if (year == "video") {
+      }
+
+      if (year.match(/^\d{4}$/) && isDirectory(`/app/gliderport/${year}`)) {
+        results.images[year] = {};
+        fs.readdir(`/app/gliderport/${year}`, (err, months) => {
+          if (err) {
+            console.log(err.message);
+            results.error = err.message;
+            res.send(results);
+            return;
+          }
+          months.forEach((month) => {
+            // scan that directory for 'nn' format directories (two numbers) that are directories themselves
+            if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
+              results.images[year][month] = {};
+              fs.readdir(`/app/gliderport/${year}/${month}`, (err, days) => {
+                if (err) {
+                  console.log(err.message);
+                  results.error = err.message;
+                  res.send(results);
+                  return;
+                }
+                days.forEach((day) => {
+                  // scan that directory for year-month-day format directories (two numbers) that are directories themselves
+                  results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+                });
+              });
+            }
+          });
+        });
+      }
+    });
+    res.send(results);
+  });
 });
