@@ -492,6 +492,7 @@ function getImageStats(directoryPath: string): ImageStats {
     }
     results.earliestTime = results.earliestTime.toLocaleString();
     results.lastTime = results.lastTime.toLocaleString();
+    return results;
   } catch (err: any) {
     console.error(err);
     results.error = err.message;
