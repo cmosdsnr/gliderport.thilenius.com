@@ -517,9 +517,8 @@ app.get("/fileList", (req, res) => {
           let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
           for (let k = 0; k < days.length; k++) {
             let day = days[k];
-            results.images[year][month][day] = {};
             // scan that directory for year-month-day format directories (two numbers) that are directories themselves
-            // results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+            results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
           }
         }
       }
