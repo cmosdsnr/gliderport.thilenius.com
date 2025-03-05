@@ -501,52 +501,29 @@ function getImageStats(directoryPath: string): ImageStats {
 app.get("/fileList", (req, res) => {
   let results: any = { images: {}, videos: {} };
   //scan the /app/gliderport directory for directories of the form 20xx where xx are numbers
-  fs.readdir("/app/gliderport", (err, files) => {
-    if (err) {
-      console.log(err.message);
-      results.error = err.message;
-      res.send(results);
-      return;
+  let files = fs.readdirSync("/app/gliderport");
+  for (let i = 0; i < files.length; i++) {
+    let year = files[i];
+    if (year == "video") {
     }
-    for (let i = 0; i < files.length; i++) {
-      let year = files[i];
-      if (year == "video") {
-      }
-
-      if (year.match(/^\d{4}$/) && isDirectory(`/app/gliderport/${year}`)) {
-        results.images[year] = {};
-        fs.readdir(`/app/gliderport/${year}`, (err, months) => {
-          if (err) {
-            console.log(err.message);
-            results.error = err.message;
-            res.send(results);
-            return;
+    if (year.match(/^\d{4}$/) && isDirectory(`/app/gliderport/${year}`)) {
+      results.images[year] = {};
+      let months = fs.readdirSync(`/app/gliderport/${year}`);
+      for (let j = 0; j < months.length; j++) {
+        let month = months[j];
+        // scan that directory for 'nn' format directories (two numbers) that are directories themselves
+        if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
+          results.images[year][month] = {};
+          let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
+          for (let k = 0; k < days.length; k++) {
+            let day = days[k];
+            results.images[year][month][day] = {};
+            // scan that directory for year-month-day format directories (two numbers) that are directories themselves
+            // results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
           }
-          console.log(JSON.stringify(months));
-          for (let j = 0; j < months.length; j++) {
-            let month = months[j];
-            // scan that directory for 'nn' format directories (two numbers) that are directories themselves
-            if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
-              results.images[year][month] = {};
-              fs.readdir(`/app/gliderport/${year}/${month}`, (err, days) => {
-                if (err) {
-                  console.log(err.message);
-                  results.error = err.message;
-                  res.send(results);
-                  return;
-                }
-                for (let k = 0; k < days.length; k++) {
-                  let day = days[k];
-                  results.images[year][month][day] = {};
-                  // scan that directory for year-month-day format directories (two numbers) that are directories themselves
-                  // results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-                }
-              });
-            }
-          }
-        });
+        }
       }
     }
-  });
+  }
   res.send(results);
 });
