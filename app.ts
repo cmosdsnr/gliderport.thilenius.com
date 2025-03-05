@@ -424,11 +424,11 @@ function getFileDate(filePath: string): Date | null {
 
 interface ImageStats {
   earliestFile: string;
-  earliestTime: Date;
+  earliestTime: Date | string;
   isContinuous: boolean;
   formatType: number; // 0:image1000.jpg 1:image10000.jpg 2:image-1/2-10000.jpg
   lastFile: string;
-  lastTime: Date;
+  lastTime: Date | string;
   numFiles: number;
   numMissing: number;
   error?: string;
@@ -490,7 +490,8 @@ function getImageStats(directoryPath: string): ImageStats {
         results.numMissing++;
       }
     }
-    return results;
+    results.earliestTime = results.earliestTime.toLocaleString();
+    results.lastTime = results.lastTime.toLocaleString();
   } catch (err: any) {
     console.error(err);
     results.error = err.message;
