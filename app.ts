@@ -60,7 +60,7 @@ onAuthStateChanged(auth, async (user) => {
       globals.textWatch = {};
       querySnapshot.forEach((document) => {
         const d = document.data();
-        console.log(document.id, " ", d);
+        // console.log(document.id, " ", d);
         globals.textWatch[document.id] = d;
       });
     });
@@ -518,7 +518,7 @@ app.get("/fileList", (req, res) => {
           for (let k = 0; k < days.length; k++) {
             let day = days[k];
             // scan that directory for year-month-day format directories (two numbers) that are directories themselves
-            if (year == "2021" && month == "08" && day == "2021-08-10")
+            if (year == "2021" && month == "08")
               results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
             else results.images[year][month][day] = {};
           }

@@ -221,6 +221,6 @@ export const handleHits = async (connection: mysql.Connection) => {
   retString += "totals plot length  : " + t.weeks.totals.length + "</br>";
   retString += "uniques plot length : " + t.weeks.uniques.length + "</br>";
   retString += "last totaled        : " + t.total.date + "</br>";
-  console.log(retString);
+  //   console.log(retString);
   return retString;
 };
