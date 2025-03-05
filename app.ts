@@ -508,7 +508,8 @@ app.get("/fileList", (req, res) => {
       res.send(results);
       return;
     }
-    files.forEach((year) => {
+    for (let i = 0; i < files.length; i++) {
+      let year = files[i];
       if (year == "video") {
       }
 
@@ -522,8 +523,8 @@ app.get("/fileList", (req, res) => {
             return;
           }
           console.log(JSON.stringify(months));
-
-          months.forEach((month) => {
+          for (let j = 0; j < months.length; j++) {
+            let month = months[j];
             // scan that directory for 'nn' format directories (two numbers) that are directories themselves
             if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
               results.images[year][month] = {};
@@ -534,16 +535,18 @@ app.get("/fileList", (req, res) => {
                   res.send(results);
                   return;
                 }
-                days.forEach((day) => {
+                for (let k = 0; k < days.length; k++) {
+                  let day = days[k];
+                  results.images[year][month][day] = {};
                   // scan that directory for year-month-day format directories (two numbers) that are directories themselves
-                  //   results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-                });
+                  // results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+                }
               });
             }
-          });
+          }
         });
       }
-    });
-    res.send(results);
+    }
   });
+  res.send(results);
 });
