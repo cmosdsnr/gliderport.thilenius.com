@@ -490,8 +490,8 @@ function getImageStats(directoryPath: string): ImageStats {
         results.numMissing++;
       }
     }
-    // results.earliestTime = results.earliestTime.toLocaleString();
-    // results.lastTime = results.lastTime.toLocaleString();
+    results.earliestTime = results.earliestTime.toLocaleString();
+    results.lastTime = results.lastTime.toLocaleString();
     return results;
   } catch (err: any) {
     console.error(err);
