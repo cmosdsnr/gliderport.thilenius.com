@@ -1,4 +1,6 @@
 import express from "express";
+
+import { pb, pbInit } from "./src/pb.js";
 import dotenv from "dotenv";
 import mysql from "mysql2";
 import fs from "fs";
@@ -11,13 +13,12 @@ import { auth, db } from "./src/firebase.js";
 import { onSnapshot, doc, setDoc, collection, query, where } from "firebase/firestore";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
-import { globals } from "./src/globals";
+import { globals } from "./src/globals.js";
 import { sendTextMessage } from "./src/sendTextMessage.js";
 import { info } from "./src/info.js";
-import { timestampToString } from "./src/timeConversion";
-import { handleHits } from "./src/handleHits";
-import AddData from "./src/AddData";
-
+import { timestampToString } from "./src/timeConversion.js";
+import { handleHits } from "./src/handleHits.js";
+import AddData from "./src/AddData.js";
 import OffTime from "./src/images/offTime.jpg";
 import { format } from "path";
 
@@ -45,8 +46,8 @@ import { format } from "path";
 //  b. '/UpdateStatus'  : DEFUNCT, status is checked locally now
 //                          WAS: called from Pi4: Online status was checked so update those fields in server_sent and network_status
 
+await pbInit();
 dotenv.config();
-
 //log in to firebase
 signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123");
 
@@ -94,7 +95,7 @@ d = new AddData(connection);
 
 connection?.connect(async function (err) {
   if (err) throw err;
-  console.log("Connected!");
+  console.log("MySQL Connected!");
   // get server_sent data
   connection?.query("SELECT * FROM `server_sent` WHERE `id`=1", function (err, results, fields) {
     if (Array.isArray(results)) onlineStatus = (results[0] as ServerSentTable).online_status;
@@ -215,22 +216,23 @@ app.listen(port, () => {
 app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
 var corsOptions = {
-  origin: [/gliderport.*thilenius.*/, /localhost.*/],
+  origin: [/gliderport.*thilenius.*/, /localhost.*/, /.*/],
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 //
 app.use(cors(corsOptions));
-app.use(express.static("/app/video"));
+app.use(express.static("/app/gliderport"));
 
 // enable files upload
-app.use(
-  fileUpload({
-    createParentPath: true,
-    limits: {
-      fileSize: 2 * 1024 * 1024 * 1024, //2GB max file(s) size
-    },
-  })
-);
+
+// const options: fileUpload.Options = {
+//   createParentPath: true,
+//   limits: {
+//     fileSize: 2 * 1024 * 1024 * 1024, //2GB max file(s) size
+//   },
+// };
+
+// app.use(fileUpload(options));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -532,3 +534,5 @@ app.get("/fileList", (req, res) => {
   }
   res.send(results);
 });
+
+// pbInit();

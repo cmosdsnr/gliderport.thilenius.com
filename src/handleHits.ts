@@ -1,6 +1,6 @@
 import mysql from "mysql2";
-import { getSQLDate } from "./timeConversion";
-import { globals } from "./globals";
+import { getSQLDate } from "./timeConversion.js";
+import { globals } from "./globals.js";
 
 const getWeekCount = async (start: string, stop: string, connection: mysql.Connection) => {
   let startDay = start;
