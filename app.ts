@@ -536,7 +536,7 @@ app.get("/fileList", (req, res) => {
                 }
                 days.forEach((day) => {
                   // scan that directory for year-month-day format directories (two numbers) that are directories themselves
-                  results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+                  //   results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
                 });
               });
             }
