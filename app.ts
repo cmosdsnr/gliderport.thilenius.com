@@ -175,7 +175,7 @@ const go = async () => {
             results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
             results.images[year][month][day].video = fs
               .readdirSync(`/app/gliderport/video/${year}/`)
-              .filter((fn) => fn.match(`/^${year}-${month}-${day}.*mp4$/`));
+              .filter((fn) => fn.match(`/^${day}.*mp4$/`));
             console.log("results: ", JSON.stringify(results.images[year][month][day]));
           }
           const id = ToId(year + month);
