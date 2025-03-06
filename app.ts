@@ -57,7 +57,7 @@ function isDirectory(path: string): boolean {
   try {
     return fs.statSync(path).isDirectory();
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     return false;
   }
 }
@@ -103,7 +103,7 @@ function getImageStats(directoryPath: string): ImageStats {
   let ld = new Date(0);
 
   try {
-    const files = fs.readdirSync(directoryPath); //.filter((fn) => fn.match(`/image/`));
+    const files = fs.readdirSync(directoryPath);
     files.forEach((file: string) => {
       if (file.match(/image/)) {
         results.numFiles++;
@@ -136,7 +136,7 @@ function getImageStats(directoryPath: string): ImageStats {
         if (num > results.largestIndex) results.largestIndex = num;
         if (num < results.smallestIndex) results.smallestIndex = num;
       } else {
-        console.log("skipping ", file);
+        // console.log("skipping ", file);
       }
     });
     for (let i = results.smallestIndex; i <= results.largestIndex; i++) {
