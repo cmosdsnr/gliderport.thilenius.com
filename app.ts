@@ -21,7 +21,6 @@ import { handleHits } from "./src/handleHits.js";
 import AddData from "./src/AddData.js";
 import OffTime from "./src/images/offTime.jpg";
 import { format } from "path";
-import { console } from "inspector";
 
 // A node server used to:
 // 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
@@ -157,7 +156,7 @@ function getImageStats(directoryPath: string): ImageStats {
 }
 
 //scan all files and create the information database
-const go = async () => {
+const scanEntireDirectory = async () => {
   let videos: any = {};
   let files = fs.readdirSync("/app/gliderport/video");
   for (let i = 0; i < files.length; i++) {
@@ -189,7 +188,6 @@ const go = async () => {
             // 'day' is like 2024-10-12
             images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
             images[year][month][day].video = videos[year].filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
-            if (day == "2024-12-14") images[year][month][day].debug = videos[year];
           }
           const id = ToId(year + month);
           console.log("id: ", id);
@@ -202,8 +200,62 @@ const go = async () => {
     }
   }
 };
-await go();
-console.log("done with go");
+
+const scanLatestDirectory = async () => {
+  const mostRecent = await pb.collection("ImageFileData").getList(1, 1, {
+    sort: "-id", // descending
+  });
+  // id has format 000000000202503 where 2025 is the year and 03 is the month
+  let year = mostRecent.items[0].id.slice(9, 13);
+  let month = mostRecent.items[0].id.slice(13, 15);
+
+  console.log("mostRecent: ", mostRecent.items[0].id, "year:", year, "month:", month);
+
+  if (isDirectory(`/app/gliderport/${year}/${month}`)) {
+    console.log("rescan", `/app/gliderport/${year}/${month}`);
+    let res: any = {};
+    let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
+    let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
+    for (let k = 0; k < days.length; k++) {
+      let day = days[k];
+      res[day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+      res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
+    }
+    const id = ToId(year + month);
+    console.log("id: ", id);
+    await pb
+      .collection("ImageFileData")
+      .update(id, { data: res })
+      .catch((err: any) => console.error(err.message));
+  } else console.log("directory does not exist");
+
+  month = parseInt(month) + 1;
+  if (month > 12) {
+    month = 1;
+    year = parseInt(year) + 1;
+  }
+  if (fs.readdirSync(`/app/gliderport/${year}/${month}`)) {
+    console.log("scan", `/app/gliderport/${year}/${month}`);
+    let res: any = {};
+    let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
+    let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
+    for (let k = 0; k < days.length; k++) {
+      let day = days[k];
+      res[day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+      res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
+    }
+    const id = ToId(year.toString() + month.toString().padStart(2, "0"));
+    await pb
+      .collection("ImageFileData")
+      .create({ id, data: res })
+      .catch((err: any) => console.error(err.message));
+  }
+};
+
+// everyday at between 1-2am local time, call backup
+setInterval(() => {
+  if (new Date().getHours() == 1) scanLatestDirectory();
+}, 3600000); // 1 hr
 
 dotenv.config();
 //log in to firebase
@@ -398,6 +450,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 let imageBuffer: Buffer;
 let imageBuffer1: Buffer, imageBigBuffer1: Buffer;
 let imageBuffer2: Buffer, imageBigBuffer2: Buffer;
+
+app.get("/debug", async (req, res) => {
+  console.log("debug called");
+  await scanLatestDirectory();
+  res.json({ status: "ok", hr: new Date().getHours() });
+});
 
 app.post("/updateImage", (req, res) => {
   imageBuffer = Buffer.from(req.body.A, "base64");

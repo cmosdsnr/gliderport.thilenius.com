@@ -57,7 +57,6 @@ export const pbInit = () => {
         await delay(15000); // Wait for 15 seconds before retrying
       }
     }
-    console.log("url: ", url);
     while (!loggedIn) {
       try {
         authData = await pb.admins.authWithPassword("stephen@thilenius.com", "Qwe123qwe!");
