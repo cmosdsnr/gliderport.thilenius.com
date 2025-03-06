@@ -160,6 +160,7 @@ const go = async () => {
   let images: any = {};
   //scan the /app/gliderport directory for directories of the form 20xx where xx are numbers
   let files = fs.readdirSync("/app/gliderport");
+  console.log("files: ", files.length);
   for (let i = 0; i < files.length; i++) {
     let year = files[i];
     if (year == "video") {
@@ -176,6 +177,8 @@ const go = async () => {
           let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
           for (let k = 0; k < days.length; k++) {
             let day = days[k];
+
+            console.log("day: ", day);
             // 'day' is like 2024-10-12
             images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
 
