@@ -177,9 +177,15 @@ const go = async () => {
             let day = days[k];
             // 'day' is like 2024-10-12
             results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-            results.images[year][month][day].video = fs
-              .readdirSync(`/app/gliderport/video/${year}/`)
-              .filter((fn) => fn.match(`/^${day}.*mp4$/`));
+            let r = fs.readdirSync(`/app/gliderport/video/${year}/`);
+            results.images[year][month][day].video = r.filter((fn) => fn.match(`/${day}/`));
+            results.images[year][month][day].video2 = [];
+            r.forEach((fn) => {
+              if (fn.match(`/${day}/`)) results.images[year][month][day].video2.push(fn);
+            });
+            // results.images[year][month][day].video = fs
+            //   .readdirSync(`/app/gliderport/video/${year}/`)
+            //   .filter((fn) => fn.match(`/^${day}.*mp4$/`));
             console.log("results: ", JSON.stringify(results.images[year][month][day]));
           }
           const id = ToId(year + month);
