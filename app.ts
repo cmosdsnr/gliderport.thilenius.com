@@ -21,6 +21,7 @@ import { handleHits } from "./src/handleHits.js";
 import AddData from "./src/AddData.js";
 import OffTime from "./src/images/offTime.jpg";
 import { format } from "path";
+import { console } from "inspector";
 
 // A node server used to:
 // 1. check every hour if it's a new day and update sunrise/set data (updateSunData)
@@ -503,7 +504,11 @@ function getImageStats(directoryPath: string): ImageStats {
   }
 }
 
-app.get("/fileList", (req, res) => {
+const ToId = (x: string) => {
+  return "0".repeat(15 - x.length) + x;
+};
+
+const go = async () => {
   let results: any = { images: {}, videos: {} };
   //scan the /app/gliderport directory for directories of the form 20xx where xx are numbers
   let files = fs.readdirSync("/app/gliderport");
@@ -523,16 +528,21 @@ app.get("/fileList", (req, res) => {
           for (let k = 0; k < days.length; k++) {
             let day = days[k];
             // scan that directory for year-month-day format directories (two numbers) that are directories themselves
-            if (year == "2021" && month == "08" && day == "2021-08-10") {
-              results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-              console.log("results: ", JSON.stringify(results.images[year][month][day]));
-            } else results.images[year][month][day] = {};
+            //   if (year == "2021" && month == "08" && day == "2021-08-10") {
+            results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+            console.log("results: ", JSON.stringify(results.images[year][month][day]));
+            //   } else results.images[year][month][day] = {};
           }
+          const id = ToId(year + month);
+          console.log("id: ", id);
+          await pb
+            .collection("ImageFileData")
+            .create({ id, data: results.images[year][month] })
+            .catch((err: any) => console.error(err.message));
         }
       }
     }
   }
-  res.send(results);
-});
+};
 
-// pbInit();
+go();
