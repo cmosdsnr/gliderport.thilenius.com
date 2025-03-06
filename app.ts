@@ -103,37 +103,41 @@ function getImageStats(directoryPath: string): ImageStats {
   let ld = new Date(0);
 
   try {
-    const files = fs.readdirSync(directoryPath).filter((fn) => fn.match(`/^image.*$/`));
+    const files = fs.readdirSync(directoryPath); //.filter((fn) => fn.match(`/image/`));
     files.forEach((file: string) => {
-      results.numFiles++;
-      if (results.formatType === -1) {
-        if (file.match(/image\d{4}.jpg/)) {
-          results.formatType = 0;
-        } else if (file.match(/image\d{5}.jpg/)) {
-          results.formatType = 1;
-        } else if (file.match(/image-\d-\d{5}.jpg/)) {
-          results.formatType = 2;
+      if (file.match(/image/)) {
+        results.numFiles++;
+        if (results.formatType === -1) {
+          if (file.match(/image\d{4}.jpg/)) {
+            results.formatType = 0;
+          } else if (file.match(/image\d{5}.jpg/)) {
+            results.formatType = 1;
+          } else if (file.match(/image-\d-\d{5}.jpg/)) {
+            results.formatType = 2;
+          }
         }
+        const fileDate = getFileDate(directoryPath + "/" + file);
+        if (fileDate) {
+          if (fileDate < ed) {
+            ed = fileDate;
+            results.earliestFile = file;
+          }
+          if (fileDate > ld) {
+            ld = fileDate;
+            results.lastFile = file;
+          }
+        }
+        const filePath = `${directoryPath}/${file}`;
+        //extract the 4 or 5 digit number from the name
+        let num = parseInt(file.match(/\d{4,5}/)![0]);
+        if (results.formatType == 0) num -= 1000;
+        else num -= 10000;
+        index[num] = true;
+        if (num > results.largestIndex) results.largestIndex = num;
+        if (num < results.smallestIndex) results.smallestIndex = num;
+      } else {
+        console.log("skipping ", file);
       }
-      const fileDate = getFileDate(directoryPath + "/" + file);
-      if (fileDate) {
-        if (fileDate < ed) {
-          ed = fileDate;
-          results.earliestFile = file;
-        }
-        if (fileDate > ld) {
-          ld = fileDate;
-          results.lastFile = file;
-        }
-      }
-      const filePath = `${directoryPath}/${file}`;
-      //extract the 4 or 5 digit number from the name
-      let num = parseInt(file.match(/\d{4,5}/)![0]);
-      if (results.formatType == 0) num -= 1000;
-      else num -= 10000;
-      index[num] = true;
-      if (num > results.largestIndex) results.largestIndex = num;
-      if (num < results.smallestIndex) results.smallestIndex = num;
     });
     for (let i = results.smallestIndex; i <= results.largestIndex; i++) {
       if (!index[i]) {
