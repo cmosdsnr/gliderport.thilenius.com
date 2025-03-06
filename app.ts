@@ -169,6 +169,7 @@ const go = async () => {
       let months = fs.readdirSync(`/app/gliderport/${year}`);
       for (let j = 0; j < months.length; j++) {
         let month = months[j];
+        console.log("month: ", month);
         // scan that directory for 'nn' format directories (two numbers) that are directories themselves
         if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
           images[year][month] = {};
@@ -177,12 +178,13 @@ const go = async () => {
             let day = days[k];
             // 'day' is like 2024-10-12
             images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+
             let r = fs.readdirSync(`/app/gliderport/video/${year}`);
             console.log("r: ", r.length, "in", `/app/gliderport/video/${year}`);
             images[year][month][day].video = r.filter((fn) => fn.match(`/${day}/`));
-            images[year][month][day].video2 = [];
+            images[year][month][day].videox = [];
             r.forEach((fn) => {
-              if (fn.match(`/${day}/`)) images[year][month][day].video2.push(fn);
+              if (fn.match(`/${day}/`)) images[year][month][day].videox.push(fn);
             });
             // results.images[year][month][day].video = fs
             //   .readdirSync(`/app/gliderport/video/${year}/`)
