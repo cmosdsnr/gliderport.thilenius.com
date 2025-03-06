@@ -157,7 +157,7 @@ function getImageStats(directoryPath: string): ImageStats {
 
 //scan all files and create teh information database
 const go = async () => {
-  let results: any = { images: {}, videos: {} };
+  let images: any = {};
   //scan the /app/gliderport directory for directories of the form 20xx where xx are numbers
   let files = fs.readdirSync("/app/gliderport");
   for (let i = 0; i < files.length; i++) {
@@ -165,34 +165,35 @@ const go = async () => {
     if (year == "video") {
     }
     if (year.match(/^\d{4}$/) && isDirectory(`/app/gliderport/${year}`)) {
-      results.images[year] = {};
+      images[year] = {};
       let months = fs.readdirSync(`/app/gliderport/${year}`);
       for (let j = 0; j < months.length; j++) {
         let month = months[j];
         // scan that directory for 'nn' format directories (two numbers) that are directories themselves
         if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
-          results.images[year][month] = {};
+          images[year][month] = {};
           let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
           for (let k = 0; k < days.length; k++) {
             let day = days[k];
             // 'day' is like 2024-10-12
-            results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-            let r = fs.readdirSync(`/app/gliderport/video/${year}/`);
-            results.images[year][month][day].video = r.filter((fn) => fn.match(`/${day}/`));
-            results.images[year][month][day].video2 = [];
+            images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+            let r = fs.readdirSync(`/app/gliderport/video/${year}`);
+            console.log("r: ", r.length, "in", `/app/gliderport/video/${year}`);
+            images[year][month][day].video = r.filter((fn) => fn.match(`/${day}/`));
+            images[year][month][day].video2 = [];
             r.forEach((fn) => {
-              if (fn.match(`/${day}/`)) results.images[year][month][day].video2.push(fn);
+              if (fn.match(`/${day}/`)) images[year][month][day].video2.push(fn);
             });
             // results.images[year][month][day].video = fs
             //   .readdirSync(`/app/gliderport/video/${year}/`)
             //   .filter((fn) => fn.match(`/^${day}.*mp4$/`));
-            console.log("results: ", JSON.stringify(results.images[year][month][day]));
+            console.log("results: ", JSON.stringify(images[year][month][day]));
           }
           const id = ToId(year + month);
           console.log("id: ", id);
           await pb
             .collection("ImageFileData")
-            .update(id, { data: results.images[year][month] })
+            .update(id, { data: images[year][month] })
             .catch((err: any) => console.error(err.message));
         }
       }
