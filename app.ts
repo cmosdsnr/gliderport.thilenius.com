@@ -48,6 +48,7 @@ import { console } from "inspector";
 //                          WAS: called from Pi4: Online status was checked so update those fields in server_sent and network_status
 
 await pbInit();
+console.log("pocketbase logged in and connected");
 
 const ToId = (x: string) => {
   return "0".repeat(15 - x.length) + x;
@@ -185,10 +186,10 @@ const go = async () => {
             let r = fs.readdirSync(`/app/gliderport/video/${year}`);
             console.log("r: ", r.length, "in", `/app/gliderport/video/${year}`);
             images[year][month][day].video = r.filter((fn) => fn.match(`/${day}/`));
-            images[year][month][day].videox = r.length;
-            r.forEach((fn) => {
-              if (fn.match(`/${day}/`)) images[year][month][day].videox.push(fn);
-            });
+            images[year][month][day].videox = r;
+            // r.forEach((fn) => {
+            //   if (fn.match(`/${day}/`)) images[year][month][day].videox.push(fn);
+            // });
             // results.images[year][month][day].video = fs
             //   .readdirSync(`/app/gliderport/video/${year}/`)
             //   .filter((fn) => fn.match(`/^${day}.*mp4$/`));
