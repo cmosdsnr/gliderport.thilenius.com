@@ -186,13 +186,10 @@ const go = async () => {
           let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
           for (let k = 0; k < days.length; k++) {
             let day = days[k];
-            if (day === "2024-12-14") images[year][month][day].debug = videos[year];
-
-            // console.log("day: ", day);
             // 'day' is like 2024-10-12
             images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-            // let r = fs.readdirSync(`/app/gliderport/video/${year}`);
             images[year][month][day].video = videos[year].filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
+            if (day == "2024-12-14") images[year][month][day].debug = videos[year];
           }
           const id = ToId(year + month);
           console.log("id: ", id);
