@@ -155,7 +155,7 @@ function getImageStats(directoryPath: string): ImageStats {
   }
 }
 
-//scan all files and create teh information database
+//scan all files and create the information database
 const go = async () => {
   let images: any = {};
   //scan the /app/gliderport directory for directories of the form 20xx where xx are numbers
@@ -185,7 +185,7 @@ const go = async () => {
             let r = fs.readdirSync(`/app/gliderport/video/${year}`);
             console.log("r: ", r.length, "in", `/app/gliderport/video/${year}`);
             images[year][month][day].video = r.filter((fn) => fn.match(`/${day}/`));
-            images[year][month][day].videox = [];
+            images[year][month][day].videox = r.length;
             r.forEach((fn) => {
               if (fn.match(`/${day}/`)) images[year][month][day].videox.push(fn);
             });
