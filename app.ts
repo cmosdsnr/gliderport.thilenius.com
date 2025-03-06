@@ -171,12 +171,14 @@ const go = async () => {
           let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
           for (let k = 0; k < days.length; k++) {
             let day = days[k];
-            if (day.match(/^image.*$/)) {
+            if (day.match(/^image\.*$/)) {
               results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
               results.images[year][month][day].video = fs
                 .readdirSync(`/app/gliderport/video/${year}/`)
-                .filter((fn) => fn.match(`/^${year}-${month}-${day}.*mp4$/`));
+                .filter((fn) => fn.match(`/^${year}-${month}-${day}\.*mp4$/`));
               console.log("results: ", JSON.stringify(results.images[year][month][day]));
+            } else {
+              console.log("day didn't match: ", day);
             }
           }
           const id = ToId(year + month);
