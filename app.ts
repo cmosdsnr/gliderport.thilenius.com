@@ -191,6 +191,7 @@ const go = async () => {
   }
 };
 await go();
+console.log("done with go");
 
 dotenv.config();
 //log in to firebase
