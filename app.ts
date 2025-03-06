@@ -230,11 +230,15 @@ const scanLatestDirectory = async () => {
   } else console.log("directory does not exist");
 
   month = parseInt(month) + 1;
+  year = parseInt(year);
   if (month > 12) {
     month = 1;
-    year = parseInt(year) + 1;
+    year = year + 1;
   }
-  if (fs.readdirSync(`/app/gliderport/${year}/${month}`)) {
+  month = month.toString().padStart(2, "0");
+  year = year.toString();
+
+  if (isDirectory(`/app/gliderport/${year}/${month}`)) {
     console.log("scan", `/app/gliderport/${year}/${month}`);
     let res: any = {};
     let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
@@ -244,7 +248,7 @@ const scanLatestDirectory = async () => {
       res[day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
       res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
     }
-    const id = ToId(year.toString() + month.toString().padStart(2, "0"));
+    const id = ToId(year + month);
     await pb
       .collection("ImageFileData")
       .create({ id, data: res })
@@ -434,14 +438,12 @@ app.use(cors(corsOptions));
 app.use(express.static("/app/gliderport"));
 
 // enable files upload
-
 // const options: fileUpload.Options = {
 //   createParentPath: true,
 //   limits: {
 //     fileSize: 2 * 1024 * 1024 * 1024, //2GB max file(s) size
 //   },
 // };
-
 // app.use(fileUpload(options));
 
 app.use(bodyParser.json());
