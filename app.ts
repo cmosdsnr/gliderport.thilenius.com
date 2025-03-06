@@ -103,7 +103,7 @@ function getImageStats(directoryPath: string): ImageStats {
   let ld = new Date(0);
 
   try {
-    const files = fs.readdirSync(directoryPath);
+    const files = fs.readdirSync(directoryPath).filter((fn) => fn.match(`/^image.*$/`));
     files.forEach((file: string) => {
       results.numFiles++;
       if (results.formatType === -1) {
@@ -171,15 +171,12 @@ const go = async () => {
           let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
           for (let k = 0; k < days.length; k++) {
             let day = days[k];
-            if (day.match(/^image\.*$/)) {
-              results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-              results.images[year][month][day].video = fs
-                .readdirSync(`/app/gliderport/video/${year}/`)
-                .filter((fn) => fn.match(`/^${year}-${month}-${day}\.*mp4$/`));
-              console.log("results: ", JSON.stringify(results.images[year][month][day]));
-            } else {
-              console.log("day didn't match: ", day);
-            }
+            // 'day' is like 2024-10-12
+            results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+            results.images[year][month][day].video = fs
+              .readdirSync(`/app/gliderport/video/${year}/`)
+              .filter((fn) => fn.match(`/^${year}-${month}-${day}.*mp4$/`));
+            console.log("results: ", JSON.stringify(results.images[year][month][day]));
           }
           const id = ToId(year + month);
           console.log("id: ", id);
