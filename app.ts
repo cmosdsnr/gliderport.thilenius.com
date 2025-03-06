@@ -48,6 +48,50 @@ import { console } from "inspector";
 //                          WAS: called from Pi4: Online status was checked so update those fields in server_sent and network_status
 
 await pbInit();
+
+const ToId = (x: string) => {
+  return "0".repeat(15 - x.length) + x;
+};
+
+const go = async () => {
+  let results: any = { images: {}, videos: {} };
+  //scan the /app/gliderport directory for directories of the form 20xx where xx are numbers
+  let files = fs.readdirSync("/app/gliderport");
+  for (let i = 0; i < files.length; i++) {
+    let year = files[i];
+    if (year == "video") {
+    }
+    if (year.match(/^\d{4}$/) && isDirectory(`/app/gliderport/${year}`)) {
+      results.images[year] = {};
+      let months = fs.readdirSync(`/app/gliderport/${year}`);
+      for (let j = 0; j < months.length; j++) {
+        let month = months[j];
+        // scan that directory for 'nn' format directories (two numbers) that are directories themselves
+        if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
+          results.images[year][month] = {};
+          let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
+          for (let k = 0; k < days.length; k++) {
+            let day = days[k];
+            // scan that directory for year-month-day format directories (two numbers) that are directories themselves
+            //   if (year == "2021" && month == "08" && day == "2021-08-10") {
+            results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+            console.log("results: ", JSON.stringify(results.images[year][month][day]));
+            //   } else results.images[year][month][day] = {};
+          }
+          const id = ToId(year + month);
+          console.log("id: ", id);
+          await pb
+            .collection("ImageFileData")
+            .create({ id, data: results.images[year][month] })
+            .catch((err: any) => console.error(err.message));
+        }
+      }
+    }
+  }
+};
+
+await go();
+
 dotenv.config();
 //log in to firebase
 signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123");
@@ -503,46 +547,3 @@ function getImageStats(directoryPath: string): ImageStats {
     return results;
   }
 }
-
-const ToId = (x: string) => {
-  return "0".repeat(15 - x.length) + x;
-};
-
-const go = async () => {
-  let results: any = { images: {}, videos: {} };
-  //scan the /app/gliderport directory for directories of the form 20xx where xx are numbers
-  let files = fs.readdirSync("/app/gliderport");
-  for (let i = 0; i < files.length; i++) {
-    let year = files[i];
-    if (year == "video") {
-    }
-    if (year.match(/^\d{4}$/) && isDirectory(`/app/gliderport/${year}`)) {
-      results.images[year] = {};
-      let months = fs.readdirSync(`/app/gliderport/${year}`);
-      for (let j = 0; j < months.length; j++) {
-        let month = months[j];
-        // scan that directory for 'nn' format directories (two numbers) that are directories themselves
-        if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
-          results.images[year][month] = {};
-          let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
-          for (let k = 0; k < days.length; k++) {
-            let day = days[k];
-            // scan that directory for year-month-day format directories (two numbers) that are directories themselves
-            //   if (year == "2021" && month == "08" && day == "2021-08-10") {
-            results.images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-            console.log("results: ", JSON.stringify(results.images[year][month][day]));
-            //   } else results.images[year][month][day] = {};
-          }
-          const id = ToId(year + month);
-          console.log("id: ", id);
-          await pb
-            .collection("ImageFileData")
-            .create({ id, data: results.images[year][month] })
-            .catch((err: any) => console.error(err.message));
-        }
-      }
-    }
-  }
-};
-
-// go();
