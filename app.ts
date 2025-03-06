@@ -1,6 +1,4 @@
 import express from "express";
-
-import { pb, pbInit } from "./src/pb.js";
 import dotenv from "dotenv";
 import mysql from "mysql2";
 import fs from "fs";
@@ -19,6 +17,15 @@ import { info } from "./src/info.js";
 import { timestampToString } from "./src/timeConversion.js";
 import { handleHits } from "./src/handleHits.js";
 import AddData from "./src/AddData.js";
+import { log } from "./src/log.js";
+import {
+  scanEntireDirectory,
+  scanLatestDirectory,
+  createListingRecord,
+  getListingRecord,
+  getImageData,
+} from "./src/ImageFiles.js";
+
 import OffTime from "./src/images/offTime.jpg";
 import { format } from "path";
 
@@ -45,221 +52,6 @@ import { format } from "path";
 //                          WAS: called from Pi3: Update the time the last image was added to now in the server_sent table
 //  b. '/UpdateStatus'  : DEFUNCT, status is checked locally now
 //                          WAS: called from Pi4: Online status was checked so update those fields in server_sent and network_status
-
-await pbInit();
-console.log("pocketbase logged in and connected");
-
-const ToId = (x: string) => {
-  return "0".repeat(15 - x.length) + x;
-};
-
-function isDirectory(path: string): boolean {
-  try {
-    return fs.statSync(path).isDirectory();
-  } catch (err) {
-    // console.error(err);
-    return false;
-  }
-}
-
-function getFileDate(filePath: string): Date | null {
-  try {
-    const stats = fs.statSync(filePath);
-    return stats.mtime;
-  } catch (err) {
-    console.error(err);
-    return null;
-  }
-}
-
-interface ImageStats {
-  earliestFile: string;
-  earliestTime?: number;
-  isContinuous: boolean;
-  formatType: number; // 0:image1000.jpg 1:image10000.jpg 2:image-1/2-10000.jpg
-  lastFile: string;
-  lastTime?: number;
-  numFiles: number;
-  numMissing: number;
-  error?: string;
-  smallestIndex: number;
-  largestIndex: number;
-}
-
-function getImageStats(directoryPath: string): ImageStats {
-  let index: boolean[] = Array(9999).fill(false);
-
-  const results: ImageStats = {
-    isContinuous: true,
-    numFiles: 0,
-    numMissing: 0,
-    earliestFile: "",
-    lastFile: "",
-    formatType: -1,
-    smallestIndex: 999999,
-    largestIndex: 0,
-  };
-  let ed = new Date();
-  let ld = new Date(0);
-
-  try {
-    const files = fs.readdirSync(directoryPath);
-    files.forEach((file: string) => {
-      if (file.match(/image/)) {
-        results.numFiles++;
-        if (results.formatType === -1) {
-          if (file.match(/image\d{4}.jpg/)) {
-            results.formatType = 0;
-          } else if (file.match(/image\d{5}.jpg/)) {
-            results.formatType = 1;
-          } else if (file.match(/image-\d-\d{5}.jpg/)) {
-            results.formatType = 2;
-          }
-        }
-        const fileDate = getFileDate(directoryPath + "/" + file);
-        if (fileDate) {
-          if (fileDate < ed) {
-            ed = fileDate;
-            results.earliestFile = file;
-          }
-          if (fileDate > ld) {
-            ld = fileDate;
-            results.lastFile = file;
-          }
-        }
-        const filePath = `${directoryPath}/${file}`;
-        //extract the 4 or 5 digit number from the name
-        let num = parseInt(file.match(/\d{4,5}/)![0]);
-        if (results.formatType == 0) num -= 1000;
-        else num -= 10000;
-        index[num] = true;
-        if (num > results.largestIndex) results.largestIndex = num;
-        if (num < results.smallestIndex) results.smallestIndex = num;
-      } else {
-        // console.log("skipping ", file);
-      }
-    });
-    for (let i = results.smallestIndex; i <= results.largestIndex; i++) {
-      if (!index[i]) {
-        results.isContinuous = false;
-        results.numMissing++;
-      }
-    }
-    results.earliestTime = ed.getTime();
-    results.lastTime = ld.getTime();
-    return results;
-  } catch (err: any) {
-    console.error(err);
-    results.error = err.message;
-    return results;
-  }
-}
-
-//scan all files and create the information database
-const scanEntireDirectory = async () => {
-  let videos: any = {};
-  let files = fs.readdirSync("/app/gliderport/video");
-  for (let i = 0; i < files.length; i++) {
-    let year = files[i];
-    if (year.match(/^\d{4}$/) && isDirectory(`/app/gliderport/video/${year}`))
-      videos[year] = fs.readdirSync(`/app/gliderport/video/${year}`);
-  }
-
-  let images: any = {};
-  //scan the /app/gliderport directory for directories of the form 20xx where xx are numbers
-  files = fs.readdirSync("/app/gliderport");
-  //   console.log("files: ", files.length);
-  for (let i = 0; i < files.length; i++) {
-    let year = files[i];
-    if (year == "video") {
-    }
-    if (year.match(/^\d{4}$/) && isDirectory(`/app/gliderport/${year}`)) {
-      images[year] = {};
-      let months = fs.readdirSync(`/app/gliderport/${year}`);
-      for (let j = 0; j < months.length; j++) {
-        let month = months[j];
-        // console.log("month: ", month);
-        // scan that directory for 'nn' format directories (two numbers) that are directories themselves
-        if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
-          images[year][month] = {};
-          let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
-          for (let k = 0; k < days.length; k++) {
-            let day = days[k];
-            // 'day' is like 2024-10-12
-            images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-            images[year][month][day].video = videos[year].filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
-          }
-          const id = ToId(year + month);
-          console.log("id: ", id);
-          await pb
-            .collection("ImageFileData")
-            .update(id, { data: images[year][month] })
-            .catch((err: any) => console.error(err.message));
-        }
-      }
-    }
-  }
-};
-
-const scanLatestDirectory = async () => {
-  const mostRecent = await pb.collection("ImageFileData").getList(1, 1, {
-    sort: "-id", // descending
-  });
-  // id has format 000000000202503 where 2025 is the year and 03 is the month
-  let year = mostRecent.items[0].id.slice(9, 13);
-  let month = mostRecent.items[0].id.slice(13, 15);
-
-  console.log("mostRecent: ", mostRecent.items[0].id, "year:", year, "month:", month);
-
-  if (isDirectory(`/app/gliderport/${year}/${month}`)) {
-    console.log("rescan", `/app/gliderport/${year}/${month}`);
-    let res: any = {};
-    let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
-    let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
-    for (let k = 0; k < days.length; k++) {
-      let day = days[k];
-      res[day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-      res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
-    }
-    const id = ToId(year + month);
-    console.log("id: ", id);
-    await pb
-      .collection("ImageFileData")
-      .update(id, { data: res })
-      .catch((err: any) => console.error(err.message));
-  } else console.log("directory does not exist");
-
-  month = parseInt(month) + 1;
-  year = parseInt(year);
-  if (month > 12) {
-    month = 1;
-    year = year + 1;
-  }
-  month = month.toString().padStart(2, "0");
-  year = year.toString();
-
-  if (isDirectory(`/app/gliderport/${year}/${month}`)) {
-    console.log("scan", `/app/gliderport/${year}/${month}`);
-    let res: any = {};
-    let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
-    let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
-    for (let k = 0; k < days.length; k++) {
-      let day = days[k];
-      res[day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-      res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
-    }
-    const id = ToId(year + month);
-    await pb
-      .collection("ImageFileData")
-      .create({ id, data: res })
-      .catch((err: any) => console.error(err.message));
-  }
-};
-
-// everyday at between 1-2am local time, call backup
-setInterval(() => {
-  if (new Date().getHours() == 1) scanLatestDirectory();
-}, 3600000); // 1 hr
 
 dotenv.config();
 //log in to firebase
@@ -332,7 +124,7 @@ let sunData: SunCalc.GetTimesResult;
 let reportEveryMin = false; //for debugging the online status test
 
 const updateSunData = (ts = 0) => {
-  // La Jola lat/long
+  // La Jolla lat/long
   const lat = 32.89;
   const long = -117.25;
   const d = ts > 0 ? new Date(ts * 1000) : new Date();
@@ -454,9 +246,28 @@ let imageBuffer1: Buffer, imageBigBuffer1: Buffer;
 let imageBuffer2: Buffer, imageBigBuffer2: Buffer;
 
 app.get("/debug", async (req, res) => {
-  console.log("debug called");
-  await scanLatestDirectory();
-  res.json({ status: "ok", hr: new Date().getHours() });
+  res.json({ status: "ok" });
+});
+
+app.get("/scanLatestDirectory", async (req, res) => {
+  res.json(await scanLatestDirectory());
+});
+
+app.get("/createListingRecord", async (req, res) => {
+  createListingRecord();
+  res.json({ status: "ok" });
+});
+
+app.get("/listing", async (req, res) => {
+  res.json(await getListingRecord());
+});
+
+app.get("/getImageData", async (req, res) => {
+  if (req.query.year === undefined)
+    return res.status(400).json({ error: "year not provided", ...req.query, help: "add ?year=2025 to the url" });
+  if (req.query.month === undefined)
+    return res.status(400).json({ error: "month not provided", ...req.query, help: "add ?month=4 to the url" });
+  res.json(await getImageData(parseInt(req.query.year as string), parseInt(req.query.month as string)));
 });
 
 app.post("/updateImage", (req, res) => {
@@ -556,6 +367,21 @@ app.get("/UpdateSun", async (req, res) => {
     x += "</h3>";
     res.send(x);
   } else res.send("<h1>No connection to database</h1>");
+});
+
+app.get("/current", function (req, res) {
+  if (req.query.camera === undefined || (req.query.camera != "1" && req.query.camera != "2"))
+    return res.status(400).json({ error: "camera not valid", ...req.query, help: "add ?camera=1|2 to the url" });
+  if (req.query.size === undefined || (req.query.size != "b" && req.query.size != "s"))
+    return res.status(400).json({ error: "size not valid", ...req.query, help: "add ?size=b|s to the url" });
+  res.contentType("image/jpeg");
+  if (req.query.camera == "1") {
+    if (req.query.size == "b") res.send(imageBigBuffer1);
+    else res.send(imageBuffer1);
+  } else {
+    if (req.query.size == "b") res.send(imageBigBuffer2);
+    else res.send(imageBuffer2);
+  }
 });
 
 // peak at current image

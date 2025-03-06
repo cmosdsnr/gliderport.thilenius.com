@@ -241,3 +241,17 @@ type DataType = {
   pressure: number[];
   temperature: number[];
 };
+
+interface ImageStats {
+  earliestFile: string;
+  earliestTime?: number;
+  isContinuous: boolean;
+  formatType: number; // 0:image1000.jpg 1:image10000.jpg 2:image-1/2-10000.jpg
+  lastFile: string;
+  lastTime?: number;
+  numFiles: number;
+  numMissing: number;
+  error?: string;
+  smallestIndex: number;
+  largestIndex: number;
+}
