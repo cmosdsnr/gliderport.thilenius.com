@@ -59,7 +59,7 @@ dotenv.config();
 //log in to firebase
 try {
   signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123");
-} catch (e) {
+} catch (e: any) {
   console.log("error logging in to firebase", e.message);
 }
 
