@@ -6,7 +6,8 @@ import { Request, Response } from "express";
 import { app, startExpress } from "./src/express.js";
 startExpress();
 
-import "./src/listEndpoints.ts";
+import { listEndpoints } from "./src/listEndpoints.js";
+app.use(listEndpoints());
 import { auth, db } from "./src/firebase.js";
 import { onSnapshot, doc, setDoc, collection, query, where } from "firebase/firestore";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
