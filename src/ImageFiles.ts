@@ -45,6 +45,10 @@ function getImageStats(directoryPath: string): ImageStats {
 
   try {
     const files = fs.readdirSync(directoryPath);
+    if (!files || files.length === 0) {
+      log("getImageStats", "no files in ", directoryPath);
+      return results;
+    }
     if (files[0].match(/image\d{4}.jpg/)) {
       results.formatType = 0;
     } else if (files[0].match(/image\d{5}.jpg/)) {
@@ -96,7 +100,13 @@ function getImageStats(directoryPath: string): ImageStats {
       results.CameraA.isContinuous &&
       results.CameraA.largestIndex - results.CameraA.smallestIndex + 1 != results.CameraA.numFiles
     )
-      log("CameraA: ", results.CameraA.largestIndex, results.CameraA.smallestIndex, results.CameraA.numFiles);
+      log(
+        "getImageStats",
+        "CameraA: ",
+        results.CameraA.largestIndex,
+        results.CameraA.smallestIndex,
+        results.CameraA.numFiles
+      );
 
     if (results.CameraB) {
       for (let i = results.CameraB.smallestIndex; i <= results.CameraB.largestIndex; i++) {
@@ -110,11 +120,17 @@ function getImageStats(directoryPath: string): ImageStats {
         results.CameraB.isContinuous &&
         results.CameraB.largestIndex - results.CameraB.smallestIndex + 1 != results.CameraB.numFiles
       )
-        log("CameraB: ", results.CameraB.largestIndex, results.CameraB.smallestIndex, results.CameraB.numFiles);
+        log(
+          "getImageStats",
+          "CameraB: ",
+          results.CameraB.largestIndex,
+          results.CameraB.smallestIndex,
+          results.CameraB.numFiles
+        );
     }
     return results;
   } catch (err: any) {
-    console.error(err);
+    log("getImageStats", err.message);
     results.error = err.message;
     return results;
   }
