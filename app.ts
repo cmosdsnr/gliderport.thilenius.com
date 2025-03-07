@@ -227,7 +227,8 @@ app.get("/scanLatestDirectory", async (req: Request, res: Response) => {
 });
 
 app.get("/scanEntireDirectory", async (req: Request, res: Response) => {
-  res.json(await scanEntireDirectory());
+  scanEntireDirectory();
+  res.json({ status: "ok" });
 });
 
 app.get("/createListingRecord", async (req: Request, res: Response) => {
