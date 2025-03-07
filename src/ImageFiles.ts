@@ -1,6 +1,6 @@
 import fs from "fs";
 import { isDirectory } from "./fileOps.js";
-
+import { log } from "./log.js";
 import { pb, pbInit } from "./pb.js";
 await pbInit();
 
@@ -8,10 +8,10 @@ const ToId = (x: string) => {
   return "0".repeat(15 - x.length) + x;
 };
 
-function getFileDate(filePath: string): Date | null {
+function getFileDate(filePath: string): number | null {
   try {
     const stats = fs.statSync(filePath);
-    return stats.mtime;
+    return stats.mtime.getTime();
   } catch (err) {
     console.error(err);
     return null;
@@ -19,66 +19,115 @@ function getFileDate(filePath: string): Date | null {
 }
 
 function getImageStats(directoryPath: string): ImageStats {
-  let index: boolean[] = Array(9999).fill(false);
+  let indexA: boolean[] = Array(9999).fill(false);
+  let indexB: boolean[] = Array(9999).fill(false);
 
   const results: ImageStats = {
-    isContinuous: true,
-    numFiles: 0,
-    numMissing: 0,
-    earliestFile: "",
-    lastFile: "",
-    formatType: -1,
-    smallestIndex: 999999,
-    largestIndex: 0,
+    CameraA: {
+      // original camera pointing right
+      starting: {
+        file: "",
+        time: +Infinity,
+      },
+      ending: {
+        file: "",
+        time: -Infinity,
+      },
+      smallestIndex: 0,
+      largestIndex: 0,
+      numFiles: 0,
+      numMissing: 0,
+      isContinuous: false,
+      video: false,
+    },
+    formatType: 0, // 0:image1000.jpg 1:image10000.jpg 2:image-1/2-10000.jpg
   };
-  let ed = new Date();
-  let ld = new Date(0);
 
   try {
     const files = fs.readdirSync(directoryPath);
+    if (files[0].match(/image\d{4}.jpg/)) {
+      results.formatType = 0;
+    } else if (files[0].match(/image\d{5}.jpg/)) {
+      results.formatType = 1;
+    } else if (files[0].match(/image-\d-\d{5}.jpg/)) {
+      results.formatType = 2;
+      results.CameraB = {
+        // second camera pointing left
+        starting: {
+          file: "",
+          time: +Infinity,
+        },
+        ending: {
+          file: "",
+          time: -Infinity,
+        },
+        smallestIndex: 0,
+        largestIndex: 0,
+        numFiles: 0,
+        numMissing: 0,
+        isContinuous: false,
+        video: false,
+      };
+    }
     files.forEach((file: string) => {
       if (file.match(/image/)) {
-        results.numFiles++;
-        if (results.formatType === -1) {
-          if (file.match(/image\d{4}.jpg/)) {
-            results.formatType = 0;
-          } else if (file.match(/image\d{5}.jpg/)) {
-            results.formatType = 1;
-          } else if (file.match(/image-\d-\d{5}.jpg/)) {
-            results.formatType = 2;
-          }
+        let Camera = results.CameraA;
+        let Index = indexA;
+        if (results.formatType == 2 && file.match(/-2-/)) {
+          Camera = results.CameraB!;
+          Index = indexB;
         }
+        Camera.numFiles++;
         const fileDate = getFileDate(directoryPath + "/" + file);
         if (fileDate) {
-          if (fileDate < ed) {
-            ed = fileDate;
-            results.earliestFile = file;
+          if (fileDate < Camera.starting.time) {
+            Camera.starting.time = fileDate;
+            Camera.starting.file = file;
           }
-          if (fileDate > ld) {
-            ld = fileDate;
-            results.lastFile = file;
+          if (fileDate > Camera.ending.time) {
+            Camera.ending.time = fileDate;
+            Camera.ending.file = file;
           }
         }
-        const filePath = `${directoryPath}/${file}`;
+
         //extract the 4 or 5 digit number from the name
         let num = parseInt(file.match(/\d{4,5}/)![0]);
         if (results.formatType == 0) num -= 1000;
         else num -= 10000;
-        index[num] = true;
-        if (num > results.largestIndex) results.largestIndex = num;
-        if (num < results.smallestIndex) results.smallestIndex = num;
+        Index[num] = true;
+        if (num > Camera.largestIndex) Camera.largestIndex = num;
+        if (num < Camera.smallestIndex) Camera.smallestIndex = num;
       } else {
-        // console.log("skipping ", file);
+        // log("skipping ", file);
       }
     });
-    for (let i = results.smallestIndex; i <= results.largestIndex; i++) {
-      if (!index[i]) {
-        results.isContinuous = false;
-        results.numMissing++;
+    for (let i = results.CameraA.smallestIndex; i <= results.CameraA.largestIndex; i++) {
+      if (!indexA[i]) {
+        results.CameraA.isContinuous = false;
+        results.CameraA.numMissing++;
       }
     }
-    results.earliestTime = ed.getTime();
-    results.lastTime = ld.getTime();
+
+    if (
+      results.CameraA.isContinuous &&
+      results.CameraA.largestIndex - results.CameraA.smallestIndex + 1 != results.CameraA.numFiles
+    )
+      log("CameraA: ", results.CameraA.largestIndex, results.CameraA.smallestIndex, results.CameraA.numFiles);
+
+    if (results.CameraB) {
+      for (let i = results.CameraB.smallestIndex; i <= results.CameraB.largestIndex; i++) {
+        if (!indexB[i]) {
+          results.CameraB.isContinuous = false;
+          results.CameraB.numMissing++;
+        }
+      }
+
+      if (
+        results.CameraB.isContinuous &&
+        results.CameraB.largestIndex - results.CameraB.smallestIndex + 1 != results.CameraB.numFiles
+      )
+        log("CameraB: ", results.CameraB.largestIndex, results.CameraB.smallestIndex, results.CameraB.numFiles);
+    }
     return results;
   } catch (err: any) {
     console.error(err);
@@ -97,10 +146,10 @@ export const scanEntireDirectory = async () => {
       videos[year] = fs.readdirSync(`/app/gliderport/video/${year}`);
   }
 
-  let images: any = {};
+  let images: Record<string, Record<string, Record<string, ImageStats>>> = {};
   //scan the /app/gliderport directory for directories of the form 20xx where xx are numbers
   files = fs.readdirSync("/app/gliderport");
-  //   console.log("files: ", files.length);
+  log("files: ", files.length);
   for (let i = 0; i < files.length; i++) {
     let year = files[i];
     if (year == "video") {
@@ -110,19 +159,23 @@ export const scanEntireDirectory = async () => {
       let months = fs.readdirSync(`/app/gliderport/${year}`);
       for (let j = 0; j < months.length; j++) {
         let month = months[j];
-        // console.log("month: ", month);
+        log("date: " + year + "/" + month);
         // scan that directory for 'nn' format directories (two numbers) that are directories themselves
         if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
           images[year][month] = {};
-          let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
-          for (let k = 0; k < days.length; k++) {
-            let day = days[k];
+          let dates = fs.readdirSync(`/app/gliderport/${year}/${month}`);
+          for (let k = 0; k < dates.length; k++) {
+            let date = dates[k];
             // 'day' is like 2024-10-12
-            images[year][month][day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-            images[year][month][day].video = videos[year].filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
+            images[year][month][date] = getImageStats(`/app/gliderport/${year}/${month}/${date}`);
+            const v = videos[year].filter((fn: string) => fn.match(new RegExp(`^${date}.*mp4$`)));
+            v.forEach((f: string) => {
+              if (f.match(/-2-/)) images[year][month][date].CameraB!.video = true;
+              else images[year][month][date].CameraA.video = true;
+            });
           }
           const id = ToId(year + month);
-          console.log("id: ", id);
+          log("id: ", id);
           await pb
             .collection("ImageFileData")
             .update(id, { data: images[year][month] })
@@ -180,10 +233,10 @@ export const scanLatestDirectory = async () => {
   let year = mostRecent.items[0].id.slice(9, 13);
   let month = mostRecent.items[0].id.slice(13, 15);
 
-  console.log("mostRecent: ", mostRecent.items[0].id, "year:", year, "month:", month);
+  log("mostRecent: ", mostRecent.items[0].id, "year:", year, "month:", month);
 
   if (isDirectory(`/app/gliderport/${year}/${month}`)) {
-    console.log("rescan", `/app/gliderport/${year}/${month}`);
+    log("rescan", `/app/gliderport/${year}/${month}`);
     listing.data[year][month] = [];
     let res: any = {};
     let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
@@ -195,7 +248,7 @@ export const scanLatestDirectory = async () => {
       listing.data[year][month].push(parseInt(day.slice(8, 10)));
     }
     const id = ToId(year + month);
-    console.log("id: ", id);
+    log("id: ", id);
     await pb
       .collection("ImageFileData")
       .update(id, { data: res })
@@ -204,7 +257,7 @@ export const scanLatestDirectory = async () => {
       .collection("ImageFileData")
       .update(listing.id, { data: listing.data })
       .catch((err: any) => console.error(err.message));
-  } else console.log("directory does not exist");
+  } else log("directory does not exist");
 
   month = parseInt(month) + 1;
   year = parseInt(year);
@@ -216,7 +269,7 @@ export const scanLatestDirectory = async () => {
   year = year.toString();
 
   if (isDirectory(`/app/gliderport/${year}/${month}`)) {
-    console.log("scan", `/app/gliderport/${year}/${month}`);
+    log("scan", `/app/gliderport/${year}/${month}`);
     let res: any = {};
     let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
     let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);

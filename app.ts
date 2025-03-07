@@ -253,6 +253,10 @@ app.get("/scanLatestDirectory", async (req, res) => {
   res.json(await scanLatestDirectory());
 });
 
+app.get("/scanEntireDirectory", async (req, res) => {
+  res.json(await scanEntireDirectory());
+});
+
 app.get("/createListingRecord", async (req, res) => {
   createListingRecord();
   res.json({ status: "ok" });

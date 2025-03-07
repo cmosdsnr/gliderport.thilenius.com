@@ -242,16 +242,25 @@ type DataType = {
   temperature: number[];
 };
 
-interface ImageStats {
-  earliestFile: string;
-  earliestTime?: number;
-  isContinuous: boolean;
-  formatType: number; // 0:image1000.jpg 1:image10000.jpg 2:image-1/2-10000.jpg
-  lastFile: string;
-  lastTime?: number;
-  numFiles: number;
-  numMissing: number;
-  error?: string;
+type CameraData = {
+  starting: {
+    file: string;
+    time: number;
+  };
+  ending: {
+    file: string;
+    time: number;
+  };
   smallestIndex: number;
   largestIndex: number;
+  numFiles: number;
+  numMissing: number;
+  isContinuous: boolean;
+  video: boolean;
+};
+interface ImageStats {
+  formatType: number; // 0:image1000.jpg 1:image10000.jpg 2:image-1/2-10000.jpg
+  error?: string;
+  CameraA: CameraData; // original camera pointing right
+  CameraB?: CameraData; // second camera pointing left
 }
