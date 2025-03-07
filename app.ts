@@ -2,6 +2,15 @@ import dotenv from "dotenv";
 import mysql from "mysql2";
 import SunCalc from "suncalc";
 
+import {
+  scanEntireDirectory,
+  scanLatestDirectory,
+  createListingRecord,
+  getListingRecord,
+  getImageData,
+} from "./src/ImageFiles.js";
+await scanEntireDirectory();
+
 import { Request, Response } from "express";
 import { app, startExpress } from "./src/express.js";
 startExpress();
@@ -20,13 +29,6 @@ import { timestampToString } from "./src/timeConversion.js";
 import { handleHits } from "./src/handleHits.js";
 import AddData from "./src/AddData.js";
 import { log } from "./src/log.js";
-import {
-  scanEntireDirectory,
-  scanLatestDirectory,
-  createListingRecord,
-  getListingRecord,
-  getImageData,
-} from "./src/ImageFiles.js";
 
 import OffTime from "./src/images/offTime.jpg";
 import { format } from "path";

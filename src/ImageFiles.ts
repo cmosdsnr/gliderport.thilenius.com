@@ -188,7 +188,6 @@ export const scanEntireDirectory = async () => {
     }
   }
 };
-scanEntireDirectory();
 
 //create the listing record
 export const createListingRecord = async () => {
