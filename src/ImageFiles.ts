@@ -133,7 +133,7 @@ export const scanEntireDirectory = async () => {
   let images: Record<string, Record<string, Record<string, ImageStats>>> = {};
   //scan the /app/gliderport directory for directories of the form 20xx where xx are numbers
   files = fs.readdirSync("/app/gliderport");
-  log("files: ", files.length);
+  log("scanEntireDirectory", "files: ", files.length);
   for (let i = 0; i < files.length; i++) {
     let year = files[i];
     if (year == "video") {
@@ -141,13 +141,16 @@ export const scanEntireDirectory = async () => {
     if (year.match(/^\d{4}$/) && isDirectory(`/app/gliderport/${year}`)) {
       images[year] = {};
       let months = fs.readdirSync(`/app/gliderport/${year}`);
+
+      log("scanEntireDirectory", months.length, "months to do this year");
       for (let j = 0; j < months.length; j++) {
         let month = months[j];
-        log("date: " + year + "/" + month);
+        log("scanEntireDirectory", "date: " + year + "/" + month);
         // scan that directory for 'nn' format directories (two numbers) that are directories themselves
         if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
           images[year][month] = {};
           let dates = fs.readdirSync(`/app/gliderport/${year}/${month}`);
+          log("scanEntireDirectory", dates.length, "dates to do this month");
           for (let k = 0; k < dates.length; k++) {
             let date = dates[k];
             // 'day' is like 2024-10-12
@@ -159,7 +162,7 @@ export const scanEntireDirectory = async () => {
             });
           }
           const id = ToId(year + month);
-          log("id: ", id);
+          log("scanEntireDirectory", "id: ", id);
           await pb
             .collection("ImageFileData")
             .update(id, { data: images[year][month] })
@@ -169,6 +172,7 @@ export const scanEntireDirectory = async () => {
     }
   }
 };
+scanEntireDirectory();
 
 //create the listing record
 export const createListingRecord = async () => {
