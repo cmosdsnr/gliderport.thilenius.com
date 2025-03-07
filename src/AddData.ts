@@ -5,6 +5,7 @@ import { sendTextMessage } from "./sendTextMessage";
 import { auth, db } from "./firebase.js";
 import { onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, collection, query, where } from "firebase/firestore";
 import SunCalc from "suncalc";
+import { Request, Response } from "express";
 
 export default class AddData {
   sunset: number;
@@ -546,19 +547,20 @@ export default class AddData {
     this.tsNow = Math.floor(Date.now() / 1000);
     globals.debugInfo.now = this.tsNow;
 
+    const body: any = req.body;
     //add data if it was present
-    if (req && "d" in req) {
-      console.log("addData d.length: ", req.d.length);
-      console.log("addData first one: ", req.d[0][0]);
+    if (body && "d" in body) {
+      console.log("addData d.length: ", body.d.length);
+      console.log("addData first one: ", body.d[0][0]);
 
       // if we switched to daylight savings time, there may be overlapping time
       let latest = new Date(globals.lastRecord);
-      let s = new Date(req.d[0][0]);
-      while (req.d.length > 0 && s < latest) {
-        req.d.shift();
-        s = new Date(req.d[0][0]);
+      let s = new Date(body.d[0][0]);
+      while (body.d.length > 0 && s < latest) {
+        body.d.shift();
+        s = new Date(body.d[0][0]);
       }
-      if (req.d.length > 0) await this.#insertData(req.d);
+      if (body.d.length > 0) await this.#insertData(body.d);
 
       if (this.tsNow > 3600 + sunrise && this.tsNow < sunset - 3600) this.#checkForTexts();
       this.updateHoursTable();

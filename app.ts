@@ -1,12 +1,12 @@
-import express from "express";
 import dotenv from "dotenv";
 import mysql from "mysql2";
-import fs from "fs";
-import bodyParser from "body-parser";
-import cors from "cors";
-import fileUpload from "express-fileupload";
 import SunCalc from "suncalc";
 
+import { Request, Response } from "express";
+import { app, startExpress } from "./src/express.js";
+startExpress();
+
+import "./src/listEndpoints.ts";
 import { auth, db } from "./src/firebase.js";
 import { onSnapshot, doc, setDoc, collection, query, where } from "firebase/firestore";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
@@ -212,61 +212,32 @@ let pingTimer = setInterval(() => {
 d.setLastRecord();
 console.log("last record set to: ", globals.lastRecord);
 
-const app = express();
-
-const port = process.env.PORT || 1234;
-app.listen(port, () => {
-  console.log(`Updater listening on port data.${port}`);
-});
-
-app.use(express.urlencoded({ extended: true, limit: "30mb" }));
-
-var corsOptions = {
-  origin: [/gliderport.*thilenius.*/, /localhost.*/, /.*/],
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-//
-app.use(cors(corsOptions));
-app.use(express.static("/app/gliderport"));
-
-// enable files upload
-// const options: fileUpload.Options = {
-//   createParentPath: true,
-//   limits: {
-//     fileSize: 2 * 1024 * 1024 * 1024, //2GB max file(s) size
-//   },
-// };
-// app.use(fileUpload(options));
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
 let imageBuffer: Buffer;
 let imageBuffer1: Buffer, imageBigBuffer1: Buffer;
 let imageBuffer2: Buffer, imageBigBuffer2: Buffer;
 
-app.get("/debug", async (req, res) => {
+app.get("/debug", async (req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
-app.get("/scanLatestDirectory", async (req, res) => {
+app.get("/scanLatestDirectory", async (req: Request, res: Response) => {
   res.json(await scanLatestDirectory());
 });
 
-app.get("/scanEntireDirectory", async (req, res) => {
+app.get("/scanEntireDirectory", async (req: Request, res: Response) => {
   res.json(await scanEntireDirectory());
 });
 
-app.get("/createListingRecord", async (req, res) => {
+app.get("/createListingRecord", async (req: Request, res: Response) => {
   createListingRecord();
   res.json({ status: "ok" });
 });
 
-app.get("/listing", async (req, res) => {
+app.get("/listing", async (req: Request, res: Response) => {
   res.json(await getListingRecord());
 });
 
-app.get("/getImageData", async (req, res) => {
+app.get("/getImageData", async (req: Request, res: Response) => {
   if (req.query.year === undefined)
     return res.status(400).json({ error: "year not provided", ...req.query, help: "add ?year=2025 to the url" });
   if (req.query.month === undefined)
@@ -274,20 +245,20 @@ app.get("/getImageData", async (req, res) => {
   res.json(await getImageData(parseInt(req.query.year as string), parseInt(req.query.month as string)));
 });
 
-app.post("/updateImage", (req, res) => {
+app.post("/updateImage", (req: Request, res: Response) => {
   imageBuffer = Buffer.from(req.body.A, "base64");
   let index = req.body.size + 2 * (req.body.camera - 1);
   connection?.query("UPDATE images SET d=? WHERE `id`=" + index, imageBuffer1, () => {});
   res.json("Ok");
 });
 
-app.post("/updateSmallImage1", (req, res) => {
+app.post("/updateSmallImage1", (req: Request, res: Response) => {
   imageBuffer1 = Buffer.from(req.body.A, "base64");
   connection?.query("UPDATE images SET d=? WHERE `id`=1", imageBuffer1, () => {});
   res.json("Ok");
 });
 
-app.post("/updateBigImage1", (req, res) => {
+app.post("/updateBigImage1", (req: Request, res: Response) => {
   //   console.log("updating big image");
   imageBigBuffer1 = Buffer.from(req.body.A, "base64");
   const ts = Math.floor(new Date().getTime() / 1000);
@@ -300,12 +271,12 @@ app.post("/updateBigImage1", (req, res) => {
   res.send("Ok");
 });
 
-app.post("/updateSmallImage2", (req, res) => {
+app.post("/updateSmallImage2", (req: Request, res: Response) => {
   imageBuffer2 = Buffer.from(req.body.A, "base64");
   connection?.query("UPDATE images SET d=? WHERE `id`=3", imageBuffer2, () => {});
   res.json("Ok");
 });
-app.post("/updateBigImage2", (req, res) => {
+app.post("/updateBigImage2", (req: Request, res: Response) => {
   //   console.log("updating big image");
   imageBigBuffer2 = Buffer.from(req.body.A, "base64");
   //   const ts = Math.floor(new Date().getTime() / 1000);
@@ -318,45 +289,45 @@ app.post("/updateBigImage2", (req, res) => {
   res.send("Ok");
 });
 
-app.get("/ReportEveryMinute", function (req, res) {
+app.get("/ReportEveryMinute", function (req: Request, res: Response) {
   reportEveryMin = !reportEveryMin;
   console.log("changing reportEveryMin to " + reportEveryMin);
   res.send("changing reportEveryMin to " + reportEveryMin);
 });
 
-app.get("/RegenerateAllHours", function (req, res) {
+app.get("/RegenerateAllHours", function (req: Request, res: Response) {
   console.log("regenerate all hours");
   if (connection) d.updateHoursTable(false);
   res.send("done");
 });
 
 // For testing, not usually called.
-app.get("/HandleHits", async (req, res) => {
+app.get("/HandleHits", async (req: Request, res: Response) => {
   if (connection) res.send(await handleHits(connection));
   else res.send("no connection to database");
 });
 
 // called to add new wind Data to the db
-app.post("/addData", async (req, res) => {
-  if (connection) d.add(req.body);
+app.post("/addData", async (req: Request, res: Response) => {
+  if (connection) d.add(req);
   else console.log("can't add data, no connection to database");
   res.send("ok");
 });
 
 // called by gliderport Pi3 to see what needs updating
-app.get("/getLastEntry", (req, res) => {
+app.get("/getLastEntry", (req: Request, res: Response) => {
   if (globals.lastRecord === "0") res.send("Error");
   else res.send(globals.lastRecord);
 });
 
 // called from browser for debug to display latest happenings
-app.get("/info", async (req, res) => {
+app.get("/info", async (req: Request, res: Response) => {
   if (connection) res.send(await info(connection));
   else res.send("<h1>No connection to database</h1>");
 });
 
 // called from browser for debug to display latest happenings
-app.get("/UpdateSun", async (req, res) => {
+app.get("/UpdateSun", async (req: Request, res: Response) => {
   if (connection) {
     updateSunData();
     let x = "<h3>Updated Sun Data<br>";
@@ -373,7 +344,7 @@ app.get("/UpdateSun", async (req, res) => {
   } else res.send("<h1>No connection to database</h1>");
 });
 
-app.get("/current", function (req, res) {
+app.get("/current", function (req: Request, res: Response) {
   if (req.query.camera === undefined || (req.query.camera != "1" && req.query.camera != "2"))
     return res.status(400).json({ error: "camera not valid", ...req.query, help: "add ?camera=1|2 to the url" });
   if (req.query.size === undefined || (req.query.size != "b" && req.query.size != "s"))
@@ -389,30 +360,30 @@ app.get("/current", function (req, res) {
 });
 
 // peak at current image
-app.get("/current1.jpg", function (req, res) {
+app.get("/current1.jpg", function (req: Request, res: Response) {
   res.contentType("image/jpeg");
   res.send(imageBuffer1);
 });
 
 // peak at current image
-app.get("/currentBig1.jpg", function (req, res) {
+app.get("/currentBig1.jpg", function (req: Request, res: Response) {
   res.contentType("image/jpeg");
   res.send(imageBigBuffer1);
 });
 
 // peak at current image
-app.get("/current2.jpg", function (req, res) {
+app.get("/current2.jpg", function (req: Request, res: Response) {
   res.contentType("image/jpeg");
   res.send(imageBuffer2);
 });
 
 // peak at current image
-app.get("/currentBig2.jpg", function (req, res) {
+app.get("/currentBig2.jpg", function (req: Request, res: Response) {
   res.contentType("image/jpeg");
   res.send(imageBigBuffer2);
 });
 
-app.get("/sendTestSms", (req, res) => {
+app.get("/sendTestSms", (req: Request, res: Response) => {
   if (
     "to" in req.query &&
     "name" in req.query &&
@@ -427,7 +398,7 @@ app.get("/sendTestSms", (req, res) => {
 });
 
 // Call to find out carrier of a phone number
-app.get("/PhoneFinder", (req, res) => {
+app.get("/PhoneFinder", (req: Request, res: Response) => {
   if ("area" in req.query && "prefix" in req.query && "number" in req.query) {
     // https://www.fonefinder.net/findome.php?npa=530&nxx=613&thoublock=5388&usaquerytype=Search+by+Number
     const url =
