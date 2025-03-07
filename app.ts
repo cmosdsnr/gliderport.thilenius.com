@@ -18,8 +18,8 @@ startExpress();
 import { listEndpoints } from "./src/listEndpoints.js";
 app.use(listEndpoints());
 
-import { auth, db } from "./src/firebase.js";
-import { onSnapshot, doc, setDoc, collection, query, where } from "firebase/firestore";
+import { auth, db, exportFirebase } from "./src/firebase.js";
+import { onSnapshot, collection, query, where } from "firebase/firestore";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
 import { globals } from "./src/globals.js";
@@ -221,6 +221,11 @@ let imageBuffer1: Buffer, imageBigBuffer1: Buffer;
 let imageBuffer2: Buffer, imageBigBuffer2: Buffer;
 
 app.get("/debug", async (req: Request, res: Response) => {
+  res.json({ status: "ok" });
+});
+
+app.get("/exportFirebase", async (req: Request, res: Response) => {
+  exportFirebase();
   res.json({ status: "ok" });
 });
 

@@ -2,8 +2,8 @@ import mysql from "mysql2";
 import { timestampToString } from "./timeConversion";
 import { globals } from "./globals";
 import { sendTextMessage } from "./sendTextMessage";
-import { auth, db } from "./firebase.js";
-import { onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, collection, query, where } from "firebase/firestore";
+import { db } from "./firebase.js";
+import { doc, setDoc } from "firebase/firestore";
 import SunCalc from "suncalc";
 import { Request, Response } from "express";
 
