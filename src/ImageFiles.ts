@@ -37,7 +37,7 @@ function getImageStats(directoryPath: string): ImageStats {
       largestIndex: 0,
       numFiles: 0,
       numMissing: 0,
-      isContinuous: false,
+      isContinuous: true,
       video: false,
     },
     formatType: 0, // 0:image1000.jpg 1:image10000.jpg 2:image-1/2-10000.jpg
@@ -51,23 +51,7 @@ function getImageStats(directoryPath: string): ImageStats {
       results.formatType = 1;
     } else if (files[0].match(/image-\d-\d{5}.jpg/)) {
       results.formatType = 2;
-      results.CameraB = {
-        // second camera pointing left
-        starting: {
-          file: "",
-          time: +Infinity,
-        },
-        ending: {
-          file: "",
-          time: -Infinity,
-        },
-        smallestIndex: 0,
-        largestIndex: 0,
-        numFiles: 0,
-        numMissing: 0,
-        isContinuous: false,
-        video: false,
-      };
+      results.CameraB = { ...results.CameraA }; // second camera pointing left
     }
     files.forEach((file: string) => {
       if (file.match(/image/)) {

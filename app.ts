@@ -8,6 +8,7 @@ startExpress();
 
 import { listEndpoints } from "./src/listEndpoints.js";
 app.use(listEndpoints());
+
 import { auth, db } from "./src/firebase.js";
 import { onSnapshot, doc, setDoc, collection, query, where } from "firebase/firestore";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
