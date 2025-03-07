@@ -18,7 +18,7 @@ startExpress();
 import { listEndpoints } from "./src/listEndpoints.js";
 app.use(listEndpoints());
 
-import { auth, db } from "./src/firebase.js";
+// import { auth, db } from "./src/firebase.js";
 import { onSnapshot, doc, setDoc, collection, query, where } from "firebase/firestore";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
@@ -60,27 +60,27 @@ import { format } from "path";
 dotenv.config();
 //log in to firebase
 try {
-  signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123");
+  //   signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123");
 } catch (e: any) {
   console.log("error logging in to firebase", e.message);
 }
 
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    // console.log("user", JSON.stringify(user));
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("text.enabled", "==", true));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      console.log(new Date().toISOString(), ": snapshot update");
-      globals.textWatch = {};
-      querySnapshot.forEach((document) => {
-        const d = document.data();
-        // console.log(document.id, " ", d);
-        globals.textWatch[document.id] = d;
-      });
-    });
-  }
-});
+// onAuthStateChanged(auth, async (user) => {
+//   if (user) {
+//     // console.log("user", JSON.stringify(user));
+//     const usersRef = collection(db, "users");
+//     const q = query(usersRef, where("text.enabled", "==", true));
+//     const unsubscribe = onSnapshot(q, (querySnapshot) => {
+//       console.log(new Date().toISOString(), ": snapshot update");
+//       globals.textWatch = {};
+//       querySnapshot.forEach((document) => {
+//         const d = document.data();
+//         // console.log(document.id, " ", d);
+//         globals.textWatch[document.id] = d;
+//       });
+//     });
+//   }
+// });
 
 const resetAllSentTexts = () => {
   Object.keys(globals.textWatch).map(async (v, i) => {

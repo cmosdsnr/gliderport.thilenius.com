@@ -2,8 +2,8 @@ import mysql from "mysql2";
 import { timestampToString } from "./timeConversion";
 import { globals } from "./globals";
 import { sendTextMessage } from "./sendTextMessage";
-import { auth, db } from "./firebase.js";
-import { onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, collection, query, where } from "firebase/firestore";
+// import { auth, db } from "./firebase.js";
+// import { onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, collection, query, where } from "firebase/firestore";
 import SunCalc from "suncalc";
 import { Request, Response } from "express";
 
@@ -266,7 +266,7 @@ export default class AddData {
         }
         if (d.text.sent === true) {
           // console.log("sending text to ", d.email)
-          await setDoc(doc(db, "users", v), d);
+          //   await setDoc(doc(db, "users", v), d);
         }
       } else {
         // console.log("already sent to", v, " => ", d)
