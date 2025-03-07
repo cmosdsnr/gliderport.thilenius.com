@@ -130,7 +130,7 @@ function getImageStats(directoryPath: string): ImageStats {
     }
     return results;
   } catch (err: any) {
-    log("getImageStats", err.message);
+    log("getImageStats", directoryPath, err.message);
     results.error = err.message;
     return results;
   }

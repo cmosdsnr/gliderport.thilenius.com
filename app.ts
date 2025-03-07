@@ -57,7 +57,11 @@ import { format } from "path";
 
 dotenv.config();
 //log in to firebase
-signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123");
+try {
+  signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123");
+} catch (e) {
+  console.log("error logging in to firebase", e.message);
+}
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
