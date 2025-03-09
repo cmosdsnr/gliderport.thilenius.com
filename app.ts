@@ -261,8 +261,10 @@ app.get("/getImageData", async (req: Request, res: Response) => {
 });
 
 app.post("/updateImage", (req: Request, res: Response) => {
-  imageBuffer = Buffer.from(req.body.A, "base64");
+  //size 1=small, 2=big
+  //camera 1=left, 2=right
   if (
+    req.body.A === undefined ||
     req.body.size === undefined ||
     req.body.camera === undefined ||
     req.body.size < 1 ||
@@ -273,9 +275,11 @@ app.post("/updateImage", (req: Request, res: Response) => {
     return res
       .status(400)
       .json({ error: "size or camera not provided", ...req.body, help: "add size and camera to body" });
+
+  imageBuffer = Buffer.from(req.body.A, "base64");
   const index = req.body.size + 2 * (req.body.camera - 1);
   connection?.query("UPDATE images SET d=? WHERE `id`=" + index, imageBuffer1, () => {});
-  res.json("Ok");
+  res.json({ status: "Ok", camera: req.body.camera, size: req.body.size });
 });
 
 app.post("/updateSmallImage1", (req: Request, res: Response) => {
