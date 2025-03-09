@@ -4,6 +4,9 @@ import { dirname } from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 
+// import mainUsers from "./Mainusers.json"; // Firebase user export (each with uid)
+// import extraUsers from "./users.json"; // Extra data export (each with id)
+
 export let pb: any = null;
 export let authData = null;
 
@@ -71,3 +74,32 @@ export const pbInit = () => {
     }
   });
 };
+
+//this can be run after pbInit in ImageFiles.ts
+export async function migrateUsers() {
+  //   for (const user of mainUsers) {
+  //     // Match extra data based on the Firebase user uid and extra data id.
+  //     const extraData = extraUsers.find((u) => u.id === user.uid);
+  //     // Prepare the new user object for PocketBase.
+  //     const newUser = {
+  //       email: user.email,
+  //       // Generate a username based on the email prefix.
+  //       username: user.email.split("@")[0],
+  //       // Set both password and passwordConfirm to the temporary password
+  //       password: "TempPassword123!",
+  //       passwordConfirm: "TempPassword123!",
+  //       // Optionally use displayName if available.
+  //       name: extraData ? extraData.data.firstName + " " + extraData.data.lastName : "",
+  //       // Put the extra data into a settings field (if found), or an empty object.
+  //       settings: extraData ? extraData.data : {},
+  //       role: "Member",
+  //       verified: true,
+  //     };
+  //     try {
+  //       const created = await pb.collection("users").create(newUser);
+  //       console.log(`Created user: ${created.email}`);
+  //     } catch (err) {
+  //       console.error(`Error creating user ${user.email}:`, err);
+  //     }
+  //   }
+}

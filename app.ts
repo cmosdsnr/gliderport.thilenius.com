@@ -17,7 +17,7 @@ startExpress();
 
 import { listEndpoints } from "./src/listEndpoints.js";
 app.use(listEndpoints());
-
+import { migrateUsers } from "./src/pb.js";
 import { auth, db, exportFirebase } from "./src/firebase.js";
 import { onSnapshot, collection, query, where } from "firebase/firestore";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
@@ -229,6 +229,11 @@ app.get("/exportFirebase", async (req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
+app.get("/migrateUsers", async (req: Request, res: Response) => {
+  migrateUsers();
+  res.json({ status: "ok" });
+});
+
 app.get("/scanLatestDirectory", async (req: Request, res: Response) => {
   res.json(await scanLatestDirectory());
 });
@@ -257,7 +262,18 @@ app.get("/getImageData", async (req: Request, res: Response) => {
 
 app.post("/updateImage", (req: Request, res: Response) => {
   imageBuffer = Buffer.from(req.body.A, "base64");
-  let index = req.body.size + 2 * (req.body.camera - 1);
+  if (
+    req.body.size === undefined ||
+    req.body.camera === undefined ||
+    req.body.size < 1 ||
+    req.body.camera < 1 ||
+    req.body.size > 2 ||
+    req.body.camera > 2
+  )
+    return res
+      .status(400)
+      .json({ error: "size or camera not provided", ...req.body, help: "add size and camera to body" });
+  const index = req.body.size + 2 * (req.body.camera - 1);
   connection?.query("UPDATE images SET d=? WHERE `id`=" + index, imageBuffer1, () => {});
   res.json("Ok");
 });
