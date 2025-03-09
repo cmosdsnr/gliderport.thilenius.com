@@ -279,10 +279,16 @@ app.post("/updateImage", (req: Request, res: Response) => {
   imageBuffer = Buffer.from(req.body.A, "base64");
   const index = req.body.size + 2 * (req.body.camera - 1);
   connection?.query("UPDATE images SET d=? WHERE `id`=" + index, imageBuffer, function (err, results, fields) {
-    console.log(results); // results contains rows returned by server
-    console.log(fields); // fields contains extra meta data about results, if available
-    console.log(err);
+    // console.log(results); // results contains rows returned by server
+    // console.log(fields); // fields contains extra meta data about results, if available
+    // console.log(err);
   });
+  if (index == 4)
+    connection?.query(
+      `UPDATE server_sent SET last_image=${Math.floor(new Date().getTime() / 1000)} WHERE id=1`,
+      () => {}
+    );
+
   res.json({ status: "Ok", camera: req.body.camera, size: req.body.size, index: index });
 });
 
