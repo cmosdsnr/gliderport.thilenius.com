@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import fileUpload from "express-fileupload";
@@ -34,4 +34,14 @@ export const startExpress = () => {
 
   app.use(bodyParser.json({ limit: "10mb" }));
   app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
+
+  // Error-handling middleware
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    console.error(err); // Log the error details on the server
+    if (err.type === "entity.too.large") {
+      return res.status(413).json({ error: "Payload too large", details: err.message });
+    }
+    // For other errors, return a generic error message
+    res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
+  });
 };

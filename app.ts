@@ -278,7 +278,7 @@ app.post("/updateImage", (req: Request, res: Response) => {
 
   imageBuffer = Buffer.from(req.body.A, "base64");
   const index = req.body.size + 2 * (req.body.camera - 1);
-  connection?.query("UPDATE images SET d=? WHERE `id`=" + index, imageBuffer1, function (err, results, fields) {
+  connection?.query("UPDATE images SET d=? WHERE `id`=" + index, imageBuffer, function (err, results, fields) {
     console.log(results); // results contains rows returned by server
     console.log(fields); // fields contains extra meta data about results, if available
     console.log(err);
