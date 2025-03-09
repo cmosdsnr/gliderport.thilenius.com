@@ -278,11 +278,7 @@ app.post("/updateImage", (req: Request, res: Response) => {
 
   imageBuffer = Buffer.from(req.body.A, "base64");
   const index = req.body.size + 2 * (req.body.camera - 1);
-  connection?.query("UPDATE images SET d=? WHERE `id`=" + index, imageBuffer, function (err, results, fields) {
-    // console.log(results); // results contains rows returned by server
-    // console.log(fields); // fields contains extra meta data about results, if available
-    // console.log(err);
-  });
+  connection?.query("UPDATE images SET d=? WHERE `id`=" + index, imageBuffer, function (err, results, fields) {});
   if (index == 4)
     connection?.query(
       `UPDATE server_sent SET last_image=${Math.floor(new Date().getTime() / 1000)} WHERE id=1`,
@@ -292,41 +288,21 @@ app.post("/updateImage", (req: Request, res: Response) => {
   res.json({ status: "Ok", camera: req.body.camera, size: req.body.size, index: index });
 });
 
-app.post("/updateSmallImage1", (req: Request, res: Response) => {
-  imageBuffer1 = Buffer.from(req.body.A, "base64");
-  connection?.query("UPDATE images SET d=? WHERE `id`=1", imageBuffer1, () => {});
-  res.json("Ok");
-});
+app.post("/updateLog", (req: Request, res: Response) => {
+  //   const { operation_date } = req.body;
+  //   // Create a Date object from the ISO8601 string
+  //   const opDate = new Date(operation_date);
 
-app.post("/updateBigImage1", (req: Request, res: Response) => {
-  //   console.log("updating big image");
-  imageBigBuffer1 = Buffer.from(req.body.A, "base64");
-  const ts = Math.floor(new Date().getTime() / 1000);
-  connection?.query(`UPDATE server_sent SET last_image=${ts} WHERE id=1`, () => {});
-  connection?.query("UPDATE images SET d=? WHERE id=2", imageBigBuffer1, function (err, results, fields) {
-    // console.log(results); // results contains rows returned by server
-    // console.log(fields); // fields contains extra meta data about results, if available
-    // console.log(err);
-  });
-  res.send("Ok");
-});
+  //   // Optionally, check if the date is valid:
+  //   if (isNaN(opDate.getTime())) {
+  //     return res.status(400).json({ error: "Invalid operation_date" });
+  //   }
 
-app.post("/updateSmallImage2", (req: Request, res: Response) => {
-  imageBuffer2 = Buffer.from(req.body.A, "base64");
-  connection?.query("UPDATE images SET d=? WHERE `id`=3", imageBuffer2, () => {});
-  res.json("Ok");
-});
-app.post("/updateBigImage2", (req: Request, res: Response) => {
-  //   console.log("updating big image");
-  imageBigBuffer2 = Buffer.from(req.body.A, "base64");
-  //   const ts = Math.floor(new Date().getTime() / 1000);
-  //   connection?.query(`UPDATE server_sent SET last_image=${ts} WHERE id=3`, () => {});
-  connection?.query("UPDATE images SET d=? WHERE id=4", imageBigBuffer2, function (err, results, fields) {
-    // console.log(results); // results contains rows returned by server
-    // console.log(fields); // fields contains extra meta data about results, if available
-    // console.log(err);
-  });
-  res.send("Ok");
+  //   console.log("Parsed operation date:", opDate);
+
+  //   // Further processing...
+
+  res.json({ status: "ok", sent: req.body });
 });
 
 app.get("/ReportEveryMinute", function (req: Request, res: Response) {
