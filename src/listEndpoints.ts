@@ -17,7 +17,7 @@ export const listEndpoints = (): Router => {
       if (middleware.route) {
         const methods: { [method: string]: boolean } = middleware.route.methods;
         // Check if GET or PUT is allowed.
-        if (methods.get || methods.put) {
+        if (methods.get || methods.post) {
           endpoints.push({
             method: Object.keys(methods)
               .filter((m) => methods[m])
@@ -31,7 +31,7 @@ export const listEndpoints = (): Router => {
         middleware.handle.stack.forEach((handler: any) => {
           if (handler.route) {
             const methods: { [method: string]: boolean } = handler.route.methods;
-            if (methods.get || methods.put) {
+            if (methods.get || methods.post) {
               endpoints.push({
                 method: Object.keys(methods)
                   .filter((m) => methods[m])
