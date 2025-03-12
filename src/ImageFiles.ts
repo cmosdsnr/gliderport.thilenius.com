@@ -233,7 +233,7 @@ export const scanLatestDirectory = async () => {
     const listing = await pb.collection("ImageFileData").getOne(ToId("listing"));
 
     const mostRecent = await pb.collection("ImageFileData").getList(1, 1, {
-      filter: { id: { $regex: "20\\d{4}" } },
+      filter: `id~"20\\d{4}"`,
       sort: "-id", // descending
     });
     // id has format 000000000202503 where 2025 is the year and 03 is the month
