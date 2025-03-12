@@ -229,62 +229,68 @@ export const getImageData = async (year: number, month: number) => {
 };
 
 export const scanLatestDirectory = async () => {
-  //   const listing = await pb.collection("ImageFileData").getOne(ToId("listing"));
-  //   const mostRecent = await pb.collection("ImageFileData").getList(1, 1, {
-  //     filter: { id: { $regex: "20\\d{4}" } },
-  //     sort: "-id", // descending
-  //   });
-  //   // id has format 000000000202503 where 2025 is the year and 03 is the month
-  //   let year = mostRecent.items[0].id.slice(9, 13);
-  //   let month = mostRecent.items[0].id.slice(13, 15);
-  //   log("mostRecent: ", mostRecent.items[0].id, "year:", year, "month:", month);
-  //   if (isDirectory(`/app/gliderport/${year}/${month}`)) {
-  //     log("rescan", `/app/gliderport/${year}/${month}`);
-  //     listing.data[year][month] = [];
-  //     let res: any = {};
-  //     let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
-  //     let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
-  //     for (let k = 0; k < days.length; k++) {
-  //       let day = days[k];
-  //       res[day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-  //       res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
-  //       listing.data[year][month].push(parseInt(day.slice(8, 10)));
-  //     }
-  //     const id = ToId(year + month);
-  //     log("id: ", id);
-  //     await pb
-  //       .collection("ImageFileData")
-  //       .update(id, { data: res })
-  //       .catch((err: any) => console.error(err.message));
-  //     await pb
-  //       .collection("ImageFileData")
-  //       .update(listing.id, { data: listing.data })
-  //       .catch((err: any) => console.error(err.message));
-  //   } else log("directory does not exist");
-  //   month = parseInt(month) + 1;
-  //   year = parseInt(year);
-  //   if (month > 12) {
-  //     month = 1;
-  //     year = year + 1;
-  //   }
-  //   month = month.toString().padStart(2, "0");
-  //   year = year.toString();
-  //   if (isDirectory(`/app/gliderport/${year}/${month}`)) {
-  //     log("scan", `/app/gliderport/${year}/${month}`);
-  //     let res: any = {};
-  //     let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
-  //     let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
-  //     for (let k = 0; k < days.length; k++) {
-  //       let day = days[k];
-  //       res[day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
-  //       res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
-  //     }
-  //     const id = ToId(year + month);
-  //     await pb
-  //       .collection("ImageFileData")
-  //       .create({ id, data: res })
-  //       .catch((err: any) => console.error(err.message));
-  //   }
+  try {
+    const listing = await pb.collection("ImageFileData").getOne(ToId("listing"));
+
+    const mostRecent = await pb.collection("ImageFileData").getList(1, 1, {
+      filter: { id: { $regex: "20\\d{4}" } },
+      sort: "-id", // descending
+    });
+    // id has format 000000000202503 where 2025 is the year and 03 is the month
+    let year = mostRecent.items[0].id.slice(9, 13);
+    let month = mostRecent.items[0].id.slice(13, 15);
+    log("mostRecent: ", mostRecent.items[0].id, "year:", year, "month:", month);
+    if (isDirectory(`/app/gliderport/${year}/${month}`)) {
+      log("rescan", `/app/gliderport/${year}/${month}`);
+      listing.data[year][month] = [];
+      let res: any = {};
+      let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
+      let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
+      for (let k = 0; k < days.length; k++) {
+        let day = days[k];
+        res[day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+        res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
+        listing.data[year][month].push(parseInt(day.slice(8, 10)));
+      }
+      const id = ToId(year + month);
+      log("id: ", id);
+      await pb
+        .collection("ImageFileData")
+        .update(id, { data: res })
+        .catch((err: any) => console.error(err.message));
+      await pb
+        .collection("ImageFileData")
+        .update(listing.id, { data: listing.data })
+        .catch((err: any) => console.error(err.message));
+    } else log("directory does not exist");
+    month = parseInt(month) + 1;
+    year = parseInt(year);
+    if (month > 12) {
+      month = 1;
+      year = year + 1;
+    }
+    month = month.toString().padStart(2, "0");
+    year = year.toString();
+    if (isDirectory(`/app/gliderport/${year}/${month}`)) {
+      log("scan", `/app/gliderport/${year}/${month}`);
+      let res: any = {};
+      let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
+      let days = fs.readdirSync(`/app/gliderport/${year}/${month}`);
+      for (let k = 0; k < days.length; k++) {
+        let day = days[k];
+        res[day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+        res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
+      }
+      const id = ToId(year + month);
+      await pb
+        .collection("ImageFileData")
+        .create({ id, data: res })
+        .catch((err: any) => console.error(err.message));
+    }
+  } catch (err: any) {
+    log("scan", `error in scanLatestDirectory: ${err.message}`);
+    console.error(err);
+  }
 };
 
 // Schedule scanLatestDirectory to run at 1:00 am every day.
