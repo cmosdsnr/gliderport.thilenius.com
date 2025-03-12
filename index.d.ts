@@ -220,18 +220,6 @@ type mailOptionsType = {
   html?: string;
 };
 
-type globals = {
-  offset: number;
-  firstRecord: string | null;
-  lastRecord: string;
-  tdLast: Date;
-  numberRecords: number;
-  latestHours: number;
-  debugInfo: DebugInfoData;
-  DEBUG: boolean;
-  textWatch: any;
-};
-
 type DataType = {
   start: number;
   date: number[];
@@ -264,3 +252,37 @@ interface ImageStats {
   CameraA: CameraData; // original camera pointing right
   CameraB?: CameraData; // second camera pointing left
 }
+
+type Globals = {
+  DEBUG: boolean;
+  textWatch: Record<string, any>; // or you can use `any` if you prefer
+  offset: number;
+  firstRecord: any | null;
+  lastRecord: string;
+  tdLast: Date;
+  numberRecords: number;
+  latestHours: number;
+  debugInfo: {
+    tsLast: number;
+    numberRecords: number;
+    hourLength: number;
+    hours: any[]; // Replace `any` with a more specific type if known
+    now: number;
+    codeHistory: {
+      length: number;
+      date: number;
+      tsLast: number;
+      code: number;
+      gpResults: number;
+      days: any[]; // Replace `any` with a more specific type if known
+    };
+    openWeather: {
+      hours: number;
+      start: number;
+      stop: number;
+    };
+    latestHours: number;
+    sentTexts: any[]; // Or string[] if these are strings
+    tsLastPre: number;
+  };
+};

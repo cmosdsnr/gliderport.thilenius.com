@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { globals } from "./globals";
+import globals from "./globals";
 
 export const sendTextMessage = (to: string, name: string, data: any) => {
   let transporter = nodemailer.createTransport({

@@ -22,7 +22,7 @@ import { auth, db, exportFirebase } from "./src/firebase.js";
 import { onSnapshot, collection, query, where } from "firebase/firestore";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
-import { globals } from "./src/globals.js";
+import globals from "./src/globals.js";
 import { sendTextMessage } from "./src/sendTextMessage.js";
 import { info } from "./src/info.js";
 import { timestampToString } from "./src/timeConversion.js";
@@ -216,10 +216,6 @@ let pingTimer = setInterval(() => {
 d.setLastRecord();
 console.log("last record set to: ", globals.lastRecord);
 
-let imageBuffer: Buffer;
-let imageBuffer1: Buffer, imageBigBuffer1: Buffer;
-let imageBuffer2: Buffer, imageBigBuffer2: Buffer;
-
 app.get("/debug", async (req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
@@ -276,7 +272,7 @@ app.post("/updateImage", (req: Request, res: Response) => {
       .status(400)
       .json({ error: "size or camera not provided", ...req.body, help: "add size and camera to body" });
 
-  imageBuffer = Buffer.from(req.body.A, "base64");
+  const imageBuffer = Buffer.from(req.body.A, "base64");
   const index = req.body.size + 2 * (req.body.camera - 1);
   connection?.query("UPDATE images SET d=? WHERE `id`=" + index, imageBuffer, function (err, results, fields) {});
   if (index == 4)
@@ -358,45 +354,6 @@ app.get("/UpdateSun", async (req: Request, res: Response) => {
     x += "</h3>";
     res.send(x);
   } else res.send("<h1>No connection to database</h1>");
-});
-
-app.get("/current", function (req: Request, res: Response) {
-  if (req.query.camera === undefined || (req.query.camera != "1" && req.query.camera != "2"))
-    return res.status(400).json({ error: "camera not valid", ...req.query, help: "add ?camera=1|2 to the url" });
-  if (req.query.size === undefined || (req.query.size != "b" && req.query.size != "s"))
-    return res.status(400).json({ error: "size not valid", ...req.query, help: "add ?size=b|s to the url" });
-  res.contentType("image/jpeg");
-  if (req.query.camera == "1") {
-    if (req.query.size == "b") res.send(imageBigBuffer1);
-    else res.send(imageBuffer1);
-  } else {
-    if (req.query.size == "b") res.send(imageBigBuffer2);
-    else res.send(imageBuffer2);
-  }
-});
-
-// peak at current image
-app.get("/current1.jpg", function (req: Request, res: Response) {
-  res.contentType("image/jpeg");
-  res.send(imageBuffer1);
-});
-
-// peak at current image
-app.get("/currentBig1.jpg", function (req: Request, res: Response) {
-  res.contentType("image/jpeg");
-  res.send(imageBigBuffer1);
-});
-
-// peak at current image
-app.get("/current2.jpg", function (req: Request, res: Response) {
-  res.contentType("image/jpeg");
-  res.send(imageBuffer2);
-});
-
-// peak at current image
-app.get("/currentBig2.jpg", function (req: Request, res: Response) {
-  res.contentType("image/jpeg");
-  res.send(imageBigBuffer2);
 });
 
 app.get("/sendTestSms", (req: Request, res: Response) => {

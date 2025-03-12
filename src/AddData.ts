@@ -1,6 +1,6 @@
 import mysql from "mysql2";
 import { timestampToString } from "./timeConversion";
-import { globals } from "./globals";
+import globals from "./globals";
 import { sendTextMessage } from "./sendTextMessage";
 import { db } from "./firebase.js";
 import { doc, setDoc } from "firebase/firestore";

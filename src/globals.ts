@@ -1,4 +1,4 @@
-export var globals: globals = {
+var globals: Globals = {
   DEBUG: true,
   textWatch: {},
   offset: 0,
@@ -32,3 +32,4 @@ export var globals: globals = {
     tsLastPre: 0,
   },
 };
+export default globals;
