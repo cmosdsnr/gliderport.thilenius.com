@@ -15,6 +15,7 @@
     "build": "tsup --format esm app.ts"
   },
   "dependencies": {
+    "@types/node-cron": "^3.0.11",
     "base64url": "^3.0.1",
     "body-parser": "^1.20.1",
     "cors": "^2.8.5",
@@ -26,6 +27,7 @@
     "fs": "^0.0.1-security",
     "http": "0.0.1-security",
     "mysql2": "^2.3.3",
+    "node-cron": "^3.0.3",
     "nodemailer": "^6.9.0",
     "pocketbase": "^0.25.2",
     "react-hook-form": "^7.54.2",
