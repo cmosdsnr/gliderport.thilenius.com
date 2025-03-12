@@ -231,7 +231,6 @@ export const getImageData = async (year: number, month: number) => {
 export const scanLatestDirectory = async () => {
   try {
     const listing = await pb.collection("ImageFileData").getOne(ToId("listing"));
-
     const mostRecent = await pb.collection("ImageFileData").getList(1, 1, {
       filter: 'id~"000020"',
       sort: "-id", // descending
@@ -251,7 +250,7 @@ export const scanLatestDirectory = async () => {
         let day = days[k];
         res[day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
         res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
-        listing.data[year][month].push(parseInt(day.slice(8, 10)));
+        listing.data[year][parseInt(month)].push(parseInt(day.slice(8, 10)));
       }
       const id = ToId(year + month);
       log("id: ", id);
