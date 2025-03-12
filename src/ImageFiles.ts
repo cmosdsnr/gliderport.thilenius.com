@@ -233,7 +233,7 @@ export const scanLatestDirectory = async () => {
     const listing = await pb.collection("ImageFileData").getOne(ToId("listing"));
 
     const mostRecent = await pb.collection("ImageFileData").getList(1, 1, {
-      filter: `id~"20\\d{4}"`,
+      filter: `id~"^0*20\\d{4}"`,
       sort: "-id", // descending
     });
     log("rescan", "latest record", JSON.stringify(mostRecent));
