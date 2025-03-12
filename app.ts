@@ -26,7 +26,7 @@ import globals from "./src/globals.js";
 import { sendTextMessage } from "./src/sendTextMessage.js";
 import { info } from "./src/info.js";
 import { timestampToString } from "./src/timeConversion.js";
-import { handleHits } from "../handleHits.js";
+import { handleHits } from "./src/handleHits.js";
 import AddData from "./src/AddData.js";
 import { log } from "./src/log.js";
 
