@@ -291,12 +291,7 @@ export const scanLatestDirectory = async () => {
   }
 };
 
-// Schedule scanLatestDirectory to run at 1:00 am every day and startup.
-scanLatestDirectory();
+// Schedule scanLatestDirectory to run at 1:00 am every day.
 cron.schedule("0 1 * * *", () => {
   scanLatestDirectory();
 });
-// everyday at between 1-2am local time, call backup
-// setInterval(() => {
-//   if (new Date().getHours() == 1) scanLatestDirectory();
-// }, 3600000); // 1 hr
