@@ -236,6 +236,7 @@ export const scanLatestDirectory = async () => {
       filter: `id~"20\\d{4}"`,
       sort: "-id", // descending
     });
+    log("rescan", `latest record ${mostRecent}`);
     // id has format 000000000202503 where 2025 is the year and 03 is the month
     let year = mostRecent.items[0].id.slice(9, 13);
     let month = mostRecent.items[0].id.slice(13, 15);
