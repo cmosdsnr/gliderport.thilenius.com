@@ -2,14 +2,11 @@ import dotenv from "dotenv";
 import mysql from "mysql2";
 import SunCalc from "suncalc";
 
-import {
-  scanEntireDirectory,
-  scanLatestDirectory,
-  createListingRecord,
-  getListingRecord,
-  getImageData,
-} from "./src/ImageFiles.js";
-// await scanEntireDirectory();
+import { connection, SqlConnect } from "./src/SqlConnect.js";
+SqlConnect();
+
+import { pbInit } from "./src/pb.js";
+await pbInit();
 
 import { Request, Response } from "express";
 import { app, startExpress } from "./src/express.js";
@@ -17,6 +14,12 @@ startExpress();
 
 import { listEndpoints } from "./src/listEndpoints.js";
 app.use(listEndpoints());
+
+import ImageFiles from "./src/ImageFiles.js";
+app.use(ImageFiles());
+
+// await scanEntireDirectory();
+
 import { migrateUsers } from "./src/pb.js";
 import { auth, db, exportFirebase } from "./src/firebase.js";
 import { onSnapshot, collection, query, where } from "firebase/firestore";
@@ -92,31 +95,22 @@ globals.offset = -60000 * new Date().getTimezoneOffset(); //to ms 60s/min*1000ms
 console.log("offset ", globals.offset);
 
 let sql: string = "";
-let onlineStatus: number = 0;
-let debugInfo: DebugInfoData;
 let d: AddData;
 
-const sqlEnabled = !(typeof process.env.SQL !== "undefined");
-
-let connection: mysql.Connection | null =
-  typeof process.env.DATABASE_URL === "string" && sqlEnabled ? mysql.createConnection(process.env.DATABASE_URL) : null;
-
-d = new AddData(connection);
-
-connection?.connect(async function (err) {
-  if (err) throw err;
-  console.log("MySQL Connected!");
-  // get server_sent data
-  connection?.query("SELECT * FROM `server_sent` WHERE `id`=1", function (err, results, fields) {
-    if (Array.isArray(results)) onlineStatus = (results[0] as ServerSentTable).online_status;
-  });
-  //get debugInfo for modification
-  //debugInfo is written each time addData is called
-  //debugInfo is displayed in get info
-  const results = await connection?.promise().query("SELECT * FROM miscellaneous WHERE id='debug_info'");
-  if (Array.isArray(results) && Array.isArray(results[0]) && results[0].length > 0)
-    debugInfo = JSON.parse((results[0][0] as MiscellaneousTable).data);
+let debugInfo: DebugInfoData;
+let onlineStatus: number = 0;
+// get server_sent data
+connection?.query("SELECT * FROM `server_sent` WHERE `id`=1", function (err, results, fields) {
+  if (Array.isArray(results)) onlineStatus = (results[0] as ServerSentTable).online_status;
 });
+//get debugInfo for modification
+//debugInfo is written each time addData is called
+//debugInfo is displayed in get info
+const results = await connection?.promise().query("SELECT * FROM miscellaneous WHERE id='debug_info'");
+if (Array.isArray(results) && Array.isArray(results[0]) && results[0].length > 0)
+  debugInfo = JSON.parse((results[0][0] as MiscellaneousTable).data);
+
+d = new AddData();
 
 let changes = {
   lastForecast: 0,
@@ -228,77 +222,6 @@ app.get("/exportFirebase", async (req: Request, res: Response) => {
 app.get("/migrateUsers", async (req: Request, res: Response) => {
   migrateUsers();
   res.json({ status: "ok" });
-});
-
-app.get("/scanLatestDirectory", async (req: Request, res: Response) => {
-  res.json(await scanLatestDirectory());
-});
-
-app.get("/scanEntireDirectory", async (req: Request, res: Response) => {
-  scanEntireDirectory();
-  res.json({ status: "ok" });
-});
-
-app.get("/createListingRecord", async (req: Request, res: Response) => {
-  createListingRecord();
-  res.json({ status: "ok" });
-});
-
-app.get("/listing", async (req: Request, res: Response) => {
-  res.json(await getListingRecord());
-});
-
-app.get("/getImageData", async (req: Request, res: Response) => {
-  if (req.query.year === undefined)
-    return res.status(400).json({ error: "year not provided", ...req.query, help: "add ?year=2025 to the url" });
-  if (req.query.month === undefined)
-    return res.status(400).json({ error: "month not provided", ...req.query, help: "add ?month=4 to the url" });
-  res.json(await getImageData(parseInt(req.query.year as string), parseInt(req.query.month as string)));
-});
-
-app.post("/updateImage", (req: Request, res: Response) => {
-  //size 1=small, 2=big
-  //camera 1=left, 2=right
-  if (
-    req.body.A === undefined ||
-    req.body.size === undefined ||
-    req.body.camera === undefined ||
-    req.body.size < 1 ||
-    req.body.camera < 1 ||
-    req.body.size > 2 ||
-    req.body.camera > 2
-  )
-    return res
-      .status(400)
-      .json({ error: "size or camera not provided", ...req.body, help: "add size and camera to body" });
-
-  const imageBuffer = Buffer.from(req.body.A, "base64");
-  const index = req.body.size + 2 * (req.body.camera - 1);
-  connection?.query("UPDATE images SET d=? WHERE `id`=" + index, imageBuffer, function (err, results, fields) {});
-  if (index == 4)
-    connection?.query(
-      `UPDATE server_sent SET last_image=${Math.floor(new Date().getTime() / 1000)} WHERE id=1`,
-      () => {}
-    );
-
-  res.json({ status: "Ok", camera: req.body.camera, size: req.body.size, index: index });
-});
-
-app.post("/updateLog", (req: Request, res: Response) => {
-  //   const { operation_date } = req.body;
-  //   // Create a Date object from the ISO8601 string
-  //   const opDate = new Date(operation_date);
-
-  //   // Optionally, check if the date is valid:
-  //   if (isNaN(opDate.getTime())) {
-  //     return res.status(400).json({ error: "Invalid operation_date" });
-  //   }
-
-  //   console.log("Parsed operation date:", opDate);
-
-  //   // Further processing...
-
-  res.json({ status: "ok", sent: req.body });
 });
 
 app.get("/ReportEveryMinute", function (req: Request, res: Response) {

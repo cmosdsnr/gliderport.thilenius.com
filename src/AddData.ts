@@ -6,21 +6,19 @@ import { db } from "./firebase.js";
 import { doc, setDoc } from "firebase/firestore";
 import SunCalc from "suncalc";
 import { Request, Response } from "express";
+import { connection } from "./SqlConnect.js";
 
 export default class AddData {
   sunset: number;
   sunrise: number;
   tsLast: number;
   tsNow: number;
-  connection: mysql.Connection;
 
-  constructor(conn: mysql.Connection | null) {
+  constructor() {
     this.sunset = 0;
     this.sunrise = 0;
     this.tsLast = 0;
     this.tsNow = 0;
-    if (conn) this.connection = conn;
-    else this.connection = mysql.createConnection("");
   }
 
   #c = {
@@ -85,7 +83,7 @@ export default class AddData {
   }
 
   setLastRecord = () => {
-    this.connection.query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1", (err, results, fields) => {
+    connection?.query("SELECT * FROM gliderport ORDER BY recorded DESC LIMIT 1", (err, results, fields) => {
       if (Array.isArray(results) && results.length > 0) {
         let ts = Math.floor((new Date((results[0] as GliderportTable).recorded).getTime() + globals.offset) / 1000);
         globals.lastRecord = ts > 0 ? timestampToString(ts) : "0";
@@ -98,7 +96,7 @@ export default class AddData {
     // y must have a local time in the day that we want to get sunrise/sunset for
     // so we add 12 hours to ts to get a local time in the day we want
     const y = new Date((ts + 3600 * 12) * 1000);
-    // La Jola lat/long
+    // La Jolla lat/long
     const lat = 32.89;
     const long = -117.25;
     const sunData = SunCalc.getTimes(y, lat, long);
@@ -120,7 +118,7 @@ export default class AddData {
   #fetchServerSentData = async () => {
     //fetch sunset, sunrise, tsLast info for this post
     let sql = "SELECT * FROM `server_sent` WHERE `id`=1";
-    let results = await this.connection.promise().query(sql);
+    let results = await connection?.promise().query(sql);
     let sunset = 0,
       sunrise = 0,
       tsLast = 0;
@@ -156,7 +154,7 @@ export default class AddData {
       if (i === d.length - 1) e = "";
       sql += '( "' + v[0] + '", ' + v[1] + ", " + v[2] + ", " + v[3] + ", " + v[4] + ", " + v[5] + ")" + e;
     });
-    await this.connection.promise().query(sql);
+    await connection?.promise().query(sql);
     // console.table(d);
     this.setLastRecord();
     globals.tdLast = new Date();
@@ -180,7 +178,7 @@ export default class AddData {
       ", `temperature` = " +
       last[5] +
       " WHERE `id`=1";
-    this.connection.query(sql, (err, results, fields) => {});
+    connection?.query(sql, (err, results, fields) => {});
   };
 
   #checkForTexts = async () => {
@@ -191,7 +189,7 @@ export default class AddData {
     //   console.log("checkForTexts: " + timestampToString(fifteenMin + globals.offset / 1000));
     let sql =
       "SELECT * FROM `gliderport` WHERE recorded > '" + timestampToString(fifteenMin + globals.offset / 1000) + "'";
-    let res = await this.connection.promise().query(sql);
+    let res = await connection?.promise().query(sql);
     //   console.log("res: " + res[0].length);
     //   console.log("sql: " + sql);
     let aSpeed = 0,
@@ -281,14 +279,14 @@ export default class AddData {
     const twoDaysAgo = thisHour - 48 * 3600;
 
     // delete older records
-    await this.connection.promise().query(`DELETE FROM hours WHERE start < ${twoDaysAgo}`);
-    await this.connection.promise().query(`DELETE FROM hours WHERE start > ${thisHour}`);
+    await connection?.promise().query(`DELETE FROM hours WHERE start < ${twoDaysAgo}`);
+    await connection?.promise().query(`DELETE FROM hours WHERE start > ${thisHour}`);
 
     let hourLength = 0;
     if (!forceRegeneration) {
       // get latest record (or 2 days ago if there are none)
       const sql = `SELECT * FROM hours WHERE start > ${twoDaysAgo} ORDER BY start DESC LIMIT 1`;
-      const results = await this.connection.promise().query(sql);
+      const results = await connection?.promise().query(sql);
       globals.latestHours = twoDaysAgo;
       if (Array.isArray(results) && Array.isArray(results[0]) && results[0].length > 0) {
         const d = JSON.parse((results[0][0] as HoursTable).data);
@@ -323,7 +321,7 @@ export default class AddData {
         "' AND recorded < '" +
         timestampToString(i + 3600) +
         "'";
-      const results = await this.connection.promise().query(sql);
+      const results = await connection?.promise().query(sql);
 
       if (Array.isArray(results) && Array.isArray(results[0]) && results[0].length > 0) {
         hourInfo.resultsFound = (results[0] as any[]).length;
@@ -344,7 +342,7 @@ export default class AddData {
       //     hourLength, " rows and now has ", data.date.length, " rows")
       // msg += "replacing " + data.start + " with " + data.date.length + " records\n"
       sql = "REPLACE into hours (`start`, `data`) value(" + data.start + ",'" + JSON.stringify(data) + "')";
-      this.connection.query(sql, (err, results, fields) => {});
+      connection?.query(sql, (err, results, fields) => {});
       globals.debugInfo.hours.push(hourInfo);
     }
   };
@@ -386,11 +384,11 @@ export default class AddData {
             }
           });
           // last_forecast will be teh next tsLast
-          this.connection.query(
+          connection?.query(
             "UPDATE `server_sent` SET `last_forecast`=" + this.tsNow + " WHERE `id`=1",
             (err, results, fields) => {}
           );
-          this.connection.query(
+          connection?.query(
             "UPDATE `miscellaneous` SET `data`='" + JSON.stringify(forecast) + "' WHERE `id`='forecast'"
           );
           const h: OpenWeatherReport[] = responseJson.hourly;
@@ -403,10 +401,8 @@ export default class AddData {
               delete h[i].weather;
             }
           });
-          this.connection.query(
-            "UPDATE `miscellaneous` SET `data`='" + JSON.stringify(h) + "' WHERE `id`='forecast_full'"
-          );
-          this.connection.query(
+          connection?.query("UPDATE `miscellaneous` SET `data`='" + JSON.stringify(h) + "' WHERE `id`='forecast_full'");
+          connection?.query(
             "UPDATE `miscellaneous` SET `data`='" + JSON.stringify(todaysCodes) + "' WHERE `id`='todays_codes'"
           );
         }
@@ -417,7 +413,7 @@ export default class AddData {
     // get the last timestamp from code_history
     let r: any;
     let sql = "SELECT * FROM code_history ORDER BY date DESC LIMIT 1";
-    let results = await this.connection.promise().query(sql);
+    let results = await connection?.promise().query(sql);
     if (Array.isArray(results) && Array.isArray(results[0]) && results[0].length > 0) {
       let d = results[0][0] as { date: number; data: string };
       const dt = 24 * 3600 * Math.floor(d.date / (24 * 3600));
@@ -451,7 +447,7 @@ export default class AddData {
     };
 
     sql = "SELECT * FROM gliderport WHERE recorded > '" + timestampToString(tsLast) + "'";
-    results = await this.connection.promise().query(sql);
+    results = await connection?.promise().query(sql);
 
     if (Array.isArray(results) && Array.isArray(results[0])) {
       const res = results[0] as {
@@ -514,7 +510,7 @@ export default class AddData {
               "' ON DUPLICATE KEY UPDATE data ='" +
               JSON.stringify(r.data) +
               "'";
-            this.connection.query(sql, () => {});
+            connection?.query(sql, () => {});
             // console.log(`   DEBUG: saving ${JSON.stringify(r)} `)
             globals.debugInfo.codeHistory.days.push({
               length: r.data.codes.length,
@@ -534,7 +530,7 @@ export default class AddData {
       "' ON DUPLICATE KEY UPDATE data ='" +
       JSON.stringify(globals.debugInfo) +
       "';";
-    await this.connection.promise().query(sql);
+    await connection?.promise().query(sql);
   };
 
   add = async (req: Request) => {
