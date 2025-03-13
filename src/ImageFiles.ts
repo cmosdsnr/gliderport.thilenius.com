@@ -21,28 +21,30 @@ const ImageFiles = (): Router => {
     }
   }
 
+  const cameraDefault = {
+    // original camera pointing right
+    starting: {
+      file: "",
+      time: +Infinity,
+    },
+    ending: {
+      file: "",
+      time: -Infinity,
+    },
+    smallestIndex: 0,
+    largestIndex: 0,
+    numFiles: 0,
+    numMissing: 0,
+    isContinuous: true,
+    video: false,
+  };
+
   function getImageStats(directoryPath: string): ImageStats {
     let indexA: boolean[] = Array(9999).fill(false);
     let indexB: boolean[] = Array(9999).fill(false);
 
     const results: ImageStats = {
-      CameraA: {
-        // original camera pointing right
-        starting: {
-          file: "",
-          time: +Infinity,
-        },
-        ending: {
-          file: "",
-          time: -Infinity,
-        },
-        smallestIndex: 0,
-        largestIndex: 0,
-        numFiles: 0,
-        numMissing: 0,
-        isContinuous: true,
-        video: false,
-      },
+      CameraA: { ...cameraDefault },
       formatType: 0, // 0:image1000.jpg 1:image10000.jpg 2:image-1/2-10000.jpg
     };
 
@@ -58,7 +60,7 @@ const ImageFiles = (): Router => {
         results.formatType = 1;
       } else if (files[0].match(/image-\d-\d{5}.jpg/)) {
         results.formatType = 2;
-        results.CameraB = { ...results.CameraA }; // second camera pointing left
+        results.CameraB = { ...cameraDefault };
       }
       files.forEach((file: string) => {
         if (file.match(/image/)) {
