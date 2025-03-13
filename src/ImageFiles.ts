@@ -139,7 +139,7 @@ const ImageFiles = (): Router => {
     }
   }
 
-  const imageCount = (date: string, from: number, to: number) => {
+  const imageCount = (date: string, from: number, to: number, camera: number) => {
     let ans: string[] = [];
     // split date at - and check for 3 parts
     const [year, month, day] = date.split("-");
@@ -148,6 +148,10 @@ const ImageFiles = (): Router => {
     try {
       let files = fs.readdirSync(`/app/gliderport/${year}/${month}/${date}`);
       files.forEach((file: string) => {
+        if (file.match(/image/)) {
+          if (camera == 1 && file.match(/-2-/)) return;
+          if (camera == 2 && file.match(/-1-/)) return;
+        }
         const fileDate = getFileDate(directoryPath + "/" + file);
         const hour = fileDate ? new Date(fileDate).getHours() : -1;
         if (hour >= from && hour <= to) ans.push(file);
@@ -348,8 +352,15 @@ const ImageFiles = (): Router => {
       return res.status(400).json({ error: "from not provided", ...req.query, help: "add ?from=0 to the url" });
     if (req.query.to === undefined)
       return res.status(400).json({ error: "to not provided", ...req.query, help: "add ?to=23 to the url" });
+    if (req.query.camera === undefined)
+      return res.status(400).json({ error: "camera not provided", ...req.query, help: "add ?camera=1|2 to the url" });
     res.json(
-      imageCount(req.query.date as string, parseInt(req.query.from as string), parseInt(req.query.to as string))
+      imageCount(
+        req.query.date as string,
+        parseInt(req.query.from as string),
+        parseInt(req.query.to as string),
+        parseInt(req.query.camera as string)
+      )
     );
   });
 
