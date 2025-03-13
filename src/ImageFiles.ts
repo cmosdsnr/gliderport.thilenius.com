@@ -7,6 +7,9 @@ import { pb } from "./pb.js";
 import { connection } from "./SqlConnect.js";
 
 const ImageFiles = (): Router => {
+  const lastFiveSmallImagesCamera1: Buffer[] = [];
+  const lastFiveSmallImagesCamera2: Buffer[] = [];
+
   const ToId = (x: string) => {
     return "0".repeat(15 - x.length) + x;
   };
@@ -366,12 +369,18 @@ const ImageFiles = (): Router => {
     );
   });
 
+  // read the image data from a directory on disk
   router.get("/getImageData", async (req: Request, res: Response) => {
     if (req.query.year === undefined)
       return res.status(400).json({ error: "year not provided", ...req.query, help: "add ?year=2025 to the url" });
     if (req.query.month === undefined)
       return res.status(400).json({ error: "month not provided", ...req.query, help: "add ?month=4 to the url" });
     res.json(await getImageData(parseInt(req.query.year as string), parseInt(req.query.month as string)));
+  });
+
+  // called by the front end when it loads
+  router.get("/latestImages", (req: Request, res: Response) => {
+    res.json();
   });
 
   router.post("/updateImage", (req: Request, res: Response) => {
@@ -388,7 +397,7 @@ const ImageFiles = (): Router => {
     )
       return res
         .status(400)
-        .json({ error: "size or camera not provided", ...req.body, help: "add size and camera to body" });
+        .json({ error: "data, size or camera not provided", ...req.body, help: "add data, size and camera to body" });
 
     const imageBuffer = Buffer.from(req.body.A, "base64");
     const index = req.body.size + 2 * (req.body.camera - 1);
@@ -398,8 +407,28 @@ const ImageFiles = (): Router => {
         `UPDATE server_sent SET last_image=${Math.floor(new Date().getTime() / 1000)} WHERE id=1`,
         () => {}
       );
-
+    // Store last 5 small images for each camera
+    if (req.body.size === 1) {
+      if (req.body.camera === 1) {
+        lastFiveSmallImagesCamera1.push(imageBuffer);
+        if (lastFiveSmallImagesCamera1.length > 5) {
+          lastFiveSmallImagesCamera1.shift(); // Remove the oldest image
+        }
+      } else if (req.body.camera === 2) {
+        lastFiveSmallImagesCamera2.push(imageBuffer);
+        if (lastFiveSmallImagesCamera2.length > 5) {
+          lastFiveSmallImagesCamera2.shift(); // Remove the oldest image
+        }
+      }
+    }
     res.json({ status: "Ok", camera: req.body.camera, size: req.body.size, index: index });
+  });
+
+  router.get("/getLastFiveSmallImages", (req: Request, res: Response) => {
+    res.json({
+      camera1: lastFiveSmallImagesCamera1.map((buf) => buf.toString("base64")), // Convert buffers to Base64
+      camera2: lastFiveSmallImagesCamera2.map((buf) => buf.toString("base64")),
+    });
   });
 
   router.post("/updateLog", (req: Request, res: Response) => {
