@@ -6,9 +6,15 @@ import { log } from "./log.js";
 import { pb } from "./pb.js";
 import { connection } from "./SqlConnect.js";
 
+type ImageData = { image: Buffer; date: number };
+type CameraData = ImageData[];
+type SendImageData = { image: string; date: number };
+type SendCameraData = SendImageData[];
+type BothCameraData = { camera1: SendCameraData; camera2: SendCameraData };
+
 const ImageFiles = (): Router => {
-  const lastFiveSmallImagesCamera1: [Buffer, number][] = [];
-  const lastFiveSmallImagesCamera2: [Buffer, number][] = [];
+  const lastFiveSmallImagesCamera1: CameraData = [];
+  const lastFiveSmallImagesCamera2: CameraData = [];
 
   const ToId = (x: string) => {
     return "0".repeat(15 - x.length) + x;
@@ -410,12 +416,13 @@ const ImageFiles = (): Router => {
     // Store last 5 small images for each camera
     if (req.body.size === 1) {
       if (req.body.camera === 1) {
-        lastFiveSmallImagesCamera1.push([imageBuffer, new Date().getTime()]);
+        lastFiveSmallImagesCamera1.push({ image: imageBuffer, date: new Date().getTime() });
         if (lastFiveSmallImagesCamera1.length > 5) {
           lastFiveSmallImagesCamera1.shift(); // Remove the oldest image
         }
-      } else if (req.body.camera === 2) {
-        lastFiveSmallImagesCamera2.push([imageBuffer, new Date().getTime()]);
+      }
+      if (req.body.camera === 2) {
+        lastFiveSmallImagesCamera2.push({ image: imageBuffer, date: new Date().getTime() });
         if (lastFiveSmallImagesCamera2.length > 5) {
           lastFiveSmallImagesCamera2.shift(); // Remove the oldest image
         }
@@ -425,10 +432,17 @@ const ImageFiles = (): Router => {
   });
 
   router.get("/getLastFiveSmallImages", (req: Request, res: Response) => {
-    res.json({
-      camera1: lastFiveSmallImagesCamera1.map((buf) => [buf[0].toString("base64"), buf[1]]), // Convert buffers to Base64
-      camera2: lastFiveSmallImagesCamera2.map((buf) => [buf[0].toString("base64"), buf[1]]),
+    let ans: BothCameraData = {
+      camera1: [],
+      camera2: [],
+    };
+    lastFiveSmallImagesCamera1.map((buf) => {
+      ans.camera1.push({ image: buf.image.toString("base64"), date: buf.date });
     });
+    lastFiveSmallImagesCamera2.map((buf) => {
+      ans.camera2.push({ image: buf.image.toString("base64"), date: buf.date });
+    });
+    res.json(ans);
   });
 
   router.post("/updateLog", (req: Request, res: Response) => {
