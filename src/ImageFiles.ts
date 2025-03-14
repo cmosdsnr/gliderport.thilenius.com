@@ -449,13 +449,15 @@ const ImageFiles = (): Router => {
   });
 
   router.get("/gotoSleep", (req: Request, res: Response) => {
-    connection?.query("UPDATE `server_sent` SET `sleeping`=`true` WHERE `id`=1", (err, results, fields) => {});
-    res.json({ status: "going to sleep" });
+    connection?.query("UPDATE `server_sent` SET `sleeping`=`true` WHERE `id`=1", (err, results, fields) => {
+      res.json({ status: "going to sleep", results });
+    });
   });
 
   router.get("/wakeUp", (req: Request, res: Response) => {
-    connection?.query("UPDATE `server_sent` SET `sleeping`=`false` WHERE `id`=1", (err, results, fields) => {});
-    res.json({ status: "going to sleep" });
+    connection?.query("UPDATE `server_sent` SET `sleeping`=`false` WHERE `id`=1", (err, results, fields) => {
+      res.json({ status: "waking up", results });
+    });
   });
 
   return router;
