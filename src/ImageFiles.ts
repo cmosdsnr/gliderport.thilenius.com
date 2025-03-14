@@ -448,6 +448,16 @@ const ImageFiles = (): Router => {
     res.json({ status: "ok", sent: req.body });
   });
 
+  router.get("/gotoSleep", (req: Request, res: Response) => {
+    connection?.query("UPDATE `server_sent` SET `sleeping`=`true` WHERE `id`=1", (err, results, fields) => {});
+    res.json({ status: "going to sleep" });
+  });
+
+  router.get("/wakeUp", (req: Request, res: Response) => {
+    connection?.query("UPDATE `server_sent` SET `sleeping`=`false` WHERE `id`=1", (err, results, fields) => {});
+    res.json({ status: "going to sleep" });
+  });
+
   return router;
 };
 
