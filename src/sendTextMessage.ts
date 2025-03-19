@@ -22,39 +22,44 @@ export const resetTextUsers = () => {
 };
 
 export const syncTextUsers = () => {
-  pb.collection("users")
-    .getFullList(2000, {
-      filter: "textMe = true",
-      expand: "user",
-    })
-    .then((users: any[]) => {
-      for (const user of users) {
-        targets[user.id] = {
-          address: user.settings.address,
-          direction: user.settings.direction,
-          duration: user.settings.duration,
-          errorAngle: user.settings.errorAngle,
-          speed: user.settings.speed,
-          name: user.user.firstName ? user.user.firstName : "User",
-          sent: 0,
-        };
-      }
+  return;
+  try {
+    pb.collection("users")
+      .getFullList(2000, {
+        filter: "textMe = true",
+        expand: "user",
+      })
+      .then((users: any[]) => {
+        for (const user of users) {
+          targets[user.id] = {
+            address: user.settings.address,
+            direction: user.settings.direction,
+            duration: user.settings.duration,
+            errorAngle: user.settings.errorAngle,
+            speed: user.settings.speed,
+            name: user.user.firstName ? user.user.firstName : "User",
+            sent: 0,
+          };
+        }
+      });
+    pb.collection("users").subscribe("*", (e: any) => {
+      const user = e.record;
+      if (user && (e.action === "create" || e.action === "update"))
+        if (user.textMe === true)
+          targets[user.id] = {
+            address: user.settings.address,
+            direction: user.settings.direction,
+            duration: user.settings.duration,
+            errorAngle: user.settings.errorAngle,
+            speed: user.settings.speed,
+            name: user.user.firstName ? user.user.firstName : "User",
+            sent: 0,
+          };
+        else delete targets[user.id];
     });
-  pb.collection("users").subscribe("*", (e: any) => {
-    const user = e.record;
-    if (user && (e.action === "create" || e.action === "update"))
-      if (user.textMe === true)
-        targets[user.id] = {
-          address: user.settings.address,
-          direction: user.settings.direction,
-          duration: user.settings.duration,
-          errorAngle: user.settings.errorAngle,
-          speed: user.settings.speed,
-          name: user.user.firstName ? user.user.firstName : "User",
-          sent: 0,
-        };
-      else delete targets[user.id];
-  });
+  } catch (error: any) {
+    console.error("Error syncing text users", error.message);
+  }
 };
 
 export const checkAndSendTexts = (speed: number[], dir: number[]) => {
