@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import { dirname } from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { UserRecord } from "firebase-admin/lib/auth/user-record";
+import globals from "./globals.js";
 
 // import mainUsers from "./Mainusers.json"; // Firebase user export (each with uid)
 // import extraUsers from "./users.json"; // Extra data export (each with id)
@@ -37,7 +39,7 @@ export const pbInit = () => {
     let firstPass = true;
     console.log("connecting to pocketbase...");
     while (!connected) {
-      url = "http://pocketbase.web:5000";
+      url = "http://gpdata.web:5000";
       // let res = await fetch(url);
       pb = new PocketBase(url);
       pb.autoCancellation(false);
@@ -46,7 +48,7 @@ export const pbInit = () => {
       connected = await testConnection(firstPass);
 
       if (!connected) {
-        url = "https://pocketbase.thilenius.com";
+        url = "https://gpdata.thilenius.com";
         // let res = await fetch(url);
         pb = new PocketBase(url);
         pb.autoCancellation(false);

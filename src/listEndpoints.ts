@@ -1,4 +1,4 @@
-import { app } from "./express";
+import { app } from "./startExpress";
 import express, { Router, Request, Response } from "express";
 
 interface Endpoint {

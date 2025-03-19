@@ -1,4 +1,4 @@
-import { app } from "./express";
+import { app } from "./startExpress";
 import express from "express";
 import mysql from "mysql2";
 import { timestampToString, timestampToLocalString, toHMS } from "./timeConversion";

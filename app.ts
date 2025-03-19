@@ -1,15 +1,15 @@
 import dotenv from "dotenv";
-import mysql from "mysql2";
+import cron from "node-cron";
 import SunCalc from "suncalc";
 
 import { connection, SqlConnect } from "./src/SqlConnect.js";
 SqlConnect();
 
-import { pbInit } from "./src/pb.js";
+import { pbInit, pb } from "./src/pb.js";
 await pbInit();
 
 import { Request, Response } from "express";
-import { app, startExpress } from "./src/express.js";
+import { app, startExpress } from "./src/startExpress.js";
 startExpress();
 
 import { listEndpoints } from "./src/listEndpoints.js";
@@ -18,15 +18,8 @@ app.use(listEndpoints());
 import ImageFiles from "./src/ImageFiles.js";
 app.use(ImageFiles());
 
-// await scanEntireDirectory();
-
-import { migrateUsers } from "./src/pb.js";
-import { auth, db, exportFirebase } from "./src/firebase.js";
-import { onSnapshot, collection, query, where } from "firebase/firestore";
-import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-
 import globals from "./src/globals.js";
-import { sendTextMessage } from "./src/sendTextMessage.js";
+import { syncTextUsers, resetTextUsers, sendTextMessage } from "./src/sendTextMessage.js";
 import { info } from "./src/info.js";
 import { timestampToString } from "./src/timeConversion.js";
 import { handleHits } from "./src/handleHits.js";
@@ -61,25 +54,6 @@ import { format } from "path";
 //                          WAS: called from Pi4: Online status was checked so update those fields in server_sent and network_status
 
 dotenv.config();
-//log in to firebase
-signInWithEmailAndPassword(auth, "stephen@thilenius.com", "qwe123");
-
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    // console.log("user", JSON.stringify(user));
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("text.enabled", "==", true));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      console.log(new Date().toISOString(), ": snapshot update");
-      globals.textWatch = {};
-      querySnapshot.forEach((document) => {
-        const d = document.data();
-        // console.log(document.id, " ", d);
-        globals.textWatch[document.id] = d;
-      });
-    });
-  }
-});
 
 const resetAllSentTexts = () => {
   Object.keys(globals.textWatch).map(async (v, i) => {
@@ -121,6 +95,12 @@ let TodaysDay = new Date().getDate();
 let sunData: SunCalc.GetTimesResult;
 let reportEveryMin = false; //for debugging the online status test
 
+//load users and set up subscription to database
+syncTextUsers();
+// Schedule scanLatestDirectory to run at 1:00 am every day.
+cron.schedule("0 1 * * *", () => {
+  resetTextUsers();
+});
 const updateSunData = (ts = 0) => {
   // La Jolla lat/long
   const lat = 32.89;
@@ -153,7 +133,6 @@ let id = setInterval(() => {
     // Update Day and Week hit_counter databases on each new day
     handleHits(connection);
     //reset sent text list
-    resetAllSentTexts();
     debugInfo.sentTexts = [];
   }
 }, 1 * 3600 * 1000); // every 1 hours
@@ -211,17 +190,23 @@ d.setLastRecord();
 console.log("last record set to: ", globals.lastRecord);
 
 app.get("/debug", async (req: Request, res: Response) => {
-  res.json({ status: "ok" });
-});
+  const serverSent = await connection?.promise().query("SELECT * FROM `server_sent` WHERE `id`=1");
 
-app.get("/exportFirebase", async (req: Request, res: Response) => {
-  exportFirebase();
-  res.json({ status: "ok" });
-});
+  const miscellaneous = await connection?.promise().query("SELECT * FROM miscellaneous WHERE id='debug_info'");
 
-app.get("/migrateUsers", async (req: Request, res: Response) => {
-  migrateUsers();
-  res.json({ status: "ok" });
+  const dt = new Date();
+  const dtStart = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() - 14, 0, 0, 0);
+  const networkStatus = await connection
+    ?.promise()
+    .query(
+      "SELECT * FROM `network_status` WHERE recorded <= '" + dtStart.toISOString() + "' ORDER BY recorded DESC LIMIT 1;"
+    );
+
+  res.json({
+    serverSent: JSON.stringify(serverSent),
+    miscellaneous: JSON.stringify(miscellaneous),
+    networkStatus: JSON.stringify(networkStatus),
+  });
 });
 
 app.get("/ReportEveryMinute", function (req: Request, res: Response) {

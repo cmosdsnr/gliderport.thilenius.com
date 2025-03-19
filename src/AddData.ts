@@ -1,11 +1,8 @@
-import mysql from "mysql2";
+import { Request } from "express";
 import { timestampToString } from "./timeConversion";
 import globals from "./globals";
-import { sendTextMessage } from "./sendTextMessage";
-import { db } from "./firebase.js";
-import { doc, setDoc } from "firebase/firestore";
+import { checkAndSendTexts } from "./sendTextMessage";
 import SunCalc from "suncalc";
-import { Request, Response } from "express";
 import { connection } from "./SqlConnect.js";
 
 export default class AddData {
@@ -234,42 +231,7 @@ export default class AddData {
 
     //   console.log("Speeds: ", aSpeed, ", ", bSpeed, ", ", cSpeed, "  Dir: ", aDir, ", ", bDir, ", ", cDir);
 
-    Object.keys(globals.textWatch).forEach(async (v, i) => {
-      const d = globals.textWatch[v];
-      if (d.text.sent != true) {
-        //   console.log("not yet sent to", d.email, " ", d.text.speed);
-        if (d.text.duration === 0 && cSpeed >= d.text.speed && Math.abs(270 - cDir) <= d.text.errorAngle) {
-          sendTextMessage(d.text.address, d.firstName, {
-            speed: cSpeed,
-            direction: cDir,
-            duration: "1",
-          });
-          d.text.sent = true;
-        }
-        if (d.text.duration === 1 && bSpeed >= d.text.speed && Math.abs(270 - bDir) <= d.text.errorAngle) {
-          sendTextMessage(d.text.address, d.firstName, {
-            speed: bSpeed,
-            direction: bDir,
-            duration: "5",
-          });
-          d.text.sent = true;
-        }
-        if (d.text.duration === 2 && aSpeed >= d.text.speed && Math.abs(270 - aDir) <= d.text.errorAngle) {
-          sendTextMessage(d.text.address, d.firstName, {
-            speed: aSpeed,
-            direction: aDir,
-            duration: "15",
-          });
-          d.text.sent = true;
-        }
-        if (d.text.sent === true) {
-          // console.log("sending text to ", d.email)
-          await setDoc(doc(db, "users", v), d);
-        }
-      } else {
-        // console.log("already sent to", v, " => ", d)
-      }
-    });
+    checkAndSendTexts([cSpeed, bSpeed, aSpeed], [cDir, bDir, aDir]);
   };
 
   updateHoursTable = async (forceRegeneration = false) => {
@@ -549,6 +511,7 @@ export default class AddData {
       console.log("addData d.length: ", body.d.length);
       console.log("addData first one: ", body.d[0][0]);
 
+      this.setLastRecord();
       // if we switched to daylight savings time, there may be overlapping time
       let latest = new Date(globals.lastRecord);
       let s = new Date(body.d[0][0]);

@@ -217,7 +217,7 @@ const ImageFiles = (): Router => {
             const id = ToId(year + month);
             log("scanEntireDirectory", "id: ", id);
             await pb
-              .collection("ImageFileData")
+              .collection("imageFiles")
               .update(id, { data: images[year][month] })
               .catch((err: any) => console.error(err.message));
           }
@@ -228,9 +228,9 @@ const ImageFiles = (): Router => {
 
   //create the listing record
   const createListingRecord = async () => {
-    // load all records from ImageFileData
+    // load all records from imageFiles
     let ans: any = {};
-    const res = await pb.collection("ImageFileData").getList(0, 9999);
+    const res = await pb.collection("imageFiles").getList(0, 9999);
     res.items.forEach((item: any) => {
       let year = parseInt(item.id.slice(9, 13));
       //if year is a number
@@ -244,19 +244,19 @@ const ImageFiles = (): Router => {
       }
     });
     await pb
-      .collection("ImageFileData")
+      .collection("imageFiles")
       .update(ToId("listing"), { data: ans })
       .catch((err: any) => console.error(err.message));
   };
 
   const getListingRecord = async () => {
-    const res = await pb.collection("ImageFileData").getOne(ToId("listing"));
+    const res = await pb.collection("imageFiles").getOne(ToId("listing"));
     return res.data;
   };
 
   const getImageData = async (year: number, month: number) => {
     try {
-      const res = await pb.collection("ImageFileData").getOne(ToId(year + month.toString().padStart(2, "0")));
+      const res = await pb.collection("imageFiles").getOne(ToId(year + month.toString().padStart(2, "0")));
       return res.data;
     } catch (err) {
       return {};
@@ -265,8 +265,8 @@ const ImageFiles = (): Router => {
 
   const scanLatestDirectory = async () => {
     try {
-      const listing = await pb.collection("ImageFileData").getOne(ToId("listing"));
-      const mostRecent = await pb.collection("ImageFileData").getList(1, 1, {
+      const listing = await pb.collection("imageFiles").getOne(ToId("listing"));
+      const mostRecent = await pb.collection("imageFiles").getList(1, 1, {
         filter: 'id~"000020"',
         sort: "-id", // descending
       });
@@ -290,11 +290,11 @@ const ImageFiles = (): Router => {
         const id = ToId(year + month);
         log("id: ", id);
         await pb
-          .collection("ImageFileData")
+          .collection("imageFiles")
           .update(id, { data: res })
           .catch((err: any) => console.error(err.message));
         await pb
-          .collection("ImageFileData")
+          .collection("imageFiles")
           .update(listing.id, { data: listing.data })
           .catch((err: any) => console.error(err.message));
       } else log("directory does not exist");
@@ -318,7 +318,7 @@ const ImageFiles = (): Router => {
         }
         const id = ToId(year + month);
         await pb
-          .collection("ImageFileData")
+          .collection("imageFiles")
           .create({ id, data: res })
           .catch((err: any) => console.error(err.message));
       }
