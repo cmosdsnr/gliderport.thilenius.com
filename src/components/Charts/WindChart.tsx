@@ -1,17 +1,17 @@
 import React, { useEffect, useState, useRef, MouseEvent } from 'react'
 import * as d3 from 'd3'
-import { Col } from "react-bootstrap"
-import { useFilter, Limits, FilterReturnDataType } from '../../contexts/FilterContext'
+import { Col } from 'react-bootstrap'
+import { useFilter } from 'contexts/FilterContext'
 import { getGradients } from './ColorGradients'
-import Legend from "./Legend"
-import { useData } from '../../contexts/DataContext'
+import Legend from './Legend'
+import { useData } from 'contexts/DataContext'
 
 interface WindChartProps {
     clientWidth: number,
     label: string,
 }
 
-const WindChart = ({ clientWidth, label }: WindChartProps): JSX.Element => {
+const WindChart = ({ clientWidth, label }: WindChartProps) => {
 
     const {
         chart

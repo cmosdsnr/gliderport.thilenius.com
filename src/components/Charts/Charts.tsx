@@ -1,10 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react'
-import { Row } from "react-bootstrap"
-import WindChart from "./WindChart"
-import SimpleChart from "./SimpleChart"
+import { Row } from 'react-bootstrap'
+import { FilterProvider } from 'contexts/FilterContext'
+import WindChart from './WindChart'
+import SimpleChart from './SimpleChart'
 
 
-const Charts = ({ ...rest }): JSX.Element => {
+const Charts = ({ ...rest }) => {
 
 
     const [clientWidth, setClientWidth] = useState<number>(0)
@@ -28,13 +29,16 @@ const Charts = ({ ...rest }): JSX.Element => {
     }, [])
 
     return (
-        <Row ref={rowRef} style={{ backgroundColor: "rgb(240,255,255)" }} {...rest}>
-            <WindChart clientWidth={clientWidth} label="Speed (mph) & Dir (color)" />
-            <SimpleChart clientWidth={clientWidth} label="Direction" />
-            <SimpleChart clientWidth={clientWidth} label="Temperature" />
-            <SimpleChart clientWidth={clientWidth} label="Pressure" />
-            <SimpleChart clientWidth={clientWidth} label="Humidity" />
-        </Row>
+
+        <FilterProvider>
+            <Row ref={rowRef} style={{ backgroundColor: "rgb(240,255,255)" }} {...rest}>
+                <WindChart clientWidth={clientWidth} label="Speed (mph) & Dir (color)" />
+                <SimpleChart clientWidth={clientWidth} label="Direction" />
+                <SimpleChart clientWidth={clientWidth} label="Temperature" />
+                <SimpleChart clientWidth={clientWidth} label="Pressure" />
+                <SimpleChart clientWidth={clientWidth} label="Humidity" />
+            </Row>
+        </FilterProvider>
     )
 }
 export default Charts

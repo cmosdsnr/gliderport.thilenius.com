@@ -1,11 +1,11 @@
-import React, { useState, ChangeEvent, FormEvent } from "react"
-import { useAuth, Message } from '../../contexts/AuthContext'
+import React, { useState, ChangeEvent, FormEvent } from 'react'
+import { useAuth } from 'contexts/AuthContextPocketbase'
 
 
 export default function PostMessage() {
     const [msgItems, setMsgItems] = useState<Partial<Message>>({ msg: "" });
 
-    const { saveMessage } = useAuth()
+    const { newMessage } = useAuth()
 
     //Dynamically Update States for the form
     function updateFormEdits(event: ChangeEvent<HTMLTextAreaElement>) {
@@ -16,7 +16,7 @@ export default function PostMessage() {
     //Submit a new post
     function postFormUpdate(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        saveMessage(msgItems)
+        newMessage(msgItems.msg!)
     }
 
     return (

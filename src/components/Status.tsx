@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Row, Col } from "react-bootstrap"
-import StatusCanvas from "./StatusCanvas"
-import { useData } from '../contexts/DataContext'
+import { Row, Col } from 'react-bootstrap'
+import StatusCanvas from './StatusCanvas'
+import { useData } from 'contexts/DataContext'
 
-export default function Status(): JSX.Element {
+export default function Status() {
     const [lastStatus, setLastStatus] = useState<string>("")
     const rowRef = useRef<HTMLDivElement>(null)
     const width = useRef<number>(0)
@@ -75,6 +75,8 @@ export default function Status(): JSX.Element {
                     )
                 })
                 }
+            </Row >
+            <Row style={{ height: '200px' }}>
             </Row>
         </>
     )

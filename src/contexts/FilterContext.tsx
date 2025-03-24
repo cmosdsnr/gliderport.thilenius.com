@@ -1,27 +1,4 @@
 import React, { useEffect, useContext, createContext } from 'react'
-import { Reading } from '../contexts/DataContext'
-
-export type Limits = {
-    tsStart: number,
-    tsStop: number,
-    yMin: number,
-    yMax: number
-}
-export type FillReturnDataType = {
-    filled: null | [number, number][][],
-    limits: null | Limits
-}
-export type FffReturnDataType = {
-    filled: [number, number][],
-    limits: null | Limits
-}
-export type FilterReturnDataType = {
-    filtered: [number, number][],
-    fTop: [number, number][],
-    fBottom: [number, number][],
-    limits: null | Limits
-}
-
 interface FilterContextInterface {
     //functions 
     filterData: (rawData: Reading[], width: number) => FilterReturnDataType,

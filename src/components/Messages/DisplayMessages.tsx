@@ -1,12 +1,12 @@
-import React from "react";
-import DisplayMessage from "./DisplayMessage";
-import { useAuth, MessageItem } from '../../contexts/AuthContext'
+import React from 'react';
+import DisplayMessage from './DisplayMessage';
+import { useAuth } from 'contexts/AuthContextPocketbase'
 
 
-export default function DisplayMessages(): JSX.Element {
+export default function DisplayMessages() {
     const { messages, messagesLoaded } = useAuth()
 
-    function getMessages(): JSX.Element | JSX.Element[] {
+    function getMessages() {
         if (messagesLoaded && messages) {
             return messages.map((msgItem: MessageItem, i: number) => (
                 <DisplayMessage key={i} msgItem={msgItem} />

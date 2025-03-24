@@ -8,7 +8,7 @@
 }
 
 #myContainer {   /*used in site nav*/
-    /* background-image: url('../images/banner.jpg'); */
+    /* background-image: url('images/banner.jpg'); */
     background-repeat: repeat;
     background-position: 0 0;
 }
@@ -39,14 +39,14 @@ svg.mysvg {
   border-color:blue; 
 }
 .thumbs {
-  background-image:url('../images/thumbs-up--down-buttons.gif');
+  background-image:url('images/thumbs-up--down-buttons.gif');
   background-size: 200% 100%;
   width:100px;
   height:100px;
   background-position: 0% 0%;
 }
 .night {
-  background-image:url('../images/partly-cloudy-night.png');
+  background-image:url('images/partly-cloudy-night.png');
   background-size: 100% 100%;
   width:100px;
   height:100px;
@@ -404,7 +404,7 @@ background-color: rgb(32, 32, 197);
 }
 
 /* Tooltip container */
-.tltip {
+.toolTip {
     /*position: relative;*/
     /*display: inline-block;*/
     border-bottom: 1px dotted black;
@@ -412,7 +412,7 @@ background-color: rgb(32, 32, 197);
 }
 
 /* Tooltip text */
-.tltip .tltiptext {
+.toolTip .toolTipText {
     visibility: hidden;
     width: 240px;
     background-color: black;
@@ -427,7 +427,7 @@ background-color: rgb(32, 32, 197);
 }
 
 /* Show the tooltip text when you mouse over the tooltip container */
-.tltip:hover .tltiptext {
+.toolTip:hover .toolTipText {
     visibility: visible;
 }
 

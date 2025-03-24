@@ -1,23 +1,25 @@
-import React from "react";
-import { useAuth, Message, MessageItem } from '../../contexts/AuthContext'
-import "../../css/message.css"
+import React from 'react';
+import { useAuth } from 'contexts/AuthContextPocketbase'
+import "css/message.css"
 interface DisplayMessageProps {
 
     msgItem: MessageItem;
 
 }
 
+
 export default function DisplayMessage({ msgItem }: DisplayMessageProps) {
     const { currentUser, deleteMessage } = useAuth()
 
     return (
         <div className="message" style={{ paddingBottom: "20px" }}>
-            <b>{msgItem.data.date}</b> from {msgItem.data.ownerName.length > 1 ? <>{msgItem.data.ownerName}</> : "unknown"} {
-                msgItem.data.uid === currentUser?.id ?
-                    <span className="deleteBtn"
-                        onClick={() => deleteMessage(msgItem)}
-                    >❌</span> : <></>}<br />
-            {msgItem.data.msg}
+            {msgItem.avatar.length > 0 ? <img src={msgItem.avatar} alt="avatar" style={{ width: "50px", borderRadius: "50%" }} /> : <></>}
+            <b>  {msgItem.name} / {msgItem.username}</b> posted on <b>{msgItem.created}</b>
+            {msgItem.uid === currentUser?.id ?
+                <span className="deleteBtn"
+                    onClick={() => deleteMessage(msgItem)}
+                >❌</span> : <></>}<br />
+            {msgItem.message}
         </div>
     );
 }

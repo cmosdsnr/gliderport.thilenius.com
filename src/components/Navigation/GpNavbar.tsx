@@ -1,15 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom'
-import Nav from "react-bootstrap/Nav"
-import Navbar from "react-bootstrap/Navbar"
+import Nav from 'react-bootstrap/Nav'
+import Navbar from 'react-bootstrap/Navbar'
+import NavDropdown from 'react-bootstrap/NavDropdown'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faHome, faVideo, faDonate, faInfoCircle, faTty, faAtom, faWind, faSignInAlt, faSignOutAlt, faUserPlus } from '@fortawesome/free-solid-svg-icons'
-import { useAuth } from '../../contexts/AuthContext'
+import { faHome, faVideo, faDonate, faInfoCircle, faTty, faAtom, faWind, faSignInAlt, faSignOutAlt, faUserPlus, faSadCry } from '@fortawesome/free-solid-svg-icons'
+import { useAuth } from 'contexts/AuthContextPocketbase'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 
+import { useModal, ModalType } from 'modals/Modals'
 
-import paraglider from "../../images/paraglider.png";
-import banner from "../../images/banner.jpg"
+import paraglider from 'images/paraglider.png';
+import banner from 'images/banner.jpg'
+import { useWindow } from 'hooks/useWindow'
+
+export const MyFontAwesomeIcon = (props: any) => {
+    const width = useWindow();
+    const showIcons = width > 950 || width < 768;
+    const { icon, inverse } = props;
+    return (
+        <>{showIcons && <FontAwesomeIcon icon={icon} inverse={inverse} />}</>
+    )
+}
 
 interface NavImageTextProps {
     icon: IconDefinition | null;
@@ -32,79 +44,54 @@ interface Page {
     name: string;
     loggedIn?: boolean;
     loggedOut?: boolean;
+    admin?: boolean;
 }
 
-interface GpNavbarProps {
-    showSignUpModal: boolean;
-    setShowSignUpModal: React.Dispatch<React.SetStateAction<boolean>>;
-    showLoginModal: boolean;
-    setShowLoginModal: React.Dispatch<React.SetStateAction<boolean>>;
-}
 
-export default function GpNavbar({ showSignUpModal, setShowSignUpModal, showLoginModal, setShowLoginModal }: GpNavbarProps) {
+export default function GpNavbar() {
     const [bannerStyle, setBannerStyle] = useState("-500px 500px");
     const [bannerTimer, setBannerTimer] = useState<number>(0);
-
+    const { openModal, closeModal } = useModal();
     const { currentUser } = useAuth();
 
     const pages: Page[] = [
         {
             icon: faHome,
             name: "Home",
-        },
-        {
+        }, {
             icon: faVideo,
             name: "Video",
             loggedIn: true,
-        },
-        {
+        }, {
             icon: faInfoCircle,
             name: "Stats",
             loggedIn: true,
-        },
-        {
+        }, {
             icon: faWind,
             name: "Forecast",
-        },
-
-        {
+        }, {
             icon: faAtom,
             name: "Equipment",
             loggedIn: true,
-        },
-        {
+        }, {
             icon: faTty,
             name: "Contact",
-        },
-        {
+        }, {
             icon: faDonate,
             name: "Contribute",
             loggedIn: true,
-        },
-        {
-            icon: faSignInAlt,
-            name: "Login",
-            loggedOut: true,
-        },
-        {
-            icon: faSignOutAlt,
-            name: "Logout",
-            loggedIn: true,
-        },
-        {
-            icon: faUserPlus,
-            name: "Sign-up",
-            loggedOut: true,
-        },
-        {
+        }, {
             icon: faTty,
             name: "Dashboard",
             loggedIn: true,
-        },
-        {
+        }, {
             icon: faTty,
             name: "Blog",
             loggedIn: true,
+        }, {
+            icon: faTty,
+            name: "Admin",
+            admin: true,
         },
     ];
 
@@ -143,16 +130,61 @@ export default function GpNavbar({ showSignUpModal, setShowSignUpModal, showLogi
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="mr-auto">
                         {pages.map((page, i) => {
-                            if (currentUser && page.loggedIn) {
-                                return (<NavImageText key={i} name={page.name} icon={page.icon} />)
-                            } else if (!currentUser && page.loggedOut) {
-                                return (<NavImageText key={i} name={page.name} icon={page.icon} />)
-                            } else if (!page.loggedIn && !page.loggedOut) {
-                                return (<NavImageText key={i} name={page.name} icon={page.icon} />)
-                            } else {
-                                return (null)
+                            // in the menu if we are logged in
+                            if (currentUser && (page.loggedIn || page.admin)) {
+                                if (page.admin && currentUser.role == 'Administrator')
+                                    return (
+                                        <NavDropdown key={i} title={<span>
+                                            <MyFontAwesomeIcon icon={faUserPlus} /> Admin
+                                        </span>} id="basic-nav-dropdown">
+                                            <NavDropdown.Item as={Link} to="/admin/listEndpoints">Endpoints</NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/admin/Information">Server Info</NavDropdown.Item>
+                                            <NavDropdown.Divider />
+                                            <NavDropdown.Item as={Link} to="/admin/Messages">Messages</NavDropdown.Item>
+                                        </NavDropdown>
+                                    )
+                                if (page.name == "Stats")
+                                    return (
+                                        <NavDropdown key={i} title={<span>
+                                            <MyFontAwesomeIcon icon={faUserPlus} /> Stats
+                                        </span>} id="basic-nav-dropdown">
+                                            <NavDropdown.Item as={Link} to="/stats/images">Images</NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/stats/hits">Hits</NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/stats/changes">Changes</NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/stats/links">Links</NavDropdown.Item>
+                                        </NavDropdown>
+                                    )
+                                if (page.loggedIn)
+                                    return (<NavImageText key={i} name={page.name} icon={page.icon} />)
                             }
+
+                            // in the menu if we are logged out
+                            if (!currentUser && page.loggedOut)
+                                return (<NavImageText key={i} name={page.name} icon={page.icon} />)
+
+                            //always in the menu
+                            if (!page.loggedIn && !page.loggedOut && !page.admin)
+                                return (<NavImageText key={i} name={page.name} icon={page.icon} />)
+
+                            return (null)
+
                         })}
+                        {currentUser ?
+                            <Nav.Link as={Link} to="/logout">
+                                <MyFontAwesomeIcon icon={faSignOutAlt} />
+                                <span className="navText">Logout</span>
+                            </Nav.Link> :
+                            <>
+                                <div style={{ paddingTop: "8px", paddingRight: "25px" }} onClick={() => openModal(ModalType.Login)}>
+                                    <MyFontAwesomeIcon icon={faSignInAlt} />
+                                    <span className="navText"> Login</span>
+                                </div>
+                                <div style={{ paddingTop: "8px", paddingRight: "25px" }} onClick={() => openModal(ModalType.SignUp)}>
+                                    <MyFontAwesomeIcon icon={faUserPlus} />
+                                    <span className="navText"> Sign-up</span>
+                                </div>
+                            </>
+                        }
                     </Nav>
                 </Navbar.Collapse>
             </Navbar>

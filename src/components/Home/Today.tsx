@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react"
-import { useData } from '../../contexts/DataContext'
+import React, { useState, useEffect } from 'react'
+import { useData } from 'contexts/DataContext'
 
-const Today = props => {
-    const { ...rest } = props
+const Today = () => {
     const { forecast, loadData } = useData()
 
     useEffect(() => {

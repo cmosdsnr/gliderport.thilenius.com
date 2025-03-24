@@ -1,32 +1,32 @@
 import React, { useRef, useState } from 'react'
 import { Form, Button, Card, Alert } from 'react-bootstrap'
-import { useAuth } from '../contexts/AuthContext'
-import { Link, useHistory } from 'react-router-dom'
+import { useAuth } from 'contexts/AuthContextPocketbase'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function UpdateProfile() {
-    const emailRef = useRef()
-    const passwordRef = useRef()
-    const passwordConfirmRef = useRef()
+    const emailRef = useRef<HTMLInputElement>(null)
+    const passwordRef = useRef<HTMLInputElement>(null)
+    const passwordConfirmRef = useRef<HTMLInputElement>(null)
     const { currentUser, updateUserEmail, updateUserPassword } = useAuth()
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
-    const history = useHistory()
+    const navigate = useNavigate()
 
     function handleSubmit(e) {
         e.preventDefault()
-        if (passwordConfirmRef.current.value !== passwordRef.current.value) {
+        if (passwordConfirmRef.current && passwordRef.current && passwordConfirmRef.current.value !== passwordRef.current.value) {
             return setError('Passwords do not match')
         }
 
         const promises = []
-        if (emailRef.current.value !== currentUser.email) {
+        if (emailRef.current && emailRef.current.value !== currentUser?.email) {
             promises.push(updateUserEmail(emailRef.current.value))
         }
-        if (passwordRef.current.value) {
+        if (passwordRef.current?.value) {
             promises.push(updateUserPassword(passwordRef.current.value))
         }
         Promise.all(promises).then(() => {
-            history.push('/')
+            navigate('/')
         }).catch(() => {
             setError('Failed to update account')
         }).finally(() => {
@@ -45,7 +45,7 @@ export default function UpdateProfile() {
                     <Form onSubmit={handleSubmit}>
                         <Form.Group id="email">
                             <Form.Label>Email</Form.Label>
-                            <Form.Control type="email" ref={emailRef} required defaultValue={currentUser.email} />
+                            <Form.Control type="email" ref={emailRef} required defaultValue={currentUser?.email!} />
                         </Form.Group>
                         <Form.Group id="password">
                             <Form.Label>password</Form.Label>

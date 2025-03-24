@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import JSMpeg from 'jsmpeg-player'
-import { useData } from '../contexts/DataContext'
+import { useData } from 'contexts/DataContext'
 
 export default function Video() {
     const [tooMany, setTooMany] = useState(false)

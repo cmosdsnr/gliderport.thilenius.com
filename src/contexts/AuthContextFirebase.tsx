@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, ReactNode } from 'react'
 import { auth, db } from '../firebase'
 import { User, UserCredential } from 'firebase/auth'
-import { doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, collection, query, orderBy, onSnapshot, DocumentData } from "firebase/firestore";
+import { doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, collection, query, orderBy, onSnapshot, DocumentData } from 'firebase/firestore';
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -11,7 +11,7 @@ import {
     updatePassword,
     onAuthStateChanged
 } from 'firebase/auth'
-import date from "date-and-time"
+import date from 'date-and-time'
 
 
 export interface Message {

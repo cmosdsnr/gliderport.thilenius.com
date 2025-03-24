@@ -1,16 +1,16 @@
-import React, { useRef, useEffect, useState } from "react"
-import Row from "react-bootstrap/Row"
-import Col from "react-bootstrap/Col"
-import LineCanvas from "./LineCanvas"
-import CircleCanvas from "./CircleCanvas"
-import KeyCanvas from "./KeyCanvas"
-import { useData } from '../../contexts/DataContext'
-import '../../css/history.css';
+import React, { useRef, useEffect, useState } from 'react'
+import Row from 'react-bootstrap/Row'
+import Col from 'react-bootstrap/Col'
+import LineCanvas from './LineCanvas'
+import CircleCanvas from './CircleCanvas'
+import KeyCanvas from './KeyCanvas'
+import { useData } from 'contexts/DataContext'
+import 'css/history.css';
 
 export default function History() {
 
-    const containerRef = useRef<HTMLInputElement>()
-    const containerKeyRef = useRef<HTMLInputElement>()
+    const containerRef = useRef<HTMLInputElement>(null)
+    const containerKeyRef = useRef<HTMLInputElement>(null)
     const [clockFormat, setClockFormat] = useState(false)
     const [toggleText, setToggleText] = useState("Toggle to Clock Format")
     const [circleWidth, setCircleWidth] = useState(100)
@@ -104,7 +104,9 @@ export default function History() {
                         </Col>
                     ))}
                 </Row>
+
             )}
+            <Row style={{ height: '200px' }}></Row>
         </>
     )
 }

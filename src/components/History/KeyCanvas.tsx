@@ -1,6 +1,6 @@
-import React from "react"
-import Canvas from "./Canvas"
-import { codes } from "../Globals"
+import React from 'react'
+import Canvas from './Canvas'
+import { codes } from '../Globals'
 
 interface KeyCanvasProps {
     width: number

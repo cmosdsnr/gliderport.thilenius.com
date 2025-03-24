@@ -1,32 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Alert, Row, Col } from 'react-bootstrap';
-import { useAuth } from '../contexts/AuthContext';
-import { useHistory } from 'react-router-dom';
+import { useAuth } from 'contexts/AuthContextPocketbase';
+import { useNavigate } from 'react-router-dom';
 import { PhoneNumberInput } from './PhoneNumber';
 import TextField from '@mui/material/TextField';
-import { ToggleSlider } from "react-toggle-slider";
+import { ToggleSlider } from 'react-toggle-slider';
 
-interface UserText {
-    speed: number;
-    direction: number;
-    enabled: boolean;
-    duration: number;
-    address?: string;
-    provider?: string;
-    errorAngle?: number;
-}
-
-interface CurrentUser {
-    firstName: string;
-    lastName: string;
-    email: string;
-    role: string;
-    text: UserText;
-}
-
-
-
-function useOutsideAlerter(ref: React.RefObject<HTMLDivElement>, setEditing: React.Dispatch<React.SetStateAction<number>>) {
+function useOutsideAlerter(ref: React.RefObject<HTMLDivElement | null>, setEditing: React.Dispatch<React.SetStateAction<number>>) {
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (ref.current && !ref.current.contains(event.target as Node)) {
@@ -43,17 +23,16 @@ function useOutsideAlerter(ref: React.RefObject<HTMLDivElement>, setEditing: Rea
 export default function Dashboard() {
     const [error, setError] = useState<string>("");
     const [editing, setEditing] = useState<number>(0);
-    const editRef = useRef<HTMLDivElement>(null);
-
+    const editRef = useRef<HTMLDivElement | null>(null);
     useOutsideAlerter(editRef, setEditing);
-    const { currentUser, logout, updateUser } = useAuth();
-    const history = useHistory();
+    const { currentUser, logout, updateUser, updateUserSettings, resetPassword } = useAuth();
+    const navigate = useNavigate();
 
     async function handleLogout() {
         setError('');
         try {
             await logout();
-            history.push('/Login');
+            navigate('/Login');
         } catch {
             setError('Failed to log out');
         }
@@ -61,21 +40,10 @@ export default function Dashboard() {
 
     const sendTestSms = () => {
         if (currentUser) {
-            const url = `${import.meta.env.VITE_UPDATE_SERVER_URL}/sendTestSms?name=${currentUser.firstName}&to=${currentUser.text.address}`;
+            const url = `${import.meta.env.VITE_UPDATE_SERVER_URL}/sendTestSms?name=${currentUser.firstName}&to=${currentUser.settings.address}`;
             console.log(url);
             fetch(url);
             alert("Please check your phone for the test SMS");
-        }
-    }
-
-    const updateUserText = (obj: Partial<UserText>) => {
-        if (currentUser) {
-            let t: UserText = { ...currentUser.text, ...obj };
-            if (!t.speed) t.speed = 10;
-            if (!t.direction) t.direction = 10;
-            if (!t.enabled) t.enabled = false;
-            if (!t.duration) t.duration = 0;
-            updateUser('text', t);
         }
     }
 
@@ -103,7 +71,7 @@ export default function Dashboard() {
                                 but sometimes it can't identify it from your phone number. If you would still like to proceed send me an
                                 email <a href="mailto:stephen@thilenius.com">stephen@thilenius.com</a> with your <b>number and carrier</b>,
                                 and what would be even more helpful is if you also know the gateway for your carrier. Something like
-                                [10-digit-number]@yourcarrier.com. Try googling 'your carrier' email to sms gateway and see if
+                                [10-digit-number]@yourCarrier.com. Try googling 'your carrier' email to sms gateway and see if
                                 you can find it, and I will add it to the list. </p>
                         </Card.Body>
                     </Card>
@@ -145,9 +113,26 @@ export default function Dashboard() {
                                             </Row>
                                             :
                                             <Row className="profileBox" onClick={() => setEditing(1)}>
-                                                <Col xs={3}><strong>Name: </strong></Col>
-                                                <Col xs={8}>{currentUser.firstName + " " + currentUser.lastName}</Col>
+                                                <Col xs={3}>
+                                                    <strong>Name: </strong>
+                                                </Col>
+                                                <Col xs={5} onClick={() => setEditing(1)}>
+                                                    {currentUser.firstName + " " + currentUser.lastName}
+                                                </Col>
+                                                <Col xs={4} className="text-end">
+                                                    <Button variant="primary" onClick={(e) => {
+                                                        // Prevent triggering the row's click (if any)
+                                                        e.stopPropagation();
+                                                        // Call your change password handler
+                                                        resetPassword(currentUser.email);
+
+                                                    }}>
+                                                        Change Password
+                                                    </Button>
+                                                </Col>
                                             </Row>
+
+
                                         }
 
                                         <Row className="profileBox">
@@ -155,44 +140,43 @@ export default function Dashboard() {
                                                 <label>Mobile Number:
                                                     <PhoneNumberInput
                                                         style={{ marginLeft: "20px" }}
-                                                        updateUserText={updateUserText}
                                                     />
                                                 </label>
                                             </Col>
                                             <Col xs={12}>
-                                                {(currentUser.text.address?.length ?? 0) > 0 ?
+                                                {(currentUser.settings.address?.length ?? 0) > 0 ?
                                                     <>
-                                                        <Row><Col xs={4} style={{ marginBottom: "5px" }}><strong>Provider:</strong></Col><Col xs={6}>{currentUser.text.provider}</Col></Row>
+                                                        <Row><Col xs={4} style={{ marginBottom: "5px" }}><strong>Provider:</strong></Col><Col xs={6}>{currentUser.settings.provider}</Col></Row>
                                                         <Row className="smsAddress">
                                                             <Col xs={4}><strong>SMS address:</strong></Col>
-                                                            <Col xs={6}>{currentUser.text.address}</Col>
+                                                            <Col xs={6}>{currentUser.settings.address}</Col>
                                                             <Col
                                                                 xs={2}
                                                                 onClick={() => sendTestSms()}
-                                                                className="tryMe tltip">try me!
+                                                                className="tryMe toolTip">try me!
                                                                 <span
-                                                                    className="tltiptext">
+                                                                    className="toolTipText">
                                                                     You should receive a text from the gliderport if you press this button
                                                                 </span>
                                                             </Col>
                                                         </Row>
-                                                        {currentUser.text.address && (
+                                                        {currentUser.settings.address && (
                                                             <>
-                                                                <Row>Enable Text Alerts: <ToggleSlider active={currentUser.text.enabled} onToggle={state => updateUserText({ enabled: state })} /></Row>
+                                                                <Row>Enable Text Alerts: <ToggleSlider active={currentUser.textMe} onToggle={state => updateUserSettings({}, state)} /></Row>
                                                             </>
                                                         )}
-                                                        {currentUser.text.enabled ?
+                                                        {currentUser.textMe ?
                                                             <>
                                                                 <Row>
                                                                     <Col xs={{ span: 6, offset: 0 }} style={{ paddingTop: "20px" }}>
-                                                                        <label>Trigger speed <span className="tltip">(?)<span className="tltiptext">Minimum speed in mph</span></span>:
-                                                                            <span className="vlu">{currentUser.text.speed}</span><br />
+                                                                        <label>Trigger speed <span className="toolTip">(?)<span className="toolTipText">Minimum speed in mph</span></span>:
+                                                                            <span className="vlu">{currentUser.settings.speed}</span><br />
                                                                             <input
-                                                                                value={currentUser.text.speed}
+                                                                                value={currentUser.settings.speed}
                                                                                 type="range"
                                                                                 min="5"
                                                                                 max="20"
-                                                                                onChange={(e) => updateUserText({ speed: parseInt(e.target.value) })}
+                                                                                onChange={(e) => updateUserSettings({ speed: parseInt(e.target.value) }, currentUser.textMe)}
                                                                             />
                                                                         </label>
                                                                     </Col>
@@ -203,36 +187,36 @@ export default function Dashboard() {
                                                                                 type="radio"
                                                                                 value="0"
                                                                                 name="criteria"
-                                                                                checked={currentUser.text.duration === 0}
-                                                                                onChange={(e) => updateUserText({ duration: parseInt(e.target.value) })}
+                                                                                checked={currentUser.settings.duration === 0}
+                                                                                onChange={(e) => updateUserSettings({ duration: parseInt(e.target.value) })}
                                                                             /> Instantaneous<br />
                                                                             <input
                                                                                 type="radio"
                                                                                 value="1"
                                                                                 name="criteria"
-                                                                                checked={currentUser.text.duration === 1}
-                                                                                onChange={(e) => updateUserText({ duration: parseInt(e.target.value) })}
+                                                                                checked={currentUser.settings.duration === 1}
+                                                                                onChange={(e) => updateUserSettings({ duration: parseInt(e.target.value) })}
                                                                             /> 5 min Average<br />
                                                                             <input
                                                                                 type="radio"
                                                                                 value="2"
                                                                                 name="criteria"
-                                                                                checked={currentUser.text.duration === 2}
-                                                                                onChange={(e) => updateUserText({ duration: parseInt(e.target.value) })}
+                                                                                checked={currentUser.settings.duration === 2}
+                                                                                onChange={(e) => updateUserSettings({ duration: parseInt(e.target.value) })}
                                                                             /> 15 Min Average<br />
                                                                         </div>
                                                                     </Col>
                                                                 </Row>
                                                                 <Row>
                                                                     <Col xs={{ span: 5, offset: 0 }} md={{ span: 4, offset: 2 }} style={{ paddingTop: "20px" }}>
-                                                                        <label>Trigger Max angle <span className="tltip">(?)<span className="tltiptext">maximum the wind can be off from
-                                                                            270&deg; (west)</span></span>: <span className="vlu">&plusmn;{currentUser.text.errorAngle}&deg;</span><br />
+                                                                        <label>Trigger Max angle <span className="toolTip">(?)<span className="toolTipText">maximum the wind can be off from
+                                                                            270&deg; (west)</span></span>: <span className="vlu">&plusmn;{currentUser.settings.errorAngle}&deg;</span><br />
                                                                             <input
-                                                                                value={currentUser.text.errorAngle}
+                                                                                value={currentUser.settings.errorAngle}
                                                                                 type="range"
                                                                                 min="5"
                                                                                 max="40"
-                                                                                onChange={(e) => updateUserText({ errorAngle: parseInt(e.target.value) })}
+                                                                                onChange={(e) => updateUserSettings({ errorAngle: parseInt(e.target.value) })}
                                                                             />
                                                                         </label>
                                                                     </Col>

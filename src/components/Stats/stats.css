@@ -93,11 +93,16 @@
     margin-top: 15px;
 }
 
-.stats-video-container {
+.stats-image-container {
     height: 200px; 
 
     overflow: auto;
     padding: 2%;
     margin-top: 20px;
     border: 3px solid orange;
+}
+
+.modal-90w {
+    max-width: 90% !important;
+    width: 90% !important;
 }

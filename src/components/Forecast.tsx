@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col } from "react-bootstrap";
-import { useData } from '../contexts/DataContext';
-import "../css/forecast.css";
+import { Row, Col } from 'react-bootstrap';
+import { useData } from 'contexts/DataContext';
+import "css/forecast.css";
 
 interface ForecastData {
     [key: string]: any;

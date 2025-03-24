@@ -1,15 +1,15 @@
 import React, { useState } from 'react'
-import { Row, Col } from "react-bootstrap"
-import Nav from "react-bootstrap/Nav"
-import Navbar from "react-bootstrap/Navbar"
+import { Row, Col } from 'react-bootstrap'
+import Nav from 'react-bootstrap/Nav'
+import Navbar from 'react-bootstrap/Navbar'
 
-import hub from "../images/Equipment/Camera/Hub.jpg"
+import hub from 'images/Equipment/Camera/Hub.jpg'
 
-import Ultimeter2000 from "../images/Equipment/Pi/Ultimeter2000.jpg"
-import UM2000ConnectionBox from "../images/Equipment/Pi/UM2000ConnectionBox.jpg"
-import RaspberryPi3 from "../images/Equipment/Pi/RaspberryPi3.jpg"
-import RaspberryAndESP32 from "../images/Equipment/Pi/RaspberryAndESP32.jpg"
-import ESP32Box from "../images/Equipment/Pi/ESP32Box.jpg"
+import Ultimeter2000 from 'images/Equipment/Pi/Ultimeter2000.jpg'
+import UM2000ConnectionBox from 'images/Equipment/Pi/UM2000ConnectionBox.jpg'
+import RaspberryPi3 from 'images/Equipment/Pi/RaspberryPi3.jpg'
+import RaspberryAndESP32 from 'images/Equipment/Pi/RaspberryAndESP32.jpg'
+import ESP32Box from 'images/Equipment/Pi/ESP32Box.jpg'
 
 interface MyPillProps {
     no: number;
@@ -26,7 +26,7 @@ const MyPill: React.FC<MyPillProps> = ({ no, name, handleClick, page }) => {
     )
 }
 
-export default function Equipment(): JSX.Element {
+export default function Equipment() {
     const [page, setPage] = useState<number>(0)
 
     return (<Row>
@@ -88,8 +88,8 @@ const Manuals: React.FC = () => {
                     </a>
                 </li>
                 <li>
-                    <a href="/documents/Anamometer GM816.pdf">
-                        <h5>Anamometer GM816</h5>
+                    <a href="/documents/Anemometer GM816.pdf">
+                        <h5>Anemometer GM816</h5>
                     </a>
                 </li>
                 <li style={{ paddingBottom: "20px" }}>

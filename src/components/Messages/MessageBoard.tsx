@@ -2,7 +2,7 @@ import React from 'react'
 import PostMessage from './PostMessage'
 import DisplayMessages from './DisplayMessages'
 import date from 'date-and-time';
-import "../../css/message.css"
+import "css/message.css"
 
 export default function MessageBoard() {
 

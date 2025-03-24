@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useRef } from "react"
-import { Row, Col, Button } from "react-bootstrap"
+import React, { useState, useEffect, useRef } from 'react'
+import { Row, Col, Button } from 'react-bootstrap'
 
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 
-import { useData } from '../../contexts/DataContext'
-import History from "../History/History"
-import CurrentTable from "./CurrentTable"
-import Today from "./Today"
-import WindDial from "./WindDial"
-import Status from "../Status"
-import Charts from "../Charts/Charts"
-import UpdatingImage from "./UpdatingImage"
+import { useData } from 'contexts/DataContext'
+import History from '../History/History'
+import CurrentTable from './CurrentTable'
+import Today from './Today'
+import WindDial from './WindDial'
+import Status from '../Status'
+import Charts from '../Charts/Charts'
+import UpdatingImage from './UpdatingImage'
 import KoFiWidget from './KoFiWidget';
 
-import '../../css/home.css';
+import 'css/home.css';
 
 // *********************************************
-export const Home = () => {
+const Home = () => {
     const picRef = useRef(null)
     const { chart, passedSeconds, offline, loadData, message } = useData()
 
@@ -57,7 +57,7 @@ export const Home = () => {
                         {/* style={{ border: "1px solid black" }} */}
                         <Row>
                             <Col xs={12} className="container" >
-                                <UpdatingImage offline={offline} />
+                                <UpdatingImage />
                             </Col>
                         </Row>
                     </Col>
@@ -137,3 +137,4 @@ export const Home = () => {
     )
 }
 
+export default Home;

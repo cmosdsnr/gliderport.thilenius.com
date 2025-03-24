@@ -1,6 +1,15 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef } from 'react'
 
-// export const phpLoc = "https://live.flytorrey.com/php/"
+// prints out the data: Mar 14,2025, 6:28:21 PM
+export const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric'
+});
 
 // clone an object
 export const clone = (obj: any) => {

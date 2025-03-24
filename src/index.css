@@ -170,3 +170,13 @@ input {
     font-size: 14px;
     color: #333;
 }
+
+@keyframes flash {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+  
+  .flash {
+    animation: flash 1s infinite;
+  }

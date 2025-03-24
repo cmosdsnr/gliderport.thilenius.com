@@ -1,6 +1,6 @@
-import React from "react"
-import Canvas from "./Canvas"
-import { codes, codeDef } from "../Globals"
+import React from 'react'
+import Canvas from './Canvas'
+import { codes, codeDef } from '../Globals'
 
 export const CircleCanvas = ({ width, data }) => {
     const drawCircle = (ctx) => {

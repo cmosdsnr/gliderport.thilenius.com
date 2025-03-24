@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback, WheelEvent } from 'react'
 import * as d3 from 'd3'
-import { Reading } from '../../contexts/DataContext'
-import '../../css/windDial.css';
+import 'css/windDial.css';
 
 interface WindDialProps {
     passedSeconds: number
-    picRef: React.RefObject<HTMLDivElement>
+    picRef: React.RefObject<HTMLDivElement | null>
     data: Reading[]
 }
 
@@ -330,11 +329,9 @@ const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
 
 
         svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400)).text("Cliff \u27C2 wind: " + (Math.cos((direction - 265) * Math.PI / 180) * speed).toFixed(1) + " mph")
-        // svg.append("text").attr("x", xa(-490) + 90).attr("y", ya(-400)).text((Math.cos((direction - 265) * Math.PI / 180) * speed).toFixed(1) + " mph")
         const cross = Math.abs(Math.sin((direction - 265) * Math.PI / 180) * speed).toFixed(1)
         const crossDir = Math.sin((direction - 265) * Math.PI / 180) > 0 ? 'S' : 'N'
         svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400) + 18).text("Cross wind: " + cross + " mph " + crossDir)
-        // svg.append("text").attr("x", xa(-490) + 90).attr("y", ya(-400) + 18).text(cross + " mph " + crossDir)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data, lastSeen])
 

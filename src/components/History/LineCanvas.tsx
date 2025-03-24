@@ -1,7 +1,7 @@
-import React from "react"
-import Canvas from "./Canvas"
-import { codes, codeDef, formatDate } from "../Globals"
-import { Day } from '../../contexts/DataContext'
+import React from 'react'
+import Canvas from './Canvas'
+import { codes, codeDef, formatDate } from '../Globals'
+import { Day } from 'contexts/DataContext'
 
 interface LineCanvasProps {
     width: number

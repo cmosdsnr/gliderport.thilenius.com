@@ -1,27 +1,20 @@
 import React from 'react';
-import { Route, Redirect, RouteProps } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { Route, Navigate, RouteProps } from 'react-router-dom';
+import { useAuth } from 'contexts/AuthContextPocketbase';
+import { useModal, ModalType } from 'modals/Modals';
 
-interface PrivateRouteProps extends Omit<RouteProps, 'component'> {
-    component: React.ComponentType<any>;
-}
-
-export default function PrivateRoute({ component: Component, ...rest }: PrivateRouteProps) {
+export default function PrivateRoute({ children }: any) {
     const { currentUser } = useAuth();
+    const { openModal } = useModal();
 
-    return (
-        <Route
-            {...rest}
-            render={(props) =>
-                typeof currentUser === 'undefined' ? (
-                    <h1>Loading.....</h1>
-                ) : currentUser ? (
-                    <Component {...props} />
-                ) : (
-                    <Redirect to="/login" />
-                )
-            }
-        />
-    );
+    if (typeof currentUser === 'undefined') {
+        return <h1>Loading.....</h1>;
+    }
+
+    if (!currentUser) {
+        openModal(ModalType.Login);
+        return <Navigate to="/home" replace />;
+    }
+
+    return <>{children}</>;
 }
-

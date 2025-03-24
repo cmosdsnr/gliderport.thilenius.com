@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ChangeEvent } from 'react'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from 'contexts/AuthContextPocketbase'
 
 interface Provider {
     [key: string]: [string, string, string]
@@ -27,7 +27,6 @@ const provider: Provider = {
 }
 
 interface PhoneNumberInputProps {
-    updateUserText: (data: { address: string, provider: string }) => void
     [key: string]: any
 }
 
@@ -37,23 +36,18 @@ interface User {
 
 export const PhoneNumberInput: React.FC<PhoneNumberInputProps> = (props) => {
     const { updateUserText, ...rest } = props
-    const [phone, setPhone] = useState<string>("")
-    const { currentUser, updateUser } = useAuth()
+    const { currentUser, updateUser, updateUserSettings } = useAuth()
+
 
     useEffect(() => {
-        setPhone(currentUser.phone)
-    }, [])
-
-    useEffect(() => {
-        console.log("phone changed: ", phone)
-    }, [phone])
+        console.log("phone changed: ", currentUser?.settings.phone)
+    }, [currentUser?.settings.phone])
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setPhone(e.target.value)
         const fn = formatPhoneNumber(e.target.value)
         if (fn.length === 14) {
             gatewayPhoneNumber(fn)
-            updateUser('phone', fn)
+            updateUserSettings({ phone: fn })
             console.log("fn: ", fn)
         }
     }
@@ -86,6 +80,6 @@ export const PhoneNumberInput: React.FC<PhoneNumberInputProps> = (props) => {
     }
 
     return (
-        <input {...rest} onChange={handleChange} value={phone} />
+        <input {...rest} onChange={handleChange} value={currentUser?.settings.phone} />
     )
 }

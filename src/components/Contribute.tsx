@@ -1,13 +1,13 @@
-import React, { useEffect } from "react";
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
-import { useData } from '../contexts/DataContext';
+import React, { useEffect } from 'react';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import { useData } from 'contexts/DataContext';
 
 interface Donor {
     name: string;
 }
 
-export default function Contribute(): JSX.Element {
+export default function Contribute() {
     const { loadData, donors, clients } = useData();
 
     useEffect(() => {

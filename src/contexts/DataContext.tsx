@@ -1,157 +1,8 @@
 import React, { createContext, useState, useEffect, useContext, useRef, Dispatch, SetStateAction } from 'react'
-import { useInterval } from '../components/Globals'
+import { useInterval } from 'components/Globals'
+import { formatter } from 'components/Globals'
+import { useMessages } from 'components/Admin/MessageLogger'
 
-// Donor format from WebSocket Server
-type Donor = {
-    id: number,
-    name: string,
-    amount: number,
-    date: string
-}
-
-// Post format from WebSocket Server PLACEHOLDER
-interface Post {
-    d?: number[],
-    sun?: number
-}
-
-// Code History format from WebSocket Server
-export type Day = {
-    date: number,              //time stamp of midnight, UTC
-    codes: CodePoint[],
-    sun: [number, number],     //seconds into day for sunrise and sunset
-    limits: [number, number],  //hour numbers for start and stop of the plot e.g. [5,19]
-}
-
-export type CodePoint = [
-    number, // seconds into day
-    number, // code
-]
-
-// 
-export type Reading = {
-    time: number,
-    speed: number,
-    direction: number,
-    humidity: number,
-    pressure: number,
-    temperature: number
-}
-const emptyReading: Reading = { time: 0, speed: 0, direction: 0, humidity: 0, pressure: 0, temperature: 0 }
-
-export interface Weeks {
-    totals: number[],
-    uniques: number[],
-    start: string
-}
-
-export interface Stats {
-    lastReset?: string,
-    total?: {
-        date: string,
-        count: number,
-        unique: number
-    },
-    day?: { day: string, unique: number, total: number },
-    week?: { day: string, unique: number, total: number },
-    month?: { unique: number, total: number },
-    weeks?: Weeks,
-}
-
-interface Forecast {
-    [index: number]: [number, string]  // hour of the day, forecast
-}
-
-// video data received from server
-type VideoItem = {
-    years: [string],
-    dates: [[string, string] | string] // from date -> to date, or a single day
-}
-
-
-// translated video data for consumption
-interface VideoData {
-    videos: string[]
-    videoYears: string[]
-}
-
-
-
-type TimeStamp = number
-
-type Sun = {
-    rise: TimeStamp,
-    set: TimeStamp,
-}
-
-// possible fields of update data received from WebSocket Server
-type CurrentData = {
-    sunrise: TimeStamp,
-    sunset: TimeStamp,
-
-    onlineStatus: 0 | 1,
-    onlineStatusTouched: TimeStamp,
-
-    lastRecord: TimeStamp,
-    speed: number,
-    direction: number,
-    humidity: number,
-    pressure: number,
-    temperature: number,
-
-    lastImage: TimeStamp,
-    lastForecast: TimeStamp,
-
-    videoWidth: number,
-    videoHeight: number,
-    numberConnections: number,
-
-}
-
-type ImageData = null | {
-    A: string,
-}
-
-type Client = {
-    id: number,
-    name: string,
-    amount: number,
-    date: string,
-    [key: string]: any // Add this index signature
-}
-
-interface DataContextInterface {
-    //states
-    clients: Array<Client>,
-    donors: Array<Donor>,
-    posts: Array<Post>,
-    history: Array<Day>,
-    chart: Array<Reading>,
-    latest: Reading,
-    status: Array<number>,
-    lastCheck: TimeStamp,
-    forecast: Array<Forecast>,
-    forecastFull: any,
-    videos: VideoData,
-    hitStats: Stats | null,
-    passedSeconds: number,
-    offline: boolean,
-    image1: string | null,
-    bigImage1: string | null,
-    image2: string | null,
-    bigImage2: string | null,
-    lastForecast: TimeStamp,
-    sun: Sun,
-    videoWidth: number,
-    videoHeight: number,
-    numberConnections: number,
-    message: [string | null, string | null],
-    //functions 
-    loadData: (name: string) => void,
-    printDate: (ts: TimeStamp) => string,
-}
-
-// const DataContext = createContext<DataContextInterface | null>(null)
 const DataContext = createContext<DataContextInterface>({} as DataContextInterface);
 
 export function useData() {
@@ -164,7 +15,15 @@ export function DataProvider({ children }: any) {
     const [donors, setDonors] = useState<Donor[]>([])
     const [history, setHistory] = useState<Day[]>([])
     const [chart, setChart] = useState<Reading[]>([])
-    const [latest, setLatest] = useState<Reading>(emptyReading)
+    const [latest, setLatest] = useState<Reading>(
+        {
+            time: 0,
+            speed: 0,
+            direction: 0,
+            humidity: 0,
+            pressure: 0,
+            temperature: 0,
+        })
     const [status, setStatus] = useState<number[]>([])
     const [forecast, setForecast] = useState<Forecast[]>([])
     const [forecastFull, setForecastFull] = useState<Forecast[]>([])
@@ -178,16 +37,19 @@ export function DataProvider({ children }: any) {
     const [bigImage2, setBigImage2] = useState<string | null>(null)
     const [lastForecast, setLastForecast] = useState(0)
     const [sun, setSun] = useState<Sun>({ rise: 0, set: 0 })
-    const [videos, setVideos] = useState<VideoData>({ videos: [], videoYears: [] })
-    const [updateForecast, setUpdateForecast] = useState(0)
-    const [reFetch, setReFetch] = useState(0)
-    const [restartEventSource, setRestartEventSource] = useState()
-    const [loaded, setLoaded] = useState<boolean>(false)
+    const [sleeping, setSleeping] = useState<boolean>(false)
     const [lastCheck, setLastCheck] = useState<TimeStamp>(1658263194)
     const [videoWidth, setVideoWidth] = useState(0)
     const [videoHeight, setVideoHeight] = useState(0)
     const [numberConnections, setNumberConnections] = useState(0)
+    const [videoServerOnline, setVideoServerOnline] = useState<boolean>(false)
+
     const [message, setMessage] = useState<[string | null, string | null]>([null, null])
+    const [cameraImages, setCameraImages] = useState<CameraImages>({
+        camera1: [],
+        camera2: [],
+    });
+    const { messageLogger, setChartLength } = useMessages();
 
     const handleChart = (d: Reading[]) => {
         setChart(d)
@@ -206,53 +68,27 @@ export function DataProvider({ children }: any) {
         setLastForecast(d.lastForecast)
         setVideoWidth(d.videoWidth)
         setVideoHeight(d.videoHeight)
-        setNumberConnections(d.numberConnections)
+        setNumberConnections(d.numberConnections);
+        setVideoServerOnline(d.videoServerOnline === 1);
+        setSleeping(d.sleeping == 1 ? true : false);
     }
 
-    const handleVideos = (d: VideoItem) => {
-        let vids: string[] = []
-        d.dates.forEach((v, i) => {
-            if (Array.isArray(v)) {
-                let dt = new Date(v[0] + " 12:00:00")
-                const end = new Date(v[1] + " 12:00:00")
-                while (dt <= end) {
-                    //push the date
-                    vids.push(
-                        dt.getFullYear() + '-'
-                        + ('0' + (dt.getMonth() + 1)).slice(-2) + '-'
-                        + ('0' + dt.getDate()).slice(-2)
-                    )
-                    //add a day
-                    dt.setDate(dt.getDate() + 1)
-                }
-            } else {
-                const dt = new Date(v + " 12:00:00")
-                vids.push(
-                    dt.getFullYear() + '-'
-                    + ('0' + (dt.getMonth() + 1)).slice(-2) + '-'
-                    + ('0' + dt.getDate()).slice(-2)
-                )
-            }
-        })
-        setVideos({ videos: vids, videoYears: d.years })
-    }
-
-    const handleImage1 = (d: ImageData) => {
+    const handleImage1 = (d: gpImageData) => {
         if (d === null || d.A === undefined) return
         setImage1(d.A)
     }
 
-    const handleBigImage1 = (d: ImageData) => {
+    const handleBigImage1 = (d: gpImageData) => {
         setBigImage1((d === null ? null : d.A))
         console.log("Initial fetch of big image")
     }
 
-    const handleImage2 = (d: ImageData) => {
+    const handleImage2 = (d: gpImageData) => {
         if (d === null || d.A === undefined) return
         setImage2(d.A)
     }
 
-    const handleBigImage2 = (d: ImageData) => {
+    const handleBigImage2 = (d: gpImageData) => {
         setBigImage2((d === null ? null : d.A))
         console.log("Initial fetch of big image")
     }
@@ -264,7 +100,7 @@ export function DataProvider({ children }: any) {
 
     const handleClients = (d: Client[]) => {
         setClients(d);
-        console.log("clients: ", JSON.stringify(d));
+        // console.log("clients: ", JSON.stringify(d));
     }
 
     const subCommands = {
@@ -276,7 +112,6 @@ export function DataProvider({ children }: any) {
         Clients: handleClients,
         Forecast: setForecast,
         ForecastFull: setForecastFull,
-        Videos: handleVideos,
         Stats: setHitStats,
         CurrentData: handleCurrentData,
         Image1: handleImage1,
@@ -286,13 +121,14 @@ export function DataProvider({ children }: any) {
         Message: handleMessage,
     }
 
-
     const ws = useRef<WebSocket | null>(null)
+
     useEffect(() => {
         console.table(hitStats)
     }, [hitStats])
+
     useEffect(() => {
-        console.log("chart length:", chart.length)
+        setChartLength(chart.length);
     }, [chart])
 
     const startWebSocket = () => {
@@ -303,6 +139,7 @@ export function DataProvider({ children }: any) {
             loadData("CurrentData");
             loadData("Chart");
             loadData("Clients");
+            loadData("Forecast");
             // testAll()
             setLoading(false);
             setPassedSeconds(0);
@@ -313,22 +150,40 @@ export function DataProvider({ children }: any) {
         }
     }
 
+    const updateImageList = (camera: number, newImages: string, date: number) => {
+        const t = { ...cameraImages };
+        // add in the new image to the correct camera
+
+        if (camera === 1) {
+            t.camera1.push({ image: newImages, date, dateString: formatter.format(new Date(1000 * date)) });
+            t.camera1.shift();
+        }
+        if (camera === 2) {
+            t.camera2.push({ image: newImages, date, dateString: formatter.format(new Date(1000 * date)) });
+            t.camera2.shift();
+        }
+    }
+
+    // Fetch last 10 images on startup
+    const fetchImages = () => {
+        fetch(import.meta.env.VITE_UPDATE_SERVER_URL + "/getLastFiveSmallImages")
+            .then(res => res.json())
+            .then(data => {
+                data.camera1.forEach((d: any, i: number) => { data.camera1[i].dateString = formatter.format(new Date(d.date)) });
+                data.camera2.forEach((d: any, i: number) => { data.camera2[i].dateString = formatter.format(new Date(d.date)) });
+                setCameraImages(data);
+                setLoading(false);
+            })
+            .catch(error => {
+                console.error("Error fetching images:", error);
+                setLoading(false);
+            });
+    };
+
     // Connect to the socket server
     useEffect(() => {
+        fetchImages();
         startWebSocket();
-        // ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL)
-        // ws.current.onopen = () => {
-        //     console.log("ws opened")
-        //     loadData("CurrentData")
-        //     loadData("Chart")
-        //     // testAll()
-        //     setLoading(false)
-        //     setPassedSeconds(0)
-        // }
-        // ws.current.onclose = () => {
-        //     console.log("ws closed")
-        //     setLoading(true)
-        // }
         const wsCurrent = ws.current;
         return () => {
             if (wsCurrent) wsCurrent.close();
@@ -339,139 +194,153 @@ export function DataProvider({ children }: any) {
     // name =  Posts | Donors | History | Chart | Status | Forecast | Stats
     function loadData(name: string) {
         if (!ws.current) {
-            console.log("no ws")
-            return
+            console.log("no ws");
+            return;
         }
+
+        if (ws.current.readyState === WebSocket.CONNECTING) {
+            console.log("WebSocket is still connecting, please wait...");
+            return;
+        }
+
+        if (ws.current.readyState !== WebSocket.OPEN) {
+            console.log("WebSocket is not open, cannot send data.");
+            return;
+        }
+
         if (!(name in subCommands)) {
-            console.log("wrong SubCommand given to loadData")
-            return
+            console.log("wrong SubCommand given to loadData");
+            return;
         }
-        console.log("requesting data: " + name)
-        const messageBody = { command: "fetchData", subCommand: name, days: 8 }
-        // if (name === "History") messageBody.days = 8
+
+        const messageBody = { command: "fetchData", subCommand: name, days: 8 };
+        messageLogger(0, "fetchData", name, null);
         ws.current.send(JSON.stringify(messageBody));
     }
-
     // process returned messages fetchData || update || image || ping
     // ws.current.onmessage must be redefined when chart changes
     useEffect(() => {
-        if (ws.current != null) ws.current.onmessage = (webSocketMessage) => {
+        if (ws.current != null) {
+            ws.current.onmessage = (webSocketMessage) => {
+                const messageBody = JSON.parse(webSocketMessage.data);
+                const { command, subCommand, data, error } = messageBody;
 
-            const messageBody = JSON.parse(webSocketMessage.data)
-            const sender = messageBody.sender
+                switch (command) {
+                    case 'fetchData': {
+                        // Define a mapping from subCommand strings to functions.
+                        const fetchDataHandlers = {
+                            Posts: subCommands.Posts,
+                            Donors: subCommands.Donors,
+                            History: subCommands.History,
+                            Chart: subCommands.Chart,
+                            Status: subCommands.Status,
+                            Forecast: subCommands.Forecast,
+                            ForecastFull: subCommands.ForecastFull,
+                            Clients: subCommands.Clients,
+                            Stats: subCommands.Stats,
+                            CurrentData: subCommands.CurrentData,
+                            Message: subCommands.Message,
+                            Image1: subCommands.Image1,
+                            BigImage1: subCommands.BigImage1,
+                            Image2: subCommands.Image2,
+                            BigImage2: subCommands.BigImage2,
+                        };
 
-            if (messageBody.command === 'fetchData') {
-                if (!(messageBody.subCommand in subCommands)) {
-                    console.log(messageBody.subCommand + ": unknown SubCommand returned")
-                    return
+                        const handler = fetchDataHandlers[subCommand as keyof typeof fetchDataHandlers];
+                        if (!handler) {
+                            console.log(`${subCommand}: unknown SubCommand returned`);
+                            return;
+                        }
+                        if (error) {
+                            console.log(`error: ${subCommand} : ${error}`);
+                            return;
+                        }
+                        handler(data);
+                        break;
+                    }
+                    case 'update': {
+                        // Destructure the properties from data.
+                        const {
+                            sunrise,
+                            sunset,
+                            onlineStatus,
+                            onlineStatusTouched,
+                            lastForecast,
+                            lastRecord,
+                            speed,
+                            direction,
+                            humidity,
+                            pressure,
+                            temperature,
+                            videoWidth,
+                            videoHeight,
+                            numberConnections,
+                            sleeping,
+                        } = data;
+
+                        if (sunrise && sunset) {
+                            setSun({ rise: sunrise, set: sunset });
+                        }
+                        if (onlineStatus !== undefined) {
+                            setOffline(onlineStatus === 0);
+                        }
+                        if (onlineStatusTouched) {
+                            setLastCheck(onlineStatusTouched);
+                        }
+                        if (lastForecast) {
+                            setLastForecast(lastForecast);
+                        }
+                        if (lastRecord) {
+                            let newRecord = { ...latest, time: lastRecord };
+                            if (speed !== undefined) newRecord.speed = speed;
+                            if (direction !== undefined) newRecord.direction = direction;
+                            if (humidity !== undefined) newRecord.humidity = humidity;
+                            if (pressure !== undefined) newRecord.pressure = pressure;
+                            if (temperature !== undefined) newRecord.temperature = temperature;
+                            setChart([...chart, newRecord]);
+                            setLatest(newRecord);
+                            setPassedSeconds(0);
+                        }
+                        if (videoWidth !== undefined) setVideoWidth(videoWidth);
+                        if (videoHeight !== undefined) setVideoHeight(videoHeight);
+                        if (numberConnections !== undefined) setNumberConnections(numberConnections);
+                        if (sleeping !== undefined) setSleeping(sleeping === 1);
+                        break;
+                    }
+                    case 'image': {
+                        // Log the data but clear out the image field.
+                        if (data.camera === 1) {
+                            updateImageList(1, data.image, data.date);
+                        }
+                        if (data.camera === 2) {
+                            updateImageList(2, data.image, data.date);
+                        }
+                        break;
+                    }
+                    case 'image1': {
+                        setImage1(data);
+                        break;
+                    }
+                    case 'image2': {
+                        setImage2(data);
+                        break;
+                    }
+                    case 'ping': {
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
                 }
-                // Posts: setPosts,
-                // Donors: setDonors,
-                // History: setHistory,
-                // Chart: handleChart,
-                // Status: setStatus,
-                // Forecast: setForecast,
-                // ForecastFull: setForecastFull,
-                // Videos: handleVideos,
-                // Stats: setHitStats,
-                // CurrentData: handleCurrentData,
-                // Image: handleImage,
-                // BigImage: handleBigImage,
-
-                let cmd
-
-                if (messageBody.subCommand === "Posts")
-                    cmd = subCommands.Posts
-                else if (messageBody.subCommand === "Donors")
-                    cmd = subCommands.Donors
-                else if (messageBody.subCommand === "History")
-                    cmd = subCommands.History
-                else if (messageBody.subCommand === "Chart")
-                    cmd = subCommands.Chart
-                else if (messageBody.subCommand === "Status")
-                    cmd = subCommands.Status
-                else if (messageBody.subCommand === "Forecast")
-                    cmd = subCommands.Forecast
-                else if (messageBody.subCommand === "ForecastFull")
-                    cmd = subCommands.ForecastFull
-                else if (messageBody.subCommand === "Videos")
-                    cmd = subCommands.Videos
-                else if (messageBody.subCommand === "Clients")
-                    cmd = subCommands.Clients
-                else if (messageBody.subCommand === "Stats")
-                    cmd = subCommands.Stats
-                else if (messageBody.subCommand === "CurrentData")
-                    cmd = subCommands.CurrentData
-                else if (messageBody.subCommand === "Message")
-                    cmd = subCommands.Message
-                else if (messageBody.subCommand === "Image1")
-                    cmd = subCommands.Image1
-                else if (messageBody.subCommand === "BigImage1")
-                    cmd = subCommands.BigImage1
-                else if (messageBody.subCommand === "Image2")
-                    cmd = subCommands.Image2
+                // if command was image1 or image2 make the data "Image Data"
+                if (command === "image1" || command === "image2")
+                    messageLogger(1, command, subCommand, "Image Data");
                 else
-                    cmd = subCommands.BigImage2
+                    messageLogger(1, command, subCommand, { ...data, image: "Image Data" });
+            };
+        }
 
 
-                if (messageBody.error) {
-                    console.log("error: " + messageBody.subCommand + " : " + messageBody.error)
-                    return
-                }
-                console.log("Fetch Data message received for " + messageBody.subCommand)
-                // console.log('✅ function is defined');
-                // console.log('⛔️ ', cmd, ' function is NOT defined')
-                // if (chart.length > 1) debugger
-                // if (messageBody.subCommand === "CurrentData") debugger
-                cmd(messageBody.data)
-            }
-            // if (messageBody.command === 'update') debugger
-            if (messageBody.command === 'update' && chart?.length > 0) {
-                console.log("update message received: ", messageBody.data)
-                const d = messageBody.data
-                if ('sunrise' in d && 'sunset' in d) setSun({ rise: d.sunrise, set: d.sunset })
-
-                if ('onlineStatus' in d) setOffline(d.onlineStatus === 0)
-                if ('onlineStatusTouched' in d) setLastCheck(d.onlineStatusTouched)
-
-                // if ('lastImage' in d) setLastImage(d.lastImage)
-                if ('lastForecast' in d) setLastForecast(d.lastForecast)
-
-                // console.log(messageBody.data)
-                // note: speed, temp, and pressure are transmitted in the proper scale
-                // scaling of raw database data is done in the socketServer (temp/10, speed/10 etc)
-                if ('lastRecord' in d) {
-                    let newRecord: Reading = { ...latest }
-                    newRecord.time = d.lastRecord
-                    if ('speed' in d) newRecord.speed = d.speed
-                    if ('direction' in d) newRecord.direction = d.direction
-                    if ('humidity' in d) newRecord.humidity = d.humidity
-                    if ('pressure' in d) newRecord.pressure = d.pressure
-                    if ('temperature' in d) newRecord.temperature = d.temperature
-                    setChart([...chart, newRecord])
-                    setLatest(newRecord)
-                    setPassedSeconds(0)
-                }
-                if ('videoWidth' in d) setVideoWidth(d.videoWidth)
-                if ('videoHeight' in d) setVideoHeight(d.videoHeight)
-                if ('numberConnections' in d) setNumberConnections(d.numberConnections)
-            }
-            if (messageBody.command === 'image1') {
-                // console.log("image message received, length: ", messageBody.data.length)
-                setImage1(messageBody.data)
-            }
-            if (messageBody.command === 'image2') {
-                // console.log("image message received, length: ", messageBody.data.length)
-                setImage2(messageBody.data)
-            }
-            if (messageBody.command === 'ping') {
-                console.log("keep alive ping received")
-            }
-            if (messageBody.command === 'UpdateClients') {
-                console.log("UpdateClients message received")
-                handleClients(messageBody.data);
-            }
-        };
     }, [chart, ws.current])
 
     const interval = 10 //seconds
@@ -505,9 +374,10 @@ export function DataProvider({ children }: any) {
         loadData("Status")
         loadData("Forecast")
         loadData("ForecastFull")
-        loadData("Videos")
         loadData("Stats")
     }
+
+
 
     const value: DataContextInterface = {
         //states
@@ -521,10 +391,11 @@ export function DataProvider({ children }: any) {
         forecastFull,
         status,
         lastCheck,
-        videos,
         hitStats,
         passedSeconds,
         offline,
+        cameraImages,
+        sleeping,
         image1,
         bigImage1,
         image2,
@@ -534,10 +405,12 @@ export function DataProvider({ children }: any) {
         videoWidth,
         videoHeight,
         numberConnections,
+        videoServerOnline,
         //functions 
         loadData,
         printDate,
         message,
+
     }
     return (
         <DataContext.Provider value={value}>
