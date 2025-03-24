@@ -1,22 +1,51 @@
-import { app } from "./startExpress";
+/**
+ * Provides an Express router with an endpoint to list all registered endpoints
+ * by scanning the internal Express application middleware stack.
+ *
+ * This module extracts endpoints (HTTP methods and paths) from the Express app's internal
+ * `_router.stack` (which is undocumented and subject to change) and exposes them via a GET
+ * endpoint at "/listEndpoints".
+ *
+ * @module listEndpoints
+ */
+
+import { gpupdate } from "./startExpress";
 import express, { Router, Request, Response } from "express";
 
+/**
+ * @typedef {Object} Endpoint
+ * @property {string} method - The HTTP method(s) for the endpoint.
+ * @property {string} path - The route path.
+ * Interface representing an endpoint with a method and path.
+ */
 interface Endpoint {
   method: string;
   path: string;
 }
 
+/**
+ * Creates an Express router with a GET endpoint that returns the list of registered endpoints.
+ *
+ * @returns {Router} An Express router with the "/listEndpoints" endpoint.
+ */
 export const listEndpoints = (): Router => {
+  /**
+   * Retrieves the list of endpoints from the Express application's middleware stack.
+   *
+   * It iterates over the internal `_router.stack` and extracts both direct routes and nested router routes,
+   * filtering for those with GET or POST methods.
+   *
+   * @returns {Endpoint[]} An array of endpoint objects, each containing the HTTP method(s) and route path.
+   */
   const getEndpoints = (): Endpoint[] => {
     const endpoints: Endpoint[] = [];
 
-    // Express stores middleware and routes in app._router.stack.
-    // Note: The _router property isn’t officially documented and its structure might change.
-    app._router.stack.forEach((middleware: any) => {
-      // If the middleware has a route, it's a direct route.
+    // Iterate over the Express app's middleware stack.
+    gpupdate._router.stack.forEach((middleware: any) => {
+      // If the middleware has a direct route, extract its methods and path.
       if (middleware.route) {
         const methods: { [method: string]: boolean } = middleware.route.methods;
-        // Check if GET or PUT is allowed.
+        // Consider endpoints that support GET or POST.
         if (methods.get || methods.post) {
           endpoints.push({
             method: Object.keys(methods)
@@ -27,7 +56,7 @@ export const listEndpoints = (): Router => {
           });
         }
       } else if (middleware.name === "router" && middleware.handle && middleware.handle.stack) {
-        // If the middleware is a router, iterate over its stack.
+        // If the middleware is a router, iterate over its internal stack.
         middleware.handle.stack.forEach((handler: any) => {
           if (handler.route) {
             const methods: { [method: string]: boolean } = handler.route.methods;
@@ -47,11 +76,21 @@ export const listEndpoints = (): Router => {
     return endpoints;
   };
 
+  // Create a new Express router.
   const router = express.Router();
-  // Create a GET route that returns the endpoints list
+
+  /**
+   * GET /listEndpoints
+   *
+   * Returns a JSON array of registered endpoints (HTTP method(s) and paths).
+   *
+   * @param {Request} req - The Express request object.
+   * @param {Response} res - The Express response object.
+   */
   router.get("/listEndpoints", (req: Request, res: Response) => {
     const endpoints = getEndpoints();
     res.json(endpoints);
   });
+
   return router;
 };

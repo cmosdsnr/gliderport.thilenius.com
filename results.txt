@@ -1,0 +1,24 @@
+.\src\archive.ts: * - GET /runScheduledArchive: Manually triggers the archival process.
+.\src\codes.ts: * - GET /updateCodeHistory: Triggers an update of the current day's code history based on new wind data.
+.\src\codes.ts: * - GET /sqlToPbCodeHistory: Imports SQL code history records into the PocketBase "codeHistory" collection.
+.\src\hitCounter.ts: * - GET /HandleHits: For testing purposes, this endpoint triggers the process of updating
+.\src\ImageFiles.ts: * - GET /scanLatestDirectory: Triggers a scan of the latest directory.
+.\src\ImageFiles.ts: * - GET /scanEntireDirectory: Scans the entire directory structure.
+.\src\ImageFiles.ts: * - GET /createListingRecord: Creates the listing record in PocketBase.
+.\src\ImageFiles.ts: * - GET /listing: Retrieves the current listing record.
+.\src\ImageFiles.ts: * - GET /imageCount: Returns image count for a specified date and time range.
+.\src\ImageFiles.ts: * - GET /getImageData: Retrieves image data for a specific year and month.
+.\src\ImageFiles.ts: * - GET /latestImages: Returns the latest images (for front-end display).
+.\src\ImageFiles.ts: * - GET /getLastFiveSmallImages: Returns the last five small images for each camera.
+.\src\ImageFiles.ts: * - GET /gotoSleep: Sets the server state to "sleeping".
+.\src\ImageFiles.ts: * - GET /wakeUp: Sets the server state to "awake".
+.\src\sendTextMessage.ts: * - GET /PhoneFinder: Accepts query parameters (area, prefix, number) to look up phone carrier info.
+.\src\sendTextMessage.ts: * - GET /sendTestSms: Triggers a test text alert by calling sendTextMessage with null data.
+.\src\sendTextMessage.ts: * - GET /testWindSpeeds: Returns current wind average data as JSON.
+.\src\sun.ts: * - GET /UpdateSun: Manually triggers a sun data update and returns the current sun data.
+.\src\wind.ts: * - GET /getLastEntry: Returns the timestamp of the most recent wind data record.
+.\src\wind.ts: * - GET /addWindFromSQL: Processes and inserts new wind records from the SQL database into PocketBase.
+.\src\wind.ts: * - GET /fixSaveErrors: Corrects errors in saved wind data by swapping temperature, pressure, and humidity values.
+.\src\ImageFiles.ts: * - POST /updateImage: Updates an image record based on data from the front end.
+.\src\ImageFiles.ts: * - POST /updateLog: (Debug) Updates log data.
+.\src\wind.ts: * - POST /addData: Adds new wind data from the request to the wind table and PocketBase.

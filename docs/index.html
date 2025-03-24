@@ -1,0 +1,163 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>gpupdate - v0.0.0</title><meta name="description" content="Documentation for gpupdate"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">gpupdate - v0.0.0</a><div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>gpupdate - v0.0.0</h1></div><div class="tsd-panel tsd-typography"><h1 id="gliderport-update-server" class="tsd-anchor-link">Gliderport Update server<a href="#gliderport-update-server" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><p>dokku storage:mount gliderportupdateserver /media/cmosdsnr/passport/gliderport/video:/app/video
+dokku storage:report gliderportupdateserver
+dokku ps:restart gliderportupdateserver</p>
+<h2 id="a-node-server-used-to" class="tsd-anchor-link">A node server used to:<a href="#a-node-server-used-to" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><h4 id="check-every-hour-if-its-a-new-day-and-update-sunriseset-data-updatesundata" class="tsd-anchor-link">Check every hour if it's a new day and update sunrise/set data (updateSunData)<a href="#check-every-hour-if-its-a-new-day-and-update-sunriseset-data-updatesundata" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4><h4 id="respond-to-the-following-calls" class="tsd-anchor-link">Respond to the following calls:<a href="#respond-to-the-following-calls" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4><ol>
+<li>'/getLastEntry'  : called from Pi3 node server: return the last entry in gliderport db</li>
+<li>'/ImageAdded'    : called from Pi3 at gliderport: Update the time the last image was added to now in the server_sent table</li>
+<li>'/addData'       : called from Pi3 node server: with new record(s)</li>
+<li>'/updateSmallImage1' : called from Pi3: Update the small image data (left camera)</li>
+<li>'/updateBigImage1' :  called from Pi3 : Update the large image data (left camera)</li>
+<li>'/updateSmallImage2' : called from Pi3: Update the small image data (right camera)</li>
+<li>'/updateBigImage2' :  called from Pi3 : Update the large image data (right camera)</li>
+</ol>
+<h4 id="for-debug" class="tsd-anchor-link">For Debug<a href="#for-debug" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4><ol>
+<li>'/current1.jpg    : browser call to get latest small image  (left camera)</li>
+<li>'/currentBig1.jpg : browser call to get latest small image (left camera)</li>
+<li>'/current2.jpg    : browser call to get latest small image  (right camera)</li>
+<li>'/currentBig2.jpg : browser call to get latest small image (right camera)</li>
+<li>'/info           : browser call to get lots of info about current situation</li>
+</ol>
+<h2 id="database" class="tsd-anchor-link">Database<a href="#database" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>This server uses a SQL database created with docker and locally accessed. ( same as socketserver)</p>
+<h2 id="routes" class="tsd-anchor-link">Routes<a href="#routes" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><table>
+<thead>
+<tr>
+<th>file</th>
+<th>type</th>
+<th>URL</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>archive</td>
+<td>GET</td>
+<td>runScheduledArchive</td>
+<td>Manually triggers the archival process.</td>
+</tr>
+<tr>
+<td>codes</td>
+<td>GET</td>
+<td>updateCodeHistory</td>
+<td>Triggers an update of the current day's code history based on new wind data.</td>
+</tr>
+<tr>
+<td>codes</td>
+<td>GET</td>
+<td>sqlToPbCodeHistory</td>
+<td>Imports SQL code history records into the PocketBase &quot;codeHistory&quot; collection.</td>
+</tr>
+<tr>
+<td>hitCounter</td>
+<td>GET</td>
+<td>HandleHits</td>
+<td>For testing purposes, this endpoint triggers the process of updating</td>
+</tr>
+<tr>
+<td>ImageFiles</td>
+<td>GET</td>
+<td>scanLatestDirectory</td>
+<td>Triggers a scan of the latest directory.</td>
+</tr>
+<tr>
+<td>ImageFiles</td>
+<td>GET</td>
+<td>scanEntireDirectory</td>
+<td>Scans the entire directory structure.</td>
+</tr>
+<tr>
+<td>ImageFiles</td>
+<td>GET</td>
+<td>createListingRecord</td>
+<td>Creates the listing record in PocketBase.</td>
+</tr>
+<tr>
+<td>ImageFiles</td>
+<td>GET</td>
+<td>listing</td>
+<td>Retrieves the current listing record.</td>
+</tr>
+<tr>
+<td>ImageFiles</td>
+<td>GET</td>
+<td>imageCount</td>
+<td>Returns image count for a specified date and time range.</td>
+</tr>
+<tr>
+<td>ImageFiles</td>
+<td>GET</td>
+<td>getImageData</td>
+<td>Retrieves image data for a specific year and month.</td>
+</tr>
+<tr>
+<td>ImageFiles</td>
+<td>GET</td>
+<td>latestImages</td>
+<td>Returns the latest images (for front-end display).</td>
+</tr>
+<tr>
+<td>ImageFiles</td>
+<td>GET</td>
+<td>getLastFiveSmallImages</td>
+<td>Returns the last five small images for each camera.</td>
+</tr>
+<tr>
+<td>ImageFiles</td>
+<td>GET</td>
+<td>gotoSleep</td>
+<td>Sets the server state to &quot;sleeping&quot;.</td>
+</tr>
+<tr>
+<td>ImageFiles</td>
+<td>GET</td>
+<td>wakeUp</td>
+<td>Sets the server state to &quot;awake&quot;.</td>
+</tr>
+<tr>
+<td>sendTextMessage</td>
+<td>GET</td>
+<td>PhoneFinder</td>
+<td>Accepts query parameters (area, prefix, number) to look up phone carrier info.</td>
+</tr>
+<tr>
+<td>sendTextMessage</td>
+<td>GET</td>
+<td>sendTestSms</td>
+<td>Triggers a test text alert by calling sendTextMessage with null data.</td>
+</tr>
+<tr>
+<td>sendTextMessage</td>
+<td>GET</td>
+<td>testWindSpeeds</td>
+<td>Returns current wind average data as JSON.</td>
+</tr>
+<tr>
+<td>sun</td>
+<td>GET</td>
+<td>UpdateSun</td>
+<td>Manually triggers a sun data update and returns the current sun data.</td>
+</tr>
+<tr>
+<td>wind</td>
+<td>GET</td>
+<td>getLastEntry</td>
+<td>Returns the timestamp of the most recent wind data record.</td>
+</tr>
+<tr>
+<td>wind</td>
+<td>GET</td>
+<td>addWindFromSQL</td>
+<td>Processes and inserts new wind records from the SQL database into PocketBase.</td>
+</tr>
+<tr>
+<td>wind</td>
+<td>GET</td>
+<td>fixSaveErrors</td>
+<td>Corrects errors in saved wind data by swapping temperature, pressure, and humidity values.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="to-recreate" class="tsd-anchor-link">to recreate<a href="#to-recreate" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><ul>
+<li>grep -R -h -- &quot;- GET&quot; .\src* &gt; results.txt</li>
+<li>grep -R -h -- &quot;- POST&quot; .\src* &gt;&gt; results.txt</li>
+</ul>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#gliderport-update-server"><span>Gliderport <wbr/>Update server</span></a><ul><li><a href="#a-node-server-used-to"><span>A node server used to:</span></a></li><li><ul><li><ul><li><a href="#check-every-hour-if-its-a-new-day-and-update-sunriseset-data-updatesundata"><span>Check every hour if it&#39;s a new day and update sunrise/set data (update<wbr/>Sun<wbr/>Data)</span></a></li><li><a href="#respond-to-the-following-calls"><span>Respond to the following calls:</span></a></li><li><a href="#for-debug"><span>For <wbr/>Debug</span></a></li></ul></li></ul></li><li><a href="#database"><span>Database</span></a></li><li><a href="#routes"><span>Routes</span></a></li><li><a href="#to-recreate"><span>to recreate</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">gpupdate - v0.0.0</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>

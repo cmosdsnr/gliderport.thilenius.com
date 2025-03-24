@@ -1,107 +1,119 @@
+/**
+ *
+ * ## This module initializes the connection to the PocketBase backend service.
+ * It performs the following tasks:
+ *  - Sets up a global EventSource so that the PocketBase client can use it.
+ *  - Loads environment variables from a .env file.
+ *  - Defines a delay helper for retry logic.
+ *  - Implements a testConnection function to verify if PocketBase is reachable.
+ *  - Defines pbInit, which:
+ *      * Tries to connect to a primary PocketBase URL.
+ *      * If the connection fails, it retries with a fallback URL.
+ *      * Once connected, it attempts to log in as an admin using preset credentials.
+ *      * Uses retry logic (with a 15-second delay) for both connection and authentication.
+ *  - Finally, it calls pbInit() to establish the connection and log in.
+ *
+ * Global Variables:
+ *  - pb: The PocketBase client instance.
+ *  - authData: Holds authentication data after a successful login.
+ *
+ * @module pb
+ */
+
+import { EventSource } from "eventsource";
+// @ts-ignore – if TypeScript is strict, ignore the missing global definition
+(globalThis as any).EventSource = EventSource;
+
 import PocketBase from "pocketbase";
 import dotenv from "dotenv";
-import { dirname } from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
-import { UserRecord } from "firebase-admin/lib/auth/user-record";
-import globals from "./globals.js";
 
-// import mainUsers from "./Mainusers.json"; // Firebase user export (each with uid)
-// import extraUsers from "./users.json"; // Extra data export (each with id)
+export let pb: any = null; // Global PocketBase client instance
+export let authData = null; // Authentication data after a successful login
 
-export let pb: any = null;
-export let authData = null;
-
+// Load environment variables from .env file
 dotenv.config();
 
-// const __f = fileURLToPath(import.meta.url);
-// const __dirname = dirname(__f);
-// export let logsDir = __dirname + `/../public/logs/`;
-
+/**
+ * Helper function that returns a Promise that resolves after a specified delay.
+ *
+ * @param ms - Milliseconds to delay.
+ * @returns Promise<void>
+ */
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Tests the connection to the current PocketBase instance by calling its health check.
+ *
+ * @param firstPass - A flag to indicate if this is the first connection attempt.
+ * @returns Promise<boolean> - Resolves to true if the health check succeeds, otherwise false.
+ */
 async function testConnection(firstPass: boolean) {
   try {
     const health = await pb.health.check();
-    console.log("✅ Connection successful:", health);
+    console.log("pbInit:         ✅ Connection successful:", health);
     return true;
   } catch (error: any) {
-    if (!firstPass) console.error("❌ Connection failed:", error.message);
+    if (!firstPass) console.error("pbInit:         ❌ Connection failed:", error.message);
     return false;
   }
 }
 
+/**
+ * Initializes the PocketBase connection and logs in as an admin.
+ *
+ * This function continuously attempts to:
+ *  - Connect to the primary URL ("http://gpdata.web:5000"). If that fails,
+ *    switch to a fallback URL ("https://gpdata.thilenius.com").
+ *  - Once connected, attempt to authenticate with admin credentials.
+ *  - Use a 15-second delay between retries if necessary.
+ *
+ * @returns Promise<void> - Resolves once a successful connection and login have been established.
+ */
 export const pbInit = () => {
   return new Promise<void>(async (resolve, reject) => {
     let url = "";
     let connected = false;
     let loggedIn = false;
     let firstPass = true;
-    console.log("connecting to pocketbase...");
+    console.log("pbInit:         connecting to pocketbase...");
+
+    // Attempt to establish a connection
     while (!connected) {
       url = "http://gpdata.web:5000";
-      // let res = await fetch(url);
       pb = new PocketBase(url);
       pb.autoCancellation(false);
-      // logsDir = __dirname + `/../../public/logs/`;
-      // if (!fs.existsSync(logsDir)) console.log("ERROR!!! could not find server directory", logsDir);
       connected = await testConnection(firstPass);
 
+      // If the primary URL fails, try the fallback URL
       if (!connected) {
         url = "https://gpdata.thilenius.com";
-        // let res = await fetch(url);
         pb = new PocketBase(url);
         pb.autoCancellation(false);
-        //   logsDir = __dirname + `/../public/logs/`;
-        //   if (!fs.existsSync(logsDir)) console.log("ERROR!!! could not find local directory", logsDir);
         connected = await testConnection(false);
       }
       firstPass = false;
+
       if (!connected) {
-        console.log("Retrying in 15 seconds...");
+        console.log("pbInit:         Retrying in 15 seconds...");
         await delay(15000); // Wait for 15 seconds before retrying
       }
     }
+
+    // Once connected, attempt to log in with admin credentials
     while (!loggedIn) {
       try {
         authData = await pb.admins.authWithPassword("stephen@thilenius.com", "Qwe123qwe!");
-        console.log("pocketbase logged in to: " + url);
+        console.log("pbInit:         pocketbase logged in to: " + url);
         loggedIn = true;
         resolve();
       } catch (error: any) {
-        console.error("pb connected but failed to login", error.message);
+        console.error("pbInit:         pb connected but failed to login", error.message);
         console.log("Retrying in 15 seconds...");
-        await delay(15000); // Wait for 30 seconds before retrying
+        await delay(15000); // Wait for 15 seconds before retrying the login
       }
     }
   });
 };
 
-//this can be run after pbInit in ImageFiles.ts
-export async function migrateUsers() {
-  //   for (const user of mainUsers) {
-  //     // Match extra data based on the Firebase user uid and extra data id.
-  //     const extraData = extraUsers.find((u) => u.id === user.uid);
-  //     // Prepare the new user object for PocketBase.
-  //     const newUser = {
-  //       email: user.email,
-  //       // Generate a username based on the email prefix.
-  //       username: user.email.split("@")[0],
-  //       // Set both password and passwordConfirm to the temporary password
-  //       password: "TempPassword123!",
-  //       passwordConfirm: "TempPassword123!",
-  //       // Optionally use displayName if available.
-  //       name: extraData ? extraData.data.firstName + " " + extraData.data.lastName : "",
-  //       // Put the extra data into a settings field (if found), or an empty object.
-  //       settings: extraData ? extraData.data : {},
-  //       role: "Member",
-  //       verified: true,
-  //     };
-  //     try {
-  //       const created = await pb.collection("users").create(newUser);
-  //       console.log(`Created user: ${created.email}`);
-  //     } catch (err) {
-  //       console.error(`Error creating user ${user.email}:`, err);
-  //     }
-  //   }
-}
+// Immediately initialize the PocketBase connection and login
+await pbInit();

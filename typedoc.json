@@ -1,0 +1,12 @@
+{
+    "entryPoints": [
+        "gpupdate.ts",
+        "src/*.ts",
+        "index.d.ts"
+      ],
+    "out": "docs",
+    "excludePrivate": true,
+    "readme": "Readme.md",
+    "includeVersion": true,
+    "useFirstParagraphOfCommentAsSummary": true
+  }

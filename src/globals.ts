@@ -1,35 +1,14 @@
+process.env.TZ = "America/Los_Angeles";
+// export const offset = -60000 * new Date().getTimezoneOffset(); //to ms 60s/min*1000ms/s
+// console.log("offset ", offset);
+
 var globals: Globals = {
   DEBUG: true,
   textWatch: {},
-  offset: 0,
   firstRecord: null,
   lastRecord: "0",
   tdLast: new Date(),
   numberRecords: 0,
   latestHours: 0,
-  debugInfo: {
-    tsLast: 0,
-    numberRecords: 0,
-    hourLength: 0,
-    hours: [],
-    now: 0,
-    codeHistory: {
-      length: 0,
-      date: 0,
-      tsLast: 0,
-      code: 0,
-      gpResults: 0,
-      days: [],
-    },
-    openWeather: {
-      hours: 0,
-      start: 0,
-      stop: 0,
-    },
-    latestHours: 0,
-    sentTexts: [],
-
-    tsLastPre: 0,
-  },
 };
 export default globals;
