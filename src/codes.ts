@@ -270,8 +270,8 @@ export const initialize = async (): Promise<TodaysCodes> => {
   // Compute sun times for 12 PM on the current day.
   const sunData = getSun(tsStartOfDay.plus({ hours: 12 }).toJSDate());
   // Convert sunrise and sunset to UNIX timestamps (in seconds).
-  const sunrise = sunData.sunrise.getTime() / 1000;
-  const sunset = sunData.sunset.getTime() / 1000;
+  const sunrise = Math.floor(sunData.sunrise.getTime() / 1000);
+  const sunset = Math.floor(sunData.sunset.getTime() / 1000);
 
   // Initialize the next update time to sunrise by default and set the last code to 0.
   let next = sunrise;
