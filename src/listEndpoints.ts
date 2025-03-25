@@ -92,5 +92,26 @@ export const listEndpoints = (): Router => {
     res.json(endpoints);
   });
 
+  /**
+   * GET /endpoints
+   *
+   * Returns an HTML table of registered endpoints where each endpoint's path is a clickable link.
+   * The table includes the HTTP methods and paths for each endpoint.
+   *
+   * @param {Request} req - The Express request object.
+   * @param {Response} res - The Express response object.
+   */
+  router.get("/endpoints", (req: Request, res: Response) => {
+    const endpoints = getEndpoints();
+    let html = `<html><head><title>Registered Endpoints</title></head><body>`;
+    html += `<h1>Registered Endpoints</h1>`;
+    html += `<table border="1" cellpadding="5" cellspacing="0"><thead><tr><th>Method</th><th>Path</th></tr></thead><tbody>`;
+    endpoints.forEach((endpoint) => {
+      html += `<tr><td>${endpoint.method}</td><td><a href="${endpoint.path}">${endpoint.path}</a></td></tr>`;
+    });
+    html += `</tbody></table></body></html>`;
+    res.send(html);
+  });
+
   return router;
 };
