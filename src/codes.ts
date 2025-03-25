@@ -136,6 +136,9 @@ const sqlToPbCodeHistory = async () => {
                   );
                   jsonData = record.data;
                 }
+
+                // overwrite todays data if this is for today
+                if (todaysCodes.id === id) todaysCodes.data = jsonData;
                 // Create the record in the PocketBase "codeHistory" collection.
                 try {
                   await pb.collection("codeHistory").create({
@@ -469,6 +472,7 @@ export const codeRoutes = (): Router => {
       logStr(log, "sqlToPbCodeHistory", "sqlToPbCodeHistory called");
       writeLog(log);
       await sqlToPbCodeHistory();
+
       res.status(200).json({ log });
     } catch (error) {
       res.status(500).send("Error reading archive files.");
