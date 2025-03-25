@@ -292,10 +292,13 @@ export const initialize = async (): Promise<TodaysCodes> => {
     // If no record exists, initialize default data.
     const sunriseSec = Math.floor(sunrise - dayStart);
     const sunsetSec = Math.floor(sunset - dayStart);
+    const sunriseLocalHour = DateTime.fromJSDate(sunData.sunrise).setZone("America/Los_Angeles").hour;
+    const sunsetLocalHour = DateTime.fromJSDate(sunData.sunset).setZone("America/Los_Angeles").hour;
+
     data = {
       codes: [],
       sun: [sunriseSec, sunsetSec],
-      limits: [sunData.sunrise.getHours() - 1, sunData.sunset.getHours() + 2],
+      limits: [sunriseLocalHour - 1, sunsetLocalHour + 2],
     };
   }
 
