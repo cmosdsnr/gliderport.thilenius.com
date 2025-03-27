@@ -109,7 +109,7 @@ if (!debug) {
       if (pbResponse?.items?.length > 0) {
         const highestId = pbResponse.items[0].id;
         lastEntry = parseInt(highestId, 10);
-        log("lastEntryFound", "lastEntry:", lastEntry);
+        log("lastEntryFound", "pb wind collection last record:", lastEntry);
         lastEntryFound = true;
       } else {
         log("lastEntryFound", "No records found in PocketBase");
@@ -123,16 +123,18 @@ if (!debug) {
     }
   }
 
-  let updating = true;
+  let updating = false;
 
   setInterval(async () => {
     if (updating === true) {
       log("Interval", "waiting for previous update to finish");
       return;
     }
+log("Interval", "starting update");
     let res: any = await axios.get("http://" + espIP + "/addData").catch((err: any) => {
       log("Interval", err.message);
     });
+log("Interval", "got esp data", res.data);
     const keys = Object.keys(last);
     const hasAllKeys = keys.every((key) => key in res.data);
     if (hasAllKeys) {
@@ -143,11 +145,11 @@ if (!debug) {
           last[key as keyof SensorData] = res.data[key as keyof SensorData];
         });
         const results = await insertRaw(res.data);
-        log("Interval", "added " + results?.affectedRows + " row to local db");
+        log("Interval", "added ", results[0].affectedRows, " row to local db");
 
         getRawRecordsFromDate(lastEntry).then(async (rawRows: RawReadings[]) => {
           if (Array.isArray(rawRows) && rawRows.length > 0) {
-            log("Interval", "Excess local reading to transfer:" + rawRows.length + "starting after" + rawRows[0].epoch);
+            log("Interval", "Excess local reading to transfer: " + rawRows.length + "  starting after: " + rawRows[0].epoch);
             updating = true;
             const chunkSize = 100;
             for (let i = 0; i < rawRows.length; i += chunkSize) {
@@ -190,6 +192,7 @@ if (!debug) {
     } else {
       log("Interval", "invalid data");
     }
+log("interval","Done with update");
     await doOldUpdate();
   }, 15000);
 }

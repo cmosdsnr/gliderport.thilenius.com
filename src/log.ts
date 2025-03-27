@@ -18,7 +18,7 @@ export function isDirectory(path: string): boolean {
 
 // Determine the logs directory based on the existence of the "/app/gliderport/logs" folder.
 const logsDir = isDirectory("/home/pi/logs/")
-  ? "/home/pi/logs"
+  ? "/home/pi/logs/"
   : "/Git/web/buddStServer/thilenius.com/gliderport/gp_pi3_server/";
 // Define the log file path.
 let __logFile = logsDir + `gp_pi3_server.log`;

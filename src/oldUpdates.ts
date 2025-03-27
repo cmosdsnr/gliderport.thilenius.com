@@ -43,15 +43,18 @@ export const doOldUpdate = async () => {
     "SELECT reading, r_temp_count,r_temp_read, r_temp_ref, w_count, speed, angle, s_count, s_humidity, s_temp_dht, s_temp_bmp, s_pressure FROM `raw_data` WHERE `reading` > '" +
     lastEntry +
     "';";
-  console.log(sql);
+  log("doOldUpdate", sql);
   connection?.query(sql, async (err, rawRows: any, fields) => {
     if (Array.isArray(rawRows) && rawRows.length > 0) {
       var timezone = new Date().getTimezoneOffset();
       timezone = timezone * 60;
-      console.log("offset in hours: " + timezone / 3600);
-      console.log("Excess local reading to transfer: " + rawRows.length);
-      console.log("first reading to transfer: " + timestampToString(rawRows[0].reading.getTime() / 1e3 - timezone));
-      console.log("first reading to transfer: " + (rawRows[0].reading.getTime() / 1e3 - timezone));
+      log("doOldUpdate", "offset in hours: " + timezone / 3600);
+      log("doOldUpdate", "Excess local reading to transfer: " + rawRows.length);
+      log(
+        "doOldUpdate",
+        "first reading to transfer: " + timestampToString(rawRows[0].reading.getTime() / 1e3 - timezone)
+      );
+      log("doOldUpdate", "first reading to transfer: " + (rawRows[0].reading.getTime() / 1e3 - timezone));
       let cnt = 0;
       let idx = 0;
       let newRows: any = [];
@@ -75,20 +78,22 @@ export const doOldUpdate = async () => {
         cnt++;
         if (cnt % 5e3 == 0) console.log("count: " + cnt);
       });
-      console.log("final count: " + cnt);
+      log("doOldUpdate", "final count: " + cnt);
+      lastEntry = newRows[newRows.length-1][0];
       if (cnt > 0)
         for (let i = 0; i <= cnt; i += 500) {
           const element = newRows.slice(i, i + 500 > cnt ? cnt : i + 500);
-          console.log("await " + element[0]);
+          log("doOldUpdate", "await " + element[0]);
           try {
             const response = await axios.post("https://gpupdate.thilenius.com/addData", { d: element });
-            console.log("Post addData Response: " + response.data);
+            log("doOldUpdate", "Post addData Response: " + response.data);
           } catch (err3) {
-            console.log("Error: " + err3);
+            log("doOldUpdate", "Error: " + err3);
           }
         }
     } else {
-      console.log("No excess local reading to transfer");
+      log("doOldUpdate", "No excess local reading to transfer");
     }
   });
 };
+

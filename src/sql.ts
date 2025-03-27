@@ -46,20 +46,20 @@ export const SqlConnect = async (): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (typeof process.env.DATABASE_URL !== "string") {
       const error = new Error("SqlConnect: DATABASE_URL not defined");
-      console.error(error.message);
+      log("SqlConnect","❌"+error.message);
       return reject(error);
     }
 
-    console.log("SqlConnect: Connecting to database at", process.env.DATABASE_URL);
+      log("top level", "SqlConnect: Connecting to database at", process.env.DATABASE_URL);
     connection = mysql.createConnection(process.env.DATABASE_URL);
 
     connection.connect((err) => {
       if (err) {
-        console.error("SqlConnect: Connection failed", err.message);
+        log("SqlConnect","❌ Connection failed", err.message);
         return reject(err);
       }
 
-      console.log("SqlConnect: ✅ MySQL Connected!");
+      log("SqlConnect", "✅ MySQL Connected!");
       resolve();
     });
   });
@@ -78,19 +78,49 @@ export const getLatestRawRowTime = async (): Promise<any> => {
   return rawRows[0].epoch;
 };
 
+/**
+ * Inserts a raw data record into the `raw_data` table.
+ *
+ * @param row - An object containing all raw sensor values.
+ * @returns A Promise resolving to the query result or null if no connection.
+ */
 export const insertRaw = async (row: any): Promise<any> => {
   if (connection === null) {
-    log("getLatestRaw", "No connection to database");
+    log("insertRaw", "No connection to database");
     return null;
   }
+
   const { speed, angle, count, tc, t, tr, c, h, dt, bt, p } = row;
   const ts = Math.floor(Date.now() / 1000);
-  let sql = `INSERT INTO 'raw_data' 
-    ('speed', 'angle', 'w_count', 'r_temp_count', 'r_temp_read', 'r_temp_ref','s_count',
-    's_humidity', 's_temp_dht', 's_temp_bmp', 's_pressure', 'epoch') VALUES (
-    ${speed},${angle},${count},${tc},${t},${tr},${c},${h},${Math.round(10 * dt)},
-    ${Math.round(10 * bt)},${Math.round(p - 101325)},${ts});`;
-  return await connection.promise().query(sql);
+
+  const sql = `
+    INSERT INTO \`raw_data\` (
+      speed, angle, w_count, r_temp_count, r_temp_read, r_temp_ref,
+      s_count, s_humidity, s_temp_dht, s_temp_bmp, s_pressure, epoch
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  const values = [
+    speed,
+    angle,
+    count,
+    tc,
+    t,
+    tr,
+    c,
+    h,
+    Math.round(10 * dt),
+    Math.round(10 * bt),
+    Math.round(p - 101325),
+    ts,
+  ];
+
+  try {
+    return await connection.promise().query(sql, values);
+  } catch (err) {
+    log("insertRaw", "Error inserting data:", err);
+    return null;
+  }
 };
 
 export const getRawRecordsFromDate = async (ts: number): Promise<any> => {
