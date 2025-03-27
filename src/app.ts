@@ -145,7 +145,10 @@ log("Interval", "got esp data", res.data);
           last[key as keyof SensorData] = res.data[key as keyof SensorData];
         });
         const results = await insertRaw(res.data);
-        log("Interval", "added ", results[0].affectedRows, " row to local db");
+       if(Array.isArray(results) && results.length > 0)
+            log("Interval", "added ", results[0].affectedRows, " row to local db");
+        else 
+            log("Interval", "failed to add to local db: ", JSON.stringify(results));
 
         getRawRecordsFromDate(lastEntry).then(async (rawRows: RawReadings[]) => {
           if (Array.isArray(rawRows) && rawRows.length > 0) {
@@ -181,6 +184,8 @@ log("Interval", "got esp data", res.data);
               }
             }
             lastEntry = rawRows[rawRows.length - 1].epoch;
+//await axios.get("https://gpupdate.thilenius.com/fetchNewWind");
+await axios.get("https://tstupdate.thilenius.com/fetchNewWind");
             updating = false;
           } else {
             log("Interval", "No excess local reading to transfer");
