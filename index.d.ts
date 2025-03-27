@@ -48,6 +48,7 @@ type RawReadings = {
   s_temp_dht: number;
   s_temp_bmp: number;
   s_pressure: number;
+  epoch: number;
 };
 
 type Row = [String, number, number, number, number, number, number, number, number, number, number, number];
