@@ -122,6 +122,69 @@ export const loadWindTable = async (): Promise<void> => {
 loadWindTable();
 
 /**
+ * Loads the last 14 days of wind data from PocketBase into the in-memory windTable.
+ *
+ * It queries the "wind" collection for records with an id greater than a computed threshold
+ * based on the current time minus 14 days, then populates the windTable array.
+ *
+ * @returns {Promise<void>} A promise that resolves when the wind table is loaded.
+ */
+export const UpdateWindTable = async (): Promise<void> => {
+  const log: string[] = [""];
+
+  logStr(log, "UpdateWindTable", "Update wind table...");
+  try {
+    logStr(
+      log,
+      "loadWindTable",
+      "looking for records with id >",
+      ToId(windTable[windTable.length - 1].timestamp.toString())
+    );
+
+    const result = await pb.collection("wind").getFullList(10000, {
+      filter: `id > "${ToId(windTable[windTable.length - 1].timestamp.toString())}"`,
+      sort: "id",
+    });
+
+    // Update the in-memory wind table with the fetched records.
+    result.forEach((r: any) => {
+      windTable.push({
+        timestamp: parseInt(r.id, 10),
+        speed: r.speed,
+        direction: r.direction,
+        humidity: r.humidity,
+        pressure: r.pressure,
+        temperature: r.temperature,
+      });
+    });
+    const ts = Math.floor(Date.now() / 1000) - 14 * 24 * 60 * 60;
+    while (windTable.length > 0 && windTable[0].timestamp < ts) windTable.shift();
+    logStr(log, "loadWindTable", "Wind table loaded with", result.length, "records.");
+    // Log first and last record timestamps for debugging.
+    logStr(
+      log,
+      "loadWindTable",
+      "First record: ",
+      windTable[0].timestamp,
+      " ",
+      DateTime.fromSeconds(windTable[0].timestamp).toLocaleString()
+    );
+    logStr(
+      log,
+      "loadWindTable",
+      "Last record: ",
+      windTable[windTable.length - 1].timestamp,
+      " ",
+      DateTime.fromSeconds(windTable[windTable.length - 1].timestamp).toLocaleString()
+    );
+  } catch (error: any) {
+    logStr(log, "loadWindTable", "Error loading wind table:", error.message);
+    windTable = []; // Clear table on failure.
+  }
+  writeLog(log);
+};
+
+/**
  * Adds new wind data from an HTTP request to the windTable and PocketBase.
  *
  * It updates the in-memory windTable with new records from req.body.d,
@@ -472,6 +535,12 @@ export const windRoutes = (): Router => {
   router.get("/getLastEntry", (req: Request, res: Response) => {
     if (windTable.length === 0) res.send("Error");
     else res.send(windTable[windTable.length - 1].timestamp.toString());
+  });
+
+  // Endpoint: GET /fetchNewWind - tells the server there are new records in the pb database.
+  router.get("/fetchNewWind", (req: Request, res: Response) => {
+    UpdateWindTable();
+    res.send("ok");
   });
 
   // Endpoint: GET /addWindFromSQL - Processes new wind records from the SQL database and inserts them into PocketBase.
