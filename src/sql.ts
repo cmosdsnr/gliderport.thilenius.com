@@ -17,9 +17,12 @@
 
 import mysql from "mysql2";
 import dotenv from "dotenv";
+import { log } from "./log";
 
 // Load environment variables from .env file.
 dotenv.config();
+
+let sql;
 
 // Export the MySQL connection, initially null.
 export let connection: mysql.Connection | null = null;
@@ -64,3 +67,38 @@ export const SqlConnect = async (): Promise<void> => {
 
 // Immediately attempt to establish the connection.
 await SqlConnect();
+
+export const getLatestRawRowTime = async (): Promise<any> => {
+  if (connection === null) {
+    log("getLatestRaw", "No connection to database");
+    return null;
+  }
+  sql = "SELECT * FROM `raw_data` ORDER BY epoch DESC LIMIT 1;";
+  const [rawRows]: [any[], any[]] = await connection.promise().query(sql);
+  return rawRows[0].epoch;
+};
+
+export const insertRaw = async (row: any): Promise<any> => {
+  if (connection === null) {
+    log("getLatestRaw", "No connection to database");
+    return null;
+  }
+  const { speed, angle, count, tc, t, tr, c, h, dt, bt, p } = row;
+  const ts = Math.floor(Date.now() / 1000);
+  let sql = `INSERT INTO 'raw_data' 
+    ('speed', 'angle', 'w_count', 'r_temp_count', 'r_temp_read', 'r_temp_ref','s_count',
+    's_humidity', 's_temp_dht', 's_temp_bmp', 's_pressure', 'epoch') VALUES (
+    ${speed},${angle},${count},${tc},${t},${tr},${c},${h},${Math.round(10 * dt)},
+    ${Math.round(10 * bt)},${Math.round(p - 101325)},${ts});`;
+  return await connection.promise().query(sql);
+};
+
+export const getRawRecordsFromDate = async (ts: number): Promise<any> => {
+  if (connection === null) {
+    log("getLatestRaw", "No connection to database");
+    return null;
+  }
+  sql = "SELECT * FROM `raw_data` WHERE `epoch` > " + ts + " ORDER BY epoch ASC;";
+  const [rawRows]: [any[], any[]] = await connection.promise().query(sql);
+  return rawRows;
+};

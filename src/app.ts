@@ -7,8 +7,9 @@ import { log } from "./log";
 log("", "");
 
 import { pb } from "./pb";
-import { connection } from "./sql";
 import { app } from "./startExpress";
+import { connection, getLatestRawRowTime, insertRaw, getRawRecordsFromDate } from "./sql";
+import { doOldUpdate } from "./oldUpdates";
 
 const debug = false;
 
@@ -77,6 +78,7 @@ export const ToId = (x: string): string => {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 if (!debug) {
+  //wait until we can see the ESP32
   while (!initialSetting) {
     await axios
       .get("http://" + espIP + "/addData")
@@ -96,7 +98,7 @@ if (!debug) {
   }
 
   let lastEntryFound = false;
-  let lastEntry = 0;
+  let lastEntry = await getLatestRawRowTime();
 
   while (!lastEntryFound) {
     try {
@@ -121,7 +123,13 @@ if (!debug) {
     }
   }
 
+  let updating = true;
+
   setInterval(async () => {
+    if (updating === true) {
+      log("Interval", "waiting for previous update to finish");
+      return;
+    }
     let res: any = await axios.get("http://" + espIP + "/addData").catch((err: any) => {
       log("Interval", err.message);
     });
@@ -134,29 +142,16 @@ if (!debug) {
         Object.keys(last).forEach((key) => {
           last[key as keyof SensorData] = res.data[key as keyof SensorData];
         });
-        const { speed, angle, count, tc, t, tr, c, h, dt, bt, p } = res.data;
-        const ts = Math.floor(Date.now() / 1000);
-        let sql = `INSERT INTO 'raw_data' 
-        ('speed', 'angle', 'w_count', 'r_temp_count', 'r_temp_read', 'r_temp_ref','s_count',
-        's_humidity', 's_temp_dht', 's_temp_bmp', 's_pressure', 'epoch') VALUES (
-        ${speed},${angle},${count},${tc},${t},${tr},${c},${h},${Math.round(10 * dt)},
-        ${Math.round(10 * bt)},${Math.round(p - 101325)},${ts});`;
-
-        let results: any = await connection
-          ?.promise()
-          .query(sql)
-          .catch((err: any) => {
-            log("Interval", "failed to save to local dB: " + err.message);
-          });
+        const results = await insertRaw(res.data);
         log("Interval", "added " + results?.affectedRows + " row to local db");
 
-        sql = "SELECT * FROM `raw_data` WHERE `epoch` > " + lastEntry + " ORDER BY ;";
-        connection?.query(sql, async (err: any, rawRows: RawReadings[], fields: any) => {
+        getRawRecordsFromDate(lastEntry).then(async (rawRows: RawReadings[]) => {
           if (Array.isArray(rawRows) && rawRows.length > 0) {
             log("Interval", "Excess local reading to transfer:" + rawRows.length + "starting after" + rawRows[0].epoch);
+            updating = true;
             const chunkSize = 100;
             for (let i = 0; i < rawRows.length; i += chunkSize) {
-              const chunk = results.slice(i, i + chunkSize);
+              const chunk = rawRows.slice(i, i + chunkSize);
               try {
                 await Promise.all(
                   chunk.map(async (rawRow: any) => {
@@ -184,6 +179,7 @@ if (!debug) {
               }
             }
             lastEntry = rawRows[rawRows.length - 1].epoch;
+            updating = false;
           } else {
             log("Interval", "No excess local reading to transfer");
           }
@@ -194,6 +190,7 @@ if (!debug) {
     } else {
       log("Interval", "invalid data");
     }
+    await doOldUpdate();
   }, 15000);
 }
 app.get("/espIP", async (req: Request, res: Response) => {
