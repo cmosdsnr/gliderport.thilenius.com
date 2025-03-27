@@ -33,21 +33,34 @@ export let connection: mysql.Connection | null = null;
  *
  * @returns {void}
  */
-export const SqlConnect = (): void => {
-  if (typeof process.env.DATABASE_URL !== "string") {
-    console.error("SqlConnect: DATABASE_URL not defined", process.env.DATABASE_URL);
-    return;
-  }
-  connection = mysql.createConnection(process.env.DATABASE_URL);
-  if (!connection) {
-    console.error("SqlConnect: No connection to database at ", process.env.DATABASE_URL);
-    return;
-  }
-  connection.connect(function (err) {
-    if (err) throw err;
-    console.log("SqlConnect: MySQL Connected!");
+/**
+ * Establishes a MySQL database connection.
+ * Waits until the connection is fully established.
+ *
+ * @returns {Promise<void>} Resolves when connected, rejects on error.
+ */
+export const SqlConnect = async (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if (typeof process.env.DATABASE_URL !== "string") {
+      const error = new Error("SqlConnect: DATABASE_URL not defined");
+      console.error(error.message);
+      return reject(error);
+    }
+
+    console.log("SqlConnect: Connecting to database at", process.env.DATABASE_URL);
+    connection = mysql.createConnection(process.env.DATABASE_URL);
+
+    connection.connect((err) => {
+      if (err) {
+        console.error("SqlConnect: Connection failed", err.message);
+        return reject(err);
+      }
+
+      console.log("SqlConnect: ✅ MySQL Connected!");
+      resolve();
+    });
   });
 };
 
 // Immediately attempt to establish the connection.
-SqlConnect();
+await SqlConnect();

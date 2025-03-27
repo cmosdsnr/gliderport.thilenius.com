@@ -20,6 +20,7 @@
 
 import express, { Request, Response, NextFunction, Router } from "express";
 import cors from "cors";
+import { log } from "./log";
 
 export var app: any | null = null;
 
@@ -39,10 +40,10 @@ export const startExpress = (): void => {
 
   // Start the server and log the running status.
   app.listen(port, () => {
-    console.log(` `);
-    console.log(`######################################################`);
-    console.log(`         Server is running at http://localhost:${port}`);
-    console.log(`######################################################`);
+    log("StartServer", ` `);
+    log("StartServer", `######################################################`);
+    log("StartServer", `         Server is running at http://localhost:${port}`);
+    log("StartServer", `######################################################`);
   });
 
   // Parse URL-encoded bodies with a limit of 30mb.

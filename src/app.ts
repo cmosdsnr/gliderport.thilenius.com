@@ -1,16 +1,23 @@
-import { Request, Response } from "express";
+import { raw, Request, Response } from "express";
 import dotenv from "dotenv";
-import mysql from "mysql2";
-import cors from "cors";
 import axios from "axios";
 import fs from "fs";
+
+import { log } from "./log";
+log("", "");
+
 import { pb } from "./pb";
 import { connection } from "./sql";
 import { app } from "./startExpress";
 
-fs.stat("./app.js", (stats: any) => {
-  if (stats?.mtime) console.log("app.js last modified: " + stats.mtime);
-  else console.log("app.js didn't get fs info");
+const debug = false;
+
+fs.stat("dist/app.js", (err, stats) => {
+  if (err) {
+    log("top level", "Error reading file stats:", err.message);
+    return;
+  }
+  log("top level", "dist/app.js last modified:", stats.mtime);
 });
 
 dotenv.config();
@@ -69,125 +76,126 @@ export const ToId = (x: string): string => {
  */
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-while (!initialSetting) {
-  axios
-    .get("http://" + espIP + "/addData")
-    .then((res) => {
-      if (Object.keys(last).every((key) => key in res.data)) {
-        (Object.keys(last) as (keyof SensorData)[]).forEach((key) => {
-          last[key as keyof SensorData] = res.data[key];
-        });
-        initialSetting = Date.now();
-      }
-    })
-    .catch(function (error) {
-      console.log("ESP not visible at the moment... waiting 15s ...");
-    });
-  delay(15000);
-}
-
-let lastEntryFound = false;
-let lastEntry = 0;
-
-while (!lastEntryFound) {
-  try {
-    // Step 1: Get the latest wind record from PocketBase.
-    const pbResponse = await pb.collection("wind").getList(1, 1, { sort: "-id" });
-    let highestTimestamp = 0;
-
-    if (pbResponse?.items?.length > 0) {
-      const highestId = pbResponse.items[0].id;
-      lastEntry = parseInt(highestId, 10);
-      lastEntryFound = true;
-    } else {
-      console.log("No records found in PocketBase");
-    }
-  } catch (error: any) {
-    console.log("pocketbase returned an error: ", error.message);
-  }
-  if (!lastEntryFound) {
-    console.log("waiting 15s for PocketBase to be ready...");
-    delay(15000);
-  }
-}
-
-setInterval(async () => {
-  let res: any = await axios.get("http://" + espIP + "/addData").catch((err: any) => {
-    console.log(err.message);
-  });
-  const keys = Object.keys(last);
-  const hasAllKeys = keys.every((key) => key in res.data);
-  if (hasAllKeys) {
-    const hasChanged = keys.some((key) => last[key as keyof SensorData] !== res.data[key]);
-    if (hasChanged) {
-      //copy over the new data
-      Object.keys(last).forEach((key) => {
-        last[key as keyof SensorData] = res.data[key as keyof SensorData];
-      });
-      const { speed, angle, count, tc, t, tr, c, h, dt, bt, p } = res.data;
-
-      let sql = `INSERT INTO raw_data (
-                speed, angle, w_count, r_temp_count, r_temp_read, r_temp_ref,
-                s_count, s_humidity, s_temp_dht, s_temp_bmp, s_pressure
-              ) VALUES (
-                ${speed}, ${angle}, ${count}, ${tc}, ${t}, ${tr},
-                ${c}, ${h}, ${Math.round(dt * 10)}, ${Math.round(bt * 10)}, ${Math.round(p - 101325)}
-              );`;
-
-      let results: any = await connection
-        ?.promise()
-        .query(sql)
-        .catch((err: any) => {
-          console.log("failed to save to local dB: " + err.message);
-        });
-      console.log("added " + results?.affectedRows + " row to local db");
-
-      sql =
-        "SELECT " +
-        "reading, r_temp_count,r_temp_read, r_temp_ref, w_count, speed, angle, s_count, " +
-        "s_humidity, s_temp_dht, s_temp_bmp, s_pressure " +
-        "FROM `raw_data` WHERE `reading` > '" +
-        lastEntry +
-        "';";
-      connection?.query(sql, async (err: any, rawRows: RawReadings[], fields: any) => {
-        if (Array.isArray(rawRows) && rawRows.length > 0) {
-          console.log("Excess local reading to transfer: " + rawRows.length);
-          console.log(
-            "first reading to transfer: " +
-              rawRows[0].reading.toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
-          );
-          rawRows.forEach((rawRow: RawReadings, i) => {
-            const id = ToId(Math.floor(rawRow.reading.getTime() / 1000).toString());
-            const speed = rawRow.speed;
-            const direction = rawRow.angle;
-            const humidity = rawRow.s_count > 0 ? rawRow.s_humidity : 0;
-            const pressure = rawRow.s_pressure;
-            let temperature: number;
-            if (rawRow.r_temp_count > 0 && rawRow.r_temp_ref > 0) {
-              temperature = (40.1 * rawRow.r_temp_read) / rawRow.r_temp_ref + 27.6;
-            } else {
-              temperature = rawRow.s_temp_bmp > rawRow.s_temp_dht ? rawRow.s_temp_bmp : rawRow.s_temp_dht;
-            }
-            temperature = Math.round(10 * temperature);
-            try {
-              pb.collection("wind").create({ id, speed, direction, temperature, humidity, pressure });
-              lastEntry = rawRow.reading.getTime();
-            } catch (error: any) {
-              console.log("pocketbase returned an error: ", error.message);
-            }
+if (!debug) {
+  while (!initialSetting) {
+    await axios
+      .get("http://" + espIP + "/addData")
+      .then((res) => {
+        if (Object.keys(last).every((key) => key in res.data)) {
+          (Object.keys(last) as (keyof SensorData)[]).forEach((key) => {
+            last[key as keyof SensorData] = res.data[key];
           });
-        } else {
-          console.log("No excess local reading to transfer");
+          initialSetting = Date.now();
+          log("initialSetting", "ESP visible");
         }
+      })
+      .catch(function (error) {
+        log("initialSetting", "ESP not visible at the moment... waiting 15s ...");
       });
-    } else {
-      console.log("no new data");
-    }
-  } else {
-    console.log("invalid data");
+    await delay(15000);
   }
-}, 15000);
 
+  let lastEntryFound = false;
+  let lastEntry = 0;
+
+  while (!lastEntryFound) {
+    try {
+      // Step 1: Get the latest wind record from PocketBase.
+      const pbResponse = await pb.collection("wind").getList(1, 1, { sort: "-id" });
+      let highestTimestamp = 0;
+
+      if (pbResponse?.items?.length > 0) {
+        const highestId = pbResponse.items[0].id;
+        lastEntry = parseInt(highestId, 10);
+        log("lastEntryFound", "lastEntry:", lastEntry);
+        lastEntryFound = true;
+      } else {
+        log("lastEntryFound", "No records found in PocketBase");
+      }
+    } catch (error: any) {
+      log("lastEntryFound", "pocketbase returned an error: ", error.message);
+    }
+    if (!lastEntryFound) {
+      log("lastEntryFound", "waiting 15s for PocketBase to be ready...");
+      await delay(15000);
+    }
+  }
+
+  setInterval(async () => {
+    let res: any = await axios.get("http://" + espIP + "/addData").catch((err: any) => {
+      log("Interval", err.message);
+    });
+    const keys = Object.keys(last);
+    const hasAllKeys = keys.every((key) => key in res.data);
+    if (hasAllKeys) {
+      const hasChanged = keys.some((key) => last[key as keyof SensorData] !== res.data[key]);
+      if (hasChanged) {
+        //copy over the new data
+        Object.keys(last).forEach((key) => {
+          last[key as keyof SensorData] = res.data[key as keyof SensorData];
+        });
+        const { speed, angle, count, tc, t, tr, c, h, dt, bt, p } = res.data;
+        const ts = Math.floor(Date.now() / 1000);
+        let sql = `INSERT INTO 'raw_data' 
+        ('speed', 'angle', 'w_count', 'r_temp_count', 'r_temp_read', 'r_temp_ref','s_count',
+        's_humidity', 's_temp_dht', 's_temp_bmp', 's_pressure', 'epoch') VALUES (
+        ${speed},${angle},${count},${tc},${t},${tr},${c},${h},${Math.round(10 * dt)},
+        ${Math.round(10 * bt)},${Math.round(p - 101325)},${ts});`;
+
+        let results: any = await connection
+          ?.promise()
+          .query(sql)
+          .catch((err: any) => {
+            log("Interval", "failed to save to local dB: " + err.message);
+          });
+        log("Interval", "added " + results?.affectedRows + " row to local db");
+
+        sql = "SELECT * FROM `raw_data` WHERE `epoch` > " + lastEntry + " ORDER BY ;";
+        connection?.query(sql, async (err: any, rawRows: RawReadings[], fields: any) => {
+          if (Array.isArray(rawRows) && rawRows.length > 0) {
+            log("Interval", "Excess local reading to transfer:" + rawRows.length + "starting after" + rawRows[0].epoch);
+            const chunkSize = 100;
+            for (let i = 0; i < rawRows.length; i += chunkSize) {
+              const chunk = results.slice(i, i + chunkSize);
+              try {
+                await Promise.all(
+                  chunk.map(async (rawRow: any) => {
+                    const id = ToId(rawRow.epoch.toString());
+                    const speed = rawRow.speed;
+                    const direction = rawRow.angle;
+                    const humidity = rawRow.s_count > 0 ? rawRow.s_humidity : 0;
+                    const pressure = rawRow.s_pressure;
+                    let temperature: number;
+                    if (rawRow.r_temp_count > 0 && rawRow.r_temp_ref > 0) {
+                      temperature = (40.1 * rawRow.r_temp_read) / rawRow.r_temp_ref + 27.6;
+                    } else {
+                      temperature = rawRow.s_temp_bmp > rawRow.s_temp_dht ? rawRow.s_temp_bmp : rawRow.s_temp_dht;
+                    }
+                    temperature = Math.round(10 * temperature);
+                    try {
+                      pb.collection("wind").create({ id, speed, direction, temperature, humidity, pressure });
+                    } catch (error: any) {
+                      log("Interval", "pocketbase returned an error:", error.message, "on", id);
+                    }
+                  })
+                );
+              } catch (error: any) {
+                log("Interval", "failed to save to pocketbase: " + error.message);
+              }
+            }
+            lastEntry = rawRows[rawRows.length - 1].epoch;
+          } else {
+            log("Interval", "No excess local reading to transfer");
+          }
+        });
+      } else {
+        log("Interval", "no new data");
+      }
+    } else {
+      log("Interval", "invalid data");
+    }
+  }, 15000);
+}
 app.get("/espIP", async (req: Request, res: Response) => {
   if ("ip" in req.query && typeof req.query.ip === "string") {
     console.log("got ip: ", req.query.ip);

@@ -20,6 +20,7 @@
  */
 
 import PocketBase from "pocketbase";
+import { log } from "./log";
 
 export let pb: any = null; // Global PocketBase client instance
 export let authData = null; // Authentication data after a successful login
@@ -41,10 +42,10 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function testConnection(firstPass: boolean) {
   try {
     const health = await pb.health.check();
-    console.log("pbInit:         ✅ Connection successful:", health);
+    log("pbInit", "✅ Connection successful:", health);
     return true;
   } catch (error: any) {
-    if (!firstPass) console.error("pbInit:         ❌ Connection failed:", error.message);
+    if (!firstPass) log("pbInit", "❌ Connection failed:", error.message);
     return false;
   }
 }
@@ -65,7 +66,7 @@ export const pbInit = () => {
     let url = "";
     let connected = false;
     let loggedIn = false;
-    console.log("pbInit:         connecting to pocketbase...");
+    log("pbInit", "connecting to pocketbase...");
 
     // Attempt to establish a connection
     while (!connected) {
@@ -75,7 +76,7 @@ export const pbInit = () => {
       connected = await testConnection(false);
 
       if (!connected) {
-        console.log("pbInit:         Retrying in 15 seconds...");
+        log("pbInit", "Retrying in 15 seconds...");
         await delay(15000); // Wait for 15 seconds before retrying
       }
     }
@@ -84,12 +85,12 @@ export const pbInit = () => {
     while (!loggedIn) {
       try {
         authData = await pb.admins.authWithPassword("stephen@thilenius.com", "Qwe123qwe!");
-        console.log("pbInit:         pocketbase logged in to: " + url);
+        log("pbInit", "pocketbase logged in to: " + url);
         loggedIn = true;
         resolve();
       } catch (error: any) {
-        console.error("pbInit:         pb connected but failed to login", error.message);
-        console.log("Retrying in 15 seconds...");
+        log("pbInit", "pb connected but failed to login", error.message);
+        log("pbInit", "Retrying in 15 seconds...");
         await delay(15000); // Wait for 15 seconds before retrying the login
       }
     }
