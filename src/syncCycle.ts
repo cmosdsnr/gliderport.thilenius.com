@@ -49,14 +49,22 @@ const uploadToPocketbase = async (row: RawReadings) => {
       : Math.max(row.s_temp_bmp, row.s_temp_dht);
 
   try {
-    await pb.collection("wind").create({
-      id,
-      speed: row.speed,
-      direction: row.angle,
-      temperature: Math.round(10 * temperature),
-      humidity: row.s_count ? row.s_humidity : 0,
-      pressure: row.s_pressure,
-    });
+    await pb
+      .collection("wind")
+      .create({
+        id,
+        speed: row.speed,
+        direction: row.angle,
+        temperature: Math.round(10 * temperature),
+        humidity: row.s_count ? row.s_humidity : 0,
+        pressure: row.s_pressure,
+      })
+      .catch((err: any) => {
+        log("PocketBase", "Pocketbase Failed to insert record:", id, err.message);
+        if (err.message.includes("already exists")) {
+          log("PocketBase", "Record already exists, skipping:", id);
+        }
+      });
   } catch (err: any) {
     log("PocketBase", "Pocketbase Failed to insert record:", id, err.message);
   }
