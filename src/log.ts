@@ -1,55 +1,67 @@
+/**
+ * ## Logging Utility
+ *
+ * Provides lightweight, file-based logging for use across the application.
+ * - Logs messages to a daily log file with timestamped entries
+ * - Automatically truncates the log file to prevent uncontrolled growth
+ *
+ * @module log
+ */
+
 import fs from "fs";
 import cron from "node-cron";
 
 /**
- * Checks whether the specified file system path is a directory.
+ * Checks if the given path is a directory.
  *
- * @param {string} path - The path to check.
- * @returns {boolean} True if the path is a directory; otherwise, false.
+ * @param path - Path to check.
+ * @returns True if it's a directory, false otherwise.
  */
 export function isDirectory(path: string): boolean {
   try {
     return fs.statSync(path).isDirectory();
   } catch (err) {
-    // If an error occurs (e.g., the path does not exist), return false.
     return false;
   }
 }
 
-// Determine the logs directory based on the existence of the "/app/gliderport/logs" folder.
+// Determine log file path based on available directories
 const logsDir = isDirectory("/home/pi/logs/")
   ? "/home/pi/logs/"
   : "/Git/web/buddStServer/thilenius.com/gliderport/gp_pi3_server/";
-// Define the log file path.
-let __logFile = logsDir + `gp_pi3_server.log`;
+
+let __logFile = logsDir + "gp_pi3_server.log";
 
 /**
- * Logs a message to a file.
+ * Logs a formatted message to a rotating file log.
  *
- * Prepends the message with the current date and time in the format MM-DD-YYYY HH:mm:ss.
- * The first argument is padded to a fixed width for alignment.
+ * - Timestamped using MM-DD-YYYY HH:mm:ss
+ * - First argument acts as a tag (left-aligned to 17 chars)
  *
- * @param {...any} args - The message components to log. The first element is used as a label.
+ * @param args - Arguments to log. First is used as a label.
  */
 export const log = (...args: any[]) => {
   const d = new Date();
   const date = `${d.getMonth() + 1}-${d.getDate()}-${d.getFullYear()}`;
-  // Format the current time with leading zeros.
   const time = `${d.getHours()}:${d.getMinutes().toString().padStart(2, "0")}:${d
     .getSeconds()
     .toString()
     .padStart(2, "0")}`;
-  // Append a colon to the first argument and pad it to 17 characters.
+
   args[0] += ":";
   args[0] = args[0].toString().padEnd(17, " ");
-  // Join all arguments into a single string.
   const message = args.join(" ");
-  // Append the formatted log entry to the log file.
   fs.appendFileSync(__logFile, `${date} ${time} ${message}\n`);
-  //   console.log(`${date} ${time} ${message}`);
+  // Uncomment for console logging:
+  // console.log(`${date} ${time} ${message}`);
 };
 
 const max = 5000;
+
+/**
+ * Truncates the log file to the most recent N lines (default: 5000).
+ * Prevents excessive file size buildup.
+ */
 const limitLogLineNumbers = () => {
   const data = fs.readFileSync(__logFile, "utf8");
   const lines = data.split("\n");
@@ -59,5 +71,12 @@ const limitLogLineNumbers = () => {
   }
 };
 
-// Schedule the resetTextUsers job to run at 02:00 every day in LA time.
-cron.schedule("0 2 * * *", limitLogLineNumbers, { timezone: "America/Los_Angeles" });
+/**
+ * Cron job: Trims the log file every day at 2:00 AM LA time.
+ */
+cron.schedule("0 2 * * *", limitLogLineNumbers, {
+  timezone: "America/Los_Angeles",
+});
+
+// Trigger a dummy log line to validate setup
+log("", "");

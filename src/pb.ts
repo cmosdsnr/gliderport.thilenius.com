@@ -1,43 +1,38 @@
 /**
+ * ## PocketBase Integration Module
  *
- * ## This module initializes the connection to the PocketBase backend service.
- * It performs the following tasks:
- *  - Sets up a global EventSource so that the PocketBase client can use it.
- *  - Loads environment variables from a .env file.
- *  - Defines a delay helper for retry logic.
- *  - Implements a testConnection function to verify if PocketBase is reachable.
- *  - Defines pbInit, which:
- *      * Tries to connect to a primary PocketBase URL.
- *      * Once connected, it attempts to log in as an admin using preset credentials.
- *      * Uses retry logic (with a 15-second delay) for both connection and authentication.
- *  - Finally, it calls pbInit() to establish the connection and log in.
- *
- * Global Variables:
- *  - pb: The PocketBase client instance.
- *  - authData: Holds authentication data after a successful login.
+ * This module initializes and manages the connection to the PocketBase backend.
+ * It handles:
+ * - Attempting connection to PocketBase using retry logic
+ * - Admin authentication with preset credentials
+ * - Exported helper function to get the latest entry in the "wind" collection
  *
  * @module pb
  */
 
 import PocketBase from "pocketbase";
 import { log } from "./log";
-
-export let pb: any = null; // Global PocketBase client instance
-export let authData = null; // Authentication data after a successful login
+import { delay } from "./init";
 
 /**
- * Helper function that returns a Promise that resolves after a specified delay.
+ * Global PocketBase client instance.
  *
- * @param ms - Milliseconds to delay.
- * @returns Promise<void>
+ * @internal Mutable state, consider using an accessor.
  */
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+export let pb: any = null;
 
 /**
- * Tests the connection to the current PocketBase instance by calling its health check.
+ * Authentication data returned after successful admin login.
  *
- * @param firstPass - A flag to indicate if this is the first connection attempt.
- * @returns Promise<boolean> - Resolves to true if the health check succeeds, otherwise false.
+ * @internal Mutable state, consider using an accessor.
+ */
+export let authData = null;
+
+/**
+ * Tests the connection to the PocketBase instance by checking its health.
+ *
+ * @param firstPass - Whether this is the first connection attempt.
+ * @returns Promise resolving to true if successful, false otherwise.
  */
 async function testConnection(firstPass: boolean) {
   try {
@@ -51,24 +46,19 @@ async function testConnection(firstPass: boolean) {
 }
 
 /**
- * Initializes the PocketBase connection and logs in as an admin.
+ * Initializes the PocketBase client and performs admin login.
  *
- * This function continuously attempts to:
- *  - Connect to the primary URL ("http://gpdata.web:5000"). If that fails,
- *    switch to a fallback URL ("https://gpdata.thilenius.com").
- *  - Once connected, attempt to authenticate with admin credentials.
- *  - Use a 15-second delay between retries if necessary.
+ * Uses retry logic for both connection and authentication with 15-second intervals.
  *
- * @returns Promise<void> - Resolves once a successful connection and login have been established.
+ * @returns Promise resolving once connected and authenticated.
  */
-export const pbInit = () => {
-  return new Promise<void>(async (resolve, reject) => {
+const pbInit = () => {
+  return new Promise<void>(async (resolve) => {
     let url = "";
     let connected = false;
     let loggedIn = false;
     log("pbInit", "connecting to pocketbase...");
 
-    // Attempt to establish a connection
     while (!connected) {
       url = "https://gpdata.thilenius.com";
       pb = new PocketBase(url);
@@ -77,11 +67,10 @@ export const pbInit = () => {
 
       if (!connected) {
         log("pbInit", "Retrying in 15 seconds...");
-        await delay(15000); // Wait for 15 seconds before retrying
+        await delay(15000);
       }
     }
 
-    // Once connected, attempt to log in with admin credentials
     while (!loggedIn) {
       try {
         authData = await pb.admins.authWithPassword("stephen@thilenius.com", "Qwe123qwe!");
@@ -91,11 +80,51 @@ export const pbInit = () => {
       } catch (error: any) {
         log("pbInit", "pb connected but failed to login", error.message);
         log("pbInit", "Retrying in 15 seconds...");
-        await delay(15000); // Wait for 15 seconds before retrying the login
+        await delay(15000);
       }
     }
   });
 };
 
-// Immediately initialize the PocketBase connection and login
+// Automatically initialize the PocketBase client
 await pbInit();
+
+/**
+ * Retrieves the ID of the most recent entry from the PocketBase "wind" collection.
+ *
+ * @returns Promise resolving to the last entry ID, or null if unavailable.
+ */
+const getLatest = async () => {
+  try {
+    const pbResponse = await pb.collection("wind").getList(1, 1, { sort: "-id" });
+    if (pbResponse?.items?.length > 0) {
+      const highestId = pbResponse.items[0].id;
+      const lastEntry = parseInt(highestId, 10);
+      log("lastEntryFound", "pb wind collection last record:", lastEntry);
+      return lastEntry;
+    } else {
+      log("lastEntryFound", "No records found in PocketBase");
+    }
+  } catch (error: any) {
+    log("lastEntryFound", "pocketbase returned an error: ", error.message);
+  }
+  return null;
+};
+
+/**
+ * Loads the last PocketBase "wind" record entry, retrying until one is found.
+ *
+ * @returns Promise resolving to the most recent entry ID.
+ */
+export const loadLastPocketEntry = async () => {
+  let lastPocketEntry = null;
+
+  while (lastPocketEntry === null) {
+    lastPocketEntry = await getLatest();
+    if (lastPocketEntry === null) {
+      log("lastEntryFound", "waiting 15s for PocketBase to be ready...");
+      await delay(15000);
+    }
+  }
+  return lastPocketEntry;
+};

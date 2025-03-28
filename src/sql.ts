@@ -46,16 +46,16 @@ export const SqlConnect = async (): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (typeof process.env.DATABASE_URL !== "string") {
       const error = new Error("SqlConnect: DATABASE_URL not defined");
-      log("SqlConnect","❌"+error.message);
+      log("SqlConnect", "❌" + error.message);
       return reject(error);
     }
 
-      log("top level", "SqlConnect: Connecting to database at", process.env.DATABASE_URL);
+    log("top level", "SqlConnect: Connecting to database at", process.env.DATABASE_URL);
     connection = mysql.createConnection(process.env.DATABASE_URL);
 
     connection.connect((err) => {
       if (err) {
-        log("SqlConnect","❌ Connection failed", err.message);
+        log("SqlConnect", "❌ Connection failed", err.message);
         return reject(err);
       }
 
@@ -67,16 +67,6 @@ export const SqlConnect = async (): Promise<void> => {
 
 // Immediately attempt to establish the connection.
 await SqlConnect();
-
-export const getLatestRawRowTime = async (): Promise<any> => {
-  if (connection === null) {
-    log("getLatestRaw", "No connection to database");
-    return null;
-  }
-  sql = "SELECT * FROM `raw_data` ORDER BY epoch DESC LIMIT 1;";
-  const [rawRows]: [any[], any[]] = await connection.promise().query(sql);
-  return rawRows[0].epoch;
-};
 
 /**
  * Inserts a raw data record into the `raw_data` table.
