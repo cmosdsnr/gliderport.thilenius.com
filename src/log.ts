@@ -69,12 +69,16 @@ const limitLogLineNumbers = () => {
     const newLines = lines.slice(lines.length - max).join("\n");
     fs.writeFileSync(__logFile, newLines);
   }
+  log("Cron", `Log file trimmed to ${max} lines.`);
 };
-
+limitLogLineNumbers(); // Initial call to trim log file
 /**
- * Cron job: Trims the log file every day at 2:00 AM LA time.
+ * Cron job: Trims the log file twice every day at 2:00 AM/PM LA time.
  */
 cron.schedule("0 2 * * *", limitLogLineNumbers, {
+  timezone: "America/Los_Angeles",
+});
+cron.schedule("0 14 * * *", limitLogLineNumbers, {
   timezone: "America/Los_Angeles",
 });
 
