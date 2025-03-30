@@ -39,6 +39,8 @@ export async function readRecordsFromBinaryFile(filename: string): Promise<Senso
   const recordCount = Math.floor(fileBuffer.length / recordSize);
   const records: SensorPackedRecord[] = [];
 
+  log("readRecordsFromBinaryFile", `Reading ${filename} (${fileBuffer.length} bytes)`);
+
   for (let i = 0; i < recordCount; i++) {
     const offset = i * recordSize;
     const recordBuffer = fileBuffer.subarray(offset, offset + recordSize);
@@ -69,6 +71,7 @@ export const tryRead = async (year: number, month: number): Promise<SensorPacked
     // Construct the file path using the __dirname and formatted filename 'YYYY-MM.bin'
     const filename = path.join(__dirname, `${year}-${month.toString().padStart(2, "0")}.bin`);
 
+    log("tryRead", `Read ${filename}`);
     // Read and unpack the sensor records from the binary file.
     const records = await readRecordsFromBinaryFile(filename);
 
