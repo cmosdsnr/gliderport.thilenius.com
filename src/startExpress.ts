@@ -37,14 +37,6 @@ export const startExpress = (): void => {
   registerRoutes(app);
   app.use("/docs", express.static("docs")); // available at /docs/index.html etc.
 
-  app.use(express.urlencoded({ extended: true, limit: "30mb" }));
-
-  const corsOptions = {
-    origin: [/gliderport.*thilenius.*/, /localhost.*/],
-    optionsSuccessStatus: 200,
-  };
-  app.use(cors(corsOptions));
-
   app.get("/__ping", (_: any, res: any) => res.send("alive"));
   app.listen(port, () => {
     log("StartServer", ` `);
@@ -52,6 +44,14 @@ export const startExpress = (): void => {
     log("StartServer", `         Server is running at http://localhost:${port}`);
     log("StartServer", `######################################################`);
   });
+
+  app.use(express.urlencoded({ extended: true, limit: "30mb" }));
+
+  const corsOptions = {
+    origin: [/gliderport.*thilenius.*/, /localhost.*/],
+    optionsSuccessStatus: 200,
+  };
+  app.use(cors(corsOptions));
 };
 
 // Start the server and register application routes
