@@ -62,7 +62,7 @@ if (updateOldWay) {
 export const doOldUpdate = async () => {
   if (!updateOldWay) return;
 
-  log("doOldUpdate", "Last record on thilenius.com: ", lastEntry);
+  log("doOldUpdate", "Last record on gpupdate.thilenius.com/SQL: ", lastEntry);
 
   const sql = `
     SELECT reading, r_temp_count, r_temp_read, r_temp_ref,
@@ -72,13 +72,10 @@ export const doOldUpdate = async () => {
     WHERE reading > '${lastEntry}';
   `.trim();
 
-  log("doOldUpdate", sql);
-
   connection?.query(sql, async (err, rawRows: any[]) => {
     if (Array.isArray(rawRows) && rawRows.length > 0) {
       let timezoneOffset = new Date().getTimezoneOffset() * 60; // in seconds
 
-      log("doOldUpdate", "offset in hours: " + timezoneOffset / 3600);
       log("doOldUpdate", "Excess local reading to transfer: " + rawRows.length);
 
       log(
