@@ -105,6 +105,7 @@ export const insertRaw = async (row: any): Promise<any> => {
     ts,
   ];
 
+  console.log(sql, values);
   try {
     return await connection.promise().query(sql, values);
   } catch (err) {

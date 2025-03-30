@@ -33,13 +33,6 @@ export const startExpress = (): void => {
   app = express();
 
   const port = process.env.PORT || 1234;
-
-  app.listen(port, () => {
-    log("StartServer", ` `);
-    log("StartServer", `######################################################`);
-    log("StartServer", `         Server is running at http://localhost:${port}`);
-    log("StartServer", `######################################################`);
-  });
   //server the docs folder
   registerRoutes(app);
   app.use("/docs", express.static("docs")); // available at /docs/index.html etc.
@@ -51,6 +44,13 @@ export const startExpress = (): void => {
     optionsSuccessStatus: 200,
   };
   app.use(cors(corsOptions));
+
+  app.listen(port, () => {
+    log("StartServer", ` `);
+    log("StartServer", `######################################################`);
+    log("StartServer", `         Server is running at http://localhost:${port}`);
+    log("StartServer", `######################################################`);
+  });
 };
 
 // Start the server and register application routes
