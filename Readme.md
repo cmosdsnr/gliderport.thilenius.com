@@ -1,27 +1,14 @@
 # Gliderport Update server
 
-dokku storage:mount gliderportupdateserver /media/cmosdsnr/passport/gliderport/video:/app/video
-dokku storage:report gliderportupdateserver
-dokku ps:restart gliderportupdateserver
-## A node server used to:
+## A node server
 
-#### Check every hour if it's a new day and update sunrise/set data (updateSunData)
+- reads ESP32 every 15s and places the information in the local raw_table
+- checks and syncs records with pocketbase (gpData)
+- while OldUpdates is included it will also sync with the SQL db via gpUpdate
+- on the second of every month, it will archive the month before last in raw_data, and delete any records earlier than that month
 
-#### Respond to the following calls:
+### Respond to the following calls
 
-  1. '/getLastEntry'  : called from Pi3: return the last entry in gliderport db
-  2. '/ImageAdded'    : called from Pi3 at gliderport: Update the time the last image was added to now in the server_sent table
-  3. '/addData'       : called from Pi3: with new record(s)
-  4. '/updateSmallImage' : called from Pi3: Update the small image data
-  5. '/updateBigImage' :  called from Pi3: Update the large image data
-
- #### For Debug
-
-  1. '/current.jpg    : browser call to get latest small image
-  2. '/currentBig.jpg : browser call to get latest small image
-  3. '/info           : browser call to get lots of info about current situation
-
-# Database
-This server uses a SQL database created with docker and locally accessed. ( same as socketserver)
-
-
+  1. '/espIP'   : for the ESP to occasionally call to update the IP of the ESP32
+  2. '/stats'   : get some debug info
+  3. '/tryRead' : to test the loading of (2025,1)

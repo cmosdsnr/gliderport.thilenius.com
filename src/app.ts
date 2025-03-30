@@ -11,7 +11,8 @@
 import { runSyncCycle } from "./syncCycle";
 import { doOldUpdate } from "./oldUpdates";
 import "./init";
-import "./processAndSaveRecords";
+import "./records/records";
+
 /**
  * Starts the main execution loop.
  *
@@ -20,7 +21,7 @@ import "./processAndSaveRecords";
  * - Runs `doOldUpdate()` to update stale or missed entries
  * - Repeats every 15 seconds
  */
-// setInterval(async () => {
-//   await runSyncCycle();
-//   await doOldUpdate();
-// }, 15000);
+setInterval(async () => {
+  await runSyncCycle();
+  await doOldUpdate();
+}, 15000);

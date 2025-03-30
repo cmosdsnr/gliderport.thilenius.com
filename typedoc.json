@@ -1,7 +1,7 @@
 {
     "entryPoints": [
-        "gpupdate.ts",
         "src/*.ts",
+        "src/*/*.ts",
         "index.d.ts"
       ],
     "out": "docs",
