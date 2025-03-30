@@ -31,3 +31,4 @@ dist-ssr
 go*
 *lock*
 /storage
+bin

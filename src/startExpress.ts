@@ -40,6 +40,9 @@ export const startExpress = (): void => {
     log("StartServer", `         Server is running at http://localhost:${port}`);
     log("StartServer", `######################################################`);
   });
+  //server the docs folder
+  registerRoutes(app);
+  app.use("/docs", express.static("docs")); // available at /docs/index.html etc.
 
   app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
@@ -52,4 +55,3 @@ export const startExpress = (): void => {
 
 // Start the server and register application routes
 startExpress();
-registerRoutes(app);
