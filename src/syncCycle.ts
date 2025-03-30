@@ -85,7 +85,7 @@ export const runSyncCycle = async () => {
     return;
   }
 
-  const espData = getESPdata();
+  const espData = await getESPdata();
   log("runSyncCycle", "ESP data: ", JSON.stringify(espData));
   if (espData === null) return;
 
