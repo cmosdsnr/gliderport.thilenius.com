@@ -32,19 +32,6 @@ export var app: any | null = null;
 export const startExpress = (): void => {
   app = express();
 
-  const port = process.env.PORT || 1234;
-  //server the docs folder
-  registerRoutes(app);
-  app.use("/docs", express.static("docs")); // available at /docs/index.html etc.
-
-  app.get("/__ping", (_: any, res: any) => res.send("alive"));
-  app.listen(port, () => {
-    log("StartServer", ` `);
-    log("StartServer", `######################################################`);
-    log("StartServer", `         Server is running at http://localhost:${port}`);
-    log("StartServer", `######################################################`);
-  });
-
   app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
   const corsOptions = {
@@ -52,9 +39,24 @@ export const startExpress = (): void => {
     optionsSuccessStatus: 200,
   };
   app.use(cors(corsOptions));
+
+  const port = process.env.PORT || 1234;
+  //server the docs folder
+  registerRoutes(app);
+  app.use("/docs", express.static("docs")); // available at /docs/index.html etc.
+
+  app.get("/__ping", (_: any, res: any) => res.send("alive"));
+
   app.use((req: any, res: any, next: any) => {
     console.log("Unhandled request:", req.method, req.url);
     res.status(404).send("Not Found");
+  });
+
+  app.listen(port, () => {
+    log("StartServer", ` `);
+    log("StartServer", `######################################################`);
+    log("StartServer", `         Server is running at http://localhost:${port}`);
+    log("StartServer", `######################################################`);
   });
 };
 
