@@ -78,6 +78,10 @@ const statsRoutes = (): Router => {
     res.send(response);
   });
 
+  router.get("/test", async (req: Request, res: Response) => {
+    res.send("ok");
+  });
+
   return router;
 };
 
