@@ -76,11 +76,12 @@ export const doOldUpdate = async () => {
     if (Array.isArray(rawRows) && rawRows.length > 0) {
       let timezoneOffset = new Date().getTimezoneOffset() * 60; // in seconds
 
-      log("doOldUpdate", "Excess local reading to transfer: " + rawRows.length);
-
       log(
         "doOldUpdate",
-        "first reading to transfer: " + timestampToString(rawRows[0].reading.getTime() / 1e3 - timezoneOffset)
+        "first reading of " +
+          rawRows.length +
+          " to transfer: " +
+          timestampToString(rawRows[0].reading.getTime() / 1e3 - timezoneOffset)
       );
 
       let cnt = 0;
@@ -114,15 +115,12 @@ export const doOldUpdate = async () => {
         if (cnt % 5000 === 0) console.log("count: " + cnt);
       });
 
-      log("doOldUpdate", "final count: " + cnt);
-
       // Set lastEntry to the last timestamp sent
       lastEntry = newRows[newRows.length - 1][0];
 
       // Batch and post in chunks of 500 rows
       for (let i = 0; i <= cnt; i += 500) {
         const chunk = newRows.slice(i, Math.min(i + 500, cnt));
-        log("doOldUpdate", "await " + chunk[0]);
         try {
           const response = await axios.post("https://gpupdate.thilenius.com/addData", {
             d: chunk,
