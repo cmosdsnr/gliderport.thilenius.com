@@ -22,7 +22,7 @@ import "./records/records";
  * - Runs `doOldUpdate()` to update stale or missed entries
  * - Repeats every 15 seconds
  */
-setInterval(async () => {
-  await runSyncCycle();
-  await doOldUpdate();
-}, 15000);
+// setInterval(async () => {
+//   await runSyncCycle();
+//   await doOldUpdate();
+// }, 15000);
