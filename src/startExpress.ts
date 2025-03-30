@@ -52,6 +52,10 @@ export const startExpress = (): void => {
     optionsSuccessStatus: 200,
   };
   app.use(cors(corsOptions));
+  app.use((req: any, res: any, next: any) => {
+    console.log("Unhandled request:", req.method, req.url);
+    res.status(404).send("Not Found");
+  });
 };
 
 // Start the server and register application routes
