@@ -69,7 +69,6 @@ export const getESPdata = async (): Promise<SensorData | null> => {
     log("Interval", err.message);
     return null;
   }
-  log("Interval", "ESP data: ", JSON.stringify(res.data));
 
   const keys = Object.keys(last) as (keyof SensorData)[];
   const hasAllKeys = keys.every((k) => k in res.data);
