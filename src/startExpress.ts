@@ -45,6 +45,7 @@ export const startExpress = (): void => {
   };
   app.use(cors(corsOptions));
 
+  app.get("/__ping", (_: any, res: any) => res.send("alive"));
   app.listen(port, () => {
     log("StartServer", ` `);
     log("StartServer", `######################################################`);
