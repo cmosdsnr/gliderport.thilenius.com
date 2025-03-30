@@ -86,7 +86,6 @@ export const runSyncCycle = async () => {
   }
 
   const espData = await getESPdata();
-  log("runSyncCycle", "ESP data: ", JSON.stringify(espData));
   if (espData === null) return;
 
   const results = await insertRaw(espData);
