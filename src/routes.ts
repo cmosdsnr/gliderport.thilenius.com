@@ -17,6 +17,6 @@ import statsRoutes from "./routes/stats";
  * @param {Express} app - The Express application instance to mount the routes on.
  */
 export const registerRoutes = (app: Express): void => {
-  app.use("/", espRoutes);
-  app.use("/", statsRoutes);
+  app.use("/", espRoutes());
+  app.use("/", statsRoutes());
 };
