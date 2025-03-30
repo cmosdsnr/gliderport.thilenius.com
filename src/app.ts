@@ -8,10 +8,10 @@
  * @module app
  */
 
+import "./startExpress";
 import { runSyncCycle } from "./syncCycle";
 import { doOldUpdate } from "./oldUpdates";
 import "./init";
-import "./startExpress";
 import "./records/records";
 
 /**
