@@ -150,14 +150,21 @@ function getImageStats(directoryPath: string): ImageStats {
       log("getImageStats", "no files in ", directoryPath);
       return results;
     }
-    if (files[0].match(/image\d{4}.jpg/)) {
-      results.formatType = 0;
-    } else if (files[0].match(/image\d{5}.jpg/)) {
-      results.formatType = 1;
-    } else if (files[0].match(/image-\d-\d{5}.jpg/)) {
-      results.formatType = 2;
-      results.CameraB = JSON.parse(JSON.stringify(cameraDefault));
+
+    for (const file of files) {
+      if (/image.*\.jpg/.test(file)) {
+        if (/image-\d-\d{5}\.jpg/.test(file)) {
+          results.formatType = 2;
+          results.CameraB = JSON.parse(JSON.stringify(cameraDefault));
+        } else if (/image\d{5}\.jpg/.test(file)) {
+          results.formatType = 1;
+        } else if (/image\d{4}\.jpg/.test(file)) {
+          results.formatType = 0;
+        }
+        break;
+      }
     }
+
     files.forEach((file: string) => {
       if (file.match(/image/)) {
         let Camera = results.CameraA;
