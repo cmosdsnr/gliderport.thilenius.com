@@ -10,7 +10,7 @@
 import axios from "axios";
 import { log } from "./log";
 import { insertRaw, getRawRecordsFromDate } from "./sql";
-import { pb } from "./pb";
+import { pb, checkConnection } from "./pb";
 import { loadLastPocketEntry } from "./pb";
 import { getESPdata } from "./routes/esp";
 
@@ -37,11 +37,14 @@ const ToId = (x: string): string => {
 /**
  * Uploads a single row of sensor data to the PocketBase "wind" collection.
  *
- * Applies PocketBase-compatible formatting and temperature correction logic.
+ * - Calculates corrected temperature using either sensor reference or fallback values.
+ * - Uploads formatted data with an ID derived from the epoch.
+ * - Logs errors and attempts to re-establish PocketBase connection on failure.
  *
- * @param row - A row of sensor data from the local MySQL database
+ * @param row - A single row of sensor data from the local MySQL database.
+ * @returns `true` if the record was successfully uploaded or already existed; `false` otherwise.
  */
-const uploadToPocketbase = async (row: RawReadings) => {
+export const uploadToPocketbase = async (row: RawReadings): Promise<boolean> => {
   const id = ToId(row.epoch.toString());
   const temperature =
     row.r_temp_count > 0 && row.r_temp_ref > 0
@@ -63,10 +66,14 @@ const uploadToPocketbase = async (row: RawReadings) => {
         log("PocketBase", "Pocketbase Failed to insert record:", id, err.message);
         if (err.message.includes("already exists")) {
           log("PocketBase", "Record already exists, skipping:", id);
-        }
+        } else checkConnection();
+        return false;
       });
+    return true;
   } catch (err: any) {
     log("PocketBase", "Pocketbase Failed to insert record:", id, err.message);
+    checkConnection();
+    return false;
   }
 };
 
@@ -88,6 +95,7 @@ export const runSyncCycle = async () => {
   const espData = await getESPdata();
   if (espData === null) return;
 
+  // add to local SQL dB
   const results = await insertRaw(espData);
   if (Array.isArray(results) && results.length > 0) {
     log("Interval", "added ", results[0].affectedRows, " row to local db");
@@ -95,20 +103,35 @@ export const runSyncCycle = async () => {
     log("Interval", "failed to add to local db: ", JSON.stringify(results));
   }
 
+  // get rows in SQL dB that are newer than lastPocketEntry
   const rawRows = await getRawRecordsFromDate(lastPocketEntry);
   if (!rawRows?.length) {
     return log("Interval", "No excess local reading to transfer");
   }
-
   log("Interval", "Excess local reading to transfer: " + rawRows.length + "  starting after: " + rawRows[0].epoch);
 
+  //set the flag to prevent multiple sync cycles
   updating = true;
+
   for (let i = 0; i < rawRows.length; i += 100) {
     const chunk = rawRows.slice(i, i + 100);
-    await Promise.all(chunk.map(uploadToPocketbase));
+    const results = await Promise.all(chunk.map(uploadToPocketbase));
+
+    // If any upload failed, stop everything
+    if (results.includes(false)) {
+      log("❌ Upload failed in chunk. Halting further uploads.");
+      // Update lastPocketEntry to the epoch of the last successful row in this chunk
+      for (let j = results.length - 1; j >= 0; j--) {
+        if (results[j]) {
+          lastPocketEntry = chunk[j].epoch;
+          break;
+        }
+      }
+      break;
+    } else lastPocketEntry = chunk[chunk.length - 1].epoch;
   }
 
-  lastPocketEntry = rawRows[rawRows.length - 1].epoch;
+  //   lastPocketEntry = rawRows[rawRows.length - 1].epoch;
 
   try {
     // Notify server that new data is available
