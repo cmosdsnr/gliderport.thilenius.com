@@ -398,6 +398,7 @@ export const scanLatestDirectory = async () => {
       let mostRecent = await pb.collection("imageFiles").getList(1, 1, { filter: `id = ${id}` });
       // if it doesn't exist create it
       if (mostRecent.items.length === 0) {
+        log("rescan", "creating new record for ", id);
         await pb
           .collection("imageFiles")
           .create({ id, data: {} })
