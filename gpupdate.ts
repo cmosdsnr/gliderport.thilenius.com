@@ -66,56 +66,21 @@ gpupdate.use(codeRoutes());
 // Load environment variables into process.env.
 dotenv.config();
 
-/**
- * Initializes all routes and middleware for the Gliderport server.
- *
- * This function mounts the following:
- * - Debug endpoints (e.g., /debug)
- * - Root endpoint ("/")
- * - Routes for images, text alerts, system info, archives, sun data, hit counts, wind data, and code operations.
- *
- * @returns {void}
- */
-export function startServer(): void {
-  // Define API endpoints.
+// Define API endpoints.
+// Debug endpoint that queries various status fields from the PocketBase "status" collection.
+gpupdate.get("/debug", async (req: Request, res: Response) => {
+  const names = ["siteMessage", "siteHits", "fullForecast", "debug", "images", "online", "forecast", "sun", "lastWind"];
+  let ans: any = {};
+  await Promise.all(
+    names.map(async (name) => {
+      const r = await pb.collection("status").getOne(ToId(name.toLowerCase()));
+      ans = { name: r.record };
+    })
+  );
+  res.json(ans);
+});
 
-  // Debug endpoint that queries various status fields from the PocketBase "status" collection.
-  gpupdate.get("/debug", async (req: Request, res: Response) => {
-    const names = [
-      "siteMessage",
-      "siteHits",
-      "fullForecast",
-      "debug",
-      "images",
-      "online",
-      "forecast",
-      "sun",
-      "lastWind",
-    ];
-    let ans: any = {};
-    await Promise.all(
-      names.map(async (name) => {
-        const r = await pb.collection("status").getOne(ToId(name.toLowerCase()));
-        ans = { name: r.record };
-      })
-    );
-    res.json(ans);
-  });
-
-  // Basic root endpoint to confirm that the server is running.
-  gpupdate.get("/", (req: Request, res: Response) => {
-    res.send("Hello, TypeScript & Express!");
-  });
-}
-
-/**
- * Returns the configured Express gpupdatelication instance.
- *
- * This export allows other modules (or testing frameworks) to import and interact with the gpupdate.
- *
- * @returns {import("express").Application} The Express gpupdatelication.
- */
-export { gpupdate };
-
-// Start the server by initializing routes and middleware.
-startServer();
+// Basic root endpoint to confirm that the server is running.
+gpupdate.get("/", (req: Request, res: Response) => {
+  res.send("Hello, TypeScript & Express!");
+});
