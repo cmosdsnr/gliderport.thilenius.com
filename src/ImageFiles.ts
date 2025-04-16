@@ -156,7 +156,7 @@ function getImageStats(directoryPath: string): ImageStats {
       results.formatType = 1;
     } else if (files[0].match(/image-\d-\d{5}.jpg/)) {
       results.formatType = 2;
-      results.CameraB = { ...cameraDefault };
+      results.CameraB = JSON.parse(JSON.stringify(cameraDefault));
     }
     files.forEach((file: string) => {
       if (file.match(/image/)) {
@@ -432,7 +432,8 @@ export const scanLatestDirectory = async () => {
         year = year + 1;
         videos = fs.readdirSync(`/app/gliderport/video/${year}`);
       }
-      log("rescan", `next search /app/gliderport/${year}/${month.toString().padStart(2, "0")}`);
+      if (isDirectory(`/app/gliderport/${year}/${month.toString().padStart(2, "0")}`))
+        log("rescan", `next search /app/gliderport/${year}/${month.toString().padStart(2, "0")}`);
     }
   } catch (err: any) {
     log("rescan", `error in scanLatestDirectory: ${err.message}`);
