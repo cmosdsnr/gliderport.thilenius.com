@@ -406,7 +406,7 @@ export const scanLatestDirectory = async () => {
         //now get it
         mostRecent = await pb.collection("imageFiles").getList(1, 1, { filter: `id = ${id}` });
       }
-      log("rescan", JSON.stringify(mostRecent), mostRecent);
+      log("rescan", JSON.stringify(mostRecent));
       let res = mostRecent.items[0].data;
       let days = fs.readdirSync(`/app/gliderport/${year}/${month.toString().padStart(2, "0")}`);
       listing.data[year][month] = [];
