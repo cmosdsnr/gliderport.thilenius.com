@@ -396,7 +396,6 @@ export const scanLatestDirectory = async () => {
       // load the corresponding id
       const id = ToId(year.toString() + month.toString().padStart(2, "0"));
       let mostRecent = await pb.collection("imageFiles").getList(1, 1, { filter: `id = "${id}"` });
-      log("rescan", JSON.stringify(mostRecent));
       // if it doesn't exist create it
       if (mostRecent.items.length === 0) {
         log("rescan", "creating new record for ", id);
@@ -407,13 +406,12 @@ export const scanLatestDirectory = async () => {
         //now get it
         mostRecent = await pb.collection("imageFiles").getList(1, 1, { filter: `id = "${id}"` });
       }
-      log("rescan", JSON.stringify(mostRecent));
       let res = mostRecent.items[0].data;
       let days = fs.readdirSync(`/app/gliderport/${year}/${month.toString().padStart(2, "0")}`);
       listing.data[year][month] = [];
       for (const day of days) {
         if (res[day] === undefined) {
-          res[day] = getImageStats(`/app/gliderport/${year}/${month}/${day}`);
+          res[day] = getImageStats(`/app/gliderport/${year}/${month.toString().padStart(2, "0")}/${day}`);
           res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
         }
         listing.data[year][month].push(parseInt(day.slice(8, 10)));
