@@ -115,7 +115,7 @@ const cameraDefault: CameraData = {
   // original camera pointing right
   starting: {
     file: "",
-    time: +Infinity,
+    time: 9999999999999,
   },
   ending: {
     file: "",
@@ -168,7 +168,7 @@ function getImageStats(directoryPath: string): ImageStats {
         }
         Camera.numFiles++;
         const fileDate = getFileDate(directoryPath + "/" + file);
-        if (fileDate) {
+        if (fileDate !== null) {
           if (fileDate < Camera.starting.time) {
             Camera.starting.time = fileDate;
             Camera.starting.file = file;
