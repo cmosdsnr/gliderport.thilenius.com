@@ -429,19 +429,20 @@ export const scanLatestDirectory = async () => {
         .collection("imageFiles")
         .update(id, { data: res })
         .catch((err: any) => console.error(err.message));
-      await pb
-        .collection("imageFiles")
-        .update(listing.id, { data: listing.data })
-        .catch((err: any) => console.error(err.message));
       month = month + 1;
       if (month > 12) {
         month = 1;
         year = year + 1;
         videos = fs.readdirSync(`/app/gliderport/video/${year}`);
+        listing.data[year] = {};
       }
       if (isDirectory(`/app/gliderport/${year}/${month.toString().padStart(2, "0")}`))
         log("rescan", `next search /app/gliderport/${year}/${month.toString().padStart(2, "0")}`);
     }
+    await pb
+      .collection("imageFiles")
+      .update(listing.id, { data: listing.data })
+      .catch((err: any) => console.error(err.message));
   } catch (err: any) {
     log("rescan", `error in scanLatestDirectory: ${err.message}`);
     console.error(err);
