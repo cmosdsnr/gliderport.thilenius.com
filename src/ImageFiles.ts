@@ -140,7 +140,7 @@ function getImageStats(directoryPath: string): ImageStats {
   let indexB: boolean[] = Array(9999).fill(false);
 
   const results: ImageStats = {
-    CameraA: { ...cameraDefault },
+    CameraA: JSON.parse(JSON.stringify(cameraDefault)),
     formatType: 0, // 0: image1000.jpg, 1: image10000.jpg, 2: image-1/2-10000.jpg
   };
 
