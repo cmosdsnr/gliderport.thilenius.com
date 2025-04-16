@@ -389,13 +389,14 @@ export const scanLatestDirectory = async () => {
     // get the largest month in data[year]
     let months = Object.keys(listing.data[year]);
     let month = Math.max(...months.map((key) => parseInt(key)));
+    log("rescan", `start searching /app/gliderport/${year}/${month.toString().padStart(2, "0")}`);
 
     // see if this month exists and process it
     while (isDirectory(`/app/gliderport/${year}/${month.toString().padStart(2, "0")}`)) {
-      log("rescan", `/app/gliderport/${year}/${month.toString().padStart(2, "0")}`);
       // load the corresponding id
       const id = ToId(year.toString() + month.toString().padStart(2, "0"));
-      let mostRecent = await pb.collection("imageFiles").getList(1, 1, { filter: `id = ${id}` });
+      let mostRecent = await pb.collection("imageFiles").getList(1, 1, { filter: `id = "${id}"` });
+      log("rescan", JSON.stringify(mostRecent));
       // if it doesn't exist create it
       if (mostRecent.items.length === 0) {
         log("rescan", "creating new record for ", id);
@@ -404,7 +405,7 @@ export const scanLatestDirectory = async () => {
           .create({ id, data: {} })
           .catch((err: any) => console.error(err.message));
         //now get it
-        mostRecent = await pb.collection("imageFiles").getList(1, 1, { filter: `id = ${id}` });
+        mostRecent = await pb.collection("imageFiles").getList(1, 1, { filter: `id = "${id}"` });
       }
       log("rescan", JSON.stringify(mostRecent));
       let res = mostRecent.items[0].data;
@@ -433,6 +434,7 @@ export const scanLatestDirectory = async () => {
         year = year + 1;
         videos = fs.readdirSync(`/app/gliderport/video/${year}`);
       }
+      log("rescan", `next search /app/gliderport/${year}/${month.toString().padStart(2, "0")}`);
     }
   } catch (err: any) {
     log("rescan", `error in scanLatestDirectory: ${err.message}`);
