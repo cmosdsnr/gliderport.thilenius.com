@@ -110,8 +110,12 @@ export const runSyncCycle = async () => {
 
   lastPocketEntry = rawRows[rawRows.length - 1].epoch;
 
-  // Notify server that new data is available
-  //await axios.get("https://gpupdate.thilenius.com/fetchNewWind");
-  await axios.get("https://tstupdate.thilenius.com/fetchNewWind");
+  try {
+    // Notify server that new data is available
+    //await axios.get("https://gpupdate.thilenius.com/fetchNewWind", { timeout: 5000 }); // 5-second timeout
+    await axios.get("https://tstupdate.thilenius.com/fetchNewWind", { timeout: 5000 }); // 5-second timeout
+  } catch (err: any) {
+    log("Interval", "Error notifying server: ", err.message);
+  }
   updating = false;
 };

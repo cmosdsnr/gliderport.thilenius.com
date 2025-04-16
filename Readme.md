@@ -12,3 +12,13 @@
   1. '/espIP'   : for the ESP to occasionally call to update the IP of the ESP32
   2. '/stats'   : get some debug info
   3. '/tryRead' : to test the loading of (2025,1)
+
+
+### To Transfer to pi3 @ gliderport
+
+1. Run go.bat to add/commit/push to github
+2. ssh to pi3
+3. cd gliderport/gp_pi3_server
+4. run: git pull origin main; yarn build;
+5. OR form ~/gliderport: 
+    mv gp_pi3_server/bin .; rm -rf gp_pi3_server; git clone git@github.com:cmosdsnr/gp_pi3_server.git; mv bin gp_pi3_server
