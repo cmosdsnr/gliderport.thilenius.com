@@ -515,6 +515,7 @@ export const getWindAverage = () => {
  * - GET /getLastEntry: Returns the timestamp of the most recent wind data record.
  * - GET /addWindFromSQL: Processes and inserts new wind records from the SQL database into PocketBase.
  * - GET /fixSaveErrors: Corrects errors in saved wind data by swapping temperature, pressure, and humidity values.
+ * - GET /getData: gets the last h hours of windData.
  *
  * @returns {Router} An Express Router with the defined wind data endpoints.
  */
@@ -531,13 +532,27 @@ export const windRoutes = (): Router => {
     }
   });
 
+  // Endpoint: GET /getData: gets the last h hours of windData.
+  router.get("/getData", async (req: Request, res: Response) => {
+    try {
+      const hours = parseInt(req.query.hours as string);
+      const now = DateTime.now().toSeconds();
+      const startTime = now - hours * 60 * 60;
+      const filteredData = windTable.filter((record) => record.timestamp > startTime);
+      res.status(200).json(filteredData);
+    } catch (error: any) {
+      res.status(500).send("Error in getData: " + error.message);
+    }
+  });
+
   // Endpoint: GET /getLastEntry - Returns the timestamp of the latest wind data record.
   router.get("/getLastEntry", (req: Request, res: Response) => {
     if (windTable.length === 0) res.send("Error");
     else res.send(windTable[windTable.length - 1].timestamp.toString());
   });
 
-  // Endpoint: GET /fetchNewWind - tells the server there are new records in the pb database.
+  // Endpoint: GET /fetchNewWind - tells the server there are new records in the pb database. Called from the pi3 at teh gliderport.
+  // It will update the in-memory windTable with the latest records from PocketBase.
   router.get("/fetchNewWind", (req: Request, res: Response) => {
     UpdateWindTable();
     res.send("ok");
