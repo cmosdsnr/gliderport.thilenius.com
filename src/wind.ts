@@ -122,10 +122,10 @@ export const loadWindTable = async (): Promise<void> => {
 loadWindTable();
 
 /**
- * Loads the last 14 days of wind data from PocketBase into the in-memory windTable.
+ * update in-memory windTable with newly added records.
  *
- * It queries the "wind" collection for records with an id greater than a computed threshold
- * based on the current time minus 14 days, then populates the windTable array.
+ * It queries the "wind" collection for records newer than what is in the windTable.
+ * 🚨 Called from the pi3 at the gliderport to update the in-memory windTable through the /fetchNewWind route.
  *
  * @returns {Promise<void>} A promise that resolves when the wind table is loaded.
  */
@@ -136,7 +136,7 @@ export const UpdateWindTable = async (): Promise<void> => {
   try {
     logStr(
       log,
-      "loadWindTable",
+      "UpdateWindTable",
       "looking for records with id >",
       ToId(windTable[windTable.length - 1].timestamp.toString())
     );
@@ -159,11 +159,11 @@ export const UpdateWindTable = async (): Promise<void> => {
     });
     const ts = Math.floor(Date.now() / 1000) - 14 * 24 * 60 * 60;
     while (windTable.length > 0 && windTable[0].timestamp < ts) windTable.shift();
-    logStr(log, "loadWindTable", "Wind table loaded with", result.length, "records.");
+    logStr(log, "UpdateWindTable", "Wind table loaded with", result.length, "records.");
     // Log first and last record timestamps for debugging.
     logStr(
       log,
-      "loadWindTable",
+      "UpdateWindTable",
       "First record: ",
       windTable[0].timestamp,
       " ",
@@ -171,25 +171,24 @@ export const UpdateWindTable = async (): Promise<void> => {
     );
     logStr(
       log,
-      "loadWindTable",
+      "UpdateWindTable",
       "Last record: ",
       windTable[windTable.length - 1].timestamp,
       " ",
       DateTime.fromSeconds(windTable[windTable.length - 1].timestamp).toLocaleString()
     );
   } catch (error: any) {
-    logStr(log, "loadWindTable", "Error loading wind table:", error.message);
+    logStr(log, "UpdateWindTable", "Error loading wind table:", error.message);
     windTable = []; // Clear table on failure.
   }
+  updateCodeHistory();
   writeLog(log);
 };
 
 /**
- * Adds new wind data from an HTTP request to the windTable and PocketBase.
- *
- * It updates the in-memory windTable with new records from req.body.d,
- * creates corresponding records in PocketBase if the timestamp is newer than the latest,
- * and prunes records older than 14 days. It also triggers text alerts if within a valid time window.
+ * **Important:** DEFUNCT !!!!!!!!!!!!!!!!!!!!!!!!
+ * NEVER CALLED!!!!
+ * pi3 at the gliderport  INSERTS DIRECTLY INTO THE DB, THEN CALLS /fetchNewWind route WHICH TRIGGERS A UpdateWindTable.
  *
  * @param {Request} req - The HTTP request containing new wind data in its body.
  * @returns {Promise<void>} A promise that resolves when the new wind data is processed.

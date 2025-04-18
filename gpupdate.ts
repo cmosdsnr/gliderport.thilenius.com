@@ -63,6 +63,10 @@ gpupdate.use(windRoutes());
 import { codeRoutes } from "codes.js";
 gpupdate.use(codeRoutes());
 
+// Import and mount additional routes for openWeather API integration.
+import { forecastRoutes } from "openWeather.js";
+gpupdate.use(forecastRoutes());
+
 // Load environment variables into process.env.
 dotenv.config();
 

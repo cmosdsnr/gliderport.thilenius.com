@@ -66,6 +66,7 @@ export type TodaysCodes = {
 // --------------------------------------------------------
 // Function: sqlToPbCodeHistory
 // Description:
+//   - FOR MIGRATION from SQL to PocketBase.
 //   - Fetches the latest codeHistory record ID from PocketBase.
 //   - Converts that ID (stored as days since epoch) to a timestamp in seconds.
 //   - Queries the SQL code_history table for records newer than that timestamp.
@@ -455,6 +456,7 @@ export const codeRoutes = (): Router => {
   const router = Router();
 
   // Endpoint to update the code history record based on new wind data.
+  // for testing only! updateCodeHistory is called in wind.ts - UpdateWindTable
   router.get("/updateCodeHistory", async (req: Request, res: Response) => {
     try {
       updateCodeHistory(); // Trigger updateCodeHistory when wind data updates.
