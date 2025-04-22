@@ -58,7 +58,7 @@ export const startExpress = (): void => {
   gpupdate.use(cors(corsOptions));
 
   // Serve static files from the "/app/gliderport" directory.
-  gpupdate.use(express.static("/app/gliderport"));
+  gpupdate.use(express.static("/app/docs"));
 
   // (Optional) Enable file uploads with specific limits.
   // const options: fileUpload.Options = {
