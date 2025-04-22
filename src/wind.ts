@@ -30,8 +30,8 @@ import { DateTime } from "luxon";
 import { ToId } from "miscellaneous.js";
 import { sunData } from "sun.js";
 import { checkAndSendTexts } from "sendTextMessage.js";
-import { updateCodeHistory } from "codes.js";
 import { logStr, writeLog } from "log.js";
+import { codes, updateCodes, convertToCodes } from "codes.js";
 
 export let windTable: WindTable = [];
 
@@ -117,6 +117,7 @@ export const loadWindTable = async (): Promise<void> => {
     logStr(log, "loadWindTable", "Error loading wind table:", error.message);
     windTable = []; // Clear table on failure.
   }
+  convertToCodes(windTable);
   writeLog(log);
 };
 loadWindTable();
@@ -181,92 +182,7 @@ export const UpdateWindTable = async (): Promise<void> => {
     logStr(log, "UpdateWindTable", "Error loading wind table:", error.message);
     windTable = []; // Clear table on failure.
   }
-  updateCodeHistory();
-  writeLog(log);
-};
-
-/**
- * **Important:** DEFUNCT !!!!!!!!!!!!!!!!!!!!!!!!
- * NEVER CALLED!!!!
- * pi3 at the gliderport  INSERTS DIRECTLY INTO THE DB, THEN CALLS /fetchNewWind route WHICH TRIGGERS A UpdateWindTable.
- *
- * @param {Request} req - The HTTP request containing new wind data in its body.
- * @returns {Promise<void>} A promise that resolves when the new wind data is processed.
- */
-const addWindData = async (req: Request): Promise<void> => {
-  const log: string[] = [""];
-
-  // Retrieve relevant sun data and last timestamp from windTable.
-  let tsLast = windTable[windTable.length - 1].timestamp;
-  let sunrise = sunData.sunrise.getTime() / 1000;
-  let sunset = sunData.sunset.getTime() / 1000;
-
-  const tsNow = Math.floor(Date.now() / 1000);
-
-  const body: any = req.body;
-  // Process new data if present in the request.
-  if (body && "d" in body) {
-    const records: any[] = body.d;
-    logStr(log, "addWindData", "addData d.length: ", records.length);
-    logStr(log, "addWindData", "addData first one: ", records[0][0]);
-
-    // Add each record to the windTable and create a corresponding record in PocketBase.
-    records.forEach((r) => {
-      if (r[0] > windTable[windTable.length - 1].timestamp) {
-        windTable.push({
-          timestamp: r[0],
-          speed: r[1],
-          direction: r[2],
-          temperature: r[3],
-          humidity: r[4],
-          pressure: r[5],
-        });
-        try {
-          pb.collection("wind").create({
-            id: ToId(r[0].toString()),
-            speed: r[1],
-            direction: r[2],
-            temperature: r[3],
-            humidity: r[4],
-            pressure: r[5],
-          });
-        } catch (error: any) {
-          logStr(log, "addWindData", "Error adding wind data to PocketBase:", error.message);
-        }
-      } else {
-        logStr(log, "addWindData", "Record ts no big enough: ", r[0], "<", windTable[windTable.length - 1].timestamp);
-      }
-    });
-
-    // Remove records older than 14 days.
-    logStr(log, "addWindData", "looking for records earlier than", tsNow - 14 * 24 * 60 * 60, tsNow);
-    while (windTable.length > 0 && windTable[0].timestamp < tsNow - 14 * 24 * 60 * 60) windTable.shift();
-
-    // Trigger text alerts if within the valid time window.
-    if (tsNow > 3600 + sunrise && tsNow < sunset - 3600) checkAndSendTexts();
-
-    logStr(
-      log,
-      "addWindData",
-      "First record: ",
-      windTable[0].timestamp,
-      " ",
-      DateTime.fromSeconds(windTable[0].timestamp).toLocaleString(DateTime.DATETIME_MED)
-    );
-    logStr(
-      log,
-      "addWindData",
-      "Last record: ",
-      windTable[windTable.length - 1].timestamp,
-      " ",
-      DateTime.fromSeconds(windTable[windTable.length - 1].timestamp).toLocaleString(DateTime.DATETIME_MED)
-    );
-  } else {
-    logStr(log, "addWindData", "addData called with no data");
-  }
-
-  // Update code history and log the process.
-  updateCodeHistory();
+  updateCodes(windTable);
   writeLog(log);
 };
 
@@ -342,74 +258,6 @@ export async function processNewWindRecords(): Promise<void> {
     logStr(log, "processNewWindRecords", "✅ New wind records synced.");
   } catch (error: any) {
     logStr(log, "processNewWindRecords", "❌ Error processing wind records:", error.message);
-  }
-  writeLog(log);
-}
-
-/**
- * Simulates adding wind data for testing purposes.
- *
- * This function queries SQL for new records after the latest PocketBase record,
- * converts them to the PocketBase wind record format, and passes them to the addWindData
- * function as a simulated POST request.
- *
- * @returns {Promise<void>} A promise that resolves when the simulation is complete.
- */
-export async function simulateAddData(): Promise<void> {
-  const log: string[] = [""];
-  try {
-    // Step 1: Get the latest wind record from PocketBase.
-    const pbResponse = await pb.collection("wind").getList(1, 1, { sort: "-id" });
-    let highestTimestamp = 0;
-    if (pbResponse?.items?.length > 0) {
-      const highestId = pbResponse.items[0].id;
-      highestTimestamp = parseInt(highestId, 10);
-    }
-    const highestLA = DateTime.fromSeconds(highestTimestamp, {
-      zone: "America/Los_Angeles",
-    });
-    const highestDateLA = highestLA.toFormat("yyyy-MM-dd HH:mm:ss");
-
-    // Step 2: Query SQL for records recorded after highestDateLA.
-    const sqlQuery = "SELECT * FROM gliderport WHERE recorded > ? ORDER BY recorded ASC";
-    const sqlResult = await connection?.promise().query<any[]>(sqlQuery, [highestDateLA]);
-    const newSqlRecords = sqlResult ? sqlResult[0] : [];
-
-    // Step 3: Convert SQL records to the PocketBase wind record format.
-    const recordsToInsert: any[] = [];
-    for (const row of newSqlRecords) {
-      const recordedLA = DateTime.fromJSDate(row.recorded, {
-        zone: "America/Los_Angeles",
-      });
-      const timestamp = Math.floor(recordedLA.toUTC().toSeconds());
-      const record: any[] = [
-        timestamp,
-        Math.min(row.speed, 511),
-        Math.min(row.direction, 359),
-        Math.min(row.temperature, 1023),
-        row.humidity,
-        Math.max(-4090, Math.min(row.pressure, 4090)),
-      ];
-      recordsToInsert.push(record);
-    }
-    if (recordsToInsert.length === 0) {
-      logStr(log, "simulateAddData", "No new records to insert.");
-      writeLog(log);
-      return;
-    }
-    // Prepare a mock request object with the new wind records.
-    const mockReq: Partial<Request> = {
-      body: {
-        d: recordsToInsert,
-      },
-    };
-    try {
-      addWindData(mockReq as Request);
-    } catch (error: any) {
-      logStr(log, "simulateAddData", `Failed to insert records:`, error.message);
-    }
-  } catch (error: any) {
-    logStr(log, "simulateAddData", `Failed to insert records:`, error.message);
   }
   writeLog(log);
 }
@@ -521,16 +369,6 @@ export const getWindAverage = () => {
 export const windRoutes = (): Router => {
   const router = Router();
 
-  // Endpoint: POST /addData - Adds new wind data to the database.
-  router.post("/addData", async (req: Request, res: Response) => {
-    try {
-      addWindData(req);
-      res.status(200).send("ok");
-    } catch (error) {
-      res.status(500).send("Error reading archive files.");
-    }
-  });
-
   // Endpoint: GET /getData: gets the last h hours of windData.
   router.get("/getData", async (req: Request, res: Response) => {
     try {
@@ -565,7 +403,7 @@ export const windRoutes = (): Router => {
       console.log(log.join("\n"));
       await processNewWindRecords();
       res.status(200).json({ log });
-      setInterval(simulateAddData, 1000 * 30);
+      //   setInterval(simulateAddData, 1000 * 30);
     } catch (error) {
       res.status(500).send("Error reading archive files.");
     }

@@ -1,188 +1,71 @@
 /**
  *
- * This module handles operations related to the code history for the Gliderport system.
- * It provides functionality for:
- *  - Converting SQL code history records to PocketBase records.
- *  - Generating a code based on wind speed, direction, and light conditions.
- *  - Managing and updating the current day's code history.
- *  - Providing Express endpoints to trigger code history updates and import SQL records.
+ * Manages code history for the Gliderport system by:
+ *  - Converting SQL records to PocketBase (sqlToPbCodeHistory)
+ *  - Generating wind condition codes (getCode)
+ *  - Initializing and updating today's codes (initialize, updateCodeHistory)
+ *  - Exposing Express endpoints for manual triggers and querying codes (codeRoutes)
  *
- * The module uses Luxon for date and time calculations and formatting.
- *
- * Exported Functions:
- *  - updateCodeHistory: Updates the code history record for the current day based on new wind data.
- *  - sqlToPbCodeHistory: Imports new SQL code history records into the PocketBase collection.
- *  - codeRoutes: Returns an Express router with endpoints for updating code history and importing SQL records.
+ * Uses Luxon and sun.js for date/time and sunrise/sunset calculations.
  *
  * @module codes
  */
 
 import { Request, Response, Router } from "express";
-import { pb } from "pb.js";
-import { ToId } from "miscellaneous.js";
-import { connection } from "SqlConnect.js";
 import { getSun } from "sun.js";
 import { DateTime } from "luxon";
-import { windTable } from "wind.js";
-import { logStr, writeLog } from "log.js";
-
-type CodeEntry = [number, number];
-
-interface CodeHistoryData {
-  codes: CodeEntry[]; // [timestampOffsetInSeconds, code]
-  limits: [number, number]; // [startHour, endHour]
-  sun: [number, number]; // [sunriseInSeconds, sunsetInSeconds]
-}
-
-export type TodaysCodes = {
-  lastCode: number;
-  timestamps: {
-    dayStart: number;
-    sunrise: number;
-    sunset: number;
-    start: number;
-    stop: number;
-    next: number;
-  };
-  id: string;
-  data: CodeHistoryData;
-};
-
-// An array of string descriptions corresponding to each code.
-// export const codesMeaning = [
-//   "it is dark",
-//   "sled ride, bad angle",
-//   "sled ride, poor angle",
-//   "sled ride",
-//   "bad angle",
-//   "poor angle",
-//   "good",
-//   "excellent",
-//   "speed bar",
-//   "too windy",
-//   "no data",
-// ];
-
-// --------------------------------------------------------
-// Function: sqlToPbCodeHistory
-// Description:
-//   - FOR MIGRATION from SQL to PocketBase.
-//   - Fetches the latest codeHistory record ID from PocketBase.
-//   - Converts that ID (stored as days since epoch) to a timestamp in seconds.
-//   - Queries the SQL code_history table for records newer than that timestamp.
-//   - Processes the results in chunks, converting and creating records in PocketBase.
-//   - Logs detailed information about the process.
-// --------------------------------------------------------
-const sqlToPbCodeHistory = async () => {
-  const log: string[] = [""];
-
-  // Step 1: Get the largest (latest) id from the codeHistory collection.
-  let lastIdDays = 0;
-  try {
-    const list = await pb.collection("codeHistory").getList(1, 1, { sort: "-id" });
-    if (list.items.length > 0) {
-      // The id is stored as days since epoch.
-      lastIdDays = parseInt(list.items[0].id, 10);
-      logStr(log, "sqlToPbCodeHistory", `Last recorded day (id) in codeHistory: ${lastIdDays}`);
-    }
-  } catch (error) {
-    logStr(log, "sqlToPbCodeHistory", "Error fetching last codeHistory record:", error);
-  }
-
-  // Convert lastIdDays (days) to a timestamp in seconds.
-  const lastTimestamp = lastIdDays * 24 * 3600;
-  logStr(log, "sqlToPbCodeHistory", `Filtering SQL records with date > ${lastTimestamp} (seconds)`);
-
-  // Step 2: Query the SQL table for code_history records with date greater than lastTimestamp.
-  connection?.query(
-    "SELECT * FROM code_history WHERE date > ? ORDER BY date ASC",
-    [lastTimestamp],
-    async (err, results: any) => {
-      if (err) {
-        logStr(log, "sqlToPbCodeHistory", "Error querying code_history:", err);
-        return;
-      }
-      if (Array.isArray(results)) {
-        logStr(log, "sqlToPbCodeHistory", `Found ${results.length} new records in code_history`);
-        const chunkSize = 1000;
-        for (let i = 0; i < results.length; i += chunkSize) {
-          const chunk = results.slice(i, i + chunkSize);
-          try {
-            await Promise.all(
-              chunk.map(async (record: any) => {
-                // Validate the date is a whole day (divisible by 86400 seconds).
-                if (parseInt(record.date, 10) % (24 * 3600) !== 0)
-                  logStr(
-                    log,
-                    "sqlToPbCodeHistory",
-                    `Invalid date format for record with date ${record.date} and hour ${
-                      (parseInt(record.date, 10) % (24 * 3600)) / 3600
-                    }`
-                  );
-
-                // Convert record.date (seconds) to days since epoch.
-                const tsDays = Math.floor(parseInt(record.date, 10) / (24 * 3600));
-                // Generate a unique id using the days value.
-                const id = ToId(tsDays.toString());
-                // Parse the data field to JSON.
-                let jsonData;
-                try {
-                  jsonData = JSON.parse(record.data);
-                } catch (parseError) {
-                  logStr(
-                    log,
-                    "sqlToPbCodeHistory",
-                    `Error parsing JSON for record with date ${record.date}:`,
-                    parseError
-                  );
-                  jsonData = record.data;
-                }
-
-                // overwrite todays data if this is for today
-                if (todaysCodes.id === id) todaysCodes.data = jsonData;
-                // Create the record in the PocketBase "codeHistory" collection.
-                try {
-                  await pb.collection("codeHistory").create({
-                    id,
-                    data: jsonData,
-                  });
-                } catch (createError: any) {
-                  logStr(
-                    log,
-                    "sqlToPbCodeHistory",
-                    `Error creating codeHistory record with id ${id}:`,
-                    createError.message
-                  );
-                }
-              })
-            );
-            logStr(log, "sqlToPbCodeHistory", `Batch ${Math.floor(i / chunkSize) + 1} processed.`);
-          } catch (batchError) {
-            logStr(log, "sqlToPbCodeHistory", "Error processing batch:", batchError);
-            return;
-          }
-        }
-      }
-    }
-  );
-  writeLog(log);
-};
+import { WindTable } from "wind.js";
+/**
+ * A single wind code entry: [secondsSinceLocalMidnight, codeValue].
+ */
+export type CodeEntry = [number, number];
 
 /**
- * Enum representing various wind condition codes.
+ * A full day of wind code entries.
+ */
+export type DayOfCodes = CodeEntry[];
+
+/**
+ * Complete history: an array of per-day code sequences.
+ */
+export let codes: DayOfCodes[] = [];
+
+// Internal state tracking current processing day boundaries
+let dayTs = 0; // Local midnight (UNIX seconds)
+let sunriseTs = 0; // Sunrise time (UNIX seconds)
+let sunsetTs = 0; // Sunset time (UNIX seconds)
+
+/**
+ * Discrete wind condition codes.
  */
 export enum WindCode {
   IT_IS_DARK = 0,
-  SLED_RIDE_BAD_ANGLE = 1,
-  SLED_RIDE_POOR_ANGLE = 2,
-  SLED_RIDE = 3,
-  BAD_ANGLE = 4,
-  POOR_ANGLE = 5,
-  GOOD = 6,
-  EXCELLENT = 7,
-  SPEED_BAR = 8,
-  TOO_WINDY = 9,
-  NO_DATA = 10,
+  SLED_RIDE_BAD_ANGLE,
+  SLED_RIDE_POOR_ANGLE,
+  SLED_RIDE,
+  BAD_ANGLE,
+  POOR_ANGLE,
+  GOOD,
+  EXCELLENT,
+  SPEED_BAR,
+  TOO_WINDY,
+  NO_DATA,
+}
+
+/**
+ * Returns the UNIX timestamp of local midnight in America/Los_Angeles
+ * for the given UTC timestamp.
+ *
+ * @param ts - UTC timestamp in seconds
+ * @returns Local midnight timestamp (seconds)
+ */
+function getLastMidnightLA(ts: number): number {
+  // 1) Build a Luxon DateTime in the America/Los_Angeles zone
+  const dtLA = DateTime.fromSeconds(ts, { zone: "America/Los_Angeles" });
+  // 2) Snap to the start of that local day (i.e. midnight)
+  const midnightLA = dtLA.startOf("day");
+  // 3) Convert back to a UNIX timestamp (seconds)
+  return Math.floor(midnightLA.toSeconds());
 }
 
 /**
@@ -244,200 +127,147 @@ export function getCode(speed: number, direction: number, isItDark: boolean = fa
 }
 
 /**
- * Initializes and returns a new TodaysCodes record.
+ * Computes a WindCode based on wind speed, wind direction, and light conditions.
+ * Returns IT_IS_DARK if `isItDark` is true; otherwise applies thresholds.
  *
- * This function performs the following steps:
- * 1. Determines the start of the current day in the "America/Los_Angeles" timezone.
- * 2. Computes a unique ID for today's record based on the number of days since epoch.
- * 3. Calculates sun-related times (sunrise and sunset) for 12 PM local time using getSun.
- * 4. Converts the sunrise and sunset times to UNIX timestamps (in seconds).
- * 5. Attempts to load an existing codeHistory record from PocketBase using the computed ID.
- *    - If found, extracts the stored data, computes the next update time, and retrieves the last recorded code.
- *    - If not found, initializes a new data object with empty codes and default sun times.
- *
- * The function returns a TodaysCodes object containing:
- * - lastCode: The last recorded wind code.
- * - timestamps: An object containing various time markers (dayStart, sunrise, sunset, start, stop, next).
- * - id: The unique identifier for today's codeHistory record.
- * - data: The existing or newly initialized code history data.
- *
- * @returns {Promise<TodaysCodes>} A promise that resolves to the initialized TodaysCodes record.
+ * @param speed - Wind speed in appropriate units
+ * @param direction - Wind direction in degrees
+ * @param isItDark - True if timestamp is before sunrise or after sunset
+ * @returns Corresponding WindCode enum value
  */
-export const initialize = async (): Promise<TodaysCodes> => {
-  // Determine the start of the day (in LA timezone) and convert it to a UNIX timestamp (in seconds).
-  const tsStartOfDay = DateTime.now().setZone("America/Los_Angeles").startOf("day");
-  const dayStart = Math.floor(tsStartOfDay.toSeconds());
-
-  // Generate a unique ID based on the day (days since epoch).
-  const id = ToId(Math.floor(dayStart / (24 * 3600)).toString());
-
-  // Compute sun times for 12 PM on the current day.
-  const sunData = getSun(tsStartOfDay.plus({ hours: 12 }).toJSDate());
-  // Convert sunrise and sunset to UNIX timestamps (in seconds).
-  const sunrise = Math.floor(sunData.sunrise.getTime() / 1000);
-  const sunset = Math.floor(sunData.sunset.getTime() / 1000);
-
-  // Initialize the next update time to sunrise by default and set the last code to 0.
-  let next = sunrise;
-  let lastCode = 0;
-  let data: any = {};
-
-  // Attempt to load an existing codeHistory record for today from PocketBase.
-  try {
-    let record = await pb.collection("codeHistory").getOne(id);
-    if (record) {
-      data = record.data;
-      // Compute the next update time based on the last code record.
-      next = data.codes[data.codes.length - 1][0] + 3600 * data.limits[0] + dayStart + 120;
-      // Retrieve the last recorded code.
-      lastCode = data.codes[data.codes.length - 1][1];
+export const updateCodes = (windTable: WindTable) => {
+  if (codes.length == 0) {
+    console.log("codes not initialized");
+    return;
+  }
+  const lastDay = codes[codes.length - 1];
+  if (lastDay.length == 0) {
+    console.log("last Day is empty");
+    return;
+  }
+  let lastTs = lastDay[lastDay.length - 1][0];
+  // search for first timestamp in the windTable that is greater than lastTs
+  let idx = windTable.length - 1;
+  while (idx > 0 && windTable[idx].timestamp > lastTs) idx--;
+  while (idx < windTable.length && windTable[idx].timestamp < lastDay[lastDay.length - 1][0] + 120) idx++;
+  while (idx < windTable.length && windTable[idx].timestamp < sunsetTs) {
+    const v = windTable[idx];
+    const code = getCode(v.speed, v.direction);
+    if (code !== lastDay[lastDay.length - 1][1]) {
+      lastDay.push([v.timestamp, code]);
+      while (idx < windTable.length && windTable[idx].timestamp < v.timestamp + 120) idx++;
     }
-  } catch (error: any) {
-    // If no record exists, initialize default data.
-    const sunriseSec = Math.floor(sunrise - dayStart);
-    const sunsetSec = Math.floor(sunset - dayStart);
-    const sunriseLocalHour = DateTime.fromJSDate(sunData.sunrise).setZone("America/Los_Angeles").hour;
-    const sunsetLocalHour = DateTime.fromJSDate(sunData.sunset).setZone("America/Los_Angeles").hour;
-
-    data = {
-      codes: [],
-      sun: [sunriseSec, sunsetSec],
-      limits: [sunriseLocalHour - 1, sunsetLocalHour + 2],
-    };
+    idx++;
+  }
+  if (idx < windTable.length && windTable[idx].timestamp >= sunsetTs) {
+    lastDay.push([sunsetTs, WindCode.IT_IS_DARK]);
+    dayTs += 24 * 3600;
+    const sunData = getSun(DateTime.fromSeconds(dayTs).toJSDate());
+    sunriseTs = Math.floor(sunData.sunrise.getTime() / 1000);
+    sunsetTs = Math.floor(sunData.sunset.getTime() / 1000);
   }
 
-  // Return the initialized TodaysCodes object.
-  return {
-    lastCode,
-    timestamps: {
-      dayStart,
-      sunrise,
-      sunset,
-      // 'start' and 'stop' are computed based on dayStart and the defined limits.
-      start: dayStart + 3600 * data.limits[0],
-      stop: dayStart + 3600 * data.limits[1],
-      next,
-    },
-    id,
-    data,
-  };
-};
+  while (windTable.length > idx) {
+    let day: any = [];
+    while (idx < windTable.length && windTable[idx].timestamp < sunriseTs) idx++;
+    if (idx >= windTable.length) break;
 
-let todaysCodes: TodaysCodes = await initialize();
+    if (windTable[idx].timestamp > sunsetTs) {
+      //we have no data points for this day
+      day.push([sunriseTs, WindCode.NO_DATA]);
+    } else {
+      const code = getCode(windTable[idx].speed, windTable[idx].direction);
+      day.push([sunriseTs, code]);
+
+      while (idx < windTable.length && windTable[idx].timestamp < day[day.length - 1][0] + 120) idx++;
+      while (idx < windTable.length && windTable[idx].timestamp < sunsetTs) {
+        const v = windTable[idx];
+        const code = getCode(v.speed, v.direction);
+        if (code !== day[day.length - 1][1]) {
+          day.push([v.timestamp, code]);
+          while (idx < windTable.length && windTable[idx].timestamp < v.timestamp + 120) idx++;
+        }
+        idx++;
+      }
+    }
+    day.push([sunsetTs, WindCode.IT_IS_DARK]);
+    codes.push(day);
+    day = [];
+    dayTs += 24 * 3600;
+    const sunData = getSun(DateTime.fromSeconds(dayTs).toJSDate());
+    sunriseTs = Math.floor(sunData.sunrise.getTime() / 1000);
+    sunsetTs = Math.floor(sunData.sunset.getTime() / 1000);
+  }
+
+  // Remove days older than 15 days
+  let fTs = codes[0][0][0];
+  const lTs = codes[codes.length - 1][codes[codes.length - 1].length - 1][0];
+  while (lTs - fTs > 15 * 24 * 3600) {
+    codes.shift();
+    fTs = codes[0][0][0];
+  }
+};
 
 /**
+ * Converts the entire windTable into daily code sequences and populates the `codes` array.
+ * Iterates through each day, seeding at sunrise, tracking changes until sunset,
+ * then closing out and moving to the next day.
  *
- * Updates today's code history record with new wind data.
- *
- * This function performs the following steps:
- * 1. Checks if a new day has started by comparing the current timestamp with the day's start.
- *    - If a new day is detected, it reinitializes the daily code history record.
- * 2. Checks if the current time is past sunset (as recorded in today's timestamps).
- *    - If so, the function logs that no further updates are needed for today and returns.
- * 3. Verifies that there is new wind data available (i.e. the last wind record is more recent than the next expected update time).
- *    - If no new data is available, it logs this and returns early.
- * 4. Processes new wind records from the in-memory windTable:
- *    - If no code has been recorded yet, it uses the first wind record to generate an initial code (typically corresponding to sunrise).
- *    - For each subsequent wind record before sunset, it calculates a new code using `getCode` and, if the code changes and at least 2 minutes have passed since the last update, appends the new code.
- *    - It then advances the index past the current batch of records to skip over time intervals that have already been processed.
- * 5. If any changes were made, appends a final sunset point, and updates the PocketBase "codeHistory" record.
- *    - In case the update fails, it attempts to create a new record.
- *    - Finally, if the day isn’t finished yet, it removes the appended sunset point so that further updates are possible.
- * 6. Writes the accumulated log for debugging.
- *
- * @returns {Promise<void>} A promise that resolves when the update process is complete.
+ * @param windTable - Sorted array of { timestamp, speed, direction }
  */
+export const convertToCodes = (windTable: WindTable) => {
+  dayTs = getLastMidnightLA(windTable[0].timestamp);
+  const dt = DateTime.fromSeconds(dayTs).toJSDate();
+  let sunData = getSun(dt);
+  sunriseTs = Math.floor(sunData.sunrise.getTime() / 1000);
+  sunsetTs = Math.floor(sunData.sunset.getTime() / 1000);
 
-export const updateCodeHistory = async (): Promise<void> => {
-  // Initialize log array to record process details.
-  const log: string[] = [""];
-  // Get the current time in seconds.
-  const now = DateTime.now().toSeconds();
+  let idx = 0;
+  let day: any[] = [];
 
-  // Check if a new day has started; if so, reinitialize the day's code history record.
-  if (now > todaysCodes.timestamps.dayStart + 24 * 3600) {
-    todaysCodes = await initialize();
-  }
+  while (windTable.length > idx) {
+    while (windTable[idx].timestamp < sunriseTs) idx++;
+    if (windTable[idx].timestamp > sunsetTs) {
+      //we have no data points for this day
+      day.push([sunriseTs, WindCode.NO_DATA]);
+    } else {
+      const code = getCode(windTable[idx].speed, windTable[idx].direction);
+      day.push([sunriseTs, code]);
 
-  // If the current time is past today's sunset, log that no update is needed and exit.
-  if (now > todaysCodes.timestamps.sunset) {
-    logStr(log, "updateCodeHistory", "codeHistory already updated for today");
-    return;
-  }
-
-  // If the most recent wind data is not newer than the expected next update time, skip the update.
-  if (windTable[windTable.length - 1].timestamp < todaysCodes.timestamps.next) {
-    logStr(log, "updateCodeHistory", "No wind data of interest, skipping update.");
-    return;
-  }
-
-  // Find the index in windTable for the first record with a timestamp greater than the next expected update time.
-  let i = 0;
-  while (windTable[i].timestamp <= todaysCodes.timestamps.next) i++;
-
-  let changed = false; // Flag to indicate if any new code has been recorded.
-
-  // Process each new wind record from index i.
-  for (; i < windTable.length; i++) {
-    const v = windTable[i];
-
-    // If no code has been recorded yet, use the current record to create the initial code.
-    if (todaysCodes.data.codes.length === 0) {
-      todaysCodes.lastCode = getCode(v.speed, v.direction);
-      // Record the sunrise code entry at a time offset calculated from the sunrise time.
-      todaysCodes.data.codes.push([todaysCodes.data.sun[0] - 3600 * todaysCodes.data.limits[0], todaysCodes.lastCode]);
-      changed = true;
-    }
-
-    // If the current record is before sunset, determine if a new code should be added.
-    if (v.timestamp < todaysCodes.timestamps.sunset) {
-      const newCode = getCode(v.speed, v.direction);
-      // If the new code is different and at least 2 minutes have passed since the last code entry, record the new code.
-      if (newCode !== todaysCodes.lastCode) {
-        todaysCodes.lastCode = newCode;
-        todaysCodes.data.codes.push([
-          v.timestamp - todaysCodes.timestamps.dayStart - 3600 * todaysCodes.data.limits[0],
-          todaysCodes.lastCode,
-        ]);
-        changed = true;
+      while (idx < windTable.length && windTable[idx].timestamp < day[day.length - 1][0] + 120) idx++;
+      while (idx < windTable.length && windTable[idx].timestamp < sunsetTs) {
+        const v = windTable[idx];
+        const code = getCode(v.speed, v.direction);
+        if (code !== day[day.length - 1][1]) {
+          day.push([v.timestamp, code]);
+          while (idx < windTable.length && windTable[idx].timestamp < v.timestamp + 120) idx++;
+        }
+        idx++;
       }
     }
-
-    if (changed) {
-      // Update the next expected update time to 2 minutes after the current record's timestamp.
-      todaysCodes.timestamps.next = windTable[i].timestamp + 120;
-      // Skip ahead in the wind table to the next record past the update threshold.
-      while (i < windTable.length - 1 && windTable[i].timestamp <= todaysCodes.timestamps.next) i++;
-    }
+    if (idx < windTable.length) {
+      day.push([sunsetTs, WindCode.IT_IS_DARK]);
+      codes.push(day);
+      day = [];
+      dayTs += 24 * 3600;
+      sunData = getSun(DateTime.fromSeconds(dayTs).toJSDate());
+      sunriseTs = Math.floor(sunData.sunrise.getTime() / 1000);
+      sunsetTs = Math.floor(sunData.sunset.getTime() / 1000);
+    } else codes.push(day);
   }
-
-  // If any new code was recorded, proceed to update the code history record in PocketBase.
-  if (changed) {
-    logStr(log, "updateCodeHistory", "codeHistory has a new code, saving it.");
-    // Append a sunset point because the record may not be updated again later.
-    todaysCodes.data.codes.push([todaysCodes.data.sun[1] - 3600 * todaysCodes.data.limits[0], 0]);
-    try {
-      // Attempt to update the day's codeHistory record.
-      await pb.collection("codeHistory").update(todaysCodes.id, { data: todaysCodes.data });
-    } catch (updateError) {
-      logStr(log, "updateCodeHistory", "Error updating codeHistory record:", updateError);
-      try {
-        // If updating fails, attempt to create a new codeHistory record.
-        await pb.collection("codeHistory").create({
-          id: todaysCodes.id,
-          data: todaysCodes.data,
-        });
-        logStr(log, "updateCodeHistory", "Created the record instead");
-      } catch (updateError) {
-        logStr(log, "updateCodeHistory", "Error creating codeHistory record:", updateError);
-      }
-    }
-    // If the day hasn't ended (i.e., latest wind data is before sunset), remove the sunset point to allow further updates.
-    if (windTable[windTable.length - 1].timestamp < todaysCodes.timestamps.sunset) todaysCodes.data.codes.pop();
-  }
-  // Write the accumulated log.
-  writeLog(log);
 };
+
+/**
+ * Handler for GET /getWindTableCodes
+ * Calculates wind codes for each windTable entry, including darkness based on sunrise/sunset.
+ * Returns a list of timestamps (in seconds), ISO date strings, and their corresponding code whenever it changes.
+ *
+ * @route GET /getWindTableCodes
+ * @returns Array<{ timestamp: number; date: string; code: WindCode }>
+ */
+async function getWindTableCodesHandler(req: Request, res: Response) {
+  res.status(200).json({ codes });
+}
 
 /**
  * This module defines an Express router that exposes endpoints for managing and updating the code history.
@@ -455,35 +285,8 @@ export const updateCodeHistory = async (): Promise<void> => {
 export const codeRoutes = (): Router => {
   const router = Router();
 
-  // Endpoint to update the code history record based on new wind data.
-  // for testing only! updateCodeHistory is called in wind.ts - UpdateWindTable
-  router.get("/updateCodeHistory", async (req: Request, res: Response) => {
-    try {
-      updateCodeHistory(); // Trigger updateCodeHistory when wind data updates.
-      res.status(200).send("ok");
-    } catch (error) {
-      res.status(500).send("Error reading archive files.");
-    }
-  });
-
-  // Endpoint to import SQL code history records into PocketBase.
-  router.get("/sqlToPbCodeHistory", async (req: Request, res: Response) => {
-    const log: string[] = [""]; // Initialize log for process details.
-    try {
-      logStr(log, "sqlToPbCodeHistory", "###############################################");
-      logStr(log, "sqlToPbCodeHistory", "sqlToPbCodeHistory called");
-      writeLog(log);
-      await sqlToPbCodeHistory();
-
-      res.status(200).json({ log });
-    } catch (error) {
-      res.status(500).send("Error reading archive files.");
-    }
-  });
-
-  router.get("/TodaysCodes", async (req: Request, res: Response) => {
-    res.status(200).json(todaysCodes);
-  });
+  // New route: code changes in the windTable
+  router.get("/getWindTableCodes", getWindTableCodesHandler);
 
   return router;
 };

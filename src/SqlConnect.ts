@@ -44,7 +44,7 @@ export const SqlConnect = (): void => {
     return;
   }
   connection.connect(function (err) {
-    if (err) throw err;
+    // if (err) throw err;
     console.log("SqlConnect: MySQL Connected!");
   });
 };

@@ -1,6 +1,13 @@
 import { Request, Response, Router } from "express";
 
-const fetchOpenWeather = async () => {
+/**
+ * Fetches the 5-day weather forecast from OpenWeatherMap for a fixed location.
+ * On error, logs to console and rethrows the error.
+ *
+ * @returns A Promise resolving with the JSON payload from OpenWeatherMap.
+ * @throws {Error} If the HTTP response status is not OK or fetch fails.
+ */
+const fetchOpenWeather = async (): Promise<any> => {
   try {
     const response = await fetch(
       "https://api.openweathermap.org/data/2.5/forecast?lat=32.889956&lon=-117.251632&units=imperial&appid=483c6b4301f7069cbf4e266bffa6d5ff"
@@ -16,27 +23,40 @@ const fetchOpenWeather = async () => {
   }
 };
 
-let forecast = await fetchOpenWeather();
+// Initial forecast load
+let forecast: any;
 
+(async () => {
+  forecast = await fetchOpenWeather();
+})();
+
+// Refresh forecast every 2 hours
 setInterval(async () => {
   try {
     forecast = await fetchOpenWeather();
   } catch (error) {
     console.error("Error updating forecast data:", error);
   }
-}, 2 * 3600000); // Update every 2 hours
+}, 2 * 3600_000);
 
+/**
+ * Creates an Express router exposing forecast endpoints.
+ *
+ * @returns {Router} An Express Router with forecast-related routes.
+ */
 export const forecastRoutes = (): Router => {
   const router = Router();
 
-  // Endpoint to update the code history record based on new wind data.
-  // for testing only! updateCodeHistory is called in wind.ts - UpdateWindTable
+  /**
+   * GET /getForecast
+   * Returns the latest fetched weather forecast JSON.
+   *
+   * @name GetForecast
+   * @route {GET} /getForecast
+   * @returns 200 - JSON forecast data
+   */
   router.get("/getForecast", async (req: Request, res: Response) => {
-    try {
-      res.status(200).json(forecast);
-    } catch (error) {
-      res.status(500).send("Error reading archive files.");
-    }
+    res.status(200).json(forecast);
   });
 
   return router;
