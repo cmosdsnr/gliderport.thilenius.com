@@ -157,8 +157,7 @@ export const forecastRoutes = (): Router => {
    * @returns 200 - JSON forecast codes for 2 days
    */
   router.get("/getForecastCodes", async (req: Request, res: Response) => {
-    // res.status(200).json(codes);
-    res.status(200).json(codesdb);
+    res.status(200).json(codes);
   });
 
   return router;
