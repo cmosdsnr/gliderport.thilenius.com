@@ -59,7 +59,7 @@ export interface Forecast {
 }
 
 //stored codes set in fetchOpenWeather
-const codes: any = [];
+const codes: any = [[], []];
 
 /**
  * Fetches the 5-day weather forecast from OpenWeatherMap for a fixed location.
@@ -78,29 +78,28 @@ const fetchOpenWeather = async (): Promise<any> => {
     }
     const data: Forecast = await response.json();
 
-    let start = getLastMidnightLA(data.list[0].dt);
-    const sun = getSun(new Date(data.list[0].dt));
-
+    const dt = DateTime.fromSeconds(data.list[0].dt).toJSDate();
+    const sun = getSun(dt);
     let sunriseTs = Math.floor(sun.sunrise.getTime() / 1000);
     let sunsetTs = Math.floor(sun.sunset.getTime() / 1000);
-
     let idx = 0;
     for (let i = 0; i < 2; i++) {
       //go upto sunrise, unless we are already past sunrise
-      while (idx < data.list.length && sunsetTs > data.list[idx + 1].dt) idx++;
+      while (idx < data.list.length && sunriseTs > data.list[idx + 1].dt) idx++;
       //push the first code
-      if (idx < data.list.length && data.list[idx].dt < sunriseTs)
-        codes.push([sunriseTs, getCode(10 * data.list[idx].wind.speed, data.list[idx].wind.deg)]);
-      else codes.push([data.list[idx].dt, getCode(10 * data.list[idx].wind.speed, data.list[idx].wind.deg)]);
+      if (idx < data.list.length)
+        if (data.list[idx].dt < sunriseTs)
+          codes[i].push([sunriseTs, getCode(10 * data.list[idx].wind.speed, data.list[idx].wind.deg)]);
+        else codes[i].push([data.list[idx].dt, getCode(10 * data.list[idx].wind.speed, data.list[idx].wind.deg)]);
       idx++;
       while (idx < data.list.length && data.list[idx].dt < sunsetTs) {
         const v = data.list[idx];
         const code = getCode(10 * v.wind.speed, v.wind.deg);
-        if (code !== codes[codes.length - 1][1]) codes.push([v.dt, code]);
+        if (code !== codes[0][codes[i].length - 1][1]) codes[i].push([v.dt, code]);
         idx++;
       }
       if (idx < data.list.length && data.list[idx].dt >= sunsetTs) {
-        codes.push([sunsetTs, WindCode.IT_IS_DARK]);
+        codes[i].push([sunsetTs, WindCode.IT_IS_DARK]);
         sunriseTs += 24 * 3600;
         const sunData = getSun(DateTime.fromSeconds(sunriseTs).toJSDate());
         sunriseTs = Math.floor(sunData.sunrise.getTime() / 1000);
@@ -155,10 +154,11 @@ export const forecastRoutes = (): Router => {
    *
    * @name GetForecastCodes
    * @route {GET}
-   *
+   * @returns 200 - JSON forecast codes for 2 days
    */
   router.get("/getForecastCodes", async (req: Request, res: Response) => {
-    res.status(200).json(codes);
+    // res.status(200).json(codes);
+    res.status(200).json(codesdb);
   });
 
   return router;
