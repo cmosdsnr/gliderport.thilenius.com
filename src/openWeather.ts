@@ -1,4 +1,65 @@
 import { Request, Response, Router } from "express";
+import { getSun } from "sun.js";
+import { getCode, getLastMidnightLA, WindCode } from "codes.js";
+import { DateTime } from "luxon";
+export interface MainWeather {
+  temp: number;
+  feels_like: number;
+  temp_min: number;
+  temp_max: number;
+  pressure: number;
+  sea_level: number;
+  grnd_level: number;
+  humidity: number;
+  temp_kf: number;
+}
+
+export interface WeatherInfo {
+  id: number;
+  main: string;
+  description: string;
+  icon: string;
+}
+
+export interface Wind {
+  speed: number; // mph when units=imperial
+  deg: number; // wind direction (0‑360°)
+  gust: number;
+}
+
+export interface ForecastEntry {
+  dt: number; // UTC seconds
+  main: MainWeather;
+  weather: WeatherInfo[];
+  clouds: { all: number };
+  wind: Wind;
+  visibility: number;
+  pop: number;
+  sys: { pod: "d" | "n" };
+  dt_txt: string;
+}
+
+export interface City {
+  id: number;
+  name: string;
+  coord: { lat: number; lon: number };
+  country: string;
+  population: number;
+  timezone: number;
+  sunrise: number;
+  sunset: number;
+}
+
+export interface Forecast {
+  cod: string;
+  message: number;
+  cnt: number;
+  list: ForecastEntry[];
+  city: City;
+}
+
+//stored codes set in fetchOpenWeather
+const codes: any = [];
 
 /**
  * Fetches the 5-day weather forecast from OpenWeatherMap for a fixed location.
@@ -15,7 +76,37 @@ const fetchOpenWeather = async (): Promise<any> => {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
+    const data: Forecast = await response.json();
+
+    let start = getLastMidnightLA(data.list[0].dt);
+    const sun = getSun(new Date(data.list[0].dt));
+
+    let sunriseTs = Math.floor(sun.sunrise.getTime() / 1000);
+    let sunsetTs = Math.floor(sun.sunset.getTime() / 1000);
+
+    let idx = 0;
+    for (let i = 0; i < 2; i++) {
+      //go upto sunrise, unless we are already past sunrise
+      while (idx < data.list.length && sunsetTs > data.list[idx + 1].dt) idx++;
+      //push the first code
+      if (idx < data.list.length && data.list[idx].dt < sunriseTs)
+        codes.push([sunriseTs, getCode(10 * data.list[idx].wind.speed, data.list[idx].wind.deg)]);
+      else codes.push([data.list[idx].dt, getCode(10 * data.list[idx].wind.speed, data.list[idx].wind.deg)]);
+      idx++;
+      while (idx < data.list.length && data.list[idx].dt < sunsetTs) {
+        const v = data.list[idx];
+        const code = getCode(10 * v.wind.speed, v.wind.deg);
+        if (code !== codes[codes.length - 1][1]) codes.push([v.dt, code]);
+        idx++;
+      }
+      if (idx < data.list.length && data.list[idx].dt >= sunsetTs) {
+        codes.push([sunsetTs, WindCode.IT_IS_DARK]);
+        sunriseTs += 24 * 3600;
+        const sunData = getSun(DateTime.fromSeconds(sunriseTs).toJSDate());
+        sunriseTs = Math.floor(sunData.sunrise.getTime() / 1000);
+        sunsetTs = Math.floor(sunData.sunset.getTime() / 1000);
+      }
+    }
     return data;
   } catch (error) {
     console.error("Error fetching OpenWeather data:", error);
@@ -23,8 +114,8 @@ const fetchOpenWeather = async (): Promise<any> => {
   }
 };
 
-// Initial forecast load
-let forecast: any;
+// forecast data
+export let forecast: any;
 
 (async () => {
   forecast = await fetchOpenWeather();
@@ -57,6 +148,17 @@ export const forecastRoutes = (): Router => {
    */
   router.get("/getForecast", async (req: Request, res: Response) => {
     res.status(200).json(forecast);
+  });
+  /**
+   * GET /getForecastCodes
+   * Returns the latest fetched weather codes.
+   *
+   * @name GetForecastCodes
+   * @route {GET}
+   *
+   */
+  router.get("/getForecastCodes", async (req: Request, res: Response) => {
+    res.status(200).json(codes);
   });
 
   return router;

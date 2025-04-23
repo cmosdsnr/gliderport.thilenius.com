@@ -15,6 +15,8 @@ import { Request, Response, Router } from "express";
 import { getSun } from "sun.js";
 import { DateTime } from "luxon";
 import { WindTable } from "wind.js";
+import { forecast } from "./openWeather";
+
 /**
  * A single wind code entry: [secondsSinceLocalMidnight, codeValue].
  */
@@ -59,7 +61,7 @@ export enum WindCode {
  * @param ts - UTC timestamp in seconds
  * @returns Local midnight timestamp (seconds)
  */
-function getLastMidnightLA(ts: number): number {
+export function getLastMidnightLA(ts: number): number {
   // 1) Build a Luxon DateTime in the America/Los_Angeles zone
   const dtLA = DateTime.fromSeconds(ts, { zone: "America/Los_Angeles" });
   // 2) Snap to the start of that local day (i.e. midnight)
@@ -156,8 +158,7 @@ export const updateCodes = (windTable: WindTable) => {
     if (code !== lastDay[lastDay.length - 1][1]) {
       lastDay.push([v.timestamp, code]);
       while (idx < windTable.length && windTable[idx].timestamp < v.timestamp + 120) idx++;
-    }
-    idx++;
+    } else idx++;
   }
   if (idx < windTable.length && windTable[idx].timestamp >= sunsetTs) {
     lastDay.push([sunsetTs, WindCode.IT_IS_DARK]);
@@ -186,8 +187,7 @@ export const updateCodes = (windTable: WindTable) => {
         if (code !== day[day.length - 1][1]) {
           day.push([v.timestamp, code]);
           while (idx < windTable.length && windTable[idx].timestamp < v.timestamp + 120) idx++;
-        }
-        idx++;
+        } else idx++;
       }
     }
     day.push([sunsetTs, WindCode.IT_IS_DARK]);
@@ -241,8 +241,7 @@ export const convertToCodes = (windTable: WindTable) => {
         if (code !== day[day.length - 1][1]) {
           day.push([v.timestamp, code]);
           while (idx < windTable.length && windTable[idx].timestamp < v.timestamp + 120) idx++;
-        }
-        idx++;
+        } else idx++;
       }
     }
     if (idx < windTable.length) {
