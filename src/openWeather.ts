@@ -83,6 +83,8 @@ const fetchOpenWeather = async (): Promise<any> => {
     let sunriseTs = Math.floor(sun.sunrise.getTime() / 1000);
     let sunsetTs = Math.floor(sun.sunset.getTime() / 1000);
     let idx = 0;
+    codes[0] = [];
+    codes[1] = [];
     for (let i = 0; i < 2; i++) {
       //go upto sunrise, unless we are already past sunrise
       while (idx < data.list.length && sunriseTs > data.list[idx + 1].dt) idx++;
