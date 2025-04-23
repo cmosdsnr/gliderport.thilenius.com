@@ -96,7 +96,7 @@ const fetchOpenWeather = async (): Promise<any> => {
       while (idx < data.list.length && data.list[idx].dt < sunsetTs) {
         const v = data.list[idx];
         const code = getCode(10 * v.wind.speed, v.wind.deg);
-        if (code !== codes[0][codes[i].length - 1][1]) codes[i].push([v.dt, code]);
+        if (code !== codes[i][codes[i].length - 1][1]) codes[i].push([v.dt, code]);
         idx++;
       }
       if (idx < data.list.length && data.list[idx].dt >= sunsetTs) {
