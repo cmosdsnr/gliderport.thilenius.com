@@ -104,7 +104,11 @@ export const socketServer = (server: http.Server) => {
             // Unknown(message);
             break;
         }
-      } else if (message.command === "pong") metadata.lastMessage = Date.now();
+      } else if (message.command === "pong") {
+        metadata.lastMessage = Date.now();
+        clients.set(ws, metadata);
+        console.log("pong from: ", metadata.id);
+      }
     });
   });
 
