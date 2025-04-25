@@ -100,14 +100,11 @@ export const socketServer = (server: http.Server) => {
           case "UnloadClients":
             // UnloadClients();
             break;
-          case "pong":
-            metadata.lastMessage = Date.now();
-            break;
           default:
             // Unknown(message);
             break;
         }
-      }
+      } else if (message.command === "pong") metadata.lastMessage = Date.now();
     });
   });
 
