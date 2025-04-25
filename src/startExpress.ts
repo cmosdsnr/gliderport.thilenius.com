@@ -13,17 +13,20 @@
  * - express-fileupload: (Optional) Middleware for handling file uploads.
  *
  * Usage:
- * - Import the exported `gpupdate` variable to access the configured Express application.
+ * - Import the exported `app` variable to access the configured Express application.
  * - The `startExpress` function is automatically called to start the server.
  * @module  startExpress
  */
 
 import express, { Request, Response, NextFunction, Router } from "express";
+import http from "http";
+import WebSocket, { WebSocketServer } from "ws";
 import bodyParser from "body-parser";
 import cors from "cors";
 import fileUpload from "express-fileupload";
+import { socketServer } from "./socket.js"; // Import the socket server setup
 
-export var gpupdate: any | null = null;
+export var app: any | null = null;
 
 /**
  * Initializes and starts the Express server.
@@ -34,13 +37,19 @@ export var gpupdate: any | null = null;
  * @returns {void}
  */
 export const startExpress = (): void => {
-  gpupdate = express();
+  app = express();
 
   // Define the port to listen on, defaulting to 1234 if not specified in the environment.
   const port = process.env.PORT || 1234;
 
+  // create the server but don’t start it yet
+  const server = http.createServer(app);
+
+  // attach WebSocket to the very same server
+  socketServer(server);
+
   // Start the server and log the running status.
-  gpupdate.listen(port, () => {
+  server.listen(port, () => {
     console.log(` `);
     console.log(`######################################################`);
     console.log(`         Server is running at http://localhost:${port}`);
@@ -48,17 +57,17 @@ export const startExpress = (): void => {
   });
 
   // Parse URL-encoded bodies with a limit of 30mb.
-  gpupdate.use(express.urlencoded({ extended: true, limit: "30mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
   // Configure CORS options to allow requests from specified origins.
   const corsOptions = {
     origin: [/gliderport.*thilenius.*/, /localhost.*/, /.*/],
     optionsSuccessStatus: 200, // Some legacy browsers choke on 204.
   };
-  gpupdate.use(cors(corsOptions));
+  app.use(cors(corsOptions));
 
   // Serve static files from the "/app/gliderport" directory.
-  gpupdate.use(express.static("/app/docs"));
+  app.use(express.static("/app/docs"));
 
   // (Optional) Enable file uploads with specific limits.
   // const options: fileUpload.Options = {
@@ -67,15 +76,15 @@ export const startExpress = (): void => {
   //     fileSize: 2 * 1024 * 1024 * 1024, // 2GB max file size.
   //   },
   // };
-  // gpupdate.use(fileUpload(options));
+  // app.use(fileUpload(options));
 
   // Parse JSON bodies with a limit of 10mb.
-  gpupdate.use(bodyParser.json({ limit: "10mb" }));
+  app.use(bodyParser.json({ limit: "10mb" }));
   // Parse URL-encoded bodies with a limit of 10mb.
-  gpupdate.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
+  app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 
   // Error-handling middleware to catch errors and return standardized responses.
-  gpupdate.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error(err); // Log error details on the server.
     if (err.type === "entity.too.large") {
       return res.status(413).json({ error: "Payload too large", details: err.message });

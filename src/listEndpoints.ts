@@ -9,7 +9,7 @@
  * @module listEndpoints
  */
 
-import { gpupdate } from "./startExpress";
+import { app } from "./startExpress";
 import express, { Router, Request, Response } from "express";
 
 /**
@@ -41,7 +41,7 @@ export const listEndpoints = (): Router => {
     const endpoints: Endpoint[] = [];
 
     // Iterate over the Express app's middleware stack.
-    gpupdate._router.stack.forEach((middleware: any) => {
+    app._router.stack.forEach((middleware: any) => {
       // If the middleware has a direct route, extract its methods and path.
       if (middleware.route) {
         const methods: { [method: string]: boolean } = middleware.route.methods;

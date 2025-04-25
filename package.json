@@ -1,5 +1,5 @@
 {
-  "name": "gpupdate",
+  "name": "gpserver",
   "private": true,
   "version": "0.0.0",
   "engines": {
@@ -7,12 +7,12 @@
   },
   "type": "module",
   "scripts": {
-    "dev:debug": "ts-node-dev --transpile-only --respawn --inspect=4321 --project tsconfig.dev.json gpupdate.ts",
-    "dev3": "tsup gpupdate.ts --watch --onSuccess \"node dist/gpupdate.cjs\"",
-    "dev": "tsup --format esm gpupdate.ts --watch --onSuccess \"node dist/gpupdate.js\"",
-    "dev2": "tsx watch gpupdate.ts NODE_OPTIONS=--trace-warnings",
-    "start": "node dist/gpupdate.js",
-    "build": "tsup --format esm gpupdate.ts"
+    "dev:debug": "ts-node-dev --transpile-only --respawn --inspect=4321 --project tsconfig.dev.json app.ts",
+    "dev3": "tsup app.ts --watch --onSuccess \"node dist/app.cjs\"",
+    "dev": "tsup --format esm app.ts --watch --onSuccess \"node dist/app.js\"",
+    "dev2": "tsx watch app.ts NODE_OPTIONS=--trace-warnings",
+    "start": "node dist/app.js",
+    "build": "tsup --format esm app.ts"
   },
   "dependencies": {
     "@types/luxon": "^3.4.2",
@@ -41,7 +41,7 @@
     "typedoc": "^0.28.1",
     "typescript": "^5.8.2",
     "vite": "^3.0.9",
-    "ws": "^8.8.1"
+    "ws": "^8.18.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",
@@ -50,6 +50,7 @@
     "@types/node": "^18.8.5",
     "@types/nodemailer": "^6.4.7",
     "@types/suncalc": "^1.9.0",
+    "@types/ws": "^8.18.1",
     "nodemon": "^2.0.20",
     "ts-node": "^10.9.1",
     "tsup": "^6.6.0"

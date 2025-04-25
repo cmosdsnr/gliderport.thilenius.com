@@ -22,61 +22,62 @@
 import dotenv from "dotenv"; // Loads environment variables from a .env file
 import { pb } from "pb.js"; // PocketBase client for database operations
 import { Request, Response } from "express"; // Import Express types for request/response handling
-import { gpupdate } from "startExpress.js"; // Import the Express gpupdate instance
+import { app } from "startExpress.js"; // Import the Express app instance
+
+// Load environment variables into process.env.
+dotenv.config();
+process.env.TZ = "America/Los_Angeles";
 
 // Middleware to list all available endpoints for debugging/documentation.
 import { listEndpoints } from "listEndpoints.js";
-gpupdate.use(listEndpoints());
+app.use(listEndpoints());
 
 // Import and mount routes for handling image files (e.g., retrieving current images).
 import { ImageRoutes } from "ImageFiles.js";
-gpupdate.use(ImageRoutes());
+app.use(ImageRoutes());
 
 // Import and mount routes for sending text alerts (via email).
 import { textRoutes } from "./src/sendTextMessage.js";
-gpupdate.use(textRoutes());
+app.use(textRoutes());
 
 // Import and mount routes that provide system status and detailed info.
 import { infoRoutes } from "info.js";
-gpupdate.use(infoRoutes());
+app.use(infoRoutes());
 
 // Import and mount routes to access archived data.
 import { archiveRoutes } from "archive.js";
-gpupdate.use(archiveRoutes());
+app.use(archiveRoutes());
 
 // Import utility to generate fixed-length IDs.
 import { ToId } from "miscellaneous.js";
 
 // Import and mount routes for sunrise/sunset data management and updates.
 import { sunRoutes, sunData, updateSunData } from "sun.js";
-gpupdate.use(sunRoutes());
+app.use(sunRoutes());
 
 // Import and mount routes for tracking and reporting site hit counts.
 import { hitRoutes, hit } from "hitCounter.js";
-gpupdate.use(hitRoutes());
+app.use(hitRoutes());
 
 // Import and mount routes for wind data and related operations.
 import { windRoutes } from "wind.js";
-gpupdate.use(windRoutes());
+app.use(windRoutes());
 
 // Import and mount additional routes for code-related operations.
 import { codeRoutes } from "codes.js";
-gpupdate.use(codeRoutes());
+app.use(codeRoutes());
 
 // Import and mount additional routes for openWeather API integration.
 import { forecastRoutes } from "openWeather.js";
-gpupdate.use(forecastRoutes());
+app.use(forecastRoutes());
 
 // Import and mount additional routes for openWeather API integration.
 import { donorsRoutes } from "donors.js";
-gpupdate.use(donorsRoutes());
-
-// Load environment variables into process.env.
-dotenv.config();
+app.use(donorsRoutes());
 
 // Define API endpoints.
 // Debug endpoint that queries various status fields from the PocketBase "status" collection.
-gpupdate.get("/debug", async (req: Request, res: Response) => {
+app.get("/debug", async (req: Request, res: Response) => {
   const names = ["siteMessage", "siteHits", "fullForecast", "debug", "images", "online", "forecast", "sun", "lastWind"];
   let ans: any = {};
   await Promise.all(
@@ -89,6 +90,6 @@ gpupdate.get("/debug", async (req: Request, res: Response) => {
 });
 
 // Basic root endpoint to confirm that the server is running.
-gpupdate.get("/", (req: Request, res: Response) => {
+app.get("/", (req: Request, res: Response) => {
   res.send("Hello, TypeScript & Express!");
 });
