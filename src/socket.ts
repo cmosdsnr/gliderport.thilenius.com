@@ -21,6 +21,16 @@ export const transmitNewRecords = (records: WindTableRecord[]) => {
     );
   });
 };
+export const transmitNewImage = (camera: number, image: string, date: number) => {
+  [...clients.keys()].forEach((client) => {
+    client.send(
+      JSON.stringify({
+        command: "newImage",
+        image: { camera, image, date },
+      })
+    );
+  });
+};
 
 export const socketServer = (server: http.Server) => {
   const wss = new WebSocketServer({ server });
@@ -62,18 +72,6 @@ export const socketServer = (server: http.Server) => {
       if (message.command === "fetchData") {
         message.sender = metadata.id;
         switch (message.subCommand) {
-          case "Posts":
-            // Posts(message);
-            break;
-          case "Donors":
-            // Donors(message);
-            break;
-          case "History":
-            // History(message);
-            break;
-          case "Chart":
-            // Chart(message);
-            break;
           case "Status":
             // Status(message);
             break;
@@ -82,12 +80,6 @@ export const socketServer = (server: http.Server) => {
             break;
           case "ForecastFull":
             // ForecastFull(message);
-            break;
-          case "Stats":
-            // Stats(message);
-            break;
-          case "Videos":
-            // Videos(message);
             break;
           case "Image1":
             // Image1(message);

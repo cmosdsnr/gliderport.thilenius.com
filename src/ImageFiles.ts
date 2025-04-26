@@ -57,6 +57,7 @@ import { connection } from "SqlConnect.js";
 import { ToId } from "miscellaneous.js";
 import { hit } from "hitCounter.js";
 import { __dirname } from "miscellaneous.js";
+import { transmitNewImage } from "./socket";
 
 type ImageData = { image: Buffer; date: number };
 type ImageList = ImageData[];
@@ -584,6 +585,7 @@ export const ImageRoutes = (): Router => {
           lastFiveSmallImagesCamera2.shift(); // Remove the oldest image.
         }
       }
+      transmitNewImage(req.body.camera, currentImages[index].toString("base64"), Date.now());
     }
     res.json({ status: "Ok", camera: req.body.camera, size: req.body.size, index: index });
   });
