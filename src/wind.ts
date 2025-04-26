@@ -32,6 +32,7 @@ import { sunData } from "sun.js";
 import { checkAndSendTexts } from "sendTextMessage.js";
 import { logStr, writeLog } from "log.js";
 import { codes, updateCodes, convertToCodes } from "codes.js";
+import {transmitNewRecords} from "socket.js";
 
 export let windTable: WindTable = [];
 
@@ -146,7 +147,7 @@ export const UpdateWindTable = async (): Promise<void> => {
       filter: `id > "${ToId(windTable[windTable.length - 1].timestamp.toString())}"`,
       sort: "id",
     });
-
+    const last = windTable.length;
     // Update the in-memory wind table with the fetched records.
     result.forEach((r: any) => {
       windTable.push({
@@ -158,6 +159,9 @@ export const UpdateWindTable = async (): Promise<void> => {
         temperature: r.temperature,
       });
     });
+    // newly added records
+    const newRecords = ;
+    transmitNewRecords(windTable.slice(last));
     const ts = Math.floor(Date.now() / 1000) - 14 * 24 * 60 * 60;
     while (windTable.length > 0 && windTable[0].timestamp < ts) windTable.shift();
     logStr(log, "UpdateWindTable", "Wind table loaded with", result.length, "records.");

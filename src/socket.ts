@@ -1,16 +1,29 @@
 import WebSocket, { WebSocketServer } from "ws";
 import http from "http";
+import { WindTableRecord } from "./wind";
 
-const updateClients = (clients: Map<any, any>) => {
+const clients = new Map();
+
+const updateClients = () => {
   const t = [...clients.keys()];
   const clientCount = t.length;
   console.log("Number of clients: ", clientCount);
   t.forEach((client) => {});
 };
 
+export const transmitNewRecords = (records: WindTableRecord[]) => {
+  [...clients.keys()].forEach((client) => {
+    client.send(
+      JSON.stringify({
+        command: "newRecords",
+        records: records,
+      })
+    );
+  });
+};
+
 export const socketServer = (server: http.Server) => {
   const wss = new WebSocketServer({ server });
-  const clients = new Map();
   console.log("Starting webSocketServer on port ", process.env.PORT);
 
   wss.on("connection", (ws, req) => {
@@ -20,7 +33,7 @@ export const socketServer = (server: http.Server) => {
       lastMessage: Date.now(),
     };
     clients.set(ws, metadata);
-    updateClients(clients);
+    updateClients();
     //add to hit counter database
     const date = new Date();
     const dateStr =
@@ -38,7 +51,7 @@ export const socketServer = (server: http.Server) => {
 
     ws.on("close", () => {
       clients.delete(ws);
-      updateClients(clients);
+      updateClients();
     });
 
     ws.on("message", (messageAsString: string) => {
@@ -128,6 +141,13 @@ export const socketServer = (server: http.Server) => {
       client.send(JSON.stringify({ command: "ping" }));
     });
   }, 45000);
+
+  setInterval(() => {
+    const t = [...clients.keys()];
+    t.forEach((client) => {
+      client.send(JSON.stringify({ command: "ping" }));
+    });
+  }, 1500);
 
   function uuidv4() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
