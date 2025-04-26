@@ -142,13 +142,6 @@ export const socketServer = (server: http.Server) => {
     });
   }, 45000);
 
-  setInterval(() => {
-    const t = [...clients.keys()];
-    t.forEach((client) => {
-      client.send(JSON.stringify({ command: "ping" }));
-    });
-  }, 1500);
-
   function uuidv4() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
       var r = (Math.random() * 16) | 0,
