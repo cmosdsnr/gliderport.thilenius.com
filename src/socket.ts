@@ -22,6 +22,7 @@ export const transmitNewRecords = (records: WindTableRecord[]) => {
   });
 };
 export const transmitNewImage = (camera: number, image: string, date: number) => {
+  console.log("transmitNewImage");
   [...clients.keys()].forEach((client) => {
     client.send(
       JSON.stringify({
