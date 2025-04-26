@@ -26,7 +26,7 @@ export const transmitNewImage = (camera: number, image: string, date: number) =>
     client.send(
       JSON.stringify({
         command: "newImage",
-        image: { camera, image, date },
+        imageInfo: { camera, image, date },
       })
     );
   });
