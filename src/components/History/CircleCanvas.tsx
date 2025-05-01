@@ -1,118 +1,157 @@
-import React from 'react'
-import Canvas from './Canvas'
-import { codes, codeDef } from '../Globals'
+// src/components/CircleCanvas.tsx
+import React, { useMemo } from 'react';
+import {
+    PieChart,
+    Pie,
+    Cell,
+    Tooltip,
+    Label,
+    ResponsiveContainer,
+} from 'recharts';
+import Canvas from './Canvas';
+import { codes, codeDef } from '../Globals';
+import { format } from 'date-fns';
+import { DayOfCodes } from './History';
 
-export const CircleCanvas = ({ width, data }) => {
-    const drawCircle = (ctx) => {
-        var drawClockTick = function (ctx, center, radius, angle, text) {
-            // console.log(" center:" + center + " radius:" + radius + " angle:" + angle + " text:" + text)
-            ctx.beginPath();
-            const tickLength = 5;
-            const x = center + radius * Math.cos(angle);
-            const y = center + radius * Math.sin(angle);
-            const x2 = center + (radius + tickLength) * Math.cos(angle);
-            const y2 = center + (radius + tickLength) * Math.sin(angle);
-            ctx.moveTo(x, y);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-
-            const w = ctx.measureText(text).width;
-            const h = 10;
-            const r = 1 + 0.5 * Math.sqrt(w * w + h * h);
-            const xt = center + (radius + tickLength + r) * Math.cos(angle) - w / 2;
-            const yt = center + (radius + tickLength + r) * Math.sin(angle) + h / 2;
-            ctx.fillText(text, xt, yt);
-            ctx.closePath()
-        };
-
-        const drawPieSlice = (ctx, color, startAngle, endAngle, center, radius) => {
-
-            ctx.beginPath();
-            ctx.strokeStyle = color;
-            ctx.fillStyle = color;
-            ctx.moveTo(center, center);
-            const x = center + radius * Math.cos(startAngle);
-            const y = center + radius * Math.sin(startAngle);
-            ctx.lineTo(x, y);
-            ctx.arc(center, center, radius, startAngle, endAngle);
-            ctx.lineTo(center, center);
-            ctx.closePath();
-            ctx.stroke();
-            ctx.fill();
-        }
-
-        var i
-        const startingHour = data.limits[0];
-        const hourCount = data.limits[1] - startingHour
-
-        const radPerTime = (Math.PI * (5 / 3)) / (3600 * hourCount);
-        const tickSpaceRad = (Math.PI * (5 / 3)) / (hourCount);
-
-        const indent = 35
-        const center = ctx.canvas.width / 2
-        const radius = center - indent
-
-        ctx.beginPath()
-        ctx.arc(center, center, radius, 0, 2 * Math.PI)
-        ctx.stroke()
-
-        var startAngle = Math.PI * (2 / 3)
-        var endAngle
-
-        //draw clock tick marks and numbers
-        for (i = 0; i <= hourCount; i++) {
-            drawClockTick(ctx, center, radius, startAngle + i * tickSpaceRad, startingHour + i)
-        }
-
-        // Fill in all the data for the day
-        let prev = 0;
-        // let dbCodes = JSON.parse(data.codes);
-        let dbCodes = data.codes;
-
-        dbCodes.forEach(pt => {
-            const time = pt[0]
-            const code = prev;
-            prev = pt[1]
-            endAngle = Math.PI * (2 / 3) + radPerTime * time;
-            drawPieSlice(ctx, codes[code].color, startAngle, endAngle, center, radius)
-            startAngle = endAngle
-        })
-
-        //Add last night time slice
-
-        endAngle = Math.PI * (2 / 3) + radPerTime * 3600 * hourCount
-        drawPieSlice(ctx, codes[codeDef.IT_IS_DARK].color, startAngle, endAngle, center, radius)
-
-        // clear out teh center of the circle
-        ctx.strokeStyle = "#FFFFFF";
-        ctx.fillStyle = "#FFFFFF";
-        ctx.beginPath();
-        ctx.arc(center, center, radius * 0.6, 0, 2 * Math.PI);
-        ctx.stroke();
-        ctx.fill();
-        ctx.closePath();
-
-        //write the day name in it
-        //add text for the day (day or week and mm/dd)
-        const dtNow = new Date()
-        const dtStart = new Date(data.date * 1000 + 12 * 3600 * 1000)
-        const DayOfWeek = dtStart.toLocaleDateString('en-US', { weekday: 'long' })
-        const month = dtStart.getMonth() + 1;
-        const dateString = month + "/" + dtStart.getDate();
-        const itIsToday = (dtNow.getDate() === dtStart.getDate())
-        ctx.fillStyle = "black";
-        ctx.beginPath();
-        if (itIsToday) {
-            ctx.fillText("Today", center - ctx.measureText("Today").width / 2, center - 15);
-        }
-        ctx.fillText(DayOfWeek, center - ctx.measureText(DayOfWeek).width / 2, center - 0);
-        ctx.fillText(dateString, center - ctx.measureText(dateString).width / 2, center + 15);
-
-        ctx.stroke();
-        ctx.closePath();
-    }
-
-    return <Canvas draw={drawCircle} width={width} height={width} data={data} />
+interface CircleCanvasProps {
+    /** Array of [absoluteTimestampSec, code] for one day */
+    data: DayOfCodes;
+    /** UNIX timestamp (sec) for local midnight of this day */
+    dayStart: number;
+    /** [startHourLocal, endHourLocal] in 24h hours (e.g. [6, 20]) */
+    limits: [number, number];
+    /** pixel width of the chart container */
+    width: number;
 }
 
-export default CircleCanvas
+const CircleCanvas: React.FC<CircleCanvasProps> = ({ data, dayStart, limits, width }) => {
+    const [startHour, endHour] = limits;
+    const totalSec = (endHour - startHour) * 3600;
+    let prevCode = codeDef.IT_IS_DARK;
+    let lastTime = dayStart + startHour * 3600;
+
+    // Build slices (percent of totalSec)
+    const pieData = useMemo(() => {
+        const slices: { name: string; value: number; color: string }[] = [];
+        prevCode = codeDef.IT_IS_DARK;
+        lastTime = dayStart + startHour * 3600;
+
+        data.forEach(([ts, nextCode], idx) => {
+            const span = ts - lastTime;
+            slices.push({
+                name: `${codes[prevCode].code}`,
+                value: (span / totalSec) * 100,
+                color: codes[prevCode].color,
+            });
+            prevCode = nextCode;
+            lastTime = ts;
+        });
+
+        // final dark slice
+        const remaining = (dayStart + endHour * 3600 - lastTime);
+        slices.push({
+            name: 'dark',
+            value: (remaining / totalSec) * 100,
+            color: codes[codeDef.IT_IS_DARK].color,
+        });
+
+        return slices;
+    }, [data, dayStart, startHour, endHour]);
+
+    // Center label
+    const centerLabel = useMemo(() => {
+        const dtNow = new Date();
+        const dtTomorrow = new Date(dtNow.getTime() + 24 * 3600 * 1000);
+        const dtStart = new Date(data[0][0] * 1000 + 12 * 3600 * 1000);
+        if (dtNow.toDateString() === dtStart.toDateString()) return 'Today';
+        if (dtTomorrow.toDateString() === dtStart.toDateString()) return 'Tomorrow';
+        return format(dtStart, 'EEEE M/d');
+    }, [data]);
+
+
+    const hourTicks = useMemo(
+        () => Array.from({ length: endHour - startHour }, (_, hour) => ({ hour: hour + startHour, value: 1 })),
+        []
+    );
+
+    return (
+        <Canvas height={width} width={width}>
+            <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+
+                    {/* ──────────── HOUR TICKS ──────────── */}
+                    <Pie
+                        data={hourTicks}
+                        dataKey="value"
+                        startAngle={80}
+                        endAngle={-260}
+                        // a thin ring just outside your main pie:
+                        innerRadius={width * 0.45}
+                        outerRadius={width * 0.48}
+                        isAnimationActive={false}
+                        paddingAngle={0}
+                        labelLine={false}
+                        // transparent fill so only stroke shows:
+                        fill="transparent"
+                        stroke="#999"
+                        strokeWidth={1}
+                        // custom label at each tick’s mid-angle:
+                        label={({ cx, cy, midAngle, hour }) => {
+                            const RAD = Math.PI / 180;
+                            const r = width * 0.46;            // push labels just outside the ring
+                            const x = cx + r * Math.cos(-midAngle * RAD);
+                            const y = cy + r * Math.sin(-midAngle * RAD);
+                            return (
+                                <text
+                                    x={x}
+                                    y={y}
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    style={{ fontSize: 10, pointerEvents: 'none' }}
+                                >
+                                    {hour}
+                                </text>
+                            );
+                        }}
+                    >
+                        {hourTicks.map((_, i) => (
+                            <Cell key={`tick-cell-${i}`} />
+                        ))}
+                    </Pie>
+                    <Pie
+                        data={pieData}
+                        dataKey="value"
+                        innerRadius={width * 0.3}
+                        outerRadius={width * 0.45}
+                        startAngle={80}
+                        endAngle={-260}
+                        paddingAngle={0}
+                        isAnimationActive={false}
+                        labelLine={false}
+                    >
+                        {pieData.map((entry, i) => (
+                            <Cell key={`cell-${i}`} fill={entry.color} />
+                        ))}
+                        <Label
+                            position="center"
+                            content={() => (
+                                <text
+                                    x={width / 2}
+                                    y={width / 2}
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    style={{ fontSize: '14px', pointerEvents: 'none' }}
+                                >
+                                    {centerLabel}
+                                </text>
+                            )}
+                        />
+                    </Pie>
+                    <Tooltip formatter={(val: number) => ``} separator="" />
+                </PieChart>
+            </ResponsiveContainer>
+        </Canvas >
+    );
+};
+
+export default React.memo(CircleCanvas);

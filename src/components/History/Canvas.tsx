@@ -1,31 +1,18 @@
-import React, { useRef, useEffect } from 'react'
+
+// src/components/Canvas.tsx
+import React from 'react';
+import { ResponsiveContainer } from 'recharts';
 
 interface CanvasProps {
-    draw: (context: CanvasRenderingContext2D) => void
-    data: any
-    width: number
-    height: number
-    rest?: any[]
+    width?: string | number;
+    height: number | string;
+    children: React.ReactNode;
 }
 
-const Canvas = ({ draw, data, width, height, ...rest }: CanvasProps) => {
+const Canvas: React.FC<CanvasProps> = ({ width = '100%', height, children }) => (
+    <ResponsiveContainer width={width} height={height}>
+        {React.isValidElement(children) ? children : <></>}
+    </ResponsiveContainer>
+);
 
-    const canvasRef = useRef<HTMLCanvasElement>(null)
-    useEffect(() => {
-        const canvas = canvasRef.current
-        if (!canvas || !width) {
-            if (!canvas) console.log("no canvas provided")
-            else console.log("no width provided")
-            return
-        }
-        const context: CanvasRenderingContext2D | null = canvas.getContext('2d')
-        if (context === null) return
-        context.canvas.width = width
-        context.canvas.height = height
-        if (data && (data === 1 || data.limits)) draw(context)
-    }, [draw, data, width, height])
-
-    return <canvas ref={canvasRef} {...rest} />
-}
-
-export default Canvas
+export default Canvas;

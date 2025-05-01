@@ -1,6 +1,6 @@
 import React from 'react';
 import { Route, Navigate, RouteProps } from 'react-router-dom';
-import { useAuth } from 'contexts/AuthContextPocketbase';
+import { useAuth } from '@/contexts/AuthContext';
 import { useModal, ModalType } from 'modals/Modals';
 
 export default function PrivateRoute({ children }: any) {

@@ -1,23 +1,45 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react'
-import { useAuth } from 'contexts/AuthContextPocketbase'
+import React, { useState, ChangeEvent, FormEvent } from 'react';
+import { pb } from '@/contexts/pb';
+
+interface Message {
+}
+
+interface PostMessageProps {
+}
+
+const PostMessage: React.FC<PostMessageProps> = () => {
+    const [message, setMessage] = useState<string>('');
 
 
-export default function PostMessage() {
-    const [msgItems, setMsgItems] = useState<Partial<Message>>({ msg: "" });
-
-    const { newMessage } = useAuth()
-
-    //Dynamically Update States for the form
-    function updateFormEdits(event: ChangeEvent<HTMLTextAreaElement>) {
-        const { name, value } = event.target;
-        setMsgItems(prevState => ({ ...prevState, [name]: value }));
+    const newMessage = async (message: string) => {
+        const currentUser = pb.authStore.record;
+        if (!currentUser) {
+            alert("Please login first");
+            return;
+        } else
+            if (currentUser.firstName?.length === 0) {
+                alert("Please go to Dashboard and enter your name first");
+            } else {
+                pb.collection('posts').create({ user: currentUser.id, message });
+            }
     }
 
-    //Submit a new post
-    function postFormUpdate(e: FormEvent<HTMLFormElement>) {
+    /**
+     * Update form state as the user types.
+     */
+    const updateFormEdits = (event: ChangeEvent<HTMLTextAreaElement>): void => {
+        setMessage(event.target.value);
+    };
+
+    /**
+     * Handle form submission and pass the new message up.
+     */
+    const postFormUpdate = (e: FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
-        newMessage(msgItems.msg!)
-    }
+        newMessage(message);
+        // Optionally clear the textarea:
+        setMessage('');
+    };
 
     return (
         <div
@@ -34,13 +56,12 @@ export default function PostMessage() {
 
                 <textarea
                     name="msg"
-                    value={msgItems.msg}
+                    value={message}
                     onChange={updateFormEdits}
                     placeholder="Enter message"
                     style={{ width: "98%", height: "80px" }}
                 />
-                <br />
-                <br />
+                <br /><br />
                 <input
                     type="submit"
                     value="Post Message"
@@ -49,4 +70,6 @@ export default function PostMessage() {
             </form>
         </div>
     );
-}
+};
+
+export default PostMessage;

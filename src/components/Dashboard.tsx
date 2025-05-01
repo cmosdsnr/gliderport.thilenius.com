@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Alert, Row, Col } from 'react-bootstrap';
-import { useAuth } from 'contexts/AuthContextPocketbase';
+import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { PhoneNumberInput } from './PhoneNumber';
 import TextField from '@mui/material/TextField';

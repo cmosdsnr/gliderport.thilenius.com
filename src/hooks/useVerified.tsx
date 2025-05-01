@@ -1,5 +1,5 @@
 import React from 'react'
-import { useAuth } from 'contexts/AuthContextPocketbase'
+import { useAuth } from '@/contexts/AuthContext'
 
 export const useVerified = () => {
     const { pb, currentUser } = useAuth();

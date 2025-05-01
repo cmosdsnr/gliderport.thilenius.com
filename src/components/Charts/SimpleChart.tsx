@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { Col } from 'react-bootstrap';
-import { useData } from 'contexts/DataContext';
-import { useFilter } from 'contexts/FilterContext';
+import { useFilter, FillReturnDataType, Limits } from 'contexts/FilterContext';
+import { useData, Reading } from '@/contexts/DataContext'
 
 interface SimpleChartProps {
     clientWidth: number;
@@ -10,123 +10,191 @@ interface SimpleChartProps {
 }
 
 const SimpleChart: React.FC<SimpleChartProps> = ({ clientWidth, label }) => {
-    const { chart } = useData();
     const chartRef = useRef<HTMLDivElement>(null);
 
     const [limits, setLimits] = useState<Limits>({ tsStart: 0, tsStop: 0, yMin: 0, yMax: 0 });
     const [filled, setFilled] = useState<[number, number][][]>([]);
     const { fillData } = useFilter();
 
-    const margin = { top: 10, right: 60, bottom: 30, left: 40 };
+    const { readings } = useData();
+
+    const margin = { top: 10, right: 60, bottom: 30, left: 50 };
     const width = clientWidth - margin.left - margin.right;
     const height = Math.floor(clientWidth / 5) - margin.top - margin.bottom;
     const svgWidth = clientWidth;
     const svgHeight = Math.floor(clientWidth / 5);
 
-    // Compute filled data and limits only when `chart` or `width` changes
     useEffect(() => {
-        if (width > 0 && chart?.length > 1) {
+        if (width > 0 && readings?.length > 1) {
             const key: keyof Reading = label.toLowerCase() as keyof Reading;
-            const { filled, limits }: FillReturnDataType = fillData(chart, width, key);
-            if (filled) setFilled(filled);
-            if (limits) setLimits(limits);
+            const { filled, limits }: FillReturnDataType = fillData(readings, width, key);
+            setFilled(filled || []);
+            setLimits(limits || { tsStart: 0, tsStop: 0, yMin: 0, yMax: 0 });
         }
-    }, [chart, width, label, fillData]);
+    }, [readings, width, label, fillData]);
 
-    // D3 chart drawing logic
-    const drawChart = useCallback(() => {
-        if (filled.length === 0 || width === 0) return;
+    useEffect(() => {
+        if (filled.length === 0 || width === 0 || !chartRef.current) return;
 
         const svgContainer = d3.select(chartRef.current);
         svgContainer.selectAll("*").remove();
 
-        const svg = svgContainer.append("svg")
+        const svg = svgContainer
+            .append("svg")
             .attr("height", svgHeight)
             .attr("width", svgWidth)
+            .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        // Compute time ticks
-        const timeSinceLastHourMark = limits.tsStart % (1 * 60 * 60);
-        const tickValues = [];
-        for (let i = 0; i <= Math.floor((timeSinceLastHourMark + (limits.tsStop - limits.tsStart)) / (2 * 60 * 60)); i++) {
-            tickValues.push(limits.tsStart - timeSinceLastHourMark + (i + 0.5) * (60 * 60 * 2));
-        }
 
-        // X axis
-        const x = d3.scaleLinear()
-            .domain([limits.tsStart - timeSinceLastHourMark, limits.tsStop])
-            .range([margin.left, width]);
+        const start = new Date(limits.tsStart * 1000);
+        start.setMinutes(0, 0, 0); // Set minutes, seconds, and milliseconds to zero
+        const localHour = parseInt(
+            new Intl.DateTimeFormat("en-US", {
+                timeZone: "America/Los_Angeles",
+                hour: "2-digit",
+                hour12: false,
+            }).format(start),
+            10
+        );
+        //if localHour is odd subtract one hour from start
+        const localHourOffset = localHour % 2 === 1 ? 60 * 60 * 1000 : 0;
+        start.setTime(start.getTime() - localHourOffset);
 
-        svg.append("g")
-            .attr("transform", `translate(0,${height + 10})`)
+        const tickValues = d3.range(start.getTime() / 1000, limits.tsStop, 2 * 3600);
+        const x = d3
+            .scaleLinear()
+            .domain([limits.tsStart, limits.tsStop])
+            .range([0, width]);
+
+        svg
+            .append("g")
+            .attr("transform", `translate(0,${height})`)
             .call(
-                d3.axisBottom(x)
-                    .tickSize(-height)
+                d3
+                    .axisBottom(x)
+                    .tickSize(5)
                     .tickValues(tickValues)
                     .tickFormat(d => {
                         const td = new Date((d as number) * 1000);
-                        return td.getUTCHours() === 0 ? `12am ${td.toDateString()}` : `${td.getUTCHours()}h`;
+                        const localTime = td.toLocaleTimeString("en-US", {
+                            timeZone: "America/Los_Angeles",
+                            hour: "2-digit",
+                            hour12: false,
+                        });
+                        const localDate = td.toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" });
+                        return localTime === "00" ? localDate : localTime;
                     })
             );
 
-        // Y axis
-        const y = d3.scaleLinear()
-            .domain([limits.yMin, limits.yMax])
-            .range([height + 5, 5]);
+        // Vertical grid lines (guidelines) for each tick
+        tickValues.forEach(tick => {
+            const xPos = x(tick);
+            svg.append("line")
+                .attr("x1", xPos)
+                .attr("x2", xPos)
+                .attr("y1", 0)
+                .attr("y2", height)
+                .attr("stroke", "#ccc")
+                .attr("stroke-width", 1);
+        });
 
-        const yAxis = d3.axisLeft(y).tickSize(-width + margin.left);
-        svg.append("g").attr("transform", `translate(${margin.left},5)`).call(yAxis);
+        const y = d3.scaleLinear().domain([limits.yMin, limits.yMax]).range([height, 0]);
+
+        //svg.append("g").call(d3.axisLeft(y).ticks(4));
 
         if (label === "Direction") {
-            svg.append("g")
-                .attr("transform", `translate(${margin.left},5)`)
-                .call(d3.axisLeft(y).tickSize(-width + margin.left).tickValues([0, 90, 180, 270, 360, 450]));
+            const gridTicks = [0, 90, 180, 270, 360, 450];
 
+            gridTicks.forEach(tick => {
+                const yPos = y(tick);
+
+                // Rightward line
+                svg.append("line")
+                    .attr("x1", 0)
+                    .attr("x2", width)
+                    .attr("y1", yPos)
+                    .attr("y2", yPos)
+                    .attr("stroke", "#ccc")
+                    .attr("stroke-width", 1);
+
+                // Leftward extension
+                svg.append("line")
+                    .attr("x1", 0)
+                    .attr("x2", -10)
+                    .attr("y1", yPos)
+                    .attr("y2", yPos)
+                    .attr("stroke", "#ccc")
+                    .attr("stroke-width", 1);
+            });
+            svg.append("g").call(d3.axisLeft(y).tickValues(gridTicks));
+            svg.append("g").attr("transform", `translate(${width},0)`).call(d3.axisRight(y).tickValues([0, 90, 180, 270, 360, 450]));
             ["N", "E", "S", "W", "N", "E"].forEach((v, i) => {
-                svg.append("text").attr("y", 300 - 57 * i).attr("x", 55).text(v);
+                svg.append("text").attr("y", height + 5 - (height / 5) * i).attr("x", 10).text(v);
             });
         } else {
-            svg.append("g").attr("transform", `translate(${width},5)`).call(d3.axisRight(y).tickSize(-width + margin.left));
+            const gridTicks = y.ticks(4);
+            gridTicks.push(limits.yMax);
+            gridTicks.forEach(tick => {
+                const yPos = y(tick);
+
+                // Rightward line
+                svg.append("line")
+                    .attr("x1", 0)
+                    .attr("x2", width)
+                    .attr("y1", yPos)
+                    .attr("y2", yPos)
+                    .attr("stroke", "#ccc")
+                    .attr("stroke-width", 1);
+
+                // Leftward extension
+                svg.append("line")
+                    .attr("x1", 0)
+                    .attr("x2", -10)
+                    .attr("y1", yPos)
+                    .attr("y2", yPos)
+                    .attr("stroke", "#ccc")
+                    .attr("stroke-width", 1);
+            });
+            svg.append("g").call(d3.axisLeft(y).ticks(4));
+            svg.append("g").attr("transform", `translate(${width},0)`).call(d3.axisRight(y).ticks(4));
         }
 
-        // Chart title for Pressure
         if (label === "Pressure") {
-            svg.append("text")
+            svg
+                .append("text")
                 .attr("class", "title")
                 .attr("text-anchor", "middle")
                 .attr("y", "1.75em")
-                .attr("x", 400)
+                .attr("x", width / 2)
                 .text("Rising barometric pressure usually brings better weather");
         }
 
-        // Y-axis label
-        svg.append("text")
+        svg
+            .append("text")
             .attr("class", "y label")
             .attr("text-anchor", "middle")
-            .attr("y", ".75em")
-            .attr("x", -150)
+            .attr("y", -35)
+            .attr("x", -height / 2)
             .attr("transform", "rotate(-90)")
             .text(label);
 
-        // Draw lines
-        filled.forEach((f, i) => {
-            svg.append("path")
+        filled.forEach((f) => {
+            svg
+                .append("path")
                 .datum(f)
                 .attr("fill", "none")
                 .attr("stroke", "steelblue")
                 .attr("stroke-width", 1.5)
-                .attr("d", d3.line()
-                    .x(d => x(d[0]))
-                    .y(d => y(d[1]))
+                .attr(
+                    "d",
+                    d3
+                        .line<[number, number]>()
+                        .x(d => x(d[0]))
+                        .y(d => y(d[1]))
                 );
         });
-
     }, [filled, width, svgWidth, svgHeight, limits, margin, label]);
-
-    // Trigger chart redraw when data or size changes
-    useEffect(() => {
-        drawChart();
-    }, [drawChart]);
 
     return (
         <Col xs={12}>

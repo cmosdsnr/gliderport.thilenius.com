@@ -9,7 +9,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useNavigate } from 'react-router-dom'
 import { useModal, ModalType } from './Modals'
 
-import { useAuth } from 'contexts/AuthContextPocketbase'
+import { useAuth } from '@/contexts/AuthContext'
 import * as yup from 'yup'
 
 export default function SignUpModal() {

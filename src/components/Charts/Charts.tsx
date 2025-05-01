@@ -7,7 +7,7 @@ import SimpleChart from './SimpleChart'
 
 const Charts = ({ ...rest }) => {
 
-
+    const [passedSeconds, setPassedSeconds] = useState(0)
     const [clientWidth, setClientWidth] = useState<number>(0)
     const rowRef = useRef<HTMLElement>(null)
 
@@ -29,7 +29,6 @@ const Charts = ({ ...rest }) => {
     }, [])
 
     return (
-
         <FilterProvider>
             <Row ref={rowRef} style={{ backgroundColor: "rgb(240,255,255)" }} {...rest}>
                 <WindChart clientWidth={clientWidth} label="Speed (mph) & Dir (color)" />

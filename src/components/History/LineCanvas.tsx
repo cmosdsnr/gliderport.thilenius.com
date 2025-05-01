@@ -1,118 +1,148 @@
-import React from 'react'
-import Canvas from './Canvas'
-import { codes, codeDef, formatDate } from '../Globals'
-import { Day } from 'contexts/DataContext'
+// src/components/LineCanvas.tsx
+import React, { useMemo } from 'react';
+import {
+    ComposedChart,
+    XAxis,
+    YAxis,
+    Line,
+    Tooltip,
+    ReferenceArea,
+    ResponsiveContainer,
+} from 'recharts';
+import { format } from 'date-fns';
+import { codes, codeDef } from '../Globals';
+import { DayOfCodes } from './History';
+
 
 interface LineCanvasProps {
-    width: number
-    data: Day
+    /** Array of [absoluteTimestampSec, code] for one day */
+    data: DayOfCodes;
+    /** UNIX timestamp (sec) for local midnight of this day */
+    dayStart: number;
+    /** [startHourLocal, endHourLocal] in 24h hours (e.g. [6, 20]) */
+    limits: [number, number];
+    /** pixel width of the chart container */
+    width: number;
 }
+const LineCanvas: React.FC<LineCanvasProps> = ({ data, dayStart, limits, width }) => {
 
-export const LineCanvas = ({ width, data }: LineCanvasProps) => {
+    const startTs = Number(dayStart + 3600 * limits[0]);
+    const endTs = Number(dayStart + 3600 * limits[1]);
+    const totalHours = limits[1] - limits[0];
 
-    const drawLine = (ctx: CanvasRenderingContext2D) => {
-        const drawLineTick = (ctx: CanvasRenderingContext2D, percentageOffset: number, text: number) => {
-            var x = percentageOffset * width
-            ctx.moveTo(x, 30)
-            ctx.lineTo(x, 35)
-            ctx.stroke()
-            ctx.fillText(text.toString(), x - ctx.measureText(text.toString()).width / 2, 45)
-        }
+    // Build ticks: one mark per whole hour
+    const ticks = useMemo(
+        () => Array.from({ length: totalHours + 1 }, (_, i) => startTs + 3600 * i),
+        [startTs, endTs]
+    );
 
-        var i
-        const startingHour = data.limits[0];
-        const hourCount = data.limits[1] - startingHour
+    // Compute date label (Today/Tomorrow or weekday + M/d)
+    const dateLabel = useMemo(() => {
+        const dtNow = new Date();
+        const dtStart = new Date(dayStart * 1000 + 12 * 3600 * 1000);
+        if (dtNow.toDateString() === dtStart.toDateString()) return 'Today';
+        const tomorrow = new Date(dtNow);
+        tomorrow.setDate(dtNow.getDate() + 1);
+        if (tomorrow.toDateString() === dtStart.toDateString()) return 'Tomorrow';
+        return format(dtStart, 'EEE M/d');
+    }, [dayStart]);
 
-        // Draw a black outline rectangle
-        ctx.lineWidth = 1
-        ctx.beginPath()
-        ctx.rect(0, 0, width, 50)
-        ctx.stroke()
+    // chartData: one point per boundary (for domain inference) in seconds
+    const chartData = useMemo(
+        () => data.map(([ts, code]) => ({ ts, code, dummy: 0 })),
+        [data]
+    );
 
-        for (i = 1; i < hourCount; i++) {
-            drawLineTick(ctx, i / hourCount, startingHour + i)
-        }
+    // segments: colored background slices between code changes
+    const segments = useMemo(() => {
+        const segs: { x1: number; x2: number; color: string }[] = [];
+        let prevCode = codeDef.IT_IS_DARK;
+        let prevTs = startTs;
+        data.forEach(([ts, nextCode]) => {
+            const color = codes[prevCode]?.color ?? '#ccc';
+            segs.push({ x1: prevTs, x2: ts, color });
+            prevCode = nextCode;
+            prevTs = ts;
+        });
+        // final slice to endHour
+        segs.push({ x1: prevTs, x2: endTs, color: codes[codeDef.IT_IS_DARK].color });
+        return segs;
+    }, [data, dayStart, startTs, endTs]);
 
-        var startRatio = 0;
-        var endRatio = 0;
-        var ratioPerSecond = 1 / (3600 * hourCount)
+    return (
+        <div style={{ width, height: 60, position: 'relative' }}>
+            {/* date label */}
+            <div
+                style={{
+                    position: 'absolute',
+                    top: 4,
+                    left: 8,
+                    backgroundColor: 'rgba(0,0,0,0.7)',
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                    color: '#fff',
+                    fontSize: 12,
+                    fontFamily: 'Verdana',
+                    pointerEvents: 'none',
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {dateLabel}
+            </div>
 
-        // Fill in all the data for the day
-        let prev = 0;
+            <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={chartData} margin={{ top: 0, right: 10, left: 10, bottom: 5 }}>
+                    <XAxis
+                        dataKey="ts"
+                        type="number"
+                        domain={[startTs, endTs]}
+                        ticks={ticks}
+                        tickFormatter={h => `${(h - dayStart) / 3600}`}
+                        axisLine={false}
+                        tickLine={{ stroke: '#ccc' }}
+                        height={20}
+                        allowDataOverflow={true}
+                        interval={0}
+                    />
+                    <YAxis type="number" domain={[0, 1]} hide />
+                    <Line
+                        type="monotone"
+                        dataKey="dummy"
+                        stroke="transparent"
+                        dot={false}
+                        isAnimationActive={false}
+                    />
+                    {segments.map((s, i) => (
+                        <ReferenceArea key={i} x1={s.x1} x2={s.x2} y1={0} y2={1} fill={s.color} />
+                    ))}
 
-        //debugger
-        // let dbCodes = JSON.parse(data.codes);
-        let dbCodes = data.codes;
-        //console.log(dbCodes)
-        dbCodes.forEach(pt => {
-            const time = pt[0]
-            const code = prev
-            prev = pt[1]
+                    {/* custom tooltip */}
+                    <Tooltip
+                        cursor={false}
+                        content={({ active, payload, label }) => {
+                            if (!active || !payload || !payload.length) return null;
+                            // payload[0].payload is the full data object: { ts, code, dummy }
+                            const { code } = payload[0].payload as any;
+                            const hh = Math.floor(label);
+                            return (
+                                <div
+                                    style={{
+                                        background: 'rgba(255,255,255,0.9)',
+                                        padding: '4px 8px',
+                                        borderRadius: 4,
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                                        fontSize: 12,
+                                    }}
+                                >
+                                    <div>{codes[code].code}</div>
+                                </div>
+                            );
+                        }}
+                    />
+                </ComposedChart>
+            </ResponsiveContainer>
+        </div>
+    );
+};
 
-            endRatio = ratioPerSecond * time
-            ctx.beginPath()
-            if (!codes[code]) {
-                console.log(code)
-            }
-            ctx.fillStyle = codes[code].color
-            ctx.strokeStyle = ctx.fillStyle
-            ctx.rect(
-                1 + startRatio * (width - 2),
-                1,
-                (endRatio - startRatio) * (width - 2),
-                30
-            )
-            ctx.stroke()
-            ctx.fill()
-            startRatio = endRatio
-        })
-
-        ctx.beginPath()
-        ctx.fillStyle = codes[codeDef.IT_IS_DARK].color
-        ctx.strokeStyle = ctx.fillStyle
-        ctx.rect(
-            1 + startRatio * (width - 2),
-            1,
-            (1 - startRatio) * (width - 2),
-            30
-        )
-        ctx.stroke()
-        ctx.fill()
-
-
-        //add text for the day (day or week and mm/dd)
-        const dtNow = new Date()
-        const dtStart = new Date(data.date * 1000 + 12 * 3600 * 1000)
-        const itIsToday = (dtNow.getDate() === dtStart.getDate())
-        dtNow.setDate(dtNow.getDate() + 1)
-        const itIsTomorrow = (dtNow.getDate() === dtStart.getDate())
-        ctx.fillStyle = "white";
-        ctx.beginPath();
-        if (itIsToday) {
-            ctx.fillStyle = "Darkblue";
-            ctx.font = "20px Verdana"
-            ctx.fillText("Today", 20, 20);
-        }
-        else {
-            if (itIsTomorrow) {
-                ctx.fillStyle = "Darkblue";
-                ctx.font = "20px Verdana"
-                ctx.fillText("Tomorrow", 20, 20);
-            }
-            else {
-                ctx.fillStyle = "white";
-                ctx.font = "15px Verdana"
-                var text = formatDate(dtStart)
-                ctx.fillText(text, 20, 15);
-                text = (1 + dtStart.getMonth()) + "/" + dtStart.getDate();
-                ctx.fillText(text, 20, 30);
-            }
-        }
-        ctx.stroke();
-        ctx.closePath();
-    }
-
-    return <Canvas draw={drawLine} height={60} width={width} data={data} />
-}
-
-export default LineCanvas
+export default React.memo(LineCanvas);

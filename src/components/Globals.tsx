@@ -52,27 +52,6 @@ export const codes: Code[] = [
     { color: "rgb(255,   0,   0)", opacity: 0.1, code: "No data" }               // NO_DATA
 ];
 
-export const useInterval = (callback: any, delay: number) => {
-    const savedCallback = useRef<any>(null);
-
-    // Remember the latest function.
-    useEffect(() => {
-        savedCallback.current = callback;
-    }, [callback]);
-
-    // Set up the interval.
-    useEffect(() => {
-        function tick() {
-            if (typeof savedCallback.current === 'function')
-                savedCallback.current();
-        }
-        if (delay !== null) {
-            let id = setInterval(tick, delay);
-            return () => clearInterval(id);
-        }
-    }, [delay]);
-}
-
 export const b64toBlob = (b64Data: string, contentType: string = '', sliceSize: number = 512): Blob | null => {
     if (b64Data === null) {
         console.log("b64toBlob called with null")

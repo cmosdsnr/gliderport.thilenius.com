@@ -1,4 +1,3 @@
-import PocketBase from "pocketbase";
 import { ReactNode } from "react";
 
 declare module "*.png";
@@ -26,28 +25,7 @@ declare global {
     sun?: number;
   }
 
-  // Code History format from WebSocket Server
-  type Day = {
-    date: number; //time stamp of midnight, UTC
-    codes: CodePoint[];
-    sun: [number, number]; //seconds into day for sunrise and sunset
-    limits: [number, number]; //hour numbers for start and stop of the plot e.g. [5,19]
-  };
-
-  type CodePoint = [
-    number, // seconds into day
-    number // code
-  ];
-
   //
-  type Reading = {
-    time: number;
-    speed: number;
-    direction: number;
-    humidity: number;
-    pressure: number;
-    temperature: number;
-  };
 
   interface Weeks {
     totals: number[];
@@ -126,51 +104,6 @@ declare global {
     [key: string]: any; // Add this index signature
   };
 
-  type CameraImage = {
-    image: string;
-    date: number;
-    dateString?: string;
-  };
-
-  type CameraImageSet = CameraImage[];
-  type CameraImages = {
-    camera1: CameraImageSet;
-    camera2: CameraImageSet;
-  };
-
-  interface DataContextInterface {
-    //states
-    clients: Array<Client>;
-    donors: Array<Donor>;
-    posts: Array<Post>;
-    history: Array<Day>;
-    chart: Array<Reading>;
-    latest: Reading;
-    status: Array<number>;
-    lastCheck: TimeStamp;
-    forecast: Array<Forecast>;
-    forecastFull: any;
-    hitStats: Stats | null;
-    passedSeconds: number;
-    offline: boolean;
-    cameraImages: CameraImages;
-    sleeping: boolean;
-    image1: string | null;
-    bigImage1: string | null;
-    image2: string | null;
-    bigImage2: string | null;
-    lastForecast: TimeStamp;
-    sun: Sun;
-    videoWidth: number;
-    videoHeight: number;
-    numberConnections: number;
-    videoServerOnline: boolean;
-    message: [string | null, string | null];
-    //functions
-    loadData: (name: string) => void;
-    printDate: (ts: TimeStamp) => string;
-  }
-
   type UserSettings = {
     address?: string;
     phone?: string;
@@ -194,71 +127,6 @@ declare global {
     settings: UserSettings;
   }
 
-  interface Message {
-    ts: number;
-    date: string;
-    uid: string;
-    ownerName: string;
-    msg: string;
-  }
-
-  interface AuthProviderProps {
-    children: ReactNode;
-  }
-
-  interface MessageItem {
-    id: string;
-    created: string;
-    message: string;
-    username: string;
-    name: string;
-    avatar: string;
-    uid: string;
-  }
-
-  interface AuthContextType {
-    pb: PocketBase;
-    currentUser: User | null;
-    ChangePassword: (transaction: any) => void;
-    avatar: string;
-    login: (email: string, password: string) => any;
-    googleLogin: () => void;
-    logout: () => void;
-    signUp: (data: any) => void;
-    sendVerification: (email: string) => void;
-    requestVerification: () => void;
-    resetPassword: (email: string) => void;
-    ChangeEmail: (newEmail: string) => void;
-    changeAvatar: (data: FormData) => void;
-    updateUser: (name: string, value: any) => Promise<boolean>;
-    updateUserSettings: (obj: Partial<UserSettings>, textMe?: boolean) => Promise<boolean>;
-    reloadUserInfo: () => Promise<void>;
-    messages: MessageItem[];
-    messagesLoaded: boolean;
-    newMessage: (msg: string) => Promise<void>;
-    deleteMessage: (msg: MessageItem) => Promise<void>;
-  }
-
-  type Limits = {
-    tsStart: number;
-    tsStop: number;
-    yMin: number;
-    yMax: number;
-  };
-  type FillReturnDataType = {
-    filled: null | [number, number][][];
-    limits: null | Limits;
-  };
-  type FffReturnDataType = {
-    filled: [number, number][];
-    limits: null | Limits;
-  };
-  type FilterReturnDataType = {
-    filtered: [number, number][];
-    fTop: [number, number][];
-    fBottom: [number, number][];
-    limits: null | Limits;
-  };
   type SignUp = {
     email: string;
     password: string;

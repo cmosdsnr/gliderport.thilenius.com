@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useModal, ModalType } from './Modals';
-import { useAuth } from 'contexts/AuthContextPocketbase';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Validation schema for password change.
 const validationSchema = yup.object().shape({

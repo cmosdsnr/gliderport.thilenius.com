@@ -1,112 +1,146 @@
-import React, { useRef, useEffect, useState } from 'react'
-import Row from 'react-bootstrap/Row'
-import Col from 'react-bootstrap/Col'
-import LineCanvas from './LineCanvas'
-import CircleCanvas from './CircleCanvas'
-import KeyCanvas from './KeyCanvas'
-import { useData } from 'contexts/DataContext'
-import 'css/history.css';
+
+// src/components/History.tsx
+import React, { useState, useEffect } from 'react';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Button from 'react-bootstrap/Button';
+import { useAuth } from '@/contexts/AuthContext';
+import { ToId } from '@/util/ToId';
+import { useContainerSize } from './useContainerSize';
+import KeyCanvas from './KeyCanvas';
+import LineCanvas from './LineCanvas';
+import CircleCanvas from './CircleCanvas';
+import { DateTime } from 'luxon';
+
+/**
+ * A single wind code entry: [timestamp, codeValue].
+ */
+export type CodeEntry = [number, number];
+
+/**
+ * A full day of wind code entries.
+ */
+export type DayOfCodes = CodeEntry[];
+
+/**
+ * Complete history: an array of per-day code sequences.
+ */
+export type Codes = DayOfCodes[];
+
+
+/**
+ * Returns the UNIX timestamp of local midnight in America/Los_Angeles
+ * for the given UTC timestamp.
+ *
+ * @param ts - UTC timestamp in seconds
+ * @returns Local midnight timestamp (seconds)
+ */
+function getLastMidnightLA(ts: number): number {
+    // 1) Build a Luxon DateTime in the America/Los_Angeles zone
+    const dtLA = DateTime.fromSeconds(ts, { zone: "America/Los_Angeles" });
+    // 2) Snap to the start of that local day (i.e. midnight)
+    const midnightLA = dtLA.startOf("day");
+    // 3) Convert back to a UNIX timestamp (seconds)
+    return Math.floor(midnightLA.toSeconds());
+}
+
 
 export default function History() {
+    const { pb } = useAuth();
+    const [history, setHistory] = useState<Codes>([]);
+    const [view, setView] = useState<'line' | 'clock'>('line');
+    const [limits, setLimits] = useState<[number, number]>([4, 20]);
+    const [midnight, setMidnight] = useState<number>(0);
 
-    const containerRef = useRef<HTMLInputElement>(null)
-    const containerKeyRef = useRef<HTMLInputElement>(null)
-    const [clockFormat, setClockFormat] = useState(false)
-    const [toggleText, setToggleText] = useState("Toggle to Clock Format")
-    const [circleWidth, setCircleWidth] = useState(100)
-    const [keyWidth, setKeyWidth] = useState(100)
-    // const [history, setHistory] = useState(Array.apply(null, Array(8)).map(function (x, i) { return {}; }))
+    // refs + sizes
+    const [keyRef, { width: keyWidth }] = useContainerSize<HTMLDivElement>();
+    const [chartRef, { width: chartWidth }] = useContainerSize<HTMLDivElement>();
 
-    const { loadData, history } = useData()
-
-    // load history
-    useEffect(() => {
-        loadData("History")
-    }, [])
 
     useEffect(() => {
-        if (history) console.log(history)
-    }, [history])
+        const fetchWindCodes = async () => {
+            let codes: any;
+            try {
+                const url = new URL("/getWindTableCodes", "https://tstupdate.thilenius.com");
+                const res = await fetch(url.toString());
+                if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+                const j = await res.json();
+                codes = j.codes;
+                const mn = getLastMidnightLA(codes[0][0][0]);
+                setMidnight(mn)
+                setLimits([
+                    Math.floor((codes[0][0][0] - mn) / 3600) - 1,
+                    Math.ceil((codes[0][codes[0].length - 1][0] - mn) / 3600) + 1]);
+            } catch (err: any) {
+                console.error(err.message);
+                return;
+            }
+            try {
+                const url = new URL("/getForecastCodes", "https://tstupdate.thilenius.com");
+                const res = await fetch(url.toString());
+                if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+                const forecastCodes: any = await res.json();
 
-    const resizeAndDraw = () => {
+                // merge codes[codes.length - 1] with forecastCodes
+                const lastDay = codes[codes.length - 1]; // which is today
+                const today = forecastCodes[0];
+                const lastTs = lastDay[lastDay.length - 1][0];
+                let idx = 0;
+                while (idx < today.length && today[idx][0] < lastTs) idx++;
+                while (idx < today.length) {
+                    const ts = today[idx][0];
+                    const code = today[idx][1];
+                    if (ts > lastTs) {
+                        lastDay.push([ts, code]);
+                    }
+                    idx++;
+                }
+                codes.push(forecastCodes[1]);
+                setHistory(codes);
+            } catch (err: any) {
+                console.error(err.message);
+                return;
+            }
+        };
 
-        const container = containerRef.current
-        const containerKey = containerKeyRef.current
-        console.log(typeof container)
-        if (!container || !containerKey) {
-            if (!container) { console.log("no container") }
-            if (!containerKey) { console.log("no containerKey") }
-            return
-        }
-        const maxWidth = 500
-        var cw = container.clientWidth;
-        // console.log(cw)
-        setCircleWidth(cw > maxWidth ? maxWidth : cw)
-        setKeyWidth(containerKey.clientWidth)
-    }
+        fetchWindCodes();
+    }, []);
 
-    useEffect(() => {
-        window.addEventListener("resize", resizeAndDraw)
-        return () => {
-            window.removeEventListener("resize", resizeAndDraw)
-        }
-    }, [])
 
-    useEffect(() => {
-        resizeAndDraw()
-        // debugger
-    }, [clockFormat, history])
-
-    const toggleFormat = () => {
-        setToggleText("Toggle to " + (clockFormat ? "Clock" : "Line") + " Format")
-        setClockFormat(!clockFormat)
-    }
+    const toggleView = () => setView((v) => (v === 'line' ? 'clock' : 'line'));
 
     return (
         <>
-            <Row className="history-container">
+            <Row className="history-container mb-3">
                 <Col sm={3}>
-                    <button
-                        className="btn btn-primary btn-sm history-button"
-                        onClick={toggleFormat}
-                    >
-                        {toggleText}
-                    </button>
+                    <Button size="sm" onClick={toggleView}>
+                        Switch to {view === 'line' ? 'Clock' : 'Line'} View
+                    </Button>
                 </Col>
                 <Col sm={6}>
-                    <h4 className="history-title">8 Day History with 2 day Forecast</h4>
+                    <h4>8 Day History with 2 Day Forecast</h4>
                 </Col>
             </Row>
-            <Row ref={containerKeyRef} className="key-container">
+
+            <div ref={keyRef} className="mb-3">
                 <KeyCanvas width={keyWidth} />
-            </Row>
+            </div>
 
-            {!clockFormat ? (
-                <div className="line-history-container">
-                    {history?.map((day, i) => (
-                        <Row key={i} ref={containerRef}>
-                            <LineCanvas width={keyWidth} data={day} />
+            <div ref={chartRef} style={{ paddingBottom: '200px' }}>
+                {view === 'line'
+                    ? history.map((day, i) => (
+                        <LineCanvas key={i} data={day} dayStart={midnight + i * (24 * 3600)} limits={limits} width={chartWidth} />
+                    ))
+                    : (
+                        <Row xs={1} sm={2} lg={3} xl={4}>
+                            {history.map((day, i) => (
+                                <Col key={i} className="mb-4">
+                                    <CircleCanvas data={day} dayStart={midnight + i * (24 * 3600)} limits={limits} width={chartWidth / 4} />
+                                </Col>
+                            ))}
                         </Row>
-                    ))}
-                </div>
-            ) : (
-                <Row className="circle-history-container">
-                    {history?.map((day, i) => (
-                        <Col
-                            ref={containerRef}
-                            key={i}
-                            xs={12}
-                            md={6}
-                            lg={{ span: 4, offset: 0 }}
-                            xl={{ span: 3, offset: 0 }}
-                        >
-                            <CircleCanvas width={circleWidth} data={day} />
-                        </Col>
-                    ))}
-                </Row>
-
-            )}
-            <Row style={{ height: '200px' }}></Row>
+                    )}
+            </div >
         </>
-    )
+    );
 }

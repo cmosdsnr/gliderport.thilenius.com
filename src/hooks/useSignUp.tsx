@@ -1,4 +1,4 @@
-import { useAuth } from 'contexts/AuthContextPocketbase'
+import { useAuth } from '@/contexts/AuthContext'
 import { useMutation } from 'react-query';
 
 export default function useSignUp() {

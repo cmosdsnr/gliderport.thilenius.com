@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef, MouseEvent } from 'react'
 import * as d3 from 'd3'
 import { Col } from 'react-bootstrap'
-import { useFilter } from 'contexts/FilterContext'
+import { useFilter, FilterReturnDataType, Limits } from 'contexts/FilterContext'
 import { getGradients } from './ColorGradients'
 import Legend from './Legend'
-import { useData } from 'contexts/DataContext'
+import { useData, Reading } from '@/contexts/DataContext'
 
 interface WindChartProps {
     clientWidth: number,
@@ -13,24 +13,26 @@ interface WindChartProps {
 
 const WindChart = ({ clientWidth, label }: WindChartProps) => {
 
-    const {
-        chart
-    } = useData()
+    const chartRef = useRef(null);
 
-    const chartRef = useRef(null)
+    const [limits, setLimits] = useState<null | Limits>(null);
+    const [showLegend, setShowLegend] = useState(false);
+    const [width, setWidth] = useState(0);
+    const [height, setHeight] = useState(0);
+    const [svgWidth, setSvgWidth] = useState(0);
+    const [svgHeight, setSvgHeight] = useState(0);
 
-    const [limits, setLimits] = useState<null | Limits>(null)
-    const [showLegend, setShowLegend] = useState(false)
-    const [width, setWidth] = useState(0)
-    const [height, setHeight] = useState(0)
-    const [svgWidth, setSvgWidth] = useState(0)
-    const [svgHeight, setSvgHeight] = useState(0)
+    const [direction, setDirection] = useState([[0, 0]]);
+    const [min, setMin] = useState([[0, 0]]);
+    const [max, setMax] = useState<[number, number][]>([[0, 0]]);
 
-    const [direction, setDirection] = useState([[0, 0]])
-    const [min, setMin] = useState([[0, 0]])
-    const [max, setMax] = useState<[number, number][]>([[0, 0]])
+    const [scaled, setScaled] = useState<[number, number][]>([]);
+
+    const { readings } = useData();
     const { filterData, fillForFilter } = useFilter()
+
     const margin = { top: 10, right: 60, bottom: 30, left: 30 }
+
 
     useEffect(() => {
         setWidth(clientWidth - margin.left - margin.right)
@@ -41,17 +43,18 @@ const WindChart = ({ clientWidth, label }: WindChartProps) => {
     }, [clientWidth])
 
     useEffect(() => {
-        if (width > 0 && chart?.length > 1) {
+        if (width > 0 && readings?.length > 1) {
             // debugger
-            const { fTop, fBottom, limits }: FilterReturnDataType = filterData(chart, width);
+            const { fTop, fBottom, limits, filled }: FilterReturnDataType = filterData(readings, width);
             setLimits(limits)
             setMax(fTop)
             setMin(fBottom)
-            let { filled } = fillForFilter(chart, width, "direction")
-            setDirection(filled)
+            setScaled(filled)
+            const f = fillForFilter(readings, width, "direction")
+            setDirection(f.filled)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [chart, width])
+    }, [readings, width])
 
 
     //redraw on size change or data change
@@ -74,14 +77,29 @@ const WindChart = ({ clientWidth, label }: WindChartProps) => {
         var timeSinceLastHourMark = limits.tsStart % (1 * 60 * 60)
         var td = new Date((limits.tsStart - timeSinceLastHourMark) * 1000);
         var tickCnt = 1 + Math.floor((timeSinceLastHourMark + (limits.tsStop - limits.tsStart)) / (2 * 3600))
-        var tickValues = []
+
+
+
+        const start = new Date(limits.tsStart * 1000);
+        start.setMinutes(0, 0, 0); // Set minutes, seconds, and milliseconds to zero
+        const localHour = parseInt(
+            new Intl.DateTimeFormat("en-US", {
+                timeZone: "America/Los_Angeles",
+                hour: "2-digit",
+                hour12: false,
+            }).format(start),
+            10
+        );
+        //if localHour is odd subtract one hour from start
+        const localHourOffset = localHour % 2 === 1 ? 60 * 60 * 1000 : 0;
+        start.setTime(start.getTime() - localHourOffset);
+
+        const tickValues = d3.range(start.getTime() / 1000, limits.tsStop, 2 * 3600);
 
         // Add X axis --> it is a date format
         var x = d3.scaleLinear()
-            .domain([limits.tsStart - timeSinceLastHourMark, limits.tsStop])
+            .domain([limits.tsStart, limits.tsStop])
             .range([margin.left, width]);
-
-        for (let i = 0; i < tickCnt; i++) { tickValues.push(limits.tsStart - timeSinceLastHourMark + (i + 0.5) * (2 * 3600)) }
 
         svg.append("g")
             .attr("transform", "translate(0," + (height + 10) + ")")
@@ -92,13 +110,14 @@ const WindChart = ({ clientWidth, label }: WindChartProps) => {
                     .tickSize(-height)
                     .tickValues(tickValues)
                     .tickFormat((d: any): string => {
-                        td.setTime(1000 * d)
-                        const hrs = td.getUTCHours()
-                        if (hrs === 0) {
-                            return "12am " + td.toDateString()
-                        } else {
-                            return hrs + "h"
-                        }
+                        const td = new Date((d as number) * 1000);
+                        const localTime = td.toLocaleTimeString("en-US", {
+                            timeZone: "America/Los_Angeles",
+                            hour: "2-digit",
+                            hour12: false,
+                        });
+                        const localDate = td.toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" });
+                        return localTime === "00" ? localDate : localTime;
                     })
             )
 
@@ -110,12 +129,12 @@ const WindChart = ({ clientWidth, label }: WindChartProps) => {
         svg.append("g")
             .attr("transform", "translate(" + margin.left + ",5)")
             .attr('class', 'y axis-grid')
-            .call(d3.axisLeft(y)
+            .call(d3.axisLeft(y).ticks(4)
                 .tickSize(-width + margin.right))
         svg.append("g")
             .attr("transform", "translate(" + width + ",5)")
             .attr('class', 'y axis-grid')
-            .call(d3.axisRight(y)
+            .call(d3.axisRight(y).ticks(4)
                 .tickSize(-width + margin.left))
         svg.append("text")
             .attr("class", "y label")
@@ -202,7 +221,7 @@ const WindChart = ({ clientWidth, label }: WindChartProps) => {
                 .style("fill", 'url(#mg' + state + ')')
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [min, max]) // Redraw chart if data changes
+    }, [min, max]) // Redraw readings if data changes
 
     const toggleLegend = (e: MouseEvent) => {
         e.preventDefault();

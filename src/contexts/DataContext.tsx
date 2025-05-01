@@ -1,7 +1,87 @@
 import React, { createContext, useState, useEffect, useContext, useRef, Dispatch, SetStateAction } from 'react'
-import { useInterval } from 'components/Globals'
-import { formatter } from 'components/Globals'
+import { useInterval } from 'hooks/useInterval'
+import { formatter, b64toBlob } from 'components/Globals'
 import { useMessages } from 'components/Admin/MessageLogger'
+
+export type Reading = {
+    time: number;
+    speed: number;
+    direction: number;
+    humidity: number;
+    pressure: number;
+    temperature: number;
+};
+
+// Fetch 24hrs data
+const fetchData = async (): Promise<Reading[]> => {
+    try {
+        // const url = new URL("/getData", import.meta.env.VITE_UPDATE_SERVER_URL);
+        const url = new URL("/getData", "https://tstupdate.thilenius.com");
+        url.searchParams.set("hours", "24");
+        const response = await fetch(url.toString());
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+            //rename timestamp to time
+            // add 101,325 to pressure
+            //divide speed and temperature by 10
+            data.forEach((d: any) => {
+                d.time = d.timestamp;
+                delete d.timestamp;
+                d.pressure = d.pressure + 101325;
+                d.speed = d.speed / 10;
+                d.temperature = d.temperature / 10;
+            });
+            return data;
+        }
+        return [];
+    } catch (error: any) {
+        console.error("Error fetching data:", error.message);
+        return [];
+    }
+};
+
+
+
+export interface CameraImage {
+    url: string;
+    date: number;
+    dateString: string;
+}
+
+export interface CameraImages {
+    camera1: CameraImage[];
+    camera2: CameraImage[];
+}
+
+export interface DataContextInterface {
+    //states
+    clients: Array<Client>;
+    donors: Array<Donor>;
+    posts: Array<Post>;
+    history: Array<any>;
+    readings: Reading[];
+    status: Array<number>;
+    lastCheck: TimeStamp;
+    forecast: Array<Forecast>;
+    hitStats: Stats | null;
+    passedSeconds: number;
+    offline: boolean;
+    cameraImages: CameraImages;
+    sleeping: boolean;
+    image1: string | null;
+    bigImage1: string | null;
+    image2: string | null;
+    bigImage2: string | null;
+    lastForecast: TimeStamp;
+    videoWidth: number;
+    videoHeight: number;
+    numberConnections: number;
+    videoServerOnline: boolean;
+    message: [string | null, string | null];
+    //functions
+    loadData: (name: string) => void;
+    printDate: (ts: TimeStamp) => string;
+}
 
 const DataContext = createContext<DataContextInterface>({} as DataContextInterface);
 
@@ -13,20 +93,18 @@ export function DataProvider({ children }: any) {
     const [loading, setLoading] = useState(true)
     const [posts, setPosts] = useState<Post[]>([])
     const [donors, setDonors] = useState<Donor[]>([])
-    const [history, setHistory] = useState<Day[]>([])
-    const [chart, setChart] = useState<Reading[]>([])
-    const [latest, setLatest] = useState<Reading>(
-        {
+    const [history, setHistory] = useState<any[]>([])
+    const [readings, setReadings] = useState<Reading[]>(
+        [{
             time: 0,
             speed: 0,
             direction: 0,
             humidity: 0,
             pressure: 0,
             temperature: 0,
-        })
+        }])
     const [status, setStatus] = useState<number[]>([])
     const [forecast, setForecast] = useState<Forecast[]>([])
-    const [forecastFull, setForecastFull] = useState<Forecast[]>([])
     const [hitStats, setHitStats] = useState<Stats>({})
     const [clients, setClients] = useState<Client[]>([])
     const [passedSeconds, setPassedSeconds] = useState(0)
@@ -36,7 +114,6 @@ export function DataProvider({ children }: any) {
     const [image2, setImage2] = useState<string | null>(null)
     const [bigImage2, setBigImage2] = useState<string | null>(null)
     const [lastForecast, setLastForecast] = useState(0)
-    const [sun, setSun] = useState<Sun>({ rise: 0, set: 0 })
     const [sleeping, setSleeping] = useState<boolean>(false)
     const [lastCheck, setLastCheck] = useState<TimeStamp>(1658263194)
     const [videoWidth, setVideoWidth] = useState(0)
@@ -49,20 +126,18 @@ export function DataProvider({ children }: any) {
         camera1: [],
         camera2: [],
     });
-    const { messageLogger, setChartLength } = useMessages();
+    const { messageLogger } = useMessages();
 
-    const handleChart = (d: Reading[]) => {
-        setChart(d)
-        if (Array.isArray(d) && d.length > 0) {
-            setLatest(d[d.length - 1])
-            setPassedSeconds(((new Date()).getTime() / 1000) - d[d.length - 1].time)
-        }
-        // console.log(d)
-        // debugger
-    }
+    const load = async () => {
+        const data = await fetchData();
+        setReadings(data);
+    };
+
+    useEffect(() => {
+        load();
+    }, []);
 
     const handleCurrentData = (d: CurrentData) => {
-        setSun({ rise: d.sunrise, set: d.sunset })
         setOffline(d.onlineStatus === 0)
         setLastCheck(d.onlineStatusTouched)
         setLastForecast(d.lastForecast)
@@ -107,11 +182,9 @@ export function DataProvider({ children }: any) {
         Posts: setPosts,
         Donors: setDonors,
         History: setHistory,
-        Chart: handleChart,
         Status: setStatus,
         Clients: handleClients,
         Forecast: setForecast,
-        ForecastFull: setForecastFull,
         Stats: setHitStats,
         CurrentData: handleCurrentData,
         Image1: handleImage1,
@@ -127,19 +200,23 @@ export function DataProvider({ children }: any) {
         console.table(hitStats)
     }, [hitStats])
 
+
     useEffect(() => {
-        setChartLength(chart.length);
-    }, [chart])
+        console.log("readings length:", readings.length);
+    }, [readings])
+
+
+
 
     const startWebSocket = () => {
         ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL)
         ws.current.onopen = () => {
             console.log("ws opened");
-            loadData("Message");
-            loadData("CurrentData");
-            loadData("Chart");
-            loadData("Clients");
-            loadData("Forecast");
+            // loadData("Message");
+            // loadData("CurrentData");
+            // loadData("Chart");
+            // loadData("Clients");
+            // loadData("Forecast");
             // testAll()
             setLoading(false);
             setPassedSeconds(0);
@@ -152,26 +229,42 @@ export function DataProvider({ children }: any) {
 
     const updateImageList = (camera: number, newImages: string, date: number) => {
         const t = { ...cameraImages };
-        // add in the new image to the correct camera
-
+        const blob = b64toBlob(newImages, 'image/jpeg');
+        const url = blob ? URL.createObjectURL(blob) : '';
         if (camera === 1) {
-            t.camera1.push({ image: newImages, date, dateString: formatter.format(new Date(1000 * date)) });
+            if (t.camera1.length && t.camera1[0].url) {
+                URL.revokeObjectURL(t.camera1[0].url);
+            }
+            t.camera1.push({ url, date, dateString: formatter.format(new Date(date)) });
             t.camera1.shift();
-        }
-        if (camera === 2) {
-            t.camera2.push({ image: newImages, date, dateString: formatter.format(new Date(1000 * date)) });
+        } else {
+            if (t.camera2.length && t.camera2[0].url) {
+                URL.revokeObjectURL(t.camera2[0].url);
+            }
+            t.camera2.push({ url, date, dateString: formatter.format(new Date(date)) });
             t.camera2.shift();
         }
+        setCameraImages(t);
     }
 
     // Fetch last 10 images on startup
     const fetchImages = () => {
+        if (!loading) return;
         fetch(import.meta.env.VITE_UPDATE_SERVER_URL + "/getLastFiveSmallImages")
             .then(res => res.json())
             .then(data => {
-                data.camera1.forEach((d: any, i: number) => { data.camera1[i].dateString = formatter.format(new Date(d.date)) });
-                data.camera2.forEach((d: any, i: number) => { data.camera2[i].dateString = formatter.format(new Date(d.date)) });
-                setCameraImages(data);
+                const processed: CameraImages = { camera1: [], camera2: [] };
+                data.camera1.forEach((d: any) => {
+                    const blob = b64toBlob(d.image, 'image/jpeg');
+                    const url = blob ? URL.createObjectURL(blob) : '';
+                    processed.camera1.push({ url, date: d.date, dateString: formatter.format(new Date(d.date)) });
+                });
+                data.camera2.forEach((d: any) => {
+                    const blob = b64toBlob(d.image, 'image/jpeg');
+                    const url = blob ? URL.createObjectURL(blob) : '';
+                    processed.camera2.push({ url, date: d.date, dateString: formatter.format(new Date(d.date)) });
+                });
+                setCameraImages(processed);
                 setLoading(false);
             })
             .catch(error => {
@@ -180,9 +273,12 @@ export function DataProvider({ children }: any) {
             });
     };
 
+
+
     // Connect to the socket server
     useEffect(() => {
         fetchImages();
+        // fetchData();
         startWebSocket();
         const wsCurrent = ws.current;
         return () => {
@@ -225,17 +321,35 @@ export function DataProvider({ children }: any) {
                 const messageBody = JSON.parse(webSocketMessage.data);
                 const { command, subCommand, data, error } = messageBody;
 
+                console.log("ws message received: ", messageBody.command);
                 switch (command) {
+                    case 'newRecords': {
+                        messageBody.records.forEach((d: any) => {
+                            d.time = d.timestamp;
+                            delete d.timestamp;
+                            d.pressure = d.pressure + 101325;
+                            d.speed = d.speed / 10;
+                            d.temperature = d.temperature / 10;
+                        });
+                        setReadings(prev => [...prev, ...messageBody.records].slice(-9000));
+                        break;
+                    }
+                    case 'newImage': {
+                        // Destructure the properties from data.
+                        console.log("newImage received")
+                        const { camera, image, date } = messageBody.imageInfo;
+                        updateImageList(camera, image, date);
+                        break;
+                    }
+
                     case 'fetchData': {
                         // Define a mapping from subCommand strings to functions.
                         const fetchDataHandlers = {
                             Posts: subCommands.Posts,
                             Donors: subCommands.Donors,
                             History: subCommands.History,
-                            Chart: subCommands.Chart,
                             Status: subCommands.Status,
                             Forecast: subCommands.Forecast,
-                            ForecastFull: subCommands.ForecastFull,
                             Clients: subCommands.Clients,
                             Stats: subCommands.Stats,
                             CurrentData: subCommands.CurrentData,
@@ -278,9 +392,22 @@ export function DataProvider({ children }: any) {
                             sleeping,
                         } = data;
 
-                        if (sunrise && sunset) {
-                            setSun({ rise: sunrise, set: sunset });
+                        if (speed || direction || humidity || pressure || temperature) {
+                            const l = readings[readings.length - 1];
+                            const newRecord: Reading = {
+                                time: Date.now() / 1000,
+                                speed: l.speed,
+                                direction: direction || l.direction,
+                                humidity: humidity || l.humidity,
+                                pressure: l.pressure,
+                                temperature: l.temperature,
+                            };
+                            newRecord.speed = speed ? speed / 10 : l.speed;
+                            newRecord.pressure = pressure ? pressure + 101325 : l.pressure;
+                            newRecord.temperature = temperature ? temperature / 10 : l.temperature;
+                            // setReadings([newRecord]);
                         }
+
                         if (onlineStatus !== undefined) {
                             setOffline(onlineStatus === 0);
                         }
@@ -291,15 +418,15 @@ export function DataProvider({ children }: any) {
                             setLastForecast(lastForecast);
                         }
                         if (lastRecord) {
-                            let newRecord = { ...latest, time: lastRecord };
-                            if (speed !== undefined) newRecord.speed = speed;
-                            if (direction !== undefined) newRecord.direction = direction;
-                            if (humidity !== undefined) newRecord.humidity = humidity;
-                            if (pressure !== undefined) newRecord.pressure = pressure;
-                            if (temperature !== undefined) newRecord.temperature = temperature;
-                            setChart([...chart, newRecord]);
-                            setLatest(newRecord);
-                            setPassedSeconds(0);
+                            // let newRecord = { ...readings, time: lastRecord };
+                            // if (speed !== undefined) newRecord.speed = speed;
+                            // if (direction !== undefined) newRecord.direction = direction;
+                            // if (humidity !== undefined) newRecord.humidity = humidity;
+                            // if (pressure !== undefined) newRecord.pressure = pressure;
+                            // if (temperature !== undefined) newRecord.temperature = temperature;
+                            // setChart([...chart, newRecord]);
+                            // setReadings(newRecord);
+                            // setPassedSeconds(0);
                         }
                         if (videoWidth !== undefined) setVideoWidth(videoWidth);
                         if (videoHeight !== undefined) setVideoHeight(videoHeight);
@@ -326,6 +453,8 @@ export function DataProvider({ children }: any) {
                         break;
                     }
                     case 'ping': {
+                        console.log("ping received");
+                        ws.current?.send(JSON.stringify({ command: "pong" }));
                         break;
                     }
                     default: {
@@ -341,7 +470,7 @@ export function DataProvider({ children }: any) {
         }
 
 
-    }, [chart, ws.current])
+    }, [ws.current])
 
     const interval = 10 //seconds
     useInterval(() => {
@@ -385,10 +514,8 @@ export function DataProvider({ children }: any) {
         donors,
         posts,
         history,
-        chart,
-        latest,
+        readings,
         forecast,
-        forecastFull,
         status,
         lastCheck,
         hitStats,
@@ -401,7 +528,6 @@ export function DataProvider({ children }: any) {
         image2,
         bigImage2,
         lastForecast,
-        sun,
         videoWidth,
         videoHeight,
         numberConnections,

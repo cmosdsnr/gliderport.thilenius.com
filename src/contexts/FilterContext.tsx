@@ -1,4 +1,27 @@
 import React, { useEffect, useContext, createContext } from 'react'
+import { Reading } from '@/contexts/DataContext'
+
+export type Limits = {
+    tsStart: number;
+    tsStop: number;
+    yMin: number;
+    yMax: number;
+};
+export type FillReturnDataType = {
+    filled: null | [number, number][][];
+    limits: null | Limits;
+};
+export type FffReturnDataType = {
+    filled: [number, number][];
+    limits: null | Limits;
+};
+export type FilterReturnDataType = {
+    filtered: [number, number][];
+    fTop: [number, number][];
+    fBottom: [number, number][];
+    limits: null | Limits;
+    filled: [number, number][];
+};
 interface FilterContextInterface {
     //functions 
     filterData: (rawData: Reading[], width: number) => FilterReturnDataType,
@@ -14,6 +37,7 @@ export function useFilter() {
 
 export function FilterProvider({ children }: any) {
 
+    const [filter, setFilter] = React.useState<number[]>([])
 
     //  http://t-filter.engineerjs.com/    
     const filter11: number[] = [
@@ -49,22 +73,19 @@ export function FilterProvider({ children }: any) {
         0.05579967786768862, 0.0593731198539503, 0.06214641629190559, 0.0640407266214166, 0.06500163538254261];
 
     const filterSelect: number = 3
-    var filter = (filterSelect === 0) ? filter11 : (filterSelect === 2 ? filter50 : filter100)
-
-    const halfFilterLength = filter.length
 
 
     useEffect(() => {
-        // mirror the filter
-        var sum = 0;
-        for (var i = filter.length - 1; i >= 0; i--) {
-            filter.push(filter[i]);
-            sum += filter[i]
-        }
-        sum *= 2
-        //make filter add up to 1 (0dB)
-        filter.forEach(function (v, i) { filter[i] /= sum; });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // set the filter to the selected one
+        var f = (filterSelect === 0) ? filter11 : (filterSelect === 2 ? filter50 : filter100);
+        // f is your original 1-sided FIR kernel  (length N)
+        const origSum = f.reduce((acc, v) => acc + v, 0);      // Σ of the left half
+        const total = origSum * 2;                          // Σ of the mirrored pair
+
+        const fullFilter = [...f, ...[...f].reverse()]         // mirror it
+            .map(v => v / total);               // normalize to ∑ = 1
+
+        setFilter(fullFilter);
     }, [])
 
 
@@ -82,6 +103,11 @@ export function FilterProvider({ children }: any) {
         const tStop = data[data.length - 1].time
         const tDuration = tStop - tStart
         const stepSize = (tDuration) / width
+
+        if (data.length < 2 || tStop === tStart) {
+            return { filled: [], limits: null }
+        }
+
         let step = tStart
         let j = 1
         let k = 0
@@ -154,61 +180,60 @@ export function FilterProvider({ children }: any) {
         return { filled, limits: { tsStart: tStart, tsStop: step - stepSize, yMin: min, yMax: max } }
     }
 
-    function fillForFilter(data: Reading[], width: number, label: keyof Reading): FffReturnDataType {
-        // fill the filled array with data
-        // exactly 'width' points
-        // one array segment with equally spaced points
-
-        if (width === 0 || data?.length === 0) { return { filled: [], limits: null } }
-        const l = label
-
-        let min = data[0][l], max = data[0][l]
-
-        var filled: [number, number][] = []
-        const tStart = data[0].time
-        const tStop = data[data.length - 1].time
-        const tDuration = tStop - tStart
-        const stepSize = (tDuration) / width
-        let j = 1
-        let k = 0
-        let tk = data[k].time
-        let tj = data[j].time
-        let dk = data[k][l]
-        let dj = data[j][l]
-        filled.push([data[0].time, data[0][l]])
-        //first point is pushed so start with second
-        let step = tStart + stepSize
-
-        while (step <= tStop) {
-            // find first data point after step  
-            if ((j < data.length) && (step >= tj)) {
-                k = j
-                while ((j < (data.length - 1)) && (step >= data[j].time)) {
-                    j++
-                }
-                tk = data[k].time
-                // if (!data || !data[j] || !data[j].time) console.log("issue in filter")
-                tj = data[j].time
-                dk = data[k][l]
-                dj = data[j][l]
-            }
-            if (j < data.length) {
-                // interpolate between k and j
-                const pt = dk + (dj - dk) * ((step - tk) / (tj - tk))
-                filled.push([step, pt])
-                if (pt > max) max = pt
-                if (pt < min) min = pt
-                step += stepSize
-            }
-
+    function fillForFilter(
+        data: Reading[],
+        width: number,
+        label: keyof Reading
+    ): FffReturnDataType {
+        if (width <= 0 || data.length < 2) {
+            return { filled: [], limits: null };
         }
+        const w = width > 5000 ? 5000 : width; // max width
 
-        return { filled, limits: { tsStart: tStart, tsStop: step - stepSize, yMin: min, yMax: max } }
+        const tStart = data[0].time;
+        const tStop = data[data.length - 1].time;
+        const step = (tStop - tStart) / (w - 1);
+
+        let yMin = Infinity;
+        let yMax = -Infinity;
+
+        // build exactly width+1 time steps, map each to an interpolated [t, v]
+        const filled = Array.from({ length: w }, (_, i) => {
+            const t = tStart + step * i;
+
+            // find the first data point with time > t
+            const idx = data.findIndex(d => d.time > t);
+            const b = idx > -1 ? data[idx] : data[data.length - 1];
+            const a = idx > 0 ? data[idx - 1] : data[0];
+
+            // linear interp, guard divide-by-zero
+            const v =
+                a.time === b.time
+                    ? a[label]
+                    : a[label] + (b[label] - a[label]) * ((t - a.time) / (b.time - a.time));
+
+            yMin = Math.min(yMin, v);
+            yMax = Math.max(yMax, v);
+
+            return [t, v] as [number, number];
+        });
+
+        return {
+            filled,
+            limits: {
+                tsStart: tStart,
+                tsStop: tStop,
+                yMin,
+                yMax
+            }
+        };
     }
+
 
     function filterData(rawData: Reading[], width: number): FilterReturnDataType {
         var filtered: [number, number][] = []
         var { filled, limits }: FffReturnDataType = fillForFilter(rawData, width, "speed")
+
         // filter the data
         filled.forEach(function (v, i) {
             var g = 0
@@ -218,7 +243,7 @@ export function FilterProvider({ children }: any) {
                 lastValid = -2
             } else {
                 for (let j = 0; j < filter.length; j++) {
-                    var k = i - halfFilterLength + j;
+                    var k = i - filter.length / 2 + j;
                     if (k < 0) { k = 0 }
                     if (k >= filled.length) { k = filled.length - 1 }
                     if (filled[k][1] < 0) {
@@ -261,7 +286,7 @@ export function FilterProvider({ children }: any) {
         top.forEach(function (v, i) {
             var g = 0;
             for (let j = 0; j < filter.length; j++) {
-                var k = i - halfFilterLength + j;
+                var k = i - filter.length / 2 + j;
                 if (k < 0) { k = 0 }
                 if (k >= top.length) { k = top.length - 1 }
                 g += filter[j] * top[k][1];
@@ -272,7 +297,7 @@ export function FilterProvider({ children }: any) {
         bottom.forEach(function (v, i) {
             var g = 0;
             for (let j = 0; j < filter.length; j++) {
-                var k = i - halfFilterLength + j;
+                var k = i - filter.length / 2 + j;
                 if (k < 0) { k = 0 }
                 if (k >= bottom.length) { k = bottom.length - 1 }
                 g += filter[j] * bottom[k][1];
@@ -280,7 +305,8 @@ export function FilterProvider({ children }: any) {
             if (g < 0) { g = 0 }
             fBottom.push([v[0], g])
         })
-        return ({ filtered, fTop, fBottom, limits });
+
+        return ({ filtered, fTop, fBottom, limits, filled });
     }
 
 

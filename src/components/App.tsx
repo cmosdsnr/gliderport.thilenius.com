@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Container } from 'react-bootstrap'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
 
-import { AuthProvider } from 'contexts/AuthContextPocketbase'
+import { AuthProvider } from '@/contexts/AuthContext'
 import { DataProvider } from 'contexts/DataContext'
 
 import Modals, { ModalProvider } from 'modals/Modals';

@@ -1,15 +1,41 @@
 import React from 'react';
-import { useAuth } from 'contexts/AuthContextPocketbase'
+import { pb } from '@/contexts/pb'
 import "css/message.css"
+
+export interface MessageItem {
+    id: string;
+    created: string;
+    message: string;
+    username: string;
+    name: string;
+    avatar: string;
+    uid: string;
+}
 interface DisplayMessageProps {
-
     msgItem: MessageItem;
-
 }
 
-
 export default function DisplayMessage({ msgItem }: DisplayMessageProps) {
-    const { currentUser, deleteMessage } = useAuth()
+
+    const deleteMessage = async (msg: MessageItem) => {
+        const currentUser = pb.authStore.record;
+        if (msg.uid === currentUser?.id) {
+            if (confirm("Do you want to delete this message?")) {
+                try {
+                    // Attempt to delete the record with the given messageId
+                    await pb.collection('posts').delete(msg.id);
+                    console.log(`Message ${msg.id} deleted successfully.`);
+                } catch (error) {
+                    console.error(`Error deleting message ${msg.id}:`, error);
+                    // Optionally rethrow the error or handle it further here.
+                }
+            }
+        } else
+            alert("You can only delete your own messages");
+
+    }
+
+    const currentUser = pb.authStore.record;
 
     return (
         <div className="message" style={{ paddingBottom: "20px" }}>

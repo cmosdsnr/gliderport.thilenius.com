@@ -1,8 +1,31 @@
 import React, { useState, useEffect, useContext, ReactNode } from 'react'
-import PocketBase from 'pocketbase';
 import { formatter } from 'components/Globals'
-import date from 'date-and-time'
-import { set } from 'react-hook-form';
+import PocketBase from "pocketbase";
+import { pb } from '@/contexts/pb'
+
+
+interface AuthProviderProps {
+    children: ReactNode;
+}
+
+export interface AuthContextType {
+    pb: PocketBase;
+    currentUser: User | null;
+    ChangePassword: (transaction: any) => void;
+    avatar: string;
+    login: (email: string, password: string) => any;
+    googleLogin: () => void;
+    logout: () => void;
+    signUp: (data: any) => void;
+    sendVerification: (email: string) => void;
+    requestVerification: () => void;
+    resetPassword: (email: string) => void;
+    ChangeEmail: (newEmail: string) => void;
+    changeAvatar: (data: FormData) => void;
+    updateUser: (name: string, value: any) => Promise<boolean>;
+    updateUserSettings: (obj: Partial<UserSettings>, textMe?: boolean) => Promise<boolean>;
+    reloadUserInfo: () => Promise<void>;
+}
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined)
 
@@ -19,13 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const defaultAvatar = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/images/user.png"
     const [avatar, setAvatar] = useState<string>(defaultAvatar);
     const [settings, setSettings] = useState<any>({});
-    const [messages, setMessages] = useState<MessageItem[]>([])
-    const [messagesLoaded, setMessagesLoaded] = useState(false)
     const [currentUser, setCurrentUser] = useState<User | null>(null)
-
-    const pbURL = import.meta.env.VITE_PB_URL.toString();
-    console.log("connecting to: " + pbURL)
-    const [pb, setPb] = useState<PocketBase>(new PocketBase(pbURL))
 
     useEffect(() => {
         // Check if there is a valid auth token in localStorage
@@ -35,61 +52,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     }, []);
 
-    const newMessage = async (msg: string) => {
-        if (currentUser?.firstName?.length === 0) {
-            alert("Please go to Dashboard and enter your name first");
-        } else {
-            pb.collection('posts').create({ user: currentUser?.id, message: msg });
-        }
-    }
-
-    const deleteMessage = async (msg: MessageItem) => {
-        if (msg.uid === currentUser?.id) {
-            if (confirm("Do you want to delete this message?")) {
-                try {
-                    // Attempt to delete the record with the given messageId
-                    await pb.collection('posts').delete(msg.id);
-                    console.log(`Message ${msg.id} deleted successfully.`);
-                } catch (error) {
-                    console.error(`Error deleting message ${msg.id}:`, error);
-                    // Optionally rethrow the error or handle it further here.
-                }
-            }
-        } else
-            alert("You can only delete your own messages");
-
-    }
-
     const ChangePassword = async () => { if (pb.authStore.record) resetPassword(pb.authStore.record.email) }
-
-    // useEffect(() => {
-    //     if (pb.authStore.isValid && pb.authStore.record) {
-    //         setAvatar(pb.files.getURL(pb.authStore.record, pb.authStore.record.avatar));
-    //         try {
-    //             pb.collection('users').subscribe(pb.authStore.record?.id, async (e) => {
-    //                 try {
-    //                     if (pb.authStore.isValid) {
-    //                         await pb.collection('users').authRefresh();
-    //                     }
-    //                 } catch (error) {
-    //                     console.log("error: ", error)
-    //                 }
-    //                 // if (pb.authStore.record?.verified == true)
-    //                 //     setVerified(true);
-    //                 // else
-    //                 //     setVerified(false);
-    //             }, { /* other options like expand, custom headers, etc. */ });
-    //         } catch (error) {
-    //             console.log("error: ", error);
-    //         }
-    //         return () => {
-    //             pb.collection('users').unsubscribe(pb.authStore.record?.id);
-    //         }
-    //     } else {
-    //         return () => { };
-    //     }
-
-    // }, [pb.authStore.isValid])
 
     useEffect(() => {
         if (currentUser)
@@ -238,84 +201,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 
 
-    // Load the initial messages from the collection
-    async function loadInitialMessages() {
-        try {
-            // Fetch all records with expansion of the 'users' relation.
-            // Adjust the limit as needed.
-            const records = await pb.collection('posts').getFullList(200, {
-                expand: 'user'
-            });
-            const msgs = records.map(record => {
-                return {
-                    id: record.id,
-                    created: record.created ? formatter.format(new Date(record.created)) : "Unknown",
-                    message: record.message,
-                    username: record.expand == undefined || record.expand.user == undefined ? 'Unknown' : record.expand.user.username,
-                    avatar: record.expand?.user?.avatar ? pb.files.getURL(record.expand.user, record.expand?.user.avatar) : "",
-                    name: record.expand?.user?.name || 'Unknown',
-                    uid: record.user
-                }
-            });
-            setMessages(msgs);
-        } catch (err) {
-            console.error('Error loading messages:', err);
-        }
-    }
-
-
-    useEffect(() => {
-        // Load messages when the component mounts.
-        loadInitialMessages();
-
-        // Subscribe to realtime events for the posts collection.
-
-        pb.collection('posts').subscribe('*', (e) => {
-            // e.action is one of "create", "update", or "delete".
-            // e.record contains the record data (with expanded relations if available).
-            setMessages(prevMessages => {
-                let updated = [...prevMessages];
-                if (e.action === 'create') {
-                    // Add the new record.
-                    const newMsg = {
-                        id: e.record.id,
-                        created: e.record.created ? formatter.format(new Date(e.record.created)) : "Unknown",
-                        message: e.record.message,
-                        username: e.record.expand == undefined || e.record.expand.user == undefined ? 'Unknown' : e.record.expand.user.username,
-                        avatar: e.record.expand?.user?.avatar ? pb.files.getURL(e.record.expand.user, e.record.expand?.user.avatar) : "",
-                        name: e.record.expand?.user?.name || 'Unknown',
-                        uid: e.record.user
-                    };
-                    updated.push(newMsg);
-                } else if (e.action === 'update') {
-                    // Replace the updated record.
-                    updated = updated.map(msg =>
-                        msg.id === e.record.id
-                            ? {
-                                id: e.record.id,
-                                created: e.record.created ? formatter.format(new Date(e.record.created)) : "Unknown",
-                                message: e.record.message,
-                                username: e.record.expand == undefined || e.record.expand.user == undefined ? 'Unknown' : e.record.expand.user.username,
-                                avatar: e.record.expand?.user?.avatar ? pb.files.getURL(e.record.expand.user, e.record.expand?.user.avatar) : "",
-                                name: e.record.expand?.user?.name || 'Unknown',
-                                uid: e.record.user
-                            }
-                            : msg
-                    );
-                } else if (e.action === 'delete') {
-                    // Remove the deleted record.
-                    updated = updated.filter(msg => msg.id !== e.record.id);
-                }
-                return updated;
-            });
-        });
-        setMessagesLoaded(true);
-        // Cleanup subscription when the component unmounts.
-        return () => {
-            pb.collection('posts').unsubscribe();
-        };
-
-    }, []);
 
 
 
@@ -338,10 +223,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         updateUserSettings,
         reloadUserInfo,
 
-        messages,
-        messagesLoaded,
-        newMessage,
-        deleteMessage,
     }
 
     return (

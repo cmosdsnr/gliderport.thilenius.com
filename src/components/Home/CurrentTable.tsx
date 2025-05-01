@@ -1,34 +1,38 @@
 import React, { useState, useEffect } from 'react'
 import { useData } from 'contexts/DataContext'
+import { useStatusCollection } from '@/contexts/StatusCollection'
+import { useInterval } from 'hooks/useInterval'
 
 const CurrentTable = ({ ...rest }) => {
 
-    const { sun, passedSeconds, latest, printDate } = useData()
+    const { readings } = useData();
+    const { sun } = useStatusCollection();
 
-    const [sunset, setSunset] = useState("")
-    const [sunrise, setSunrise] = useState("")
-    const [lastSeen, setLastSeen] = useState("")
-    const [dirText, setDirText] = useState("")
+    const latest = readings[readings.length - 1] ?? {
+        speed: 0,
+        temperature: 0,
+        pressure: 0,
+        humidity: 0,
+        direction: 0,
+        secondsPassed: 0,
+        time: 0
+    };
+    // seconds since the latest reading
+    const [secondsPassed, setSecondsPassed] = useState(
+        Math.max(0, Math.floor(Date.now() / 1000) - latest.time)
+    );
 
-    useEffect(() => {
-        if (!isNaN(latest?.direction)) {
-            setDirText(latest.direction + " deg  (" + Math.abs(270 - latest.direction) + " deg off)")
-        }
-    }, [latest])
+    // update secondsPassed every 5s
+    useInterval(() => {
+        setSecondsPassed(Math.max(0, Math.floor(Date.now() / 1000) - latest.time));
+    }, 5_000);
 
-    useEffect(() => {
-        if (sun) {
-            setSunset(printDate(sun.set))
-            setSunrise(printDate(sun.rise))
-        }
-    }, [sun.set, sun.rise])
 
-    function timeAgo(date: Date) {
-        const now = new Date();
-        const diffMs = now.getTime() - date.getTime(); // difference in milliseconds
-        const diffSeconds = Math.floor(diffMs / (1000 * 60));
-        const diffMinutes = Math.floor(diffMs / (1000 * 60));
-        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    function timeAgo(ts: number) {
+        const diff = Math.floor(Date.now() / 1000) - ts;
+        const diffSeconds = diff % 60;
+        const diffMinutes = Math.floor(diff / 60);
+        const diffHours = Math.floor(diff / (60 * 60));
 
         if (diffHours >= 1) {
             return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
@@ -42,29 +46,37 @@ const CurrentTable = ({ ...rest }) => {
         }
     }
 
-    useEffect(() => {
-        const formatter = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'America/Los_Angeles',
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric',
-            second: 'numeric'
-        });
 
-        if (latest?.time) {
-            var dt = new Date(1000 * latest.time);
-            setLastSeen("Latest Reading: " + dt.toLocaleDateString() + " " + dt.toLocaleTimeString() + " (" + timeAgo(dt) + ")");
-        } else {
-            setLastSeen("Latest Reading: No data received yet")
+    const dt = new Date(1000 * latest.time);
+    // formatted last-seen string
+    const lastSeen = (() => {
+        const dt = new Date(latest.time * 1000);
+        return `Latest Reading: ${dt.toLocaleString(undefined, {
+            dateStyle: 'short',   // e.g. “9/4/23”
+            timeStyle: 'short'    // e.g. “3:05 PM”
+        })} (${timeAgo(latest.time)})`;
+    })();
+
+
+    // format sunrise/sunset
+    const sunrise = sun?.rise
+        ? new Date(sun.rise * 1000).toLocaleTimeString(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
         }
-
-    }, [passedSeconds, latest])
-
+        )
+        : 'N/A';
+    const sunset = sun?.set
+        ? new Date(sun.set * 1000).toLocaleTimeString(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        }
+        )
+        : 'N/A';
 
     return (
-
         <table style={{ width: '100%', ...rest }} >
             <tbody>
                 <tr>
@@ -74,21 +86,21 @@ const CurrentTable = ({ ...rest }) => {
                 </tr>
                 <tr>
                     <td className="blue">Speed:</td>
-                    <td className="bold">{latest ? latest.speed : 0} mph</td>
+                    <td className="bold">{latest.speed} mph</td>
                     <td className="blue"> Temperature: </td>
-                    <td className="bold">{latest ? latest.temperature : 0} F</td>
+                    <td className="bold">{latest.temperature} F</td>
                 </tr>
                 <tr>
                     <td className="blue">Direction:</td>
-                    <td className="bold"> {dirText}</td>
+                    <td className="bold"> {latest.direction + " deg  (" + Math.abs(270 - latest.direction) + " deg off)"}</td>
                     <td className="blue">Pressure:</td>
-                    <td className="bold">{latest ? latest.pressure : 0} mBar</td>
+                    <td className="bold">{latest.pressure} mBar</td>
                 </tr>
                 <tr>
                     <td className="blue">Sunrise:</td>
                     <td className="bold"> {sunrise} </td>
                     <td className="blue">Humidity:</td>
-                    <td className="bold">{latest ? latest.humidity : 0}%</td>
+                    <td className="bold">{latest.humidity}%</td>
                 </tr>
                 <tr>
                     <td className="blue">Sunset:</td>

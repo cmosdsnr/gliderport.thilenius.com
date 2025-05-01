@@ -3,7 +3,7 @@ import { Form, Button, Card } from 'react-bootstrap'
 import Modal from 'react-modal'
 import OnClickLink from './OnClickLink'
 import { useForm } from 'react-hook-form'
-import { useAuth } from 'contexts/AuthContextPocketbase'
+import { useAuth } from '@/contexts/AuthContext'
 import { useModal, ModalType } from './Modals'
 
 export default function ForgotPasswordModal() {

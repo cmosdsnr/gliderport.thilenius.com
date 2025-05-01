@@ -1,18 +1,17 @@
 import React, { useEffect } from 'react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import { useData } from 'contexts/DataContext';
 
-interface Donor {
-    name: string;
-}
+type Donor = string[];
+
 
 export default function Contribute() {
-    const { loadData, donors, clients } = useData();
+    const [donors, setDonors] = React.useState<Donor>([]);
 
     useEffect(() => {
-        loadData("Donors");
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const url = new URL("/getDonors", "https://tstupdate.thilenius.com");
+        fetch(url.toString()).then((res) => res.json())
+            .then((data) => setDonors(data));
     }, []);
 
     return (
@@ -45,7 +44,7 @@ export default function Contribute() {
             <Row style={{ fontWeight: "bold" }}>
                 {donors.map((donor, i) => (
                     <Col key={i} sm={6} md={4} lg={3}>
-                        {donor.name}
+                        {donor}
                     </Col>
                 ))}
             </Row>

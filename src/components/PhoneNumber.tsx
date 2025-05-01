@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ChangeEvent } from 'react'
-import { useAuth } from 'contexts/AuthContextPocketbase'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface Provider {
     [key: string]: [string, string, string]

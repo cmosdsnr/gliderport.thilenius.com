@@ -5,7 +5,7 @@ import Navbar from 'react-bootstrap/Navbar'
 import NavDropdown from 'react-bootstrap/NavDropdown'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHome, faVideo, faDonate, faInfoCircle, faTty, faAtom, faWind, faSignInAlt, faSignOutAlt, faUserPlus, faSadCry } from '@fortawesome/free-solid-svg-icons'
-import { useAuth } from 'contexts/AuthContextPocketbase'
+import { useAuth } from '@/contexts/AuthContext'
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 
 import { useModal, ModalType } from 'modals/Modals'

@@ -3,181 +3,185 @@ import { useData } from 'contexts/DataContext'
 import Viewer from 'react-viewer'
 import OutOfOrder from 'images/OutOfOrder.jpg'
 import OffTime from 'images/OffTime.jpg'
-import { useInterval, b64toBlob } from '../Globals'
-import Button from 'react-bootstrap/Button';
-import { Row, Col } from 'react-bootstrap';
+import { b64toBlob } from '../Globals'
+import { useInterval } from 'hooks/useInterval'
+import Button from 'react-bootstrap/Button'
+import { Row, Col, Form } from 'react-bootstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import { useStatusCollection } from '@/contexts/StatusCollection'
+import { useLocalStorageState } from 'hooks/useLocalStorageState'
+import switch_camera from 'images/switch-camera.png'
 
-
-
-import switch_camera from 'images/switch-camera.png';
-
-
-interface Props {
-}
+interface Props { }
 
 export default function UpdatingImage({ }: Props) {
-
     const [visible, setVisible] = React.useState<boolean>(false)
-    const [imgSrc, setImgSrc] = useState<string>("")
-    const [imgSrcLarge, setImgSrcLarge] = useState<string>("")
-    const [camera, setCamera] = useState(1);
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const [camera, setCamera] = useState(1)
+    const [currentIndex, setCurrentIndex] = useState(0)
+    const [rotate, setRotate] = useLocalStorageState<boolean>("rotate", true) // NEW: toggle rotation
 
-    const [timeToSunrise, setTimeToSunrise] = useState<String>("")
-
-    const { sun, bigImage1, bigImage2, cameraImages, offline, sleeping } = useData()
+    const [timeToSunrise, setTimeToSunrise] = useState<string>('')
+    const [imgSrcLarge, setImgSrcLarge] = useState<string>('')
+    const { cameraImages, offline } = useData()
     const imgRef = useRef(null)
+    const { sun, sleeping } = useStatusCollection()
 
+    /* ------------------------------------------------------------------ */
+    /*                       Sunrise countdown logic                      */
+    /* ------------------------------------------------------------------ */
     useEffect(() => {
-        if (sleeping) setSunriseText();
+        if (sleeping) setSunriseText()
     }, [sleeping])
 
     const setSunriseText = () => {
-        let tsNow = (new Date()).getTime() / 1000;
-        // if it is before sunrise...
+        const tsNow = Date.now() / 1000
         if (tsNow < sun?.rise) {
-            const SecondsToSunrise = Math.round(sun.rise - tsNow)
-            console.log("SecondsToSunrise: ", SecondsToSunrise, " Sunrise: ",
-                sun.rise, " tsNow: ", Math.round(tsNow))
-            const h = Math.floor(SecondsToSunrise / 3600)
-            const m = Math.floor(SecondsToSunrise / 60 - h * 60)
-            setTimeToSunrise("Sunrise in " + h + ":" + (m > 10 ? m : "0" + m));
+            const secondsToSunrise = Math.round(sun.rise - tsNow)
+            const h = Math.floor(secondsToSunrise / 3600)
+            const m = Math.floor(secondsToSunrise / 60 - h * 60)
+            setTimeToSunrise(`Sunrise in ${h}:${m > 10 ? m : '0' + m}`)
         } else {
-            setTimeToSunrise("")
+            setTimeToSunrise('')
         }
     }
 
-    useInterval(setSunriseText, 1000 * 60)//seconds
+    useInterval(setSunriseText, 60 * 1000)
 
+    /* ------------------------------------------------------------------ */
+    /*                        Slideshow / rotation                        */
+    /* ------------------------------------------------------------------ */
     useEffect(() => {
-        let cycleCount = 0; // To track cycles when at the last image
+        let cycleCount = 0 // To track cycles when at the last image
 
         const interval = setInterval(() => {
-            const images = camera === 1 ? cameraImages.camera1 : cameraImages.camera2;
-            if (images.length === 0) return; // Prevent division by zero
+            const images = camera === 1 ? cameraImages.camera1 : cameraImages.camera2
+            if (images.length === 0) return
 
-            setCurrentIndex((prevIndex) => {
+            if (!rotate) {
+                // Rotation disabled → always stick to most recent image (index = length - 1)
+                setCurrentIndex(images.length - 1)
+                return
+            }
+
+            setCurrentIndex(prevIndex => {
                 if (prevIndex + 1 === images.length) {
-                    if (cycleCount < 4) { // Wait for 4 cycles (0, 1, 2, 3)
-                        cycleCount++;
-                        return prevIndex; // Stay on last image
-                    } else {
-                        cycleCount = 0; // Reset cycle count
-                        return 0; // Restart from first image
+                    if (cycleCount < 4) {
+                        cycleCount++
+                        return prevIndex
                     }
-                } else {
-                    return prevIndex + 1; // Normal increment
+                    cycleCount = 0
+                    return 0
                 }
-            });
-        }, 400);
+                return prevIndex + 1
+            })
+        }, 400)
 
-        return () => clearInterval(interval);
-    }, [camera, cameraImages]);
+        return () => clearInterval(interval)
+    }, [camera, cameraImages, rotate])
 
+    // When camera changes or new images arrive while rotation is off, make sure we show latest
+    useEffect(() => {
+        if (!rotate) {
+            const images = camera === 1 ? cameraImages.camera1 : cameraImages.camera2
+            if (images.length) setCurrentIndex(images.length - 1)
+        }
+    }, [camera, cameraImages, rotate])
 
-    // useEffect(() => {
-    //     const image = camera == 1 ? image1 : image2;
-    //     // night image is set by gliderport PI3 into the database
-    //     if (offline) {
-    //         console.log("image effect: offline")
-    //         setImgSrc(OutOfOrder)
-    //     }
-    //     else if (image === null) {
-    //         console.log("image effect: null image")
-    //         setImgSrc(OutOfOrder)
-    //     }
-    //     else {
-    //         // console.log("image effect: new image added")
-    //         const blob = b64toBlob(image, "image/jpeg")
-    //         if (blob != null) {
-    //             const blobUrl = URL.createObjectURL(blob)
-    //             setImgSrc(blobUrl)
-    //         }
-    //     }
-    // }, [image1, image2, offline, camera])
-
-
-
-    1223
-
-    const getLargeImage = () => {
-
+    /* ------------------------------------------------------------------ */
+    /*                    Fetch full‑resolution on click                  */
+    /* ------------------------------------------------------------------ */
+    const getLargeImage = async () => {
+        try {
+            const url = new URL('/getLargeImage', 'https://tstupdate.thilenius.com')
+            url.searchParams.set('camera', camera.toString())
+            const res = await fetch(url.toString())
+            if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`)
+            const data: { image: string; date: number } = await res.json()
+            const blob = b64toBlob(data.image, 'image/jpeg')
+            setImgSrcLarge(blob ? URL.createObjectURL(blob) : '')
+        } catch (err) {
+            console.error(err)
+        }
     }
 
-
+    /* ------------------------------------------------------------------ */
+    /*                               Render                               */
+    /* ------------------------------------------------------------------ */
     return (
-        <Row style={{
-            marginBottom: "15px",
-        }} >
+        <Row style={{ marginBottom: '15px' }}>
+            {/* Image area */}
             <Row>
-                {(sleeping || (camera == 1 ? cameraImages.camera1.length == 0 : cameraImages.camera2.length == 0)) ? (
-                    <div style={{ position: "relative" }}>
-                        <img
-                            src={OffTime} // Replace with actual path
-                            alt="OffTime"
-                            style={{ width: "100%", marginBottom: "10px" }}
-                        />
-                        <svg height="35" width="450" style={{ position: "absolute", top: "10px", left: "20px", fontSize: "1.8vw" }}>
+                {sleeping || (camera === 1 ? cameraImages.camera1.length === 0 : cameraImages.camera2.length === 0) ? (
+                    <div style={{ position: 'relative' }}>
+                        <img src={OffTime} alt="OffTime" style={{ width: '100%', marginBottom: '10px' }} />
+                        <svg height="35" width="450" style={{ position: 'absolute', top: '10px', left: '20px', fontSize: '1.8vw' }}>
                             <text x="0" y="30" fill="green">{timeToSunrise}</text>
                         </svg>
                     </div>
                 ) : offline ? (
-                    <div style={{ position: "relative" }}>
-                        <img
-                            src={OutOfOrder} // Replace with actual path
-                            alt="OutOfOrder"
-                            style={{ width: "100%", marginBottom: "10px" }}
-                        />
+                    <div style={{ position: 'relative' }}>
+                        <img src={OutOfOrder} alt="OutOfOrder" style={{ width: '100%', marginBottom: '10px' }} />
                         <svg height="35" width="350" transform="translate(0,0) rotate(-35 -0 -0)" className="top-left">
-                            <text x="0" y="30" fill="red" >Internet offline</text>
-                            Sorry, your browser does not support inline SVG.
+                            <text x="0" y="30" fill="red">Internet offline</text>
                         </svg>
                     </div>
                 ) : (
-                    <div style={{ position: "relative" }}>
+                    <div style={{ position: 'relative' }}>
                         <img
-                            onClick={() => { getLargeImage(); setVisible(true) }}
-                            src={`data:image/jpeg;base64,${camera == 1 ? cameraImages.camera1[currentIndex].image : cameraImages.camera2[currentIndex].image}`}
-                            alt={`Camera {camera} - ${currentIndex}`}
-                            style={{ width: "100%", marginBottom: "10px" }}
+                            onClick={() => {
+                                getLargeImage()
+                                setVisible(true)
+                            }}
+                            src={cameraImages[camera === 1 ? 'camera1' : 'camera2'][currentIndex]?.url}
+                            alt={`Camera ${camera} - ${currentIndex}`}
+                            style={{ width: '100%', marginBottom: '10px' }}
                         />
-                        <svg height="35" width="350" style={{ position: "absolute", top: "0px", left: "20px", fontSize: "24px" }}>
-                            <text x="0" y="30" fill="black">{camera == 1 ? cameraImages.camera1[currentIndex].dateString : cameraImages.camera2[currentIndex].dateString}</text>
+                        <svg height="35" width="350" style={{ position: 'absolute', top: '0px', left: '20px', fontSize: '24px' }}>
+                            <text x="0" y="30" fill="black">
+                                {camera === 1
+                                    ? cameraImages.camera1[currentIndex].dateString
+                                    : cameraImages.camera2[currentIndex].dateString}
+                            </text>
                         </svg>
                     </div>
                 )}
             </Row>
-            <Row>
-                <Col xs={6} >
-                    <span style={{
-                        border: "1px solid black",
-                        borderRadius: "8px",
-                        padding: "18px",
-                        backgroundColor: "rgba(7, 190, 250, 0.8)",
 
-                    }} onClick={() => { setCamera(camera == 1 ? 2 : 1) }}>
-                        <img src={switch_camera} alt="Switch Camera" onClick={() => { setCamera(camera == 1 ? 2 : 1) }} style={{ width: '50px', height: '50px' }} />
-                        <span style={{ marginLeft: 10 }} >go to {camera == 1 ? "left" : "right"} camera</span>
+            {/* Controls */}
+            <Row className="align-items-center">
+                <Col xs={6}>
+                    <span
+                        style={{
+                            border: '1px solid black',
+                            borderRadius: '8px',
+                            padding: '18px',
+                            backgroundColor: 'rgba(7, 190, 250, 0.8)',
+                        }}
+                        onClick={() => setCamera(camera === 1 ? 2 : 1)}
+                    >
+                        <img src={switch_camera} alt="Switch Camera" style={{ width: '50px', height: '50px' }} />
+                        <span style={{ marginLeft: 10 }}>go to {camera === 1 ? 'left' : 'right'} camera</span>
                     </span>
                 </Col>
-                <Col xs={6} >
-                    Live Image every 15 Seconds, click to expand and zoom
+                <Col xs={6}>
+                    <Row className="mt-2 text-center">
+                        <Col xs={12}>Live Image every 5s, click to zoom</Col>
+                        <Col xs={12} className="d-flex justify-content-center align-items-center">
+                            <Form.Check
+                                type="switch"
+                                id="rotate-switch"
+                                inline
+                                label={rotate ? 'Rotation: ON' : 'Rotation: OFF'}
+                                checked={rotate}
+                                onChange={e => setRotate(e.target.checked)}
+                            />
+                        </Col>
+                    </Row>
                 </Col>
             </Row>
-            {/* <Button className="btn btn-info" style={{ marginTop: "5px" }} onClick={() => { setCamera(camera == 1 ? 2 : 1) }}>{camera == 2 ? <FontAwesomeIcon icon={faArrowLeft} /> : null}  Switch to Camera {camera == 1 ? 2 : 1}  {camera == 1 ? <FontAwesomeIcon icon={faArrowRight} /> : null}</Button> */}
-            <Viewer
-                visible={visible}
-                onClose={() => { setVisible(false); }}
-                images={[{ src: imgSrcLarge, alt: '' }]}
-            />
 
-
-            {/* <span className="bottom-left">{timeToSunrise}</span> */}
-            {/* <span style={{ position: "absolute", top: "80px", left: "-150px", }} >{timeToSunrise}</span> */}
-            {/* {OutOfOrder ? <p className="ooo" >Temporarily Out of Order</p> : null} */}
+            <Viewer visible={visible} onClose={() => setVisible(false)} images={[{ src: imgSrcLarge, alt: '' }]} />
         </Row>
     )
 }
-

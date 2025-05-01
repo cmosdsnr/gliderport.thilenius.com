@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect, useCallback, WheelEvent } from 'react'
 import * as d3 from 'd3'
 import 'css/windDial.css';
+import { useData } from '@/contexts/DataContext'
 
 interface WindDialProps {
     passedSeconds: number
     picRef: React.RefObject<HTMLDivElement | null>
-    data: Reading[]
 }
 
-const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
+const WindDial = ({ passedSeconds, picRef }: WindDialProps) => {
 
     const divRef = useRef<HTMLDivElement>(null)
     const [lastSeen, setLastSeen] = useState<string>("")
+
+    const { readings } = useData();
 
     const svgWidth = useRef<number>(0)
     const sizeInPx = 400
@@ -74,7 +76,7 @@ const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
     }, [passedSeconds])
 
     useEffect(() => {
-        if (!data) return
+        if (!readings) return
         //margin in px around circle plot
         const margin = 25
 
@@ -200,13 +202,12 @@ const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
                 .attr("clip-path", "url(#wdClip)")
         }
         // Draw the arrows
-        if (data.length > 10) {
+        if (readings.length >= 10) {
             var lxMin = 1000, lyMin = 1000
             var lxMax = -1000, lyMax = -1000
             for (let i = 0; i < 10; i++) {
-                // debugger
-                var lx = 22.5 * data[data.length - 10 + i].speed * Math.cos((360 + 90 - data[data.length - 10 + i].direction) * Math.PI / 180)
-                var ly = 22.5 * data[data.length - 10 + i].speed * Math.sin((360 + 90 - data[data.length - 10 + i].direction) * Math.PI / 180)
+                var lx = 22.5 * readings[readings.length - 10 + i].speed * Math.cos((360 + 90 - readings[readings.length - 10 + i].direction) * Math.PI / 180)
+                var ly = 22.5 * readings[readings.length - 10 + i].speed * Math.sin((360 + 90 - readings[readings.length - 10 + i].direction) * Math.PI / 180)
 
                 //Draw X
                 svg.append('line')
@@ -243,8 +244,8 @@ const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
                 .attr('fill', 'none')
         }
         //used lower down too
-        const speed = data.length > 0 ? data[data.length - 1].speed : 0
-        const direction = data.length > 0 ? data[data.length - 1].direction : 0
+        const speed = readings.length > 0 ? readings[readings.length - 1].speed : 0
+        const direction = readings.length > 0 ? readings[readings.length - 1].direction : 0
 
         lx = 22.5 * speed * Math.cos((360 + 90 - direction) * Math.PI / 180)
         ly = 22.5 * speed * Math.sin((360 + 90 - direction) * Math.PI / 180)
@@ -255,7 +256,7 @@ const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
             refY = 5,
             arrowPoints: [number, number][] = [[0, 0], [0, 10], [10, 5]]
 
-        // if (data.direction.length > 2) debugger
+        // if (readings.direction.length > 2) debugger
         // draw line and arrow
         svgDefs.append('marker')
             .attr('id', 'arrow')
@@ -333,7 +334,7 @@ const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
         const crossDir = Math.sin((direction - 265) * Math.PI / 180) > 0 ? 'S' : 'N'
         svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400) + 18).text("Cross wind: " + cross + " mph " + crossDir)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data, lastSeen])
+    }, [readings, lastSeen])
 
     return (
         <div

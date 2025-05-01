@@ -1,12 +1,26 @@
 import React, { useState, useEffect } from 'react'
-import { useData } from 'contexts/DataContext'
+import { DayOfCodes } from '../History/History'
+import { codes } from '../Globals'
 
 const Today = () => {
-    const { forecast, loadData } = useData()
+    const [today, setToday] = useState<DayOfCodes>([]);
 
     useEffect(() => {
-        loadData("Forecast")
-    }, [])
+        const fetchForecastCodes = async () => {
+            try {
+                const url = new URL("/getForecastCodes", "https://tstupdate.thilenius.com");
+                const res = await fetch(url.toString());
+                if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+                const forecastCodes: any = await res.json();
+                forecastCodes[0].pop(); // remove last element (it is dark)
+                setToday(forecastCodes[0]);
+            } catch (err: any) {
+                console.error(err.message);
+                return;
+            }
+        }
+        fetchForecastCodes();
+    }, []);
 
     return (
         <table className="forecast-table">
@@ -16,14 +30,18 @@ const Today = () => {
                 </tr>
             </thead>
             <tbody>
-                {forecast?.map((hr, i) => {
+                {today?.map((code, i) => {
                     return (
                         <tr key={i}>
                             <td className="forecast-time">
-                                {hr[0]}:00
+                                {new Date(code[0] * 1000)
+                                    .toLocaleTimeString('en-GB', {
+                                        hour: '2-digit',
+                                        hour12: false
+                                    })}
                             </td>
                             <td className="forecast-wind">
-                                {hr[1]}
+                                {codes[code[1]].code}
                             </td>
                         </tr>
                     )
