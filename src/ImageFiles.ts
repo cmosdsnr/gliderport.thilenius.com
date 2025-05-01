@@ -59,11 +59,9 @@ import { hit } from "hitCounter.js";
 import { __dirname } from "miscellaneous.js";
 import { transmitNewImage } from "./socket";
 
-type ImageData = { image: Buffer; date: number };
+type ImageData = { image: string; date: number };
 type ImageList = ImageData[];
-type SendImageData = { image: string; date: number };
-type SendCameraData = SendImageData[];
-type BothCameraData = { camera1: SendCameraData; camera2: SendImageData[] };
+type BothCameraData = { camera1: ImageList; camera2: ImageList };
 
 type CameraData = {
   starting: {
@@ -91,9 +89,10 @@ interface ImageStats {
 // Global arrays to store last five small images for each camera.
 const lastFiveSmallImagesCamera1: ImageList = [];
 const lastFiveSmallImagesCamera2: ImageList = [];
+const lastBigImagesCamera: ImageList = [];
 
 //hold teh current 4 images (big/small left/right)
-const currentImages: Buffer[] = [];
+const currentImages: string[] = [];
 
 /**
  * Retrieves the modification time of a file as a timestamp.
@@ -555,7 +554,7 @@ export const ImageRoutes = (): Router => {
         .json({ error: "data, size or camera not provided", ...req.body, help: "add data, size and camera to body" });
 
     const index = req.body.size + 2 * (req.body.camera - 1) - 1;
-    currentImages[index] = Buffer.from(req.body.A, "base64");
+    currentImages[index] = Buffer.from(req.body.A, "base64").toString("base64");
 
     //save this blob to an image file in case we need to reload
     fs.writeFile(__dirname + "/images/" + "image" + index + ".jpg", currentImages[index], (err) => {
@@ -574,42 +573,41 @@ export const ImageRoutes = (): Router => {
     // Store last 5 small images for each camera.
     if (req.body.size === 1) {
       if (req.body.camera === 1) {
-        lastFiveSmallImagesCamera1.push({ image: currentImages[index], date: new Date().getTime() });
+        lastFiveSmallImagesCamera1.push({ image: currentImages[index], date: Date.now() });
         if (lastFiveSmallImagesCamera1.length > 5) {
           lastFiveSmallImagesCamera1.shift(); // Remove the oldest image.
         }
       }
       if (req.body.camera === 2) {
-        lastFiveSmallImagesCamera2.push({ image: currentImages[index], date: new Date().getTime() });
+        lastFiveSmallImagesCamera2.push({ image: currentImages[index], date: Date.now() });
         if (lastFiveSmallImagesCamera2.length > 5) {
           lastFiveSmallImagesCamera2.shift(); // Remove the oldest image.
         }
       }
-      transmitNewImage(req.body.camera, currentImages[index].toString("base64"), Date.now());
+      transmitNewImage(req.body.camera, currentImages[index], Date.now());
     }
+
+    // Store last big images.
+    if (req.body.size === 2) {
+      if (req.body.camera === 1) lastBigImagesCamera[0] = { image: currentImages[index], date: Date.now() };
+      if (req.body.camera === 2) lastBigImagesCamera[1] = { image: currentImages[index], date: Date.now() };
+    }
+
     res.json({ status: "Ok", camera: req.body.camera, size: req.body.size, index: index });
   });
 
-  router.get("/getSmallImages", (req: Request, res: Response) => {
-    res.json({ images: [currentImages[0].toString("base64"), currentImages[2].toString("base64")] });
-  });
-
-  router.get("/getLargeImages", (req: Request, res: Response) => {
-    res.json({ images: [currentImages[1].toString("base64"), currentImages[3].toString("base64")] });
+  router.get("/getLargeImage", (req: Request, res: Response) => {
+    if (req.query.camera === undefined)
+      return res.status(400).json({ error: "camera not provided", ...req.query, help: "add ?camera=1|2 to the url" });
+    if (req.query.camera == "1") res.json(lastBigImagesCamera[0]);
+    if (req.query.camera == "2") res.json(lastBigImagesCamera[1]);
   });
 
   router.get("/getLastFiveSmallImages", (req: Request, res: Response) => {
-    let ans: BothCameraData = {
-      camera1: [],
-      camera2: [],
-    };
-    lastFiveSmallImagesCamera1.map((buf) => {
-      ans.camera1.push({ image: buf.image.toString("base64"), date: buf.date });
+    res.json({
+      camera1: lastFiveSmallImagesCamera1,
+      camera2: lastFiveSmallImagesCamera2,
     });
-    lastFiveSmallImagesCamera2.map((buf) => {
-      ans.camera2.push({ image: buf.image.toString("base64"), date: buf.date });
-    });
-    res.json(ans);
     // Add IP hit to database.
     hit(req);
   });
@@ -643,7 +641,7 @@ export const ImageRoutes = (): Router => {
             record: { lastImage: result.record.lastImage, sleeping: 0 },
           });
         });
-      res.json({ status: "going to sleep" });
+      res.json({ status: "WAKING UP" });
     } catch (err: any) {
       console.error("Error updating status:", err);
       return res.status(500).json({ status: "error", message: err.message });
