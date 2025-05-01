@@ -52,11 +52,11 @@ app.use(archiveRoutes());
 import { ToId } from "miscellaneous.js";
 
 // Import and mount routes for sunrise/sunset data management and updates.
-import { sunRoutes, sunData, updateSunData } from "sun.js";
+import { sunRoutes } from "sun.js";
 app.use(sunRoutes());
 
 // Import and mount routes for tracking and reporting site hit counts.
-import { hitRoutes, hit } from "hitCounter.js";
+import { hitRoutes } from "hitCounter.js";
 app.use(hitRoutes());
 
 // Import and mount routes for wind data and related operations.

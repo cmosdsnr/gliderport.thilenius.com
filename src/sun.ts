@@ -72,10 +72,6 @@ export const getSun = (y: Date): SunCalc.GetTimesResult => {
  * @returns {void}
  */
 export const updateSunData = (): void => {
-  // La Jolla latitude and longitude.
-  const lat = 32.89;
-  const long = -117.25;
-
   // Create a Date object for 10 AM.
   const d = new Date();
   d.setHours(10);
@@ -106,7 +102,7 @@ export const updateSunData = (): void => {
   }
 
   // Update the sun data in the PocketBase "status" collection.
-  pb.collection("status").update(ToId("sun"), { sunData: sd });
+  pb.collection("status").update(ToId("sun"), { record: sd });
 };
 
 // Immediately update sun data on module load.
