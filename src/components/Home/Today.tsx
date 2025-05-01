@@ -8,7 +8,7 @@ const Today = () => {
     useEffect(() => {
         const fetchForecastCodes = async () => {
             try {
-                const url = new URL("/getForecastCodes", "https://tstupdate.thilenius.com");
+                const url = new URL("/getForecastCodes", import.meta.env.VITE_UPDATE_SERVER_URL);
                 const res = await fetch(url.toString());
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const forecastCodes: any = await res.json();

@@ -9,7 +9,7 @@ export default function Contribute() {
     const [donors, setDonors] = React.useState<Donor>([]);
 
     useEffect(() => {
-        const url = new URL("/getDonors", "https://tstupdate.thilenius.com");
+        const url = new URL("/getDonors", import.meta.env.VITE_UPDATE_SERVER_URL);
         fetch(url.toString()).then((res) => res.json())
             .then((data) => setDonors(data));
     }, []);

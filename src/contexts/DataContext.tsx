@@ -16,7 +16,7 @@ export type Reading = {
 const fetchData = async (): Promise<Reading[]> => {
     try {
         // const url = new URL("/getData", import.meta.env.VITE_UPDATE_SERVER_URL);
-        const url = new URL("/getData", "https://tstupdate.thilenius.com");
+        const url = new URL("/getData", import.meta.env.VITE_UPDATE_SERVER_URL);
         url.searchParams.set("hours", "24");
         const response = await fetch(url.toString());
         const data = await response.json();

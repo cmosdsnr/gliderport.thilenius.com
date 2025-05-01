@@ -93,7 +93,7 @@ export default function UpdatingImage({ }: Props) {
     /* ------------------------------------------------------------------ */
     const getLargeImage = async () => {
         try {
-            const url = new URL('/getLargeImage', 'https://tstupdate.thilenius.com')
+            const url = new URL('/getLargeImage', import.meta.env.VITE_UPDATE_SERVER_URL)
             url.searchParams.set('camera', camera.toString())
             const res = await fetch(url.toString())
             if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`)

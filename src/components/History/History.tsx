@@ -61,7 +61,7 @@ export default function History() {
         const fetchWindCodes = async () => {
             let codes: any;
             try {
-                const url = new URL("/getWindTableCodes", "https://tstupdate.thilenius.com");
+                const url = new URL("/getWindTableCodes", import.meta.env.VITE_UPDATE_SERVER_URL);
                 const res = await fetch(url.toString());
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const j = await res.json();
@@ -76,7 +76,7 @@ export default function History() {
                 return;
             }
             try {
-                const url = new URL("/getForecastCodes", "https://tstupdate.thilenius.com");
+                const url = new URL("/getForecastCodes", import.meta.env.VITE_UPDATE_SERVER_URL);
                 const res = await fetch(url.toString());
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const forecastCodes: any = await res.json();

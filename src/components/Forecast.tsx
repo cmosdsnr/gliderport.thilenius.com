@@ -426,7 +426,7 @@ export default function ForecastChart() {
     useEffect(() => {
         const fetchForecast = async () => {
             try {
-                const url = new URL("/getForecast", "https://tstupdate.thilenius.com");
+                const url = new URL("/getForecast", import.meta.env.VITE_UPDATE_SERVER_URL);
                 const res = await fetch(url.toString());
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const data: ForecastResponse = await res.json();
