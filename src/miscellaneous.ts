@@ -53,15 +53,15 @@ const setDir = async () => {
   const __f = fileURLToPath(import.meta.url);
 
   try {
-    // Check for a local "../bin" directory.
-    await fsPromises.access(dirname(__f) + "/..");
-    __dirname = dirname(__f) + "/..";
+    // Fall back to "/app/gliderport/bin" if local directory is not available.
+    await fsPromises.access("/app/gliderport");
+    __dirname = "/app/gliderport";
     logStr(log, "top path", __dirname, "Path exists!");
   } catch (err) {
     try {
-      // Fall back to "/app/gliderport/bin" if local directory is not available.
-      await fsPromises.access("/app/gliderport");
-      __dirname = "/app/gliderport";
+      // Check for a local "../bin" directory.
+      await fsPromises.access(dirname(__f) + "/..");
+      __dirname = dirname(__f) + "/..";
       logStr(log, "top path", __dirname, "Path exists!");
     } catch (err) {
       logStr(log, "top path", "Path does not exist.");
