@@ -56,7 +56,7 @@ import { pb } from "pb.js";
 import { connection } from "SqlConnect.js";
 import { ToId } from "miscellaneous.js";
 import { hit } from "hitCounter.js";
-import { __dirname } from "miscellaneous.js";
+// import { __dirname } from "miscellaneous.js";
 import { transmitNewImage } from "./socket";
 
 type ImageData = { image: string; date: number };
@@ -557,13 +557,13 @@ export const ImageRoutes = (): Router => {
     currentImages[index] = Buffer.from(req.body.A, "base64").toString("base64");
 
     //save this blob to an image file in case we need to reload
-    fs.writeFile(__dirname + "/images/" + "image" + index + ".jpg", currentImages[index], (err) => {
-      if (err) {
-        console.error("Error saving image:", err);
-      } else {
-        console.log("Image saved as " + __dirname + "/images/" + "image" + index + ".jpg");
-      }
-    });
+    // fs.writeFile(__dirname + "/images/" + "image" + index + ".jpg", currentImages[index], (err) => {
+    //   if (err) {
+    //     console.error("Error saving image:", err);
+    //   } else {
+    //     console.log("Image saved as " + __dirname + "/images/" + "image" + index + ".jpg");
+    //   }
+    // });
 
     if (index == 3)
       pb.collection("status").update(ToId("images"), {
