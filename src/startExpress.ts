@@ -66,7 +66,7 @@ export const startExpress = (): void => {
   };
   app.use(cors(corsOptions));
 
-  // Serve static files from the "/app/gliderport" directory.
+  // Serve static files from the "/app/docs" directory.
   app.use(express.static("/app/docs"));
 
   // (Optional) Enable file uploads with specific limits.
