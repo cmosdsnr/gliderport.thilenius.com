@@ -141,6 +141,20 @@ export default function GpNavbar() {
                                             <NavDropdown.Item as={Link} to="/admin/Information">Server Info</NavDropdown.Item>
                                             <NavDropdown.Divider />
                                             <NavDropdown.Item as={Link} to="/admin/Messages">Messages</NavDropdown.Item>
+                                            <NavDropdown.Item
+                                                href="https://gpupdate.thilenius.com"
+                                                target="_blank"             // open in new tab
+                                                rel="noopener noreferrer"   // security best‑practice
+                                            >
+                                                gpUpdate Documentation
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item
+                                                href="https://gpupdate.thilenius.com/gp_pi3_server/"
+                                                target="_blank"             // open in new tab
+                                                rel="noopener noreferrer"   // security best‑practice
+                                            >
+                                                gp_pi3_server Documentation
+                                            </NavDropdown.Item>
                                         </NavDropdown>
                                     )
                                 if (page.name == "Stats")
@@ -152,6 +166,7 @@ export default function GpNavbar() {
                                             <NavDropdown.Item as={Link} to="/stats/hits">Hits</NavDropdown.Item>
                                             <NavDropdown.Item as={Link} to="/stats/changes">Changes</NavDropdown.Item>
                                             <NavDropdown.Item as={Link} to="/stats/links">Links</NavDropdown.Item>
+
                                         </NavDropdown>
                                     )
                                 if (page.loggedIn)

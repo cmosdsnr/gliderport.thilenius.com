@@ -28,6 +28,7 @@ import Contact from 'components/Contact'
 import Diagnostics from 'components/Diagnostics'
 
 import ListEndpoints from 'components/Admin/ListEndpoints'
+import Host from 'components/Admin/Host'
 import InfoDisplay from 'components/Admin/Information'
 import Debug from 'components/Admin/Debug'
 import { MessageProvider, MessageLoggerComponent } from 'components/Admin/MessageLogger'
@@ -52,6 +53,7 @@ const App: React.FC = () => {
                                     <Route path="/home" element={<Home />} />
 
                                     <Route path="/admin/listEndpoints" element={<PrivateRoute><ListEndpoints /></PrivateRoute>} />
+                                    <Route path="/admin/Host" element={<PrivateRoute><Host /></PrivateRoute>} />
                                     <Route path="/admin/Information" element={<PrivateRoute><InfoDisplay /></PrivateRoute>} />
                                     <Route path="/admin/Debug" element={<PrivateRoute><Debug /></PrivateRoute>} />
                                     <Route path="/admin/Messages" element={<PrivateRoute><MessageLoggerComponent /></PrivateRoute>} />
