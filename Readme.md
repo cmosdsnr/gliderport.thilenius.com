@@ -61,3 +61,29 @@ This server uses a SQL database created with docker and locally accessed. ( same
 
 - grep -R -h -- "- GET" .\src\* > results.txt
 - grep -R -h -- "- POST" .\src\* >> results.txt
+
+## test servers on buddbliss
+
+- dokku apps:create tstupdate 
+- dokku apps:create tstsocket 
+- dokku storage:mount tstupdate /media/cmosdsnr/passport/gliderport:/app/gliderport
+- dokku storage:mount tstsocket /media/cmosdsnr/passport/gliderport:/app/gliderport
+- dokku network:set tstupdate attach-post-create gpdata
+- 
+dokku network:create stdata
+dokku network:set pocketbase attach-post-create stdata
+dokku network:set stephen attach-post-create stdata
+dokku network:set servert attach-post-create stdata
+
+
+dokku network:set gpupdate attach-post-create gpdata
+dokku network:set tstupdate attach-post-create gpdata
+dokku network:set gpsocket attach-post-create gpdata
+dokku network:set tstsocket attach-post-create gpdata
+dokku network:report
+
+dokku letsencrypt:enable tstupdate
+
+
+## Generate documents
+
