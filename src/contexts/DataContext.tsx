@@ -227,24 +227,29 @@ export function DataProvider({ children }: any) {
         }
     }
 
-    const updateImageList = (camera: number, newImages: string, date: number) => {
-        const t = { ...cameraImages };
-        const blob = b64toBlob(newImages, 'image/jpeg');
-        const url = blob ? URL.createObjectURL(blob) : '';
-        if (camera === 1) {
-            if (t.camera1.length && t.camera1[0].url) {
-                URL.revokeObjectURL(t.camera1[0].url);
+    const updateImageList = (camera: number, newImage: string, date: number) => {
+        setCameraImages(prev => {
+            const blob = b64toBlob(newImage, 'image/jpeg');
+            const url = blob ? URL.createObjectURL(blob) : '';
+
+            // clone the arrays so we never mutate prev in-place
+            const cam1 = [...prev.camera1];
+            const cam2 = [...prev.camera2];
+
+            const target = camera === 1 ? cam1 : cam2;
+
+            /* 1️⃣ Drop the oldest frame *first* (only when we already have five) */
+            if (target.length === 5) {
+                const dropped = target.shift();          // now length is 4
+                if (dropped?.url) URL.revokeObjectURL(dropped.url);
             }
-            t.camera1.push({ url, date, dateString: formatter.format(new Date(date)) });
-            t.camera1.shift();
-        } else {
-            if (t.camera2.length && t.camera2[0].url) {
-                URL.revokeObjectURL(t.camera2[0].url);
-            }
-            t.camera2.push({ url, date, dateString: formatter.format(new Date(date)) });
-            t.camera2.shift();
-        }
-        setCameraImages(t);
+
+            /* 2️⃣ Push the new frame – list is never empty during render */
+            target.push({ url, date, dateString: formatter.format(new Date(date)) });
+
+            /* 3️⃣ Return a *new* top-level object so React re-renders */
+            return { camera1: cam1, camera2: cam2 };
+        });
     }
 
     // Fetch last 10 images on startup
