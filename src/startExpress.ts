@@ -67,7 +67,8 @@ export const startExpress = (): void => {
   app.use(cors(corsOptions));
 
   // Serve static files from the "/app/docs" directory.
-  app.use(express.static("/app/docs"));
+  app.use("/docs", express.static("/app/docs"));
+  app.use("/images", express.static("/app/gliderport"));
 
   // (Optional) Enable file uploads with specific limits.
   // const options: fileUpload.Options = {
