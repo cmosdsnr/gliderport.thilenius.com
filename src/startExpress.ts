@@ -69,6 +69,7 @@ export const startExpress = (): void => {
   // Serve static files from the "/app/docs" directory.
   app.use("/docs", express.static("/app/docs"));
   app.use("/images", express.static("/app/gliderport"));
+  app.use("/", express.static("/app/gp_dist"));
 
   // (Optional) Enable file uploads with specific limits.
   // const options: fileUpload.Options = {
