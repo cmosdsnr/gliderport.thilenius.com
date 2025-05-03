@@ -154,14 +154,14 @@ const StatsImageComponent: React.FC<StatsImageComponentProps> = () => {
 
     const getImageDirectoryUrl = () => {
         const [year, month] = imageDay!.split('-');
-        return import.meta.env.VITE_UPDATE_SERVER_URL + `/${year}/${month}/${imageDay}/`;
+        return `${import.meta.env.VITE_UPDATE_SERVER_URL}/images/${year}/${month}/${imageDay}/`;
     }
 
     // Handler for clicking an image item
     const handleImageClick = (item: string) => {
         //split imageDay on'-' to get year, month and day
         const [year, month] = imageDay!.split('-');
-        const itemUrl = import.meta.env.VITE_UPDATE_SERVER_URL + `${year}/${month}/${imageDay}/${item}`;
+        const itemUrl = `${import.meta.env.VITE_UPDATE_SERVER_URL}/images/${year}/${month}/${imageDay}/${item}`;
         fetch(itemUrl)
             .then((res) => res.json())
             .then((data) => {
@@ -176,7 +176,7 @@ const StatsImageComponent: React.FC<StatsImageComponentProps> = () => {
 
     const openVideoModal = () => {
         const [year] = imageDay!.split("-");
-        const videoUrl = `${import.meta.env.VITE_UPDATE_SERVER_URL}/video/${year}/${video}`;
+        const videoUrl = `${import.meta.env.VITE_UPDATE_SERVER_URL}/images/video/${year}/${video}`;
         setSelectedVideo(videoUrl);
         setShowModal(true);
     };

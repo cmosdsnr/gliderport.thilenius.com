@@ -142,14 +142,14 @@ export default function GpNavbar() {
                                             <NavDropdown.Divider />
                                             <NavDropdown.Item as={Link} to="/admin/Messages">Messages</NavDropdown.Item>
                                             <NavDropdown.Item
-                                                href="https://gpupdate.thilenius.com"
+                                                href="https://gpupdate.thilenius.com/docs"
                                                 target="_blank"             // open in new tab
                                                 rel="noopener noreferrer"   // security best‑practice
                                             >
                                                 gpUpdate Documentation
                                             </NavDropdown.Item>
                                             <NavDropdown.Item
-                                                href="https://gpupdate.thilenius.com/gp_pi3_server/"
+                                                href="https://gpupdate.thilenius.com/docs/gp_pi3_server"
                                                 target="_blank"             // open in new tab
                                                 rel="noopener noreferrer"   // security best‑practice
                                             >
