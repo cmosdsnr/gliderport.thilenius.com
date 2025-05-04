@@ -155,6 +155,7 @@ export default function GpNavbar() {
                                             >
                                                 gp_pi3_server Documentation
                                             </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/admin/Debug">Debug</NavDropdown.Item>
                                         </NavDropdown>
                                     )
                                 if (page.name == "Stats")
