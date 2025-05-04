@@ -95,24 +95,14 @@ export const loadWindTable = async (): Promise<void> => {
         temperature: r.temperature,
       });
     });
-
-    logStr(log, "loadWindTable", "Wind table loaded with", result.length, "records.");
-    // Log first and last record timestamps for debugging.
     logStr(
       log,
-      "loadWindTable",
-      "First record: ",
-      windTable[0].timestamp,
-      " ",
-      DateTime.fromSeconds(windTable[0].timestamp).toLocaleString()
-    );
-    logStr(
-      log,
-      "loadWindTable",
-      "Last record: ",
-      windTable[windTable.length - 1].timestamp,
-      " ",
-      DateTime.fromSeconds(windTable[windTable.length - 1].timestamp).toLocaleString()
+      "UpdateWindTable",
+      `added ${result.length} records.`,
+      `First record: ${DateTime.fromSeconds(windTable[0].timestamp).toLocaleString()} (${windTable[0].timestamp})`,
+      `Last record: ${DateTime.fromSeconds(windTable[windTable.length - 1].timestamp).toLocaleString()} (${
+        windTable[windTable.length - 1].timestamp
+      })`
     );
   } catch (error: any) {
     logStr(log, "loadWindTable", "Error loading wind table:", error.message);
@@ -134,15 +124,7 @@ loadWindTable();
 export const UpdateWindTable = async (): Promise<void> => {
   const log: string[] = [""];
 
-  logStr(log, "UpdateWindTable", "Update wind table...");
   try {
-    logStr(
-      log,
-      "UpdateWindTable",
-      "looking for records with id >",
-      ToId(windTable[windTable.length - 1].timestamp.toString())
-    );
-
     const result = await pb.collection("wind").getFullList(10000, {
       filter: `id > "${ToId(windTable[windTable.length - 1].timestamp.toString())}"`,
       sort: "id",
@@ -164,23 +146,16 @@ export const UpdateWindTable = async (): Promise<void> => {
 
     const ts = Math.floor(Date.now() / 1000) - 14 * 24 * 60 * 60;
     while (windTable.length > 0 && windTable[0].timestamp < ts) windTable.shift();
-    logStr(log, "UpdateWindTable", "Wind table loaded with", result.length, "records.");
     // Log first and last record timestamps for debugging.
+
     logStr(
       log,
       "UpdateWindTable",
-      "First record: ",
-      windTable[0].timestamp,
-      " ",
-      DateTime.fromSeconds(windTable[0].timestamp).toLocaleString()
-    );
-    logStr(
-      log,
-      "UpdateWindTable",
-      "Last record: ",
-      windTable[windTable.length - 1].timestamp,
-      " ",
-      DateTime.fromSeconds(windTable[windTable.length - 1].timestamp).toLocaleString()
+      `added ${result.length} records.`,
+      `First record: ${DateTime.fromSeconds(windTable[0].timestamp).toLocaleString()} (${windTable[0].timestamp})`,
+      `Last record: ${DateTime.fromSeconds(windTable[windTable.length - 1].timestamp).toLocaleString()} (${
+        windTable[windTable.length - 1].timestamp
+      })`
     );
   } catch (error: any) {
     logStr(log, "UpdateWindTable", "Error loading wind table:", error.message);
@@ -300,8 +275,6 @@ export const getWindAverage = () => {
     direction: windTable[windTable.length - 1].direction,
   };
 
-  logStr(log, "getWindAverage", "windTable", windTable.length);
-
   // Compute weighted averages over 5 and 15 minute durations.
   for (const duration of [5 * 60, 15 * 60]) {
     const startTime = now - duration;
@@ -310,7 +283,11 @@ export const getWindAverage = () => {
       i--;
     }
     if (i > 0) i--;
-    logStr(log, "getWindAverage", "windTable focus records:", windTable.length - i, "for duration", duration);
+    logStr(
+      log,
+      "getWindAverage",
+      `windTable focus records: ${windTable.length - i} for duration ${duration} out of ${windTable.length} records.`
+    );
 
     let speedSum = 0;
     let totalDuration = 0;
