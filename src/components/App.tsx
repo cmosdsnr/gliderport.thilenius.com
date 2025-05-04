@@ -55,7 +55,7 @@ const App: React.FC = () => {
                                     <Route path="/admin/listEndpoints" element={<PrivateRoute><ListEndpoints /></PrivateRoute>} />
                                     <Route path="/admin/Host" element={<PrivateRoute><Host /></PrivateRoute>} />
                                     <Route path="/admin/Information" element={<PrivateRoute><InfoDisplay /></PrivateRoute>} />
-                                    <Route path="/admin/Debug" element={<PrivateRoute><Debug /></PrivateRoute>} />
+                                    <Route path="/admin/Debug" element={<Debug />} />
                                     <Route path="/admin/Messages" element={<PrivateRoute><MessageLoggerComponent /></PrivateRoute>} />
 
                                     <Route path="/stats" element={<PrivateRoute><Stats /></PrivateRoute>} />
