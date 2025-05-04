@@ -1,62 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Spinner } from 'react-bootstrap';
 import { useData } from 'contexts/DataContext';
+import { pb } from '@/contexts/pb'
 
 const Debug: React.FC = () => {
-    const [loading, setLoading] = useState<boolean>(false);
     const { cameraImages } = useData();
     const [currentIndex1, setCurrentIndex1] = useState(0);
     const [currentIndex2, setCurrentIndex2] = useState(0);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentIndex1(prevIndex => (prevIndex + 1) % cameraImages.camera1.length);
-            setCurrentIndex2(prevIndex => (prevIndex + 1) % cameraImages.camera2.length);
-        }, 300);
+    // get latest record from wind collection
+    const [latestRecord, setLatestRecord] = useState<any>(null);
 
-        return () => clearInterval(interval);
-    }, [cameraImages]);
+    useEffect(() => {
+        const fetchLatestRecord = async () => {
+
+            try {
+                const latest = await pb.collection('wind').getList(1, 1, {
+                    sort: '-created'  // or sort: '-timestamp' if you have a custom field
+                });
+                setLatestRecord(latest.items[0]);
+            } catch (error) {
+                console.error('Error fetching latest record:', error);
+            }
+        };
+        fetchLatestRecord();
+        pb.collection('wind').subscribe('*', (e) => {
+
+            if (e.action === 'create') {
+                setLatestRecord(e.record);
+            };
+
+        });
+
+        return () => {
+            pb.collection('posts').unsubscribe();
+        };
+
+    }, []);
 
     return (
-        <Card>
-            <Card.Header>
-                <h5 className="text-center">Cycling Through Last 5 Small Images</h5>
-            </Card.Header>
-            <Card.Body>
-                {loading ? (
-                    <div className="text-center">
-                        <Spinner animation="border" />
-                    </div>
-                ) : (
-                    <Row>
-                        <Col md={6} className="text-center">
-                            <h5>Camera 1</h5>
-                            {cameraImages.camera1.length > 0 ? (
-                                <img
-                                    src={`data:image/jpeg;base64,${cameraImages.camera1[currentIndex1]}`}
-                                    alt={`Camera 1 - ${currentIndex1}`}
-                                    style={{ width: "100%", maxHeight: "150px", marginBottom: "10px" }}
-                                />
-                            ) : (
-                                <p>No images available</p>
-                            )}
-                        </Col>
-                        <Col md={6} className="text-center">
-                            <h5>Camera 2</h5>
-                            {cameraImages.camera2.length > 0 ? (
-                                <img
-                                    src={`data:image/jpeg;base64,${cameraImages.camera2[currentIndex2]}`}
-                                    alt={`Camera 2 - ${currentIndex2}`}
-                                    style={{ width: "100%", maxHeight: "150px", marginBottom: "10px" }}
-                                />
-                            ) : (
-                                <p>No images available</p>
-                            )}
-                        </Col>
-                    </Row>
-                )}
-            </Card.Body>
-        </Card>
+        <Row>
+            <Col>
+                <Card>
+                    <Card.Header>Latest Wind Record</Card.Header>
+                    <Card.Body>
+                        <Row>
+                            <Col>
+                                {latestRecord ? (
+                                    <div style={{ fontSize: '1.2em' }}>
+                                        <p>Speed: {latestRecord.speed / 10} mph</p>
+                                        <p>Direction: {latestRecord.direction}°</p>
+                                        <p>Temperature: {latestRecord.temperature / 10}°F</p>
+                                        <p>Humidity: {latestRecord.humidity}%</p>
+                                        <p>Pressure: {latestRecord.pressure + 100325} mBar</p>
+                                        <p>Created: {new Date(latestRecord.created).toLocaleString()}</p>
+                                    </div>
+                                ) : (
+                                    <Spinner animation="border" variant="primary" />
+                                )}
+                            </Col>
+                        </Row>
+                    </Card.Body>
+                </Card>
+            </Col>
+        </Row>
     );
 };
 

@@ -46,7 +46,6 @@ const StatsImageComponent: React.FC<StatsImageComponentProps> = () => {
             setCameraDetails(imageDetails[camera]);
             if (Array.isArray(imageDetails.video) && imageDetails.video.length == 2)
                 setVideo(camera == "CameraA" ? imageDetails.video[0] : imageDetails.video[1]);
-            debugger;
             setHourRange([new Date(imageDetails[camera].starting.time).getHours(), new Date(imageDetails[camera].ending.time).getHours()]);
         } else {
             setCameraDetails(null);
@@ -118,7 +117,6 @@ const StatsImageComponent: React.FC<StatsImageComponentProps> = () => {
             .then((response) => response.json())
             .then((data) => {
                 if (data.hasOwnProperty(key)) {
-                    debugger;
                     setImageDay(key);
                     setImageDetails(data[key]);
                 } else {

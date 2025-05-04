@@ -545,7 +545,8 @@ export function DataProvider({ children }: any) {
     }
     return (
         <DataContext.Provider value={value}>
-            {loading ? <h3>Server hardware failure... working on it</h3> : children}
+            {/* {loading ? <h3>Server hardware failure... working on it</h3> : children} */}
+            {children}
             {/* {loading ? <h3>Connecting to Web Socket Server...</h3> : children} */}
         </DataContext.Provider>
     )
