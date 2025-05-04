@@ -90,6 +90,6 @@ app.get("/debug", async (req: Request, res: Response) => {
 });
 
 // Basic root endpoint to confirm that the server is running.
-app.get("/", (req: Request, res: Response) => {
+app.get("/test", (req: Request, res: Response) => {
   res.send("Hello, TypeScript & Express!");
 });

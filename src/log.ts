@@ -78,7 +78,7 @@ export const logStr = (...args: any[]) => {
  * @param {string[]} log - The log array to output.
  */
 export const writeLog = (log: string[]) => {
-  console.log(log.join("\n"));
+  //   console.log(log.join("\n"));
   // Uncomment the following line to also append the log to the file:
-  // fs.appendFileSync(__logFile, log.join("\n") + "\n");
+  fs.appendFileSync(__logFile, log.join("\n") + "\n");
 };
