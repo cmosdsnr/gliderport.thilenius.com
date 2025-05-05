@@ -21,7 +21,13 @@ const LoginModal = () => {
 
     const onLogin = async (data: any) => {
         setIsError(false);
-        await login(data.email, data.password);
+        try {
+            await login(data.email, data.password);
+        } catch (error) {
+            console.log("error: ", error);
+            setIsError(true);
+            return;
+        }
         console.log("onLogin: isLoggedIn:", pb.authStore.isValid, "verified:", pb.authStore.model?.verified);
         if (pb.authStore.isValid) {
             closeModal();
