@@ -64,7 +64,7 @@ const App: React.FC = () => {
                                     <Route path="/stats/changes" element={<PrivateRoute><StatsChangeLogComponent /></PrivateRoute>} />
                                     <Route path="/stats/links" element={<PrivateRoute><StatsUsefulLinksComponent /></PrivateRoute>} />
 
-                                    <Route path="/forecast" element={<PrivateRoute><Forecast /></PrivateRoute>} />
+                                    <Route path="/forecast" element={<Forecast />} />
                                     <Route path="/equipment" element={<PrivateRoute><Equipment /></PrivateRoute>} />
                                     <Route path="/blog" element={<PrivateRoute><MessageBoard /></PrivateRoute>} />
                                     <Route path="/video" element={<PrivateRoute><Video /></PrivateRoute>} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { Link } from 'react-router-dom'
 import Nav from 'react-bootstrap/Nav'
 import Navbar from 'react-bootstrap/Navbar'
@@ -53,6 +53,15 @@ export default function GpNavbar() {
     const [bannerTimer, setBannerTimer] = useState<number>(0);
     const { openModal, closeModal } = useModal();
     const { currentUser } = useAuth();
+
+    useEffect(() => {
+        if (currentUser) {
+            console.log("currentUser: ", currentUser);
+        } else {
+            console.log("currentUser: null");
+        }
+    }
+        , [currentUser]);
 
     const pages: Page[] = [
         {
