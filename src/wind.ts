@@ -365,14 +365,14 @@ const averages = (hours: number, duration: number) => {
     if (record.timestamp - time > duration * 60 || i === items.length - 1) {
       const dt = record.timestamp - time;
       // process the chunk
-      response.push({
-        timestamp: time,
-        speed: Math.round(Math.sqrt(sumX * sumX + sumY * sumY) / dt),
-        direction: (360 + Math.round((Math.atan2(sumY, sumX) * 180) / Math.PI)) % 360,
-        temperature: Math.round(sumTemp / dt),
-        pressure: Math.round(sumPress / dt),
-        humidity: Math.round(sumHum / dt),
-      });
+      response.push([
+        time,
+        Math.round(Math.sqrt(sumX * sumX + sumY * sumY) / dt),
+        (360 + Math.round((Math.atan2(sumY, sumX) * 180) / Math.PI)) % 360,
+        Math.round(sumTemp / dt),
+        Math.round(sumPress / dt),
+        Math.round(sumHum / dt),
+      ]);
       time = record.timestamp;
       sumX = 0;
       sumY = 0;
