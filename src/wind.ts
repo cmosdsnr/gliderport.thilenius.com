@@ -366,6 +366,7 @@ const averages = (hours: number, duration: number) => {
       const dt = record.timestamp - time;
       // process the chunk
       response.push({
+        timestamp: time,
         speed: Math.round(Math.sqrt(sumX * sumX + sumY * sumY) / dt),
         direction: Math.round((Math.atan2(sumY, sumX) * 180) / Math.PI),
         temperature: Math.round(sumTemp / dt),
