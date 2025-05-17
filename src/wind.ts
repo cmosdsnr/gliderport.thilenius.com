@@ -33,6 +33,7 @@ import { checkAndSendTexts } from "sendTextMessage.js";
 import { logStr, writeLog } from "log.js";
 import { codes, updateCodes, convertToCodes } from "codes.js";
 import { transmitNewRecords } from "socket.js";
+import { getCode } from "codes.js";
 
 export let windTable: WindTable = [];
 
@@ -370,14 +371,18 @@ const averages = (hours: number, duration: number) => {
 
     if (record.timestamp - time > duration * 60 || i === items.length - 1) {
       const dt = record.timestamp - time;
+      const speed = Math.round(Math.sqrt(sumX * sumX + sumY * sumY) / dt);
+      const direction = (360 + Math.round((Math.atan2(sumY, sumX) * 180) / Math.PI)) % 360;
+      const code = getCode(speed, direction);
       // process the chunk
       response.push([
         time,
-        Math.round(Math.sqrt(sumX * sumX + sumY * sumY) / dt),
-        (360 + Math.round((Math.atan2(sumY, sumX) * 180) / Math.PI)) % 360,
+        speed,
+        direction,
         Math.round(sumTemp / dt),
         Math.round(sumPress / dt),
         Math.round(sumHum / dt),
+        code,
       ]);
       time += duration * 60;
       sumX = 0;
