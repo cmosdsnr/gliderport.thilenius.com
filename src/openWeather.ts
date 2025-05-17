@@ -37,6 +37,7 @@ export interface ForecastEntry {
   pop: number;
   sys: { pod: "d" | "n" };
   dt_txt: string;
+  code: WindCode;
 }
 
 export interface City {
@@ -125,6 +126,9 @@ export let forecast: any;
 setInterval(async () => {
   try {
     forecast = await fetchOpenWeather();
+    forecast.list.forEach((entry: ForecastEntry) => {
+      entry.code = getCode(10 * entry.wind.speed, entry.wind.deg);
+    });
   } catch (error) {
     console.error("Error updating forecast data:", error);
   }
