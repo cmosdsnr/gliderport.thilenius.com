@@ -368,7 +368,7 @@ const averages = (hours: number, duration: number) => {
       response.push({
         timestamp: time,
         speed: Math.round(Math.sqrt(sumX * sumX + sumY * sumY) / dt),
-        direction: Math.round((Math.atan2(sumY, sumX) * 180) / Math.PI),
+        direction: (360 + Math.round((Math.atan2(sumY, sumX) * 180) / Math.PI)) % 360,
         temperature: Math.round(sumTemp / dt),
         pressure: Math.round(sumPress / dt),
         humidity: Math.round(sumHum / dt),
