@@ -342,11 +342,17 @@ const averages = (hours: number, duration: number) => {
   // last mark
   const start = Math.floor(DateTime.now().toSeconds() / (duration * 60)) * (duration * 60) - hours * 60 * 60;
 
+  // find the index of the last record in windTable that is less than start
+  let i = windTable.length - 1;
+  while (i >= 0 && windTable[i].timestamp > start) {
+    i--;
+  }
+  if (i > 0) i--;
   // wind table items between start and end
-  const items = windTable.filter((record) => record.timestamp > start);
+  const items = windTable.slice(i);
 
   // sum chunks of duration minutes
-  let time = items[0].timestamp;
+  let time = start;
   let sumX = 0;
   let sumY = 0;
   let sumTemp = 0;
@@ -355,7 +361,7 @@ const averages = (hours: number, duration: number) => {
 
   for (let i = 1; i < items.length; i++) {
     const record = items[i];
-    const elapsed = record.timestamp - items[i - 1].timestamp;
+    const elapsed = items[i - 1].timestamp > time ? record.timestamp - items[i - 1].timestamp : record.timestamp - time;
     sumX += Math.cos((record.direction * Math.PI) / 180) * record.speed * elapsed;
     sumY += Math.sin((record.direction * Math.PI) / 180) * record.speed * elapsed;
     sumTemp += record.temperature * elapsed;
@@ -373,7 +379,7 @@ const averages = (hours: number, duration: number) => {
         Math.round(sumPress / dt),
         Math.round(sumHum / dt),
       ]);
-      time = record.timestamp;
+      time += duration * 60;
       sumX = 0;
       sumY = 0;
       sumTemp = 0;
