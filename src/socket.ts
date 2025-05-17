@@ -33,6 +33,18 @@ export const transmitNewImage = (camera: number, image: string, date: number) =>
   });
 };
 
+export const transmitNewImageMobile = (camera: number, image: string, date: number) => {
+  console.log("transmitNewImage");
+  [...clients.keys()].forEach((client) => {
+    client.send(
+      JSON.stringify({
+        command: "newImage",
+        imageInfo: { camera, image, date },
+      })
+    );
+  });
+};
+
 export const socketServer = (server: http.Server) => {
   const wss = new WebSocketServer({ server });
   console.log("Starting webSocketServer on port ", process.env.PORT);

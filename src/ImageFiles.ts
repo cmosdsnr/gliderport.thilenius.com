@@ -91,7 +91,7 @@ const lastFiveSmallImagesCamera1: ImageList = [];
 const lastFiveSmallImagesCamera2: ImageList = [];
 const lastBigImagesCamera: ImageList = [];
 
-//hold teh current 4 images (big/small left/right)
+//hold the current 4 images (big/small left/right)
 const currentImages: string[] = [];
 
 /**

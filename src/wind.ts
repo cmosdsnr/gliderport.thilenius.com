@@ -335,6 +335,54 @@ export const getWindAverage = () => {
   return response;
 };
 
+const averages = (hours: number, duration: number) => {
+  const log: string[] = [];
+  const response: any[] = [];
+
+  // last mark
+  const start = Math.floor(DateTime.now().toSeconds() / (duration * 60)) * (duration * 60) - hours * 60 * 60;
+
+  // wind table items between start and end
+  const items = windTable.filter((record) => record.timestamp > start);
+
+  // sum chunks of duration minutes
+  let time = items[0].timestamp;
+  let sumX = 0;
+  let sumY = 0;
+  let sumTemp = 0;
+  let sumPress = 0;
+  let sumHum = 0;
+
+  for (let i = 1; i < items.length; i++) {
+    const record = items[i];
+    const elapsed = record.timestamp - items[i - 1].timestamp;
+    sumX += Math.cos((record.direction * Math.PI) / 180) * record.speed * elapsed;
+    sumY += Math.sin((record.direction * Math.PI) / 180) * record.speed * elapsed;
+    sumTemp += record.temperature * elapsed;
+    sumPress += record.pressure * elapsed;
+    sumHum += record.humidity * elapsed;
+
+    if (record.timestamp - time > duration * 60 || i === items.length - 1) {
+      const dt = record.timestamp - time;
+      // process the chunk
+      response.push({
+        speed: Math.round(Math.sqrt(sumX * sumX + sumY * sumY) / dt),
+        direction: Math.round((Math.atan2(sumY, sumX) * 180) / Math.PI),
+        temperature: Math.round(sumTemp / dt),
+        pressure: Math.round(sumPress / dt),
+        humidity: Math.round(sumHum / dt),
+      });
+      time = record.timestamp;
+      sumX = 0;
+      sumY = 0;
+      sumTemp = 0;
+      sumPress = 0;
+      sumHum = 0;
+    }
+  }
+  return response;
+};
+
 /**
  * Creates an Express router for handling wind data related endpoints.
  *
@@ -363,13 +411,28 @@ export const windRoutes = (): Router => {
     }
   });
 
+  // Endpoint: GET /averages: gets the 'duration' minute averages for the last 'hours' hours of windData.
+  router.get("/averages", async (req: Request, res: Response) => {
+    try {
+      const hours = parseInt(req.query.hours as string);
+      const duration = parseInt(req.query.duration as string);
+      if (!duration || ![5, 15, 30, 60].includes(duration) || !hours) {
+        res.status(400).send("Invalid duration. Only 5, 15, 30, 60 minutes are allowed or hours was not provided.");
+        return;
+      }
+      res.status(200).json(averages(hours, duration));
+    } catch (error: any) {
+      res.status(500).send("Error in getData: " + error.message);
+    }
+  });
+
   // Endpoint: GET /getLastEntry - Returns the timestamp of the latest wind data record.
   router.get("/getLastEntry", (req: Request, res: Response) => {
     if (windTable.length === 0) res.send("Error");
     else res.send(windTable[windTable.length - 1].timestamp.toString());
   });
 
-  // Endpoint: GET /fetchNewWind - tells the server there are new records in the pb database. Called from the pi3 at teh gliderport.
+  // Endpoint: GET /fetchNewWind - tells the server there are new records in the pb database. Called from the pi3 at the gliderport.
   // It will update the in-memory windTable with the latest records from PocketBase.
   router.get("/fetchNewWind", (req: Request, res: Response) => {
     UpdateWindTable();
