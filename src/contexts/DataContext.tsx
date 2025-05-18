@@ -27,7 +27,7 @@ const fetchData = async (): Promise<Reading[]> => {
             data.forEach((d: any) => {
                 d.time = d.timestamp;
                 delete d.timestamp;
-                d.pressure = d.pressure + 101325;
+                d.pressure = (d.pressure + 101325) / 1000;
                 d.speed = d.speed / 10;
                 d.temperature = d.temperature / 10;
             });
@@ -332,7 +332,7 @@ export function DataProvider({ children }: any) {
                         messageBody.records.forEach((d: any) => {
                             d.time = d.timestamp;
                             delete d.timestamp;
-                            d.pressure = d.pressure + 101325;
+                            d.pressure = (d.pressure + 101325) / 1000;
                             d.speed = d.speed / 10;
                             d.temperature = d.temperature / 10;
                         });
@@ -408,7 +408,7 @@ export function DataProvider({ children }: any) {
                                 temperature: l.temperature,
                             };
                             newRecord.speed = speed ? speed / 10 : l.speed;
-                            newRecord.pressure = pressure ? pressure + 101325 : l.pressure;
+                            newRecord.pressure = pressure ? (pressure + 101325) / 1000 : l.pressure;
                             newRecord.temperature = temperature ? temperature / 10 : l.temperature;
                             // setReadings([newRecord]);
                         }
