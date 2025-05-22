@@ -34,7 +34,7 @@ const ToId = (x: string): string => {
   return "0".repeat(15 - x.length).toLowerCase() + x;
 };
 
-let temperature = 70;
+let temperature = 700;
 
 const getTemperature = async () => {
   try {
@@ -43,7 +43,7 @@ const getTemperature = async () => {
     );
     if (response.status === 200) {
       const data = response.data;
-      temperature = data.main.temp;
+      temperature = 10 * data.main.temp;
     } else {
       console.error("Error fetching temperature data:", response.statusText);
     }
