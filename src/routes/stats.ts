@@ -82,6 +82,10 @@ const statsRoutes = (): Router => {
     res.send("ok");
   });
 
+  router.get("/report", async (req: Request, res: Response) => {
+    res.send("ok");
+  });
+
   return router;
 };
 

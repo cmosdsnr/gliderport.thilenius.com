@@ -34,6 +34,28 @@ const ToId = (x: string): string => {
   return "0".repeat(15 - x.length).toLowerCase() + x;
 };
 
+let temperature = 70;
+
+const getTemperature = async () => {
+  try {
+    const response = await axios.get(
+      "https://api.openweathermap.org/data/2.5/weather?lat=32.889956&lon=-117.251632&units=imperial&appid=483c6b4301f7069cbf4e266bffa6d5ff"
+    );
+    if (response.status === 200) {
+      const data = response.data;
+      temperature = data.main.temp;
+    } else {
+      console.error("Error fetching temperature data:", response.statusText);
+    }
+  } catch (error) {
+    console.error("Error fetching temperature data:", error);
+  }
+};
+
+setInterval(() => {
+  getTemperature();
+}, 1000 * 60); // Update every 60s
+
 /**
  * Uploads a single row of sensor data to the PocketBase "wind" collection.
  *
@@ -58,7 +80,8 @@ export const uploadToPocketbase = async (row: RawReadings): Promise<boolean> => 
         id,
         speed: row.speed,
         direction: row.angle,
-        temperature: Math.round(10 * temperature),
+        // temperature: Math.round(10 * temperature),
+        temperature,
         humidity: row.s_count ? row.s_humidity : 0,
         pressure: row.s_pressure,
       })
