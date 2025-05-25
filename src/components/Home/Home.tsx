@@ -12,6 +12,7 @@ import WindDial from './WindDial'
 import Status from '../Status'
 import Charts from '../Charts/Charts'
 import UpdatingImage from './UpdatingImage'
+import UpdatingVideo from './UpdatingVideo'
 import KoFiWidget from './KoFiWidget';
 import { StatusCollectionProvider, useStatusCollection } from '@/contexts/StatusCollection'
 import 'css/home.css';
@@ -78,7 +79,8 @@ const Home = () => {
                                 {/* style={{ border: "1px solid black" }} */}
                                 <Row>
                                     <Col xs={12} className="container" >
-                                        <UpdatingImage />
+                                        {/* <UpdatingImage /> */}
+                                        <UpdatingVideo />
                                     </Col>
                                 </Row>
                             </Col>

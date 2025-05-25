@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Spinner } from 'react-bootstrap';
 import { useData } from 'contexts/DataContext';
 import { pb } from '@/contexts/pb'
+import HLSPlayer from '../HlsPlayer';
+
 
 const Debug: React.FC = () => {
     const { cameraImages } = useData();
@@ -40,6 +42,17 @@ const Debug: React.FC = () => {
 
     return (
         <Row>
+            <div>
+                <h1>Camera Stream</h1>
+                <HLSPlayer src="http://gpupdate.thilenius.com/images/stream/camera1/index.m3u8"
+                />
+            </div>
+
+            <div>
+                <h1>Camera Stream</h1>
+                <HLSPlayer src="http://gpupdate.thilenius.com/images/stream/camera2/index.m3u8"
+                />
+            </div>
             <Col>
                 <Card>
                     <Card.Header>Latest Wind Record</Card.Header>
