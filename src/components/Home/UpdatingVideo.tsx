@@ -129,8 +129,8 @@ export default function UpdatingImage({ }: Props) {
                     </div>
                 ) : (
                     <div style={{ position: 'relative' }}>
-                        {camera == 1 && <HLSPlayer src="http://gpupdate.thilenius.com/images/stream/camera1/index.m3u8" />}
-                        {camera == 2 && <HLSPlayer src="http://gpupdate.thilenius.com/images/stream/camera2/index.m3u8" />}
+                        {camera == 1 && <HLSPlayer src="https://gpupdate.thilenius.com/images/stream/camera1/index.m3u8" />}
+                        {camera == 2 && <HLSPlayer src="https://gpupdate.thilenius.com/images/stream/camera2/index.m3u8" />}
                     </div>
                 )}
             </Row>
