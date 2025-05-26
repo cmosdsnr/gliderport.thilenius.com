@@ -47,8 +47,11 @@ const HLSPlayer: React.FC<HLSPlayerProps> = ({
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
                 startPlayback();
             });
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                console.error('HLS.js error:', data);
+            hls.on(Hls.Events.ERROR, (event, { type, details, fatal }) => {
+                console.error('HLS error', event, details);
+                if (fatal) {
+                    hls.startLoad(); // try to recover
+                }
             });
             return () => {
                 hls.destroy();
