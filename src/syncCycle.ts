@@ -34,7 +34,7 @@ const ToId = (x: string): string => {
   return "0".repeat(15 - x.length).toLowerCase() + x;
 };
 
-let temperature = 700;
+let openWeatherTemperature = 700;
 
 const getTemperature = async () => {
   try {
@@ -43,7 +43,7 @@ const getTemperature = async () => {
     );
     if (response.status === 200) {
       const data = response.data;
-      temperature = 10 * data.main.temp;
+      openWeatherTemperature = 10 * data.main.temp;
     } else {
       console.error("Error fetching temperature data:", response.statusText);
     }
@@ -81,7 +81,7 @@ export const uploadToPocketbase = async (row: RawReadings): Promise<boolean> => 
         speed: row.speed,
         direction: row.angle,
         // temperature: Math.round(10 * temperature),
-        temperature,
+        temperature: openWeatherTemperature,
         humidity: row.s_count ? row.s_humidity : 0,
         pressure: row.s_pressure,
       })
