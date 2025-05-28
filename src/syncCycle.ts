@@ -43,7 +43,7 @@ const getTemperature = async () => {
     );
     if (response.status === 200) {
       const data = response.data;
-      openWeatherTemperature = 10 * data.main.temp;
+      openWeatherTemperature = Math.floor(10 * data.main.temp);
     } else {
       console.error("Error fetching temperature data:", response.statusText);
     }
