@@ -173,74 +173,74 @@ export const UpdateWindTable = async (): Promise<void> => {
  *
  * @returns {Promise<void>} A promise that resolves when new wind records have been processed.
  */
-export async function processNewWindRecords(): Promise<void> {
-  const log: string[] = [""];
-  try {
-    // Step 1: Get the latest wind record from PocketBase.
-    const pbResponse = await pb.collection("wind").getList(1, 1, { sort: "-id" });
-    let highestTimestamp = 0;
+// export async function processNewWindRecords(): Promise<void> {
+//   const log: string[] = [""];
+//   try {
+//     // Step 1: Get the latest wind record from PocketBase.
+//     const pbResponse = await pb.collection("wind").getList(1, 1, { sort: "-id" });
+//     let highestTimestamp = 0;
 
-    if (pbResponse?.items?.length > 0) {
-      const highestId = pbResponse.items[0].id;
-      highestTimestamp = parseInt(highestId, 10);
-    }
+//     if (pbResponse?.items?.length > 0) {
+//       const highestId = pbResponse.items[0].id;
+//       highestTimestamp = parseInt(highestId, 10);
+//     }
 
-    // Convert the highest timestamp to LA local time for logging.
-    const highestLA = DateTime.fromSeconds(highestTimestamp, {
-      zone: "America/Los_Angeles",
-    });
-    const highestDateLA = highestLA.toFormat("yyyy-MM-dd HH:mm:ss");
+//     // Convert the highest timestamp to LA local time for logging.
+//     const highestLA = DateTime.fromSeconds(highestTimestamp, {
+//       zone: "America/Los_Angeles",
+//     });
+//     const highestDateLA = highestLA.toFormat("yyyy-MM-dd HH:mm:ss");
 
-    logStr(log, "processNewWindRecords", "Querying for SQL records newer than:", highestDateLA);
+//     logStr(log, "processNewWindRecords", "Querying for SQL records newer than:", highestDateLA);
 
-    // Step 2: Query SQL for records recorded after highestDateLA.
-    const sqlQuery = "SELECT * FROM gliderport WHERE recorded > ? ORDER BY recorded ASC";
-    const sqlResult = await connection?.promise().query<any[]>(sqlQuery, [highestDateLA]);
-    const newSqlRecords = sqlResult ? sqlResult[0] : [];
+//     // Step 2: Query SQL for records recorded after highestDateLA.
+//     const sqlQuery = "SELECT * FROM gliderport WHERE recorded > ? ORDER BY recorded ASC";
+//     const sqlResult = await connection?.promise().query<any[]>(sqlQuery, [highestDateLA]);
+//     const newSqlRecords = sqlResult ? sqlResult[0] : [];
 
-    logStr(log, "processNewWindRecords", `Found ${newSqlRecords.length} new records in SQL.`);
+//     logStr(log, "processNewWindRecords", `Found ${newSqlRecords.length} new records in SQL.`);
 
-    // Step 3: Convert SQL records to the PocketBase wind record format.
-    const recordsToInsert: any[] = [];
-    for (const row of newSqlRecords) {
-      const recordedLA = DateTime.fromJSDate(row.recorded, {
-        zone: "America/Los_Angeles",
-      });
-      const timestamp = Math.floor(recordedLA.toUTC().toSeconds());
-      if (isNaN(timestamp)) {
-        logStr(log, "processNewWindRecords", "Invalid timestamp for record:", row, "Aborting.");
-        return;
-      }
-      const record: any[] = [
-        timestamp,
-        Math.min(row.speed, 511),
-        Math.min(row.direction, 359),
-        Math.min(row.temperature, 1023),
-        row.humidity,
-        Math.max(-4090, Math.min(row.pressure, 4090)),
-      ];
-      recordsToInsert.push(record);
-    }
+//     // Step 3: Convert SQL records to the PocketBase wind record format.
+//     const recordsToInsert: any[] = [];
+//     for (const row of newSqlRecords) {
+//       const recordedLA = DateTime.fromJSDate(row.recorded, {
+//         zone: "America/Los_Angeles",
+//       });
+//       const timestamp = Math.floor(recordedLA.toUTC().toSeconds());
+//       if (isNaN(timestamp)) {
+//         logStr(log, "processNewWindRecords", "Invalid timestamp for record:", row, "Aborting.");
+//         return;
+//       }
+//       const record: any[] = [
+//         timestamp,
+//         Math.min(row.speed, 511),
+//         Math.min(row.direction, 359),
+//         Math.min(row.temperature, 1023),
+//         row.humidity,
+//         Math.max(-4090, Math.min(row.pressure, 4090)),
+//       ];
+//       recordsToInsert.push(record);
+//     }
 
-    logStr(log, "processNewWindRecords", `Inserting ${recordsToInsert.length} records into PocketBase.`);
+//     logStr(log, "processNewWindRecords", `Inserting ${recordsToInsert.length} records into PocketBase.`);
 
-    // Step 4: Insert each new record into PocketBase.
-    for (const record of recordsToInsert) {
-      const [timestamp, speed, direction, temperature, humidity, pressure] = record;
-      const id = ToId(timestamp.toString());
-      try {
-        await pb.collection("wind").create({ id, speed, direction, temperature, humidity, pressure });
-      } catch (err: any) {
-        logStr(log, "processNewWindRecords", `Failed to insert record with id ${id}:`, err.message);
-      }
-    }
+//     // Step 4: Insert each new record into PocketBase.
+//     for (const record of recordsToInsert) {
+//       const [timestamp, speed, direction, temperature, humidity, pressure] = record;
+//       const id = ToId(timestamp.toString());
+//       try {
+//         await pb.collection("wind").create({ id, speed, direction, temperature, humidity, pressure });
+//       } catch (err: any) {
+//         logStr(log, "processNewWindRecords", `Failed to insert record with id ${id}:`, err.message);
+//       }
+//     }
 
-    logStr(log, "processNewWindRecords", "✅ New wind records synced.");
-  } catch (error: any) {
-    logStr(log, "processNewWindRecords", "❌ Error processing wind records:", error.message);
-  }
-  writeLog(log);
-}
+//     logStr(log, "processNewWindRecords", "✅ New wind records synced.");
+//   } catch (error: any) {
+//     logStr(log, "processNewWindRecords", "❌ Error processing wind records:", error.message);
+//   }
+//   writeLog(log);
+// }
 
 /**
  * Calculates average wind speed and direction over specified durations.
@@ -457,7 +457,7 @@ export const windRoutes = (): Router => {
       const log: string[] = [""];
       logStr(log, "addWindFromSQL", "###############################################");
       console.log(log.join("\n"));
-      await processNewWindRecords();
+      //   await processNewWindRecords();
       res.status(200).json({ log });
       //   setInterval(simulateAddData, 1000 * 30);
     } catch (error) {

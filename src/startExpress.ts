@@ -26,6 +26,9 @@ import cors from "cors";
 import fileUpload from "express-fileupload";
 import { socketServer } from "./socket.js"; // Import the socket server setup
 
+import fs from "fs";
+import path from "path";
+
 export var app: any | null = null;
 
 /**
@@ -66,9 +69,49 @@ export const startExpress = (): void => {
   };
   app.use(cors(corsOptions));
 
+  // In-memory counters
+  interface IPCounts {
+    [ip: string]: number;
+  }
+
+  const hitCount = { total: 0 };
+  const ipCounts: IPCounts = {};
+
+  const STREAM_ROUTE = "/stream";
+  const STREAM_DIR = "/app/gliderport/stream";
+  const LOG_FILE = path.join(__dirname, "app/gliderport/stream/stream_access.log");
+
+  // Middleware to count hits and log access
+  app.use(STREAM_ROUTE, (req: Request, res: Response, next: NextFunction) => {
+    const ip = req.ip || req.connection.remoteAddress || "unknown";
+    const filePath = req.path;
+
+    // Increment total hits
+    hitCount.total++;
+    // Increment per-IP count
+    ipCounts[ip] = (ipCounts[ip] || 0) + 1;
+
+    // Append log entry
+    const logLine = `${new Date().toISOString()} ${ip} ${filePath}\n`;
+    fs.appendFile(LOG_FILE, logLine, (err) => {
+      if (err) console.error("Failed to write log:", err);
+    });
+
+    next();
+  });
+
+  // Serve static files under /stream
+  app.use(STREAM_ROUTE, express.static(STREAM_DIR));
+
+  app.get("/stats", (_req: Request, res: Response) => {
+    res.json({ totalHits: hitCount.total, byIP: ipCounts });
+  });
+
+  app.use("/images", express.static("/app/gliderport/images"));
+  // Stats endpoint
+
   // Serve static files from the "/app/docs" directory.
   app.use("/docs", express.static("/app/docs"));
-  app.use("/images", express.static("/app/gliderport"));
   app.use("/", express.static("/app/gp_dist"));
 
   // (Optional) Enable file uploads with specific limits.
