@@ -79,7 +79,7 @@ export const startExpress = (): void => {
 
   const STREAM_ROUTE = "/stream";
   const STREAM_DIR = "/app/gliderport/stream";
-  const LOG_FILE = path.join(__dirname, "app/gliderport/stream/stream_access.log");
+  const LOG_FILE = "/app/gliderport/stream/stream_access.log";
 
   // Middleware to count hits and log access
   app.use(STREAM_ROUTE, (req: Request, res: Response, next: NextFunction) => {
