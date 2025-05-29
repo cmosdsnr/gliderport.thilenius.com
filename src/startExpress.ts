@@ -100,6 +100,10 @@ export const startExpress = (): void => {
 
   // Stats & logging middleware
   app.use(STREAM_ROUTE, (req: Request, res: Response, next: NextFunction) => {
+    if (!req.path.endsWith(".ts")) {
+      return next();
+    }
+
     pruneOldStats();
 
     // Extract client IP
