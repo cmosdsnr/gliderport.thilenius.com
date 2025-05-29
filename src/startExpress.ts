@@ -29,6 +29,21 @@ import { socketServer } from "./socket.js"; // Import the socket server setup
 import fs from "fs";
 import path from "path";
 
+// --- Types for stats ---
+type HourBucket = string; // e.g. "2025-05-29T22:00"
+interface Stats {
+  totalHitsByHour: Record<HourBucket, number>;
+  hitsByIPByHour: Record<HourBucket, Record<string, number>>;
+}
+
+// In-memory stats
+const stats: Stats = { totalHitsByHour: {}, hitsByIPByHour: {} };
+
+const PORT = process.env.PORT || 3000;
+const STREAM_ROUTE = "/stream";
+const STREAM_DIR = "/app/gliderport/stream";
+const LOG_FILE = "/app/gliderport/stream/stream_access.log";
+
 export var app: any | null = null;
 
 /**
@@ -41,7 +56,7 @@ export var app: any | null = null;
  */
 export const startExpress = (): void => {
   app = express();
-
+  app.set("trust proxy", true);
   // Define the port to listen on, defaulting to 1234 if not specified in the environment.
   const port = process.env.PORT || 1234;
 
@@ -69,32 +84,42 @@ export const startExpress = (): void => {
   };
   app.use(cors(corsOptions));
 
-  // In-memory counters
-  interface IPCounts {
-    [ip: string]: number;
+  /**
+   * Prune stats older than 24 hours to keep only the last day
+   */
+  function pruneOldStats() {
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    for (const hourKey of Object.keys(stats.totalHitsByHour)) {
+      const hourDate = new Date(hourKey);
+      if (hourDate.getTime() < cutoff) {
+        delete stats.totalHitsByHour[hourKey];
+        delete stats.hitsByIPByHour[hourKey];
+      }
+    }
   }
 
-  const hitCount = { total: 0 };
-  const ipCounts: IPCounts = {};
-
-  const STREAM_ROUTE = "/stream";
-  const STREAM_DIR = "/app/gliderport/stream";
-  const LOG_FILE = "/app/gliderport/stream/stream_access.log";
-
-  // Middleware to count hits and log access
+  // Stats & logging middleware
   app.use(STREAM_ROUTE, (req: Request, res: Response, next: NextFunction) => {
-    const ip = req.ip || req.connection.remoteAddress || "unknown";
-    const filePath = req.path;
+    pruneOldStats();
 
-    // Increment total hits
-    hitCount.total++;
-    // Increment per-IP count
-    ipCounts[ip] = (ipCounts[ip] || 0) + 1;
+    // Extract client IP
+    const fwd = req.headers["x-forwarded-for"];
+    let ip = typeof fwd === "string" ? fwd.split(",")[0].trim() : req.socket.remoteAddress || "unknown";
+    ip = ip.replace(/^::ffff:/, "");
 
-    // Append log entry
-    const logLine = `${new Date().toISOString()} ${ip} ${filePath}\n`;
+    // Bucket by UTC hour
+    const now = new Date();
+    const hourKey = now.toISOString().slice(0, 13) + ":00";
+
+    // Increment counters
+    stats.totalHitsByHour[hourKey] = (stats.totalHitsByHour[hourKey] || 0) + 1;
+    stats.hitsByIPByHour[hourKey] = stats.hitsByIPByHour[hourKey] || {};
+    stats.hitsByIPByHour[hourKey][ip] = (stats.hitsByIPByHour[hourKey][ip] || 0) + 1;
+
+    // Log to file
+    const logLine = `${now.toISOString()} ${ip} ${req.path}` + "\n";
     fs.appendFile(LOG_FILE, logLine, (err) => {
-      if (err) console.error("Failed to write log:", err);
+      if (err) console.error("Log write failed:", err);
     });
 
     next();
@@ -103,8 +128,9 @@ export const startExpress = (): void => {
   // Serve static files under /stream
   app.use(STREAM_ROUTE, express.static(STREAM_DIR));
 
+  // Stats endpoint
   app.get("/stats", (_req: Request, res: Response) => {
-    res.json({ totalHits: hitCount.total, byIP: ipCounts });
+    res.json(stats);
   });
 
   app.use("/images", express.static("/app/gliderport/images"));

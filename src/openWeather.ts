@@ -59,6 +59,8 @@ export interface Forecast {
   city: City;
 }
 
+// https://api.openweathermap.org/data/2.5/weather?lat=32.889956&lon=-117.251632&units=imperial&appid=483c6b4301f7069cbf4e266bffa6d5ff
+
 //stored codes set in fetchOpenWeather
 let codes: any = [[], []];
 
