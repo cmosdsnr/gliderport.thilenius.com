@@ -80,7 +80,7 @@ export default function registerStreams(app: express.Application) {
         }
       }
     }
-    stats.fiveMinuteBitrate = Date.now() == oldestDate ? 0 : (sum / (Date.now() - oldestDate)) * 1000; // bytes per second
+    stats.fiveMinuteBitrate = Date.now() == oldestDate ? 0 : Math.round((sum / (Date.now() - oldestDate)) * 1000); // bytes per second
     // Log to file
     const logLine = `${now.toISOString()} ${ip} ${req.path}` + "\n";
     fs.appendFile(LOG_FILE, logLine, (err) => {

@@ -2,6 +2,9 @@ import { Request, Response, Router } from "express";
 import { getSun } from "sun.js";
 import { getCode, getLastMidnightLA, WindCode } from "codes.js";
 import { DateTime } from "luxon";
+import { pb } from "pb.js";
+import { ToId } from "miscellaneous.js";
+
 export interface MainWeather {
   temp: number;
   feels_like: number;
@@ -128,9 +131,8 @@ export let forecast: any;
 setInterval(async () => {
   try {
     forecast = await fetchOpenWeather();
-    forecast.list.forEach((entry: ForecastEntry) => {
-      entry.code = getCode(10 * entry.wind.speed, entry.wind.deg);
-    });
+    forecast.list.forEach((entry: ForecastEntry) => (entry.code = getCode(10 * entry.wind.speed, entry.wind.deg)));
+    pb.collection("status").update(ToId("forecast"), { record: forecast });
   } catch (error) {
     console.error("Error updating forecast data:", error);
   }
