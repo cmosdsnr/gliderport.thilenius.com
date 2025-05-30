@@ -123,12 +123,7 @@ const fetchOpenWeather = async (): Promise<any> => {
 // forecast data
 export let forecast: any;
 
-(async () => {
-  forecast = await fetchOpenWeather();
-})();
-
-// Refresh forecast every 2 hours
-setInterval(async () => {
+const getForecast = async () => {
   try {
     forecast = await fetchOpenWeather();
     forecast.list.forEach((entry: ForecastEntry) => (entry.code = getCode(10 * entry.wind.speed, entry.wind.deg)));
@@ -136,7 +131,11 @@ setInterval(async () => {
   } catch (error) {
     console.error("Error updating forecast data:", error);
   }
-}, 2 * 3600_000);
+};
+getForecast();
+
+// Refresh forecast every 2 hours
+setInterval(getForecast, 2 * 3600_000);
 
 /**
  * Creates an Express router exposing forecast endpoints.
