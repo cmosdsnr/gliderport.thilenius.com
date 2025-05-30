@@ -5,6 +5,7 @@ export interface StatusCollectionInterface {
     sun: Sun;
     sleeping: boolean;
     siteMessages: string[];
+    forecast: any;
 }
 
 const StatusCollectionContext = createContext<StatusCollectionInterface>({} as StatusCollectionInterface);
@@ -18,7 +19,7 @@ export function StatusCollectionProvider({ children }: any) {
     const [sun, setSun] = useState<Sun>({ rise: 0, set: 0 });
     const [sleeping, setSleeping] = useState<boolean>(false);
     const [siteMessages, setSiteMessages] = useState<string[]>([]);
-    const [siteForecast, setForecast] = useState<Forecast>([]);
+    const [forecast, setForecast] = useState<any>({});
 
     async function loadInitial() {
         try {
@@ -67,7 +68,7 @@ export function StatusCollectionProvider({ children }: any) {
         };
     }, []);
 
-    const value: StatusCollectionInterface = { sun, sleeping, siteMessages };
+    const value: StatusCollectionInterface = { sun, sleeping, siteMessages, forecast };
 
 
     return (

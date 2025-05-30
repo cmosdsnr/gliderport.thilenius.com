@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useContext, useRef, Dispatch
 import { useInterval } from 'hooks/useInterval'
 import { formatter, b64toBlob } from 'components/Globals'
 import { useMessages } from 'components/Admin/MessageLogger'
+import { StatusCollectionProvider } from './StatusCollection'
 
 export type Reading = {
     time: number;
@@ -385,10 +386,12 @@ export function DataProvider({ children }: any) {
 
     }
     return (
-        <DataContext.Provider value={value}>
-            {/* {loading ? <h3>Server hardware failure... working on it</h3> : children} */}
-            {children}
-            {/* {loading ? <h3>Connecting to Web Socket Server...</h3> : children} */}
-        </DataContext.Provider>
+        <StatusCollectionProvider>
+            <DataContext.Provider value={value}>
+                {/* {loading ? <h3>Server hardware failure... working on it</h3> : children} */}
+                {children}
+                {/* {loading ? <h3>Connecting to Web Socket Server...</h3> : children} */}
+            </DataContext.Provider>
+        </StatusCollectionProvider>
     )
 }

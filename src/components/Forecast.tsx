@@ -83,7 +83,7 @@ const dateFmt = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "sho
 
 
 const buildChartData = (entries: ForecastEntry[]) =>
-    entries.map((e, i) => ({
+    entries?.map((e, i) => ({
         index: 3 * i,
         hour: hourFmt.format(new Date(e.dt * 1000)),
         ts: e.dt,
@@ -113,7 +113,7 @@ const bandColors = ["#d5f5f5", "#e8f0de"];
 // };
 
 const buildBands = (data: ReturnType<typeof buildChartData>) => {
-    if (!data.length) return [];
+    if (!data || !data.length) return [];
     const bands: { x1: number; x2: number; fill: string; label: string }[] = [];
     const startHour = parseInt(data[0].hour, 10);
     for (let day = 0; day < 6; day++) {
@@ -126,7 +126,7 @@ const buildBands = (data: ReturnType<typeof buildChartData>) => {
 
 // ticks every 6 h (indices divisible by 2) plus ends
 const buildTicks = (data: ReturnType<typeof buildChartData>) => {
-    if (!data.length) return [];
+    if (!data || !data.length) return [];
     const ticks: number[] = [0];
     const startHour = parseInt(data[0].hour, 10); // first slice hour (0‑23)
     // ticks between 0 and 5*24 -3 
