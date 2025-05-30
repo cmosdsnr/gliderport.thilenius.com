@@ -25,34 +25,9 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import fileUpload from "express-fileupload";
 import { socketServer } from "./socket.js"; // Import the socket server setup
-
-import fs from "fs";
-import path from "path";
-
-// --- Types for stats ---
-type HourBucket = string; // e.g. "2025-05-29T22:00"
-interface Stats {
-  totalHitsByHour: Record<HourBucket, number>;
-  hitsByIPByHour: Record<HourBucket, Record<string, number>>;
-  fiveMinuteBitrate?: number; // Average bitrate in bytes per second over the last 5 minutes
-}
-
-type LastFiveMinutes = {
-  [key: string]: {
-    date: number; // Timestamp of the last hit
-    size: number; // Size of the last hit in bytes
-  };
-};
-
-const lastFiveMinutes: LastFiveMinutes = {};
-// In-memory stats
-const stats: Stats = { totalHitsByHour: {}, hitsByIPByHour: {} };
+import registerStreams from "./streams.js"; // Import the stream registration function
 
 const PORT = process.env.PORT || 3000;
-const STREAM_ROUTE = "/stream";
-const STREAM_DIR = "/app/gliderport/stream";
-const LOG_FILE = "/app/gliderport/stream/stream_access.log";
-
 export var app: any | null = null;
 
 /**
@@ -93,73 +68,7 @@ export const startExpress = (): void => {
   };
   app.use(cors(corsOptions));
 
-  /**
-   * Prune stats older than 24 hours to keep only the last day
-   */
-  function pruneOldStats() {
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-    for (const hourKey of Object.keys(stats.totalHitsByHour)) {
-      const hourDate = new Date(hourKey);
-      if (hourDate.getTime() < cutoff) {
-        delete stats.totalHitsByHour[hourKey];
-        delete stats.hitsByIPByHour[hourKey];
-      }
-    }
-  }
-
-  // Stats & logging middleware
-  app.use(STREAM_ROUTE, (req: Request, res: Response, next: NextFunction) => {
-    if (!req.path.endsWith(".ts")) {
-      return next();
-    }
-
-    pruneOldStats();
-
-    // Extract client IP
-    const fwd = req.headers["x-forwarded-for"];
-    let ip = typeof fwd === "string" ? fwd.split(",")[0].trim() : req.socket.remoteAddress || "unknown";
-    ip = ip.replace(/^::ffff:/, "");
-
-    // Bucket by UTC hour
-    const now = new Date();
-    const hourKey = now.toISOString().slice(0, 13) + ":00";
-
-    // Increment counters
-    stats.totalHitsByHour[hourKey] = (stats.totalHitsByHour[hourKey] || 0) + 1;
-    stats.hitsByIPByHour[hourKey] = stats.hitsByIPByHour[hourKey] || {};
-    stats.hitsByIPByHour[hourKey][ip] = (stats.hitsByIPByHour[hourKey][ip] || 0) + 1;
-
-    lastFiveMinutes[req.path] = {
-      date: Date.now(),
-      size: fs.statSync(path.join(STREAM_DIR, req.path)).size,
-    };
-    //remove entries older than 5 minutes
-    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-    let sum = 0;
-    for (const key in lastFiveMinutes) {
-      if (lastFiveMinutes[key].date < fiveMinutesAgo) {
-        delete lastFiveMinutes[key];
-      } else {
-        sum += lastFiveMinutes[key].size;
-      }
-    }
-    stats.fiveMinuteBitrate = sum / (5 * 60);
-    // Log to file
-    const logLine = `${now.toISOString()} ${ip} ${req.path}` + "\n";
-    fs.appendFile(LOG_FILE, logLine, (err) => {
-      if (err) console.error("Log write failed:", err);
-    });
-
-    next();
-  });
-
-  // Serve static files under /stream
-  app.use(STREAM_ROUTE, express.static(STREAM_DIR));
-
-  // Stats endpoint
-  app.get("/stats", (_req: Request, res: Response) => {
-    res.json(stats);
-  });
+  registerStreams(app); // Register the stream routes and middleware before other routes
 
   app.use("/images", express.static("/app/gliderport/images"));
   // Stats endpoint
