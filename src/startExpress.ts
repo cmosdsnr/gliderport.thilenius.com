@@ -34,8 +34,17 @@ type HourBucket = string; // e.g. "2025-05-29T22:00"
 interface Stats {
   totalHitsByHour: Record<HourBucket, number>;
   hitsByIPByHour: Record<HourBucket, Record<string, number>>;
+  fiveMinuteBitrate?: number; // Average bitrate in bytes per second over the last 5 minutes
 }
 
+type LastFiveMinutes = {
+  [key: string]: {
+    date: number; // Timestamp of the last hit
+    size: number; // Size of the last hit in bytes
+  };
+};
+
+const lastFiveMinutes: LastFiveMinutes = {};
 // In-memory stats
 const stats: Stats = { totalHitsByHour: {}, hitsByIPByHour: {} };
 
@@ -120,6 +129,21 @@ export const startExpress = (): void => {
     stats.hitsByIPByHour[hourKey] = stats.hitsByIPByHour[hourKey] || {};
     stats.hitsByIPByHour[hourKey][ip] = (stats.hitsByIPByHour[hourKey][ip] || 0) + 1;
 
+    lastFiveMinutes[req.path] = {
+      date: Date.now(),
+      size: fs.statSync(path.join(STREAM_DIR, req.path)).size,
+    };
+    //remove entries older than 5 minutes
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    let sum = 0;
+    for (const key in lastFiveMinutes) {
+      if (lastFiveMinutes[key].date < fiveMinutesAgo) {
+        delete lastFiveMinutes[key];
+      } else {
+        sum += lastFiveMinutes[key].size;
+      }
+    }
+    stats.fiveMinuteBitrate = sum / (5 * 60);
     // Log to file
     const logLine = `${now.toISOString()} ${ip} ${req.path}` + "\n";
     fs.appendFile(LOG_FILE, logLine, (err) => {
