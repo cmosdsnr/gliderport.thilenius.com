@@ -18,6 +18,7 @@ export function StatusCollectionProvider({ children }: any) {
     const [sun, setSun] = useState<Sun>({ rise: 0, set: 0 });
     const [sleeping, setSleeping] = useState<boolean>(false);
     const [siteMessages, setSiteMessages] = useState<string[]>([]);
+    const [siteForecast, setForecast] = useState<Forecast>([]);
 
     async function loadInitial() {
         try {
@@ -32,6 +33,9 @@ export function StatusCollectionProvider({ children }: any) {
                 }
                 if (r.name === 'siteMessage') {
                     setSiteMessages(rec);
+                }
+                if (r.name === 'forecast') {
+                    setForecast(rec);
                 }
             }
         } catch (err) {
@@ -53,6 +57,8 @@ export function StatusCollectionProvider({ children }: any) {
                     setSleeping(!!e.record.record.sleeping);
             } else if (e.record.name === 'siteMessage') {
                 setSiteMessages(e.record.record);
+            } else if (e.record.name === 'forecast') {
+                setForecast(e.record.record);
             }
         });
 

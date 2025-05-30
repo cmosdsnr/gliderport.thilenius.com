@@ -62,25 +62,14 @@ export interface DataContextInterface {
     readings: Reading[];
     status: Array<number>;
     lastCheck: TimeStamp;
-    forecast: Array<Forecast>;
     hitStats: Stats | null;
     passedSeconds: number;
     offline: boolean;
     cameraImages: CameraImages;
-    sleeping: boolean;
-    image1: string | null;
-    bigImage1: string | null;
-    image2: string | null;
-    bigImage2: string | null;
     lastForecast: TimeStamp;
-    videoWidth: number;
-    videoHeight: number;
     numberConnections: number;
-    videoServerOnline: boolean;
-    message: [string | null, string | null];
     //functions
     loadData: (name: string) => void;
-    printDate: (ts: TimeStamp) => string;
 }
 
 const DataContext = createContext<DataContextInterface>({} as DataContextInterface);
@@ -104,24 +93,13 @@ export function DataProvider({ children }: any) {
             temperature: 0,
         }])
     const [status, setStatus] = useState<number[]>([])
-    const [forecast, setForecast] = useState<Forecast[]>([])
     const [hitStats, setHitStats] = useState<Stats>({})
     const [clients, setClients] = useState<Client[]>([])
     const [passedSeconds, setPassedSeconds] = useState(0)
     const [offline, setOffline] = useState(false)
-    const [image1, setImage1] = useState<string | null>(null)
-    const [bigImage1, setBigImage1] = useState<string | null>(null)
-    const [image2, setImage2] = useState<string | null>(null)
-    const [bigImage2, setBigImage2] = useState<string | null>(null)
     const [lastForecast, setLastForecast] = useState(0)
-    const [sleeping, setSleeping] = useState<boolean>(false)
     const [lastCheck, setLastCheck] = useState<TimeStamp>(1658263194)
-    const [videoWidth, setVideoWidth] = useState(0)
-    const [videoHeight, setVideoHeight] = useState(0)
     const [numberConnections, setNumberConnections] = useState(0)
-    const [videoServerOnline, setVideoServerOnline] = useState<boolean>(false)
-
-    const [message, setMessage] = useState<[string | null, string | null]>([null, null])
     const [cameraImages, setCameraImages] = useState<CameraImages>({
         camera1: [],
         camera2: [],
@@ -141,36 +119,7 @@ export function DataProvider({ children }: any) {
         setOffline(d.onlineStatus === 0)
         setLastCheck(d.onlineStatusTouched)
         setLastForecast(d.lastForecast)
-        setVideoWidth(d.videoWidth)
-        setVideoHeight(d.videoHeight)
         setNumberConnections(d.numberConnections);
-        setVideoServerOnline(d.videoServerOnline === 1);
-        setSleeping(d.sleeping == 1 ? true : false);
-    }
-
-    const handleImage1 = (d: gpImageData) => {
-        if (d === null || d.A === undefined) return
-        setImage1(d.A)
-    }
-
-    const handleBigImage1 = (d: gpImageData) => {
-        setBigImage1((d === null ? null : d.A))
-        console.log("Initial fetch of big image")
-    }
-
-    const handleImage2 = (d: gpImageData) => {
-        if (d === null || d.A === undefined) return
-        setImage2(d.A)
-    }
-
-    const handleBigImage2 = (d: gpImageData) => {
-        setBigImage2((d === null ? null : d.A))
-        console.log("Initial fetch of big image")
-    }
-
-    const handleMessage = (msg: [string | null, string | null]) => {
-        setMessage(msg)
-        console.log("Message received")
     }
 
     const handleClients = (d: Client[]) => {
@@ -184,14 +133,8 @@ export function DataProvider({ children }: any) {
         History: setHistory,
         Status: setStatus,
         Clients: handleClients,
-        Forecast: setForecast,
         Stats: setHitStats,
         CurrentData: handleCurrentData,
-        Image1: handleImage1,
-        BigImage1: handleBigImage1,
-        Image2: handleImage2,
-        BigImage2: handleBigImage2,
-        Message: handleMessage,
     }
 
     const ws = useRef<WebSocket | null>(null)
@@ -212,12 +155,6 @@ export function DataProvider({ children }: any) {
         ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL)
         ws.current.onopen = () => {
             console.log("ws opened");
-            // loadData("Message");
-            // loadData("CurrentData");
-            // loadData("Chart");
-            // loadData("Clients");
-            // loadData("Forecast");
-            // testAll()
             setLoading(false);
             setPassedSeconds(0);
         }
@@ -354,15 +291,9 @@ export function DataProvider({ children }: any) {
                             Donors: subCommands.Donors,
                             History: subCommands.History,
                             Status: subCommands.Status,
-                            Forecast: subCommands.Forecast,
                             Clients: subCommands.Clients,
                             Stats: subCommands.Stats,
                             CurrentData: subCommands.CurrentData,
-                            Message: subCommands.Message,
-                            Image1: subCommands.Image1,
-                            BigImage1: subCommands.BigImage1,
-                            Image2: subCommands.Image2,
-                            BigImage2: subCommands.BigImage2,
                         };
 
                         const handler = fetchDataHandlers[subCommand as keyof typeof fetchDataHandlers];
@@ -380,38 +311,11 @@ export function DataProvider({ children }: any) {
                     case 'update': {
                         // Destructure the properties from data.
                         const {
-                            sunrise,
-                            sunset,
                             onlineStatus,
                             onlineStatusTouched,
                             lastForecast,
-                            lastRecord,
-                            speed,
-                            direction,
-                            humidity,
-                            pressure,
-                            temperature,
-                            videoWidth,
-                            videoHeight,
                             numberConnections,
-                            sleeping,
                         } = data;
-
-                        if (speed || direction || humidity || pressure || temperature) {
-                            const l = readings[readings.length - 1];
-                            const newRecord: Reading = {
-                                time: Date.now() / 1000,
-                                speed: l.speed,
-                                direction: direction || l.direction,
-                                humidity: humidity || l.humidity,
-                                pressure: l.pressure,
-                                temperature: l.temperature,
-                            };
-                            newRecord.speed = speed ? speed / 10 : l.speed;
-                            newRecord.pressure = pressure ? (pressure + 101325) / 100 : l.pressure;
-                            newRecord.temperature = temperature ? temperature / 10 : l.temperature;
-                            // setReadings([newRecord]);
-                        }
 
                         if (onlineStatus !== undefined) {
                             setOffline(onlineStatus === 0);
@@ -422,39 +326,8 @@ export function DataProvider({ children }: any) {
                         if (lastForecast) {
                             setLastForecast(lastForecast);
                         }
-                        if (lastRecord) {
-                            // let newRecord = { ...readings, time: lastRecord };
-                            // if (speed !== undefined) newRecord.speed = speed;
-                            // if (direction !== undefined) newRecord.direction = direction;
-                            // if (humidity !== undefined) newRecord.humidity = humidity;
-                            // if (pressure !== undefined) newRecord.pressure = pressure;
-                            // if (temperature !== undefined) newRecord.temperature = temperature;
-                            // setChart([...chart, newRecord]);
-                            // setReadings(newRecord);
-                            // setPassedSeconds(0);
-                        }
-                        if (videoWidth !== undefined) setVideoWidth(videoWidth);
-                        if (videoHeight !== undefined) setVideoHeight(videoHeight);
                         if (numberConnections !== undefined) setNumberConnections(numberConnections);
-                        if (sleeping !== undefined) setSleeping(sleeping === 1);
-                        break;
-                    }
-                    case 'image': {
-                        // Log the data but clear out the image field.
-                        if (data.camera === 1) {
-                            updateImageList(1, data.image, data.date);
-                        }
-                        if (data.camera === 2) {
-                            updateImageList(2, data.image, data.date);
-                        }
-                        break;
-                    }
-                    case 'image1': {
-                        setImage1(data);
-                        break;
-                    }
-                    case 'image2': {
-                        setImage2(data);
+
                         break;
                     }
                     case 'ping': {
@@ -466,15 +339,8 @@ export function DataProvider({ children }: any) {
                         break;
                     }
                 }
-                // if command was image1 or image2 make the data "Image Data"
-                if (command === "image1" || command === "image2")
-                    messageLogger(1, command, subCommand, "Image Data");
-                else
-                    messageLogger(1, command, subCommand, { ...data, image: "Image Data" });
             };
         }
-
-
     }, [ws.current])
 
     const interval = 10 //seconds
@@ -485,22 +351,8 @@ export function DataProvider({ children }: any) {
             startWebSocket();
     }, interval * 1000)
 
-    const printDate = (ts: TimeStamp): string => {
-        const dt = new Date(1000 * ts)
-        return (
-            (1 + dt.getMonth()).toString() + "/" +
-            dt.getDate().toString() + ' ' +
-            (dt.getHours() < 10 ? "0" : "") +
-            dt.getHours().toString() + ":" +
-            (dt.getMinutes() < 10 ? "0" : "") +
-            dt.getMinutes().toString()
-        )
-    }
+
     const testAll = () => {
-        loadData("Image1")
-        loadData("Image2")
-        loadData("BigImage1")
-        loadData("BigImage2")
         loadData("Posts")
         loadData("Donors")
         loadData("History")
@@ -520,27 +372,16 @@ export function DataProvider({ children }: any) {
         posts,
         history,
         readings,
-        forecast,
         status,
         lastCheck,
         hitStats,
         passedSeconds,
         offline,
         cameraImages,
-        sleeping,
-        image1,
-        bigImage1,
-        image2,
-        bigImage2,
         lastForecast,
-        videoWidth,
-        videoHeight,
         numberConnections,
-        videoServerOnline,
         //functions 
         loadData,
-        printDate,
-        message,
 
     }
     return (

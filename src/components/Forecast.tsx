@@ -14,6 +14,7 @@ import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
 import { motion } from "framer-motion";
 import { useLocalStorageState } from "@/hooks/useLocalStorageState";
+import { useStatusCollection } from "@/contexts/StatusCollection";
 import "./Forecast.css"
 // --------------------------------------------------------------------
 // Types                                                               
@@ -152,90 +153,8 @@ const tickFormatter = (idx: number, startHour: number) => {
 // Selectable multi‑series chart                                       
 // --------------------------------------------------------------------
 
-const seriesOptions = [
-    { key: "temp", label: "Temp (°F)", color: "#8884d8" },
-    { key: "feels_like", label: "Feels Like (°F)", color: "#82ca9d" },
-    { key: "humidity", label: "Humidity (%)", color: "#ffc658" },
-    { key: "pressure", label: "Pressure (hPa)", color: "#ff7300" },
-    { key: "wind_speed", label: "Wind Speed (mph)", color: "#0088fe" },
-] as const;
-
 interface ChartProps { data: any, bands: { x1: number; x2: number; fill: string; label: string }[], ticks: number[], startHour: number, seriesOptions?: SeriesOptions, title?: string }
 
-
-function LinesChart({ data, bands, ticks, startHour }: ChartProps) {
-    const [selected, setSelected] = useState<string[]>(["temp"]);
-
-    const toggle = (key: string) =>
-        setSelected((prev) =>
-            prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-        );
-
-    return (
-        <Card className="shadow-lg mb-4">
-            <Card.Body>
-                <div className="d-flex flex-wrap gap-3 mb-3">
-                    {seriesOptions.map((opt) => (
-                        <Form.Check
-                            key={opt.key}
-                            type="checkbox"
-                            id={`series-${opt.key}`}
-                            label={opt.label}
-                            checked={selected.includes(opt.key)}
-                            onChange={() => toggle(opt.key)}
-                        />
-                    ))}
-                </div>
-
-                <motion.div layout>
-                    <ResponsiveContainer width="100%" height={400}>
-                        <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="index"
-                                type="number"
-                                domain={[0, 5 * 24 - 3]}
-                                ticks={ticks}
-                                tickFormatter={(idx: number) => tickFormatter(idx, startHour)}
-                            />
-                            <YAxis />
-                            <RechartTooltip />
-                            <Legend />
-                            {bands.map((b, i) => (
-                                <ReferenceArea
-                                    key={i}
-                                    x1={b.x1}
-                                    x2={b.x2}
-                                    fill={b.fill}
-                                    ifOverflow="extendDomain"
-                                    label={{
-                                        value: b.label,
-                                        position: "top",
-                                        offset: -20,     // pulls the date clear of the grid
-                                        fill: "#000",
-                                        fontSize: 12,
-                                    }}
-                                />
-                            ))}
-                            {seriesOptions
-                                .filter((opt) => selected.includes(opt.key))
-                                .map((opt) => (
-                                    <Line
-                                        key={opt.key}
-                                        type="monotone"
-                                        dataKey={opt.key}
-                                        stroke={opt.color}
-                                        dot={false}
-                                        strokeWidth={2}
-                                    />
-                                ))}
-                        </LineChart>
-                    </ResponsiveContainer>
-                </motion.div>
-            </Card.Body>
-        </Card>
-    );
-}
 
 // --------------------------------------------------------------------
 // Wind Speed & Direction chart                                        
@@ -404,9 +323,10 @@ function Chart({ data, bands, ticks, startHour, seriesOptions, title }: ChartPro
 // Container component                                                  
 // --------------------------------------------------------------------
 export default function ForecastChart() {
-    const [forecast, setForecast] = useState<ForecastResponse | null>(null);
     const [startHour, setStartHour] = useState<number>(0);
     const [error, setError] = useState<string | null>(null);
+
+    const { forecast } = useStatusCollection();
     const data = useMemo(() => (forecast ? buildChartData(forecast.list) : []), [forecast]);
     const bands = useMemo(() => buildBands(data), [data]);
     const ticks = useMemo(() => buildTicks(data), [data]);
@@ -420,26 +340,6 @@ export default function ForecastChart() {
         setSelected((prev) =>
             prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
         );
-
-
-
-    useEffect(() => {
-        const fetchForecast = async () => {
-            try {
-                const url = new URL("/getForecast", import.meta.env.VITE_UPDATE_SERVER_URL);
-                const res = await fetch(url.toString());
-                if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-                const data: ForecastResponse = await res.json();
-                setForecast(data);
-                setStartHour(parseInt(hourFmt.format(new Date(data.list[0].dt * 1000))));
-            } catch (err) {
-                console.error(err);
-                setError((err as Error).message);
-            }
-        };
-
-        fetchForecast();
-    }, []);
 
     const tempOptions = [
         { key: "temp", label: "Temp (°F)", color: "#8884d8" },
