@@ -46,6 +46,13 @@ export default function registerStreams(app: express.Application) {
       return next();
     }
 
+    const fullPath = path.join(STREAM_DIR, req.path);
+    if (!fs.existsSync(fullPath)) {
+      console.warn(`Requested stream file does not exist: ${fullPath}`);
+      res.status(404).send("Stream file not found");
+      return;
+    }
+
     pruneOldStats();
 
     // Extract client IP
