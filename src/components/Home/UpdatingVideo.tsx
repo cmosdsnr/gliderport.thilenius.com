@@ -32,19 +32,19 @@ export default function UpdatingImage({ }: Props) {
     /*                       Sunrise countdown logic                      */
     /* ------------------------------------------------------------------ */
     useEffect(() => {
-        if (sleeping) setSunriseText()
+        console.log("sleeping changed to ", sleeping);
+        if (sleeping) setSunriseText();
+        else setTimeToSunrise('');
     }, [sleeping])
 
     const setSunriseText = () => {
+        if (!sleeping) return
         const tsNow = Date.now() / 1000
-        if (tsNow < sun?.rise) {
-            const secondsToSunrise = Math.round(sun.rise - tsNow)
-            const h = Math.floor(secondsToSunrise / 3600)
-            const m = Math.floor(secondsToSunrise / 60 - h * 60)
-            setTimeToSunrise(`Sunrise in ${h}:${m > 10 ? m : '0' + m}`)
-        } else {
-            setTimeToSunrise('')
-        }
+        let secondsToSunrise = Math.round(24 * 3600 + sun.rise - tsNow);
+        if (secondsToSunrise < 0) secondsToSunrise += 24 * 3600;
+        const h = Math.floor(secondsToSunrise / 3600)
+        const m = Math.floor(secondsToSunrise / 60 - h * 60)
+        setTimeToSunrise(`Sunrise in ${h}:${m > 10 ? m : '0' + m}`)
     }
 
     useInterval(setSunriseText, 60 * 1000)

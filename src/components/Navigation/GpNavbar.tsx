@@ -68,10 +68,6 @@ export default function GpNavbar() {
             icon: faHome,
             name: "Home",
         }, {
-            icon: faVideo,
-            name: "Video",
-            loggedIn: true,
-        }, {
             icon: faInfoCircle,
             name: "Stats",
             loggedIn: true,
