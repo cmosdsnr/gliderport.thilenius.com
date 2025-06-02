@@ -71,7 +71,6 @@ export const startExpress = (): void => {
   registerStreams(app); // Register the stream routes and middleware before other routes
 
   app.use("/images", express.static("/app/gliderport/images"));
-  // Stats endpoint
 
   // Serve static files from the "/app/docs" directory.
   app.use("/docs", express.static("/app/docs"));

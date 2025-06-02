@@ -15,7 +15,7 @@ import fs from "fs";
 import { isDirectory } from "miscellaneous.js";
 
 // Determine the logs directory based on the existence of the "/app/gliderport/logs" folder.
-const logsDir = isDirectory("/app/gliderport/logs") ? "/app/gliderport/logs/" : "/public/logs/";
+const logsDir = isDirectory("/app/gliderport/logs") ? "/app/gliderport/logs/" : "./public/logs/";
 // Define the log file path.
 let __logFile = logsDir + `gpUpdate.log`;
 

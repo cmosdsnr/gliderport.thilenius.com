@@ -76,6 +76,214 @@ import { connection } from "./SqlConnect.js";
 import { DateTime } from "luxon";
 import cron from "node-cron";
 import { logStr, writeLog } from "log.js";
+import { FileRegistry } from "typedoc";
+
+const siteHits = await pb.collection("status").getOne(ToId("sitehits"));
+if (!siteHits.record) {
+  console.error("No siteHits record found in PocketBase. Please create it first.");
+  throw new Error("Missing siteHits record");
+}
+
+let nextMonth = DateTime.fromMillis(siteHits.record.months.start, { zone: "America/Los_Angeles" }).plus({
+  months: siteHits.record.months.total.length + 1,
+});
+
+let nextWeek = DateTime.fromMillis(siteHits.record.weeks.start, { zone: "America/Los_Angeles" }).plus({
+  days: 7 * (siteHits.record.weeks.total.length + 1),
+});
+
+let nextDay = DateTime.fromMillis(siteHits.record.days.start, { zone: "America/Los_Angeles" }).plus({
+  days: siteHits.record.days.total.length + 1,
+});
+
+const updateDay = async () => {
+  const hits = await pb
+    .collection("hitCounter")
+    .getFullList({ filter: `id >= "${ToId(nextDay.minus({ days: 1 }).toMillis().toString())}"` });
+  let count = hits.length;
+  let unique = 0;
+  let index = 0;
+  const uniqueIPs = new Set();
+  while (parseInt(hits[index].id, 10) < nextDay.toMillis()) {
+    if (!uniqueIPs.has(hits[index].ip)) unique++;
+    uniqueIPs.add(hits[index].ip);
+    index++;
+  }
+  siteHits.record.days.total.push(count);
+  siteHits.record.days.unique.push(unique);
+  nextDay = nextDay.plus({ days: 1 });
+  pb.collection("status").update(ToId("sitehits"), { record: siteHits });
+};
+
+const updateWeek = async () => {
+  const hits = await pb
+    .collection("hitCounter")
+    .getFullList({ filter: `id >= "${ToId(nextWeek.minus({ days: 7 }).toMillis().toString())}"` });
+  let count = hits.length;
+  let unique = 0;
+  let index = 0;
+  const uniqueIPs = new Set();
+  while (parseInt(hits[index].id, 10) < nextWeek.toMillis()) {
+    if (!uniqueIPs.has(hits[index].ip)) unique++;
+    uniqueIPs.add(hits[index].ip);
+    index++;
+  }
+  siteHits.record.weeks.total.push(count);
+  siteHits.record.weeks.unique.push(unique);
+  nextWeek = nextWeek.plus({ days: 7 });
+  pb.collection("status").update(ToId("sitehits"), { record: siteHits });
+};
+
+const updateMonth = async () => {
+  const hits = await pb
+    .collection("hitCounter")
+    .getFullList({ filter: `id >= "${ToId(nextMonth.minus({ months: 1 }).toMillis().toString())}"` });
+  let count = hits.length;
+  let unique = 0;
+  let index = 0;
+  const uniqueIPs = new Set();
+  while (parseInt(hits[index].id, 10) < nextMonth.toMillis()) {
+    if (!uniqueIPs.has(hits[index].ip)) unique++;
+    uniqueIPs.add(hits[index].ip);
+    index++;
+  }
+  siteHits.record.months.total.push(count);
+  siteHits.record.months.unique.push(unique);
+  nextWeek = nextMonth.plus({ months: 1 });
+  pb.collection("status").update(ToId("sitehits"), { record: siteHits });
+};
+
+const recreateSiteHits = async () => {
+  const siteHits: any = {};
+  const allRecords = [];
+  let page = 1;
+  const perPage = 1000; // Adjust based on your needs
+
+  while (true) {
+    const batch = await pb.collection("hitCounter").getList(page, perPage);
+    allRecords.push(...batch.items);
+
+    if (batch.page >= batch.totalPages) {
+      break;
+    }
+    if (page % 10 == 0)
+      console.log(`Fetched page ${page} of hitCounter records.`, allRecords.length, "records so far.");
+    page++;
+  }
+  console.log(`Recreating siteHits with ${allRecords.length} records from hitCounter.`);
+  siteHits.lastReset = parseInt(allRecords[0].id);
+  console.log(`Last reset timestamp: ${siteHits.lastReset}`);
+
+  siteHits.timestamp = Date.now();
+  siteHits.weeks = { start: 0, total: [], unique: [] };
+  siteHits.months = { start: 0, total: [], unique: [] };
+  siteHits.days = { start: 0, total: [], unique: [] };
+
+  // ****************** MONTHS ******************
+  let monthStart = DateTime.fromMillis(siteHits.lastReset, { zone: "America/Los_Angeles" })
+    .plus({ days: 10 })
+    .startOf("month");
+  siteHits.months.start = monthStart.toMillis();
+  // find first index of allRecords where the timestamp is greater than or equal to monthStart
+  let index = allRecords.findIndex((record: any) => parseInt(record.id, 10) >= monthStart.toMillis());
+  let monthEnd = monthStart.plus({ months: 1 }).toMillis();
+  while (1) {
+    let count = 0;
+    let unique = 0;
+    const uniqueIPs = new Set();
+    while (parseInt(allRecords[index].id, 10) < monthEnd) {
+      count++;
+      if (!uniqueIPs.has(allRecords[index].ip)) unique++;
+      uniqueIPs.add(allRecords[index].ip);
+
+      index++;
+      if (index >= allRecords.length) {
+        console.log("No more records found for monthStart.");
+        break;
+      }
+    }
+    if (index >= allRecords.length) {
+      console.log("No more records found");
+      break;
+    }
+    siteHits.months.total.push(count);
+    siteHits.months.unique.push(unique);
+    monthStart = monthStart.plus({ months: 1 });
+    monthEnd = monthStart.plus({ months: 1 }).toMillis();
+  }
+
+  // ****************** WEEKS ******************
+  let weekStart = DateTime.fromMillis(siteHits.lastReset, { zone: "America/Los_Angeles" })
+    .plus({ days: (5 - DateTime.fromMillis(siteHits.lastReset, { zone: "America/Los_Angeles" }).weekday + 7) % 7 })
+    .plus({ days: 7 })
+    .startOf("day");
+  siteHits.weeks.start = weekStart.toMillis();
+  // find first index of allRecords where the timestamp is greater than or equal to weekStart
+  index = allRecords.findIndex((record: any) => parseInt(record.id, 10) >= weekStart.toMillis());
+  let weekEnd = weekStart.plus({ days: 7 }).toMillis();
+
+  while (1) {
+    let count = 0;
+    let unique = 0;
+    const uniqueIPs = new Set();
+    while (parseInt(allRecords[index].id, 10) < weekEnd) {
+      count++;
+      if (!uniqueIPs.has(allRecords[index].ip)) unique++;
+      uniqueIPs.add(allRecords[index].ip);
+
+      index++;
+      if (index >= allRecords.length) {
+        console.log("No more records found for weekStart.");
+        break;
+      }
+    }
+    if (index >= allRecords.length) {
+      console.log("No more records found");
+      break;
+    }
+    siteHits.weeks.total.push(count);
+    siteHits.weeks.unique.push(unique);
+    weekStart = weekStart.plus({ days: 7 });
+    weekEnd = weekStart.plus({ days: 7 }).toMillis();
+  }
+
+  // ****************** DAYS ******************
+  let dayStart = DateTime.fromMillis(siteHits.lastReset + 24 * 3600 * 1000, { zone: "America/Los_Angeles" }).startOf(
+    "day"
+  );
+  siteHits.days.start = dayStart.toMillis();
+  // find first index of allRecords where the timestamp is greater than or equal to dayStart
+  index = allRecords.findIndex((record: any) => parseInt(record.id, 10) >= dayStart.toMillis());
+  let dayEnd = dayStart.plus({ days: 1 }).toMillis();
+
+  while (1) {
+    let count = 0;
+    let unique = 0;
+    const uniqueIPs = new Set();
+    while (parseInt(allRecords[index].id, 10) < dayEnd) {
+      count++;
+      if (!uniqueIPs.has(allRecords[index].ip)) unique++;
+      uniqueIPs.add(allRecords[index].ip);
+
+      index++;
+      if (index >= allRecords.length) {
+        console.log("No more records found for dayStart.");
+        break;
+      }
+    }
+    if (index >= allRecords.length) {
+      console.log("No more records found");
+      break;
+    }
+    siteHits.days.total.push(count);
+    siteHits.days.unique.push(unique);
+    dayStart = dayStart.plus({ days: 1 });
+    dayEnd = dayStart.plus({ days: 1 }).toMillis();
+  }
+
+  pb.collection("status").update(ToId("sitehits"), { record: siteHits });
+  return siteHits;
+};
 
 // Define the time window (10 minutes in milliseconds)
 const RECENT_HIT_WINDOW = 10 * 60 * 1000; // 600,000 ms
@@ -146,6 +354,9 @@ export const hit = async (req: Request) => {
   try {
     // Create the hitCounter record.
     await pb.collection("hitCounter").create({ id, ip });
+    if (now > nextDay.toMillis()) await updateDay();
+    if (now > nextWeek.toMillis()) await updateWeek();
+    if (now > nextMonth.toMillis()) await updateMonth();
     // Add the hit to the in-memory cache.
     recentHits.push({ ip, timestamp: now });
     logStr(log, "hit", `Recorded hit from IP ${ip}`);
@@ -305,7 +516,7 @@ const sqlToPbHitCounter = async () => {
  * {
  *   weeks: { [weekStartTimestamp]: { count: number, uniqueIPs: number } },
  *   months: { [monthStartTimestamp]: { count: number, uniqueIPs: number } },
- *   days: { [dayStartTimestamp]: { count: number, uniqueIPs: number } },
+ *   days: { [monthStartTimestamp]: { count: number, uniqueIPs: number } },
  *   timestamp: number
  * }
  *
@@ -321,7 +532,7 @@ async function updateAggregationRecord() {
   const now = DateTime.now().setZone("America/Los_Angeles");
 
   // Calculate boundaries.
-  const todayStart = now.startOf("day").toMillis();
+  const tomonthStart = now.startOf("day").toMillis();
   const tomorrowStart = now.plus({ days: 1 }).startOf("day").toMillis();
   // For weeks, assume week starts on Sunday.
   // (Luxon: weekday 1 (Monday) ... 7 (Sunday); subtract (weekday % 7) days so that Sunday is 0 days subtracted)
@@ -440,51 +651,51 @@ async function updateAggregationRecord() {
   // ---------------------------
   // Update Daily Aggregates
   // ---------------------------
-  // If the aggregation record's timestamp is older than todayStart,
+  // If the aggregation record's timestamp is older than tomonthStart,
   // aggregate yesterday's data (if missing)
-  if (aggregation.timestamp < todayStart) {
-    const yesterdayStart = now.minus({ days: 1 }).startOf("day").toMillis();
-    if (!aggregation.days[yesterdayStart]) {
-      const yesterdayFilter = `id >= "${ToId(yesterdayStart.toString())}" && id < "${ToId(todayStart.toString())}"`;
+  if (aggregation.timestamp < tomonthStart) {
+    const yestermonthStart = now.minus({ days: 1 }).startOf("day").toMillis();
+    if (!aggregation.days[yestermonthStart]) {
+      const yesterdayFilter = `id >= "${ToId(yestermonthStart.toString())}" && id < "${ToId(tomonthStart.toString())}"`;
       logStr(
         log,
         "updateAggregationRecord",
-        `Aggregating yesterday: ${DateTime.fromMillis(yesterdayStart).toLocaleString()} to ${DateTime.fromMillis(
-          todayStart
+        `Aggregating yesterday: ${DateTime.fromMillis(yestermonthStart).toLocaleString()} to ${DateTime.fromMillis(
+          tomonthStart
         ).toLocaleString()}`
       );
-      aggregation.days[yesterdayStart] = await aggregateRecords(yesterdayFilter);
+      aggregation.days[yestermonthStart] = await aggregateRecords(yesterdayFilter);
     }
   }
   // For days older than yesterday (i.e. from 2 days ago up to 7 days ago), aggregate only if missing.
   for (let d = 2; d < 7; d++) {
-    const dayStart = now.minus({ days: d }).startOf("day").toMillis();
-    if (!aggregation.days[dayStart]) {
-      const nextDayStart = DateTime.fromMillis(dayStart, { zone: "America/Los_Angeles" })
+    const monthStart = now.minus({ days: d }).startOf("day").toMillis();
+    if (!aggregation.days[monthStart]) {
+      const nextDayStart = DateTime.fromMillis(monthStart, { zone: "America/Los_Angeles" })
         .plus({ days: 1 })
         .startOf("day")
         .toMillis();
-      const dayFilter = `id >= "${ToId(dayStart.toString())}" && id < "${ToId(nextDayStart.toString())}"`;
+      const dayFilter = `id >= "${ToId(monthStart.toString())}" && id < "${ToId(nextDayStart.toString())}"`;
       logStr(
         log,
         "updateAggregationRecord",
-        `Aggregating day: ${DateTime.fromMillis(dayStart).toLocaleString()} to ${DateTime.fromMillis(
+        `Aggregating day: ${DateTime.fromMillis(monthStart).toLocaleString()} to ${DateTime.fromMillis(
           nextDayStart
         ).toLocaleString()}`
       );
-      aggregation.days[dayStart] = await aggregateRecords(dayFilter);
+      aggregation.days[monthStart] = await aggregateRecords(dayFilter);
     }
   }
   // Always update today's entry.
-  const todayFilter = `id >= "${ToId(todayStart.toString())}" && id < "${ToId(tomorrowStart.toString())}"`;
+  const todayFilter = `id >= "${ToId(tomonthStart.toString())}" && id < "${ToId(tomorrowStart.toString())}"`;
   logStr(
     log,
     "updateAggregationRecord",
-    `Aggregating today: ${DateTime.fromMillis(todayStart).toLocaleString()} to ${DateTime.fromMillis(
+    `Aggregating today: ${DateTime.fromMillis(tomonthStart).toLocaleString()} to ${DateTime.fromMillis(
       tomorrowStart
     ).toLocaleString()}`
   );
-  aggregation.days[todayStart] = await aggregateRecords(todayFilter);
+  aggregation.days[tomonthStart] = await aggregateRecords(todayFilter);
 
   // Update the aggregation record's timestamp.
   aggregation.timestamp = now.toMillis();
@@ -536,6 +747,11 @@ export const hitRoutes = () => {
     }
     res.json({ status: "Updated Aggregation" });
   });
+
+  //   router.get("/hitstest", async (req: Request, res: Response) => {
+  //     const siteHits = await recreateSiteHits();
+  //     res.json(siteHits);
+  //   });
 
   return router;
 };
