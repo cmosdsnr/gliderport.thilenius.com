@@ -332,25 +332,39 @@ export const hit = async (req: Request) => {
 };
 
 const report = async () => {
-  const log: string[] = [""];
-
   const month = DateTime.fromMillis(siteHits.months.start, { zone: "America/Los_Angeles" });
-  const lastMonth = month.plus({ months: siteHits.months.total.length - 1 });
-  logStr(log, "hitsReport", `Number of months ${siteHits.months.total.length}`);
-  logStr(log, "hitsReport", `first recorded month: ${month.toLocaleString(DateTime.DATE_SHORT)}`);
-  logStr(log, "hitsReport", `last recorded month: ${lastMonth.toLocaleString(DateTime.DATE_SHORT)}`);
-
   const week = DateTime.fromMillis(siteHits.weeks.start, { zone: "America/Los_Angeles" });
-  const lastWeek = week.plus({ days: 7 * (siteHits.weeks.total.length - 1) });
-  logStr(log, "hitsReport", `Number of weeks ${siteHits.weeks.total.length}`);
-  logStr(log, "hitsReport", `first recorded week: ${week.toLocaleString(DateTime.DATE_SHORT)}`);
-  logStr(log, "hitsReport", `last recorded week: ${lastWeek.toLocaleString(DateTime.DATE_SHORT)}`);
-
   const day = DateTime.fromMillis(siteHits.days.start, { zone: "America/Los_Angeles" });
-  const lastDay = day.plus({ days: siteHits.days.total.length - 1 });
-  logStr(log, "hitsReport", `Number of days ${siteHits.days.total.length}`);
-  logStr(log, "hitsReport", `first recorded day: ${day.toLocaleString(DateTime.DATE_SHORT)}`);
-  logStr(log, "hitsReport", `last recorded day: ${lastDay.toLocaleString(DateTime.DATE_SHORT)}`);
+
+  const res: any = {};
+  res.months = {
+    count: siteHits.months.total.length,
+    first: month.toLocaleString(DateTime.DATE_SHORT),
+    last: month.plus({ months: siteHits.months.total.length - 1 }).toLocaleString(DateTime.DATE_SHORT),
+  };
+  res.weeks = {
+    count: siteHits.weeks.total.length,
+    first: week.toLocaleString(DateTime.DATE_SHORT),
+    last: week.plus({ days: 7 * (siteHits.weeks.total.length - 1) }).toLocaleString(DateTime.DATE_SHORT),
+  };
+  res.days = {
+    count: siteHits.days.total.length,
+    first: day.toLocaleString(DateTime.DATE_SHORT),
+    last: day.plus({ days: siteHits.days.total.length - 1 }).toLocaleString(DateTime.DATE_SHORT),
+  };
+
+  const log: string[] = [""];
+  logStr(log, "hitsReport", `Number of months ${res.months.count}`);
+  logStr(log, "hitsReport", `first recorded month: ${res.months.first}`);
+  logStr(log, "hitsReport", `last recorded month: ${res.months.last}`);
+
+  logStr(log, "hitsReport", `Number of weeks ${res.weeks.count}`);
+  logStr(log, "hitsReport", `first recorded week: ${res.weeks.first}`);
+  logStr(log, "hitsReport", `last recorded week: ${res.weeks.last}`);
+
+  logStr(log, "hitsReport", `Number of days ${res.days.count}`);
+  logStr(log, "hitsReport", `first recorded day: ${res.days.first}`);
+  logStr(log, "hitsReport", `last recorded day: ${res.days.last}`);
 
   logStr(
     log,
@@ -371,7 +385,9 @@ const report = async () => {
     })}`
   );
   writeLog(log);
-  return log;
+
+  res.log = log;
+  return res;
 };
 /**
  * Creates an Express router for handling hit counter aggregation.
