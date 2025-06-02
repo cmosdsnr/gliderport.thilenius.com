@@ -323,6 +323,55 @@ export const hit = async (req: Request) => {
   }
 };
 
+const report = async () => {
+  const log: string[] = [""];
+  const siteHits = await pb.collection("status").getOne(ToId("sitehits"));
+
+  if (!siteHits.record) {
+    logStr(log, "hitsReport", "No siteHits record found in PocketBase. Please create it first.");
+    writeLog(log);
+    return log;
+  }
+
+  let month = DateTime.fromMillis(siteHits.record.months.start, { zone: "America/Los_Angeles" });
+  let lastMonth = month.plus({ months: siteHits.record.months.total.length });
+  logStr(log, "hitsReport", `Number of months ${siteHits.record.months.total.length}`);
+  logStr(log, "hitsReport", `Last recorded month starts at ${month.toISO()}`);
+  logStr(log, "hitsReport", `Next month starts at ${lastMonth.toISO()}`);
+
+  let week = DateTime.fromMillis(siteHits.record.weeks.start, { zone: "America/Los_Angeles" });
+  let lastWeek = week.plus({ days: 7 * siteHits.record.weeks.total.length });
+  logStr(log, "hitsReport", `Number of weeks ${siteHits.record.weeks.total.length}`);
+  logStr(log, "hitsReport", `Last recorded week starts at ${week.toISO()}`);
+  logStr(log, "hitsReport", `Next week starts at ${lastWeek.toISO()}`);
+
+  let day = DateTime.fromMillis(siteHits.record.days.start, { zone: "America/Los_Angeles" });
+  let lastDay = day.plus({ days: siteHits.record.days.total.length });
+  logStr(log, "hitsReport", `Number of days ${siteHits.record.days.total.length}`);
+  logStr(log, "hitsReport", `Last recorded day starts at ${day.toISO()}`);
+  logStr(log, "hitsReport", `Next day starts at ${lastDay.toISO()}`);
+
+  logStr(
+    log,
+    "hitsReport",
+    `Last Reset: ${new Date(siteHits.record.lastReset).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })}`
+  );
+  logStr(
+    log,
+    "hitsReport",
+    `Current Timestamp: ${new Date(siteHits.record.timestamp).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })}`
+  );
+  writeLog(log);
+  return log;
+};
 /**
  * Creates an Express router for handling hit counter aggregation.
  *
@@ -336,9 +385,14 @@ export const hit = async (req: Request) => {
 export const hitRoutes = () => {
   const router = express.Router();
 
-  router.get("/hitstest", async (req: Request, res: Response) => {
+  router.get("/recreateSiteHits", async (req: Request, res: Response) => {
     const siteHits = await recreateSiteHits();
     res.json(siteHits);
+  });
+
+  router.get("/hitsReport", async (req: Request, res: Response) => {
+    const log = await report();
+    res.json(log);
   });
 
   return router;
