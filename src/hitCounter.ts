@@ -82,7 +82,7 @@ if (!siteHitsRecord.record) {
   throw new Error("Missing siteHits record");
 }
 const siteHits: any = siteHitsRecord.record;
-
+console.log("siteHits record loaded from PocketBase:", siteHits);
 if (!siteHits.months) throw new Error("Missing siteHits.months");
 if (!siteHits.weeks) throw new Error("Missing siteHits.weeks");
 if (!siteHits.days) throw new Error("Missing siteHits.days");
@@ -330,13 +330,6 @@ export const hit = async (req: Request) => {
 
 const report = async () => {
   const log: string[] = [""];
-  const siteHits = await pb.collection("status").getOne(ToId("sitehits"));
-
-  if (!siteHits) {
-    logStr(log, "hitsReport", "No siteHits record found in PocketBase. Please create it first.");
-    writeLog(log);
-    return log;
-  }
 
   let month = DateTime.fromMillis(siteHits.months.start, { zone: "America/Los_Angeles" });
   let lastMonth = month.plus({ months: siteHits.months.total.length - 1 });
