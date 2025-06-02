@@ -337,20 +337,20 @@ const report = async () => {
   const month = DateTime.fromMillis(siteHits.months.start, { zone: "America/Los_Angeles" });
   const lastMonth = month.plus({ months: siteHits.months.total.length - 1 });
   logStr(log, "hitsReport", `Number of months ${siteHits.months.total.length}`);
-  logStr(log, "hitsReport", `Last recorded month starts at ${month.toLocaleString(DateTime.DATE_SHORT)}`);
-  logStr(log, "hitsReport", `Next month starts at ${lastMonth.toLocaleString(DateTime.DATE_SHORT)}`);
+  logStr(log, "hitsReport", `first recorded month: ${month.toLocaleString(DateTime.DATE_SHORT)}`);
+  logStr(log, "hitsReport", `last recorded month: ${lastMonth.toLocaleString(DateTime.DATE_SHORT)}`);
 
   const week = DateTime.fromMillis(siteHits.weeks.start, { zone: "America/Los_Angeles" });
   const lastWeek = week.plus({ days: 7 * (siteHits.weeks.total.length - 1) });
   logStr(log, "hitsReport", `Number of weeks ${siteHits.weeks.total.length}`);
-  logStr(log, "hitsReport", `Last recorded week starts at ${week.toLocaleString(DateTime.DATE_SHORT)}`);
-  logStr(log, "hitsReport", `Next week starts at ${lastWeek.toLocaleString(DateTime.DATE_SHORT)}`);
+  logStr(log, "hitsReport", `first recorded week: ${week.toLocaleString(DateTime.DATE_SHORT)}`);
+  logStr(log, "hitsReport", `last recorded week: ${lastWeek.toLocaleString(DateTime.DATE_SHORT)}`);
 
   const day = DateTime.fromMillis(siteHits.days.start, { zone: "America/Los_Angeles" });
   const lastDay = day.plus({ days: siteHits.days.total.length - 1 });
   logStr(log, "hitsReport", `Number of days ${siteHits.days.total.length}`);
-  logStr(log, "hitsReport", `Last recorded day starts at ${day.toLocaleString(DateTime.DATE_SHORT)}`);
-  logStr(log, "hitsReport", `Next day starts at ${lastDay.toLocaleString(DateTime.DATE_SHORT)}`);
+  logStr(log, "hitsReport", `first recorded day: ${day.toLocaleString(DateTime.DATE_SHORT)}`);
+  logStr(log, "hitsReport", `last recorded day: ${lastDay.toLocaleString(DateTime.DATE_SHORT)}`);
 
   logStr(
     log,
