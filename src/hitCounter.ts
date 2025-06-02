@@ -75,23 +75,24 @@ import { ToId } from "miscellaneous.js";
 import { DateTime } from "luxon";
 import { logStr, writeLog } from "log.js";
 
-const siteHits = await pb.collection("status").getOne(ToId("sitehits"));
+const siteHitsRecord = await pb.collection("status").getOne(ToId("sitehits"));
 
-if (!siteHits.record) {
+if (!siteHitsRecord.record) {
   console.error("No siteHits record found in PocketBase. Please create it first.");
   throw new Error("Missing siteHits record");
 }
+const siteHits: any = siteHitsRecord.record;
 
-let nextMonth = DateTime.fromMillis(siteHits.record.months.start, { zone: "America/Los_Angeles" }).plus({
-  months: siteHits.record.months.total.length + 1,
+let nextMonth = DateTime.fromMillis(siteHits.months.start, { zone: "America/Los_Angeles" }).plus({
+  months: siteHits.months.total.length + 1,
 });
 
-let nextWeek = DateTime.fromMillis(siteHits.record.weeks.start, { zone: "America/Los_Angeles" }).plus({
-  days: 7 * (siteHits.record.weeks.total.length + 1),
+let nextWeek = DateTime.fromMillis(siteHits.weeks.start, { zone: "America/Los_Angeles" }).plus({
+  days: 7 * (siteHits.weeks.total.length + 1),
 });
 
-let nextDay = DateTime.fromMillis(siteHits.record.days.start, { zone: "America/Los_Angeles" }).plus({
-  days: siteHits.record.days.total.length + 1,
+let nextDay = DateTime.fromMillis(siteHits.days.start, { zone: "America/Los_Angeles" }).plus({
+  days: siteHits.days.total.length + 1,
 });
 
 const updateDay = async () => {
@@ -107,8 +108,8 @@ const updateDay = async () => {
     uniqueIPs.add(hits[index].ip);
     index++;
   }
-  siteHits.record.days.total.push(count);
-  siteHits.record.days.unique.push(unique);
+  siteHits.days.total.push(count);
+  siteHits.days.unique.push(unique);
   nextDay = nextDay.plus({ days: 1 });
   pb.collection("status").update(ToId("sitehits"), { record: siteHits });
 };
@@ -126,8 +127,8 @@ const updateWeek = async () => {
     uniqueIPs.add(hits[index].ip);
     index++;
   }
-  siteHits.record.weeks.total.push(count);
-  siteHits.record.weeks.unique.push(unique);
+  siteHits.weeks.total.push(count);
+  siteHits.weeks.unique.push(unique);
   nextWeek = nextWeek.plus({ days: 7 });
   pb.collection("status").update(ToId("sitehits"), { record: siteHits });
 };
@@ -145,8 +146,8 @@ const updateMonth = async () => {
     uniqueIPs.add(hits[index].ip);
     index++;
   }
-  siteHits.record.months.total.push(count);
-  siteHits.record.months.unique.push(unique);
+  siteHits.months.total.push(count);
+  siteHits.months.unique.push(unique);
   nextWeek = nextMonth.plus({ months: 1 });
   pb.collection("status").update(ToId("sitehits"), { record: siteHits });
 };
@@ -327,34 +328,34 @@ const report = async () => {
   const log: string[] = [""];
   const siteHits = await pb.collection("status").getOne(ToId("sitehits"));
 
-  if (!siteHits.record) {
+  if (!siteHits) {
     logStr(log, "hitsReport", "No siteHits record found in PocketBase. Please create it first.");
     writeLog(log);
     return log;
   }
 
-  let month = DateTime.fromMillis(siteHits.record.months.start, { zone: "America/Los_Angeles" });
-  let lastMonth = month.plus({ months: siteHits.record.months.total.length });
-  logStr(log, "hitsReport", `Number of months ${siteHits.record.months.total.length}`);
+  let month = DateTime.fromMillis(siteHits.months.start, { zone: "America/Los_Angeles" });
+  let lastMonth = month.plus({ months: siteHits.months.total.length - 1 });
+  logStr(log, "hitsReport", `Number of months ${siteHits.months.total.length}`);
   logStr(log, "hitsReport", `Last recorded month starts at ${month.toISO()}`);
   logStr(log, "hitsReport", `Next month starts at ${lastMonth.toISO()}`);
 
-  let week = DateTime.fromMillis(siteHits.record.weeks.start, { zone: "America/Los_Angeles" });
-  let lastWeek = week.plus({ days: 7 * siteHits.record.weeks.total.length });
-  logStr(log, "hitsReport", `Number of weeks ${siteHits.record.weeks.total.length}`);
+  let week = DateTime.fromMillis(siteHits.weeks.start, { zone: "America/Los_Angeles" });
+  let lastWeek = week.plus({ days: 7 * (siteHits.weeks.total.length - 1) });
+  logStr(log, "hitsReport", `Number of weeks ${siteHits.weeks.total.length}`);
   logStr(log, "hitsReport", `Last recorded week starts at ${week.toISO()}`);
   logStr(log, "hitsReport", `Next week starts at ${lastWeek.toISO()}`);
 
-  let day = DateTime.fromMillis(siteHits.record.days.start, { zone: "America/Los_Angeles" });
-  let lastDay = day.plus({ days: siteHits.record.days.total.length });
-  logStr(log, "hitsReport", `Number of days ${siteHits.record.days.total.length}`);
+  let day = DateTime.fromMillis(siteHits.days.start, { zone: "America/Los_Angeles" });
+  let lastDay = day.plus({ days: siteHits.days.total.length - 1 });
+  logStr(log, "hitsReport", `Number of days ${siteHits.days.total.length}`);
   logStr(log, "hitsReport", `Last recorded day starts at ${day.toISO()}`);
   logStr(log, "hitsReport", `Next day starts at ${lastDay.toISO()}`);
 
   logStr(
     log,
     "hitsReport",
-    `Last Reset: ${new Date(siteHits.record.lastReset).toLocaleDateString("en-US", {
+    `Last Reset: ${new Date(siteHits.lastReset).toLocaleDateString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -363,7 +364,7 @@ const report = async () => {
   logStr(
     log,
     "hitsReport",
-    `Current Timestamp: ${new Date(siteHits.record.timestamp).toLocaleDateString("en-US", {
+    `Current Timestamp: ${new Date(siteHits.timestamp).toLocaleDateString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
