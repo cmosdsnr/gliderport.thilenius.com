@@ -83,6 +83,10 @@ if (!siteHitsRecord.record) {
 }
 const siteHits: any = siteHitsRecord.record;
 
+if (!siteHits.months) throw new Error("Missing siteHits.months");
+if (!siteHits.weeks) throw new Error("Missing siteHits.weeks");
+if (!siteHits.days) throw new Error("Missing siteHits.days");
+
 let nextMonth = DateTime.fromMillis(siteHits.months.start, { zone: "America/Los_Angeles" }).plus({
   months: siteHits.months.total.length + 1,
 });
