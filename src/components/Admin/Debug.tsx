@@ -44,13 +44,13 @@ const Debug: React.FC = () => {
         <Row>
             <div>
                 <h1>Camera Stream</h1>
-                <HLSPlayer src="http://gpupdate.thilenius.com/images/stream/camera1/index.m3u8"
+                <HLSPlayer src="http://gpupdate.thilenius.com/stream/camera1/index.m3u8"
                 />
             </div>
 
             <div>
                 <h1>Camera Stream</h1>
-                <HLSPlayer src="http://gpupdate.thilenius.com/images/stream/camera2/index.m3u8"
+                <HLSPlayer src="http://gpupdate.thilenius.com/stream/camera2/index.m3u8"
                 />
             </div>
             <Col>

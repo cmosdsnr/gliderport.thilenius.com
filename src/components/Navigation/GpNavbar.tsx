@@ -172,7 +172,6 @@ export default function GpNavbar() {
                                             <NavDropdown.Item as={Link} to="/stats/hits">Hits</NavDropdown.Item>
                                             <NavDropdown.Item as={Link} to="/stats/changes">Changes</NavDropdown.Item>
                                             <NavDropdown.Item as={Link} to="/stats/links">Links</NavDropdown.Item>
-                                            <NavDropdown.Item as={Link} to="/admin/Debug">Debug</NavDropdown.Item>
 
                                         </NavDropdown>
                                     )
