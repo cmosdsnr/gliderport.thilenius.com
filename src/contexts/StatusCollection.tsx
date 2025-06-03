@@ -1,6 +1,14 @@
 import React, { createContext, useState, useEffect, useContext, useMemo } from 'react'
 import { pb } from '@/contexts/pb'
 
+export interface Stats {
+    timestamp: number;
+    lastReset: number;
+    weeks: { start: number, count: number[], unique: number[] };
+    months: { start: number, count: number[], unique: number[] };
+    days: { start: number, count: number[], unique: number[] };
+}
+
 
 type Online = {
     online: number;
@@ -29,7 +37,7 @@ export function StatusCollectionProvider({ children }: any) {
     const [sleeping, setSleeping] = useState<boolean>(false);
     const [siteMessages, setSiteMessages] = useState<string[]>([]);
     const [forecast, setForecast] = useState<any>({});
-    const [siteHits, setSiteHits] = useState<any>({});
+    const [siteHits, setSiteHits] = useState<Stats>({ lastReset: 0, timestamp: 0, weeks: { start: 0, count: [], unique: [] }, months: { start: 0, count: [], unique: [] }, days: { start: 0, count: [], unique: [] } });
     const [lastImage, setLastImage] = useState<number>(0);
     const [online, setOnline] = useState<Online>({ online: 0, touched: "" });          // hit stats
 

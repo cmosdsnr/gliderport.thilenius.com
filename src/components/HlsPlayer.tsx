@@ -25,40 +25,84 @@ const HLSPlayer: React.FC<HLSPlayerProps> = ({
     muted = true,
 }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
+    const hlsRef = useRef<Hls | null>(null);
 
     useEffect(() => {
         const video = videoRef.current;
         if (!video) return;
 
+        // Helper: start playback if autoPlay is true
         const startPlayback = () => {
             if (autoPlay) {
-                video.play().catch(err => console.warn('Autoplay failed:', err));
+                video.play().catch((err) => console.warn('Autoplay failed:', err));
             }
         };
 
-        // Native HLS support (Safari)
+        // 1) If Safari natively supports HLS
         if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = src;
             startPlayback();
         } else if (Hls.isSupported()) {
-            const hls = new Hls();
+            // 2) Else, use Hls.js
+            const hls = new Hls({
+                // You can tune this if needed:
+                // manifestReloadInterval: 5000, // milliseconds between playlist reloads
+            });
+            hlsRef.current = hls;
             hls.loadSource(src);
             hls.attachMedia(video);
+
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
                 startPlayback();
             });
-            hls.on(Hls.Events.ERROR, (event, { type, details, fatal }) => {
-                console.error('HLS error', event, details);
-                if (fatal) {
-                    hls.startLoad(); // try to recover
+
+            // If Hls.js emits an error like network unavailable, try to recover
+            hls.on(Hls.Events.ERROR, (eventName, data) => {
+                console.error('Hls.js error:', data);
+                // If it's a network disruption or manifest load error, try restart
+                if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                    console.log('Network error detected, attempting to recover...');
+                    hls.startLoad(); // start loading again immediately
                 }
             });
-            return () => {
-                hls.destroy();
-            };
         } else {
             console.error('This browser does not support HLS playback');
         }
+
+        // 3) Listen for visibilitychange to detect “wake from sleep”
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                // Page just became visible again
+                if (hlsRef.current) {
+                    console.log('Page is visible—calling hls.startLoad() to resume playback');
+                    hlsRef.current.startLoad();
+                } else {
+                    // For native Safari HLS, re‐set the src to force reload:
+                    video.src = src;
+                }
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // 4) Listen for “online” event (when network connectivity returns)
+        const handleOnline = () => {
+            console.log('Network is back online—resuming HLS load');
+            if (hlsRef.current) {
+                hlsRef.current.startLoad();
+            } else {
+                video.src = src;
+            }
+        };
+        window.addEventListener('online', handleOnline);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('online', handleOnline);
+            if (hlsRef.current) {
+                hlsRef.current.destroy();
+                hlsRef.current = null;
+            }
+        };
     }, [src, autoPlay]);
 
     return (

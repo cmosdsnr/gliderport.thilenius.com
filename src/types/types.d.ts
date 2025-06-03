@@ -27,29 +27,6 @@ declare global {
 
   //
 
-  interface Weeks {
-    totals: number[];
-    uniques: number[];
-    start: string;
-  }
-
-  type StatsDay = { day: string; unique: number; total: number };
-  type StatsWeek = { day: string; unique: number; total: number };
-  type StatsMonth = { unique: number; total: number };
-
-  interface Stats {
-    lastReset?: string;
-    total?: {
-      date: string;
-      count: number;
-      unique: number;
-    };
-    day?: StatsDay;
-    week?: StatsWeek;
-    month?: StatsMonth;
-    weeks?: Weeks;
-  }
-
   interface Forecast {
     [index: number]: [number, string]; // hour of the day, forecast
   }

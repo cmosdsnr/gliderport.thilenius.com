@@ -245,7 +245,6 @@ const DataSummaryComponent: React.FC = () => {
         history,
         status,
         lastCheck,
-        hitStats,
         passedSeconds,
         offline,
         cameraImages,

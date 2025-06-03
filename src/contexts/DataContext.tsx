@@ -54,6 +54,7 @@ export interface CameraImages {
     camera2: CameraImage[];
 }
 
+
 export interface DataContextInterface {
     //states
     clients: Array<Client>;
@@ -63,7 +64,6 @@ export interface DataContextInterface {
     readings: Reading[];
     status: Array<number>;
     lastCheck: TimeStamp;
-    hitStats: Stats | null;
     passedSeconds: number;
     offline: boolean;
     cameraImages: CameraImages;
@@ -94,7 +94,6 @@ export function DataProvider({ children }: any) {
             temperature: 0,
         }])
     const [status, setStatus] = useState<number[]>([])
-    const [hitStats, setHitStats] = useState<Stats>({})
     const [clients, setClients] = useState<Client[]>([])
     const [passedSeconds, setPassedSeconds] = useState(0)
     const [offline, setOffline] = useState(false)
@@ -134,23 +133,14 @@ export function DataProvider({ children }: any) {
         History: setHistory,
         Status: setStatus,
         Clients: handleClients,
-        Stats: setHitStats,
         CurrentData: handleCurrentData,
     }
 
     const ws = useRef<WebSocket | null>(null)
 
     useEffect(() => {
-        console.table(hitStats)
-    }, [hitStats])
-
-
-    useEffect(() => {
         console.log("readings length:", readings.length);
     }, [readings])
-
-
-
 
     const startWebSocket = () => {
         ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL)
@@ -293,7 +283,6 @@ export function DataProvider({ children }: any) {
                             History: subCommands.History,
                             Status: subCommands.Status,
                             Clients: subCommands.Clients,
-                            Stats: subCommands.Stats,
                             CurrentData: subCommands.CurrentData,
                         };
 
@@ -361,7 +350,6 @@ export function DataProvider({ children }: any) {
         loadData("Status")
         loadData("Forecast")
         loadData("ForecastFull")
-        loadData("Stats")
     }
 
 
@@ -375,7 +363,6 @@ export function DataProvider({ children }: any) {
         readings,
         status,
         lastCheck,
-        hitStats,
         passedSeconds,
         offline,
         cameraImages,
