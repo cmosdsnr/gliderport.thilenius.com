@@ -2,7 +2,7 @@
  * ## Legacy Data Synchronization
  *
  * This module fetches old sensor readings from the local SQL database and sends them to the remote
- * server at `gpupdate.thilenius.com`, used primarily to backfill or sync records that may have
+ * server at `gliderport.thilenius.com`, used primarily to backfill or sync records that may have
  * been missed during live ingestion.
  *
  * @module oldUpdates
@@ -41,7 +41,7 @@ const timestampToString = (ts: number): string => {
 if (updateOldWay) {
   while (!lastEntryFound) {
     try {
-      const response = await axios.get("https://gpupdate.thilenius.com/getLastEntry");
+      const response = await axios.get("https://gliderport.thilenius.com/getLastEntry");
       lastEntry = response.data;
       if (lastEntry !== "Error") lastEntryFound = true;
       log("doOldUpdate", "Last Entry: " + lastEntry);
@@ -62,7 +62,7 @@ if (updateOldWay) {
 export const doOldUpdate = async () => {
   if (!updateOldWay) return;
 
-  log("doOldUpdate", "Last record on gpupdate.thilenius.com/SQL: ", lastEntry);
+  log("doOldUpdate", "Last record on gliderport.thilenius.com/SQL: ", lastEntry);
 
   const sql = `
     SELECT reading, r_temp_count, r_temp_read, r_temp_ref,
@@ -122,7 +122,7 @@ export const doOldUpdate = async () => {
       for (let i = 0; i <= cnt; i += 500) {
         const chunk = newRows.slice(i, Math.min(i + 500, cnt));
         try {
-          const response = await axios.post("https://gpupdate.thilenius.com/addData", {
+          const response = await axios.post("https://gliderport.thilenius.com/addData", {
             d: chunk,
           });
           log("doOldUpdate", "Post addData Response: " + response.data);
