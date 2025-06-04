@@ -80,6 +80,7 @@ export const pbInit = () => {
     // Attempt to establish a connection
     while (!connected) {
       url = "http://gpdata.web:5000";
+      console.log("pbInit:         Attempting to connect to PocketBase at:", url);
       pb = new PocketBase(url);
       pb.autoCancellation(false);
       connected = await testConnection(firstPass);
@@ -87,6 +88,7 @@ export const pbInit = () => {
       // If the primary URL fails, try the fallback URL
       if (!connected) {
         url = "https://gpdata.thilenius.com";
+        console.log("pbInit:         Attempting to connect to PocketBase at:", url);
         pb = new PocketBase(url);
         pb.autoCancellation(false);
         connected = await testConnection(false);
