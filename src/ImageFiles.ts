@@ -8,11 +8,11 @@
  *
  * Key Responsibilities:
  * - Directory Scanning & Data Aggregation:
- *     - Scans a structured file system (typically under `/app/gliderport`) for images
+ *     - Scans a structured file system (typically under `${IMAGE_PATH}`) for images
  *       organized by year, month, and day.
  *     - Computes image statistics (e.g., file count, continuous file sequences, date
  *       ranges, and missing files) using helper functions such as `getImageStats`.
- *     - Processes video files from `/app/gliderport/video` and links them to their
+ *     - Processes video files from `${IMAGE_PATH}/video` and links them to their
  *       corresponding image records.
  *     - Creates or updates records in the PocketBase "imageFiles" collection based on
  *       the scanned data.
@@ -93,7 +93,7 @@ const lastBigImagesCamera: ImageList = [];
 
 //hold the current 4 images (big/small left/right)
 const currentImages: string[] = [];
-
+const IMAGE_PATH = "/app/gliderport/images";
 /**
  * Retrieves the modification time of a file as a timestamp.
  *
@@ -256,7 +256,7 @@ const imageCount = (date: string, from: number, to: number, camera: number) => {
   // Validate the date format.
   const [year, month, day] = date.split("-");
   if (year.length !== 4 || month.length !== 2 || day.length !== 2) return { error: "date format is not yyyy-mm-dd" };
-  const directoryPath = `/app/gliderport/${year}/${month}/${date}`;
+  const directoryPath = `${IMAGE_PATH}/${year}/${month}/${date}`;
   try {
     let files = fs.readdirSync(directoryPath);
     files.forEach((file: string) => {
@@ -275,42 +275,42 @@ const imageCount = (date: string, from: number, to: number, camera: number) => {
 };
 
 /**
- * Scans the entire /app/gliderport directory for image and video data,
+ * Scans the entire ${IMAGE_PATH} directory for image and video data,
  * aggregates statistics, and updates the PocketBase "imageFiles" collection.
  *
  * @returns {Promise<void>} Resolves when the scanning process is complete.
  */
 const scanEntireDirectory = async () => {
   let videos: any = {};
-  let files = fs.readdirSync("/app/gliderport/video");
+  let files = fs.readdirSync("${IMAGE_PATH}/video");
   for (let i = 0; i < files.length; i++) {
     let year = files[i];
-    if (year.match(/^\d{4}$/) && isDirectory(`/app/gliderport/video/${year}`))
-      videos[year] = fs.readdirSync(`/app/gliderport/video/${year}`);
+    if (year.match(/^\d{4}$/) && isDirectory(`${IMAGE_PATH}/video/${year}`))
+      videos[year] = fs.readdirSync(`${IMAGE_PATH}/video/${year}`);
   }
 
   let images: Record<string, Record<string, Record<string, ImageStats>>> = {};
-  // Scan /app/gliderport for year directories.
-  files = fs.readdirSync("/app/gliderport");
+  // Scan ${IMAGE_PATH} for year directories.
+  files = fs.readdirSync("${IMAGE_PATH}");
   log("scanEntireDirectory", "files: ", files.length);
   for (let i = 0; i < files.length; i++) {
     let year = files[i];
     if (year === "video") continue;
-    if (year.match(/^\d{4}$/) && isDirectory(`/app/gliderport/${year}`)) {
+    if (year.match(/^\d{4}$/) && isDirectory(`${IMAGE_PATH}/${year}`)) {
       images[year] = {};
-      let months = fs.readdirSync(`/app/gliderport/${year}`);
+      let months = fs.readdirSync(`${IMAGE_PATH}/${year}`);
       log("scanEntireDirectory", months.length, "months to do this year");
       for (let j = 0; j < months.length; j++) {
         let month = months[j];
         log("scanEntireDirectory", "date: " + year + "/" + month);
         // Scan month directory for date directories.
-        if (month.match(/^\d{2}$/) && isDirectory(`/app/gliderport/${year}/${month}`)) {
+        if (month.match(/^\d{2}$/) && isDirectory(`${IMAGE_PATH}/${year}/${month}`)) {
           images[year][month] = {};
-          let dates = fs.readdirSync(`/app/gliderport/${year}/${month}`);
+          let dates = fs.readdirSync(`${IMAGE_PATH}/${year}/${month}`);
           log("scanEntireDirectory", dates.length, "dates to do this month");
           for (let k = 0; k < dates.length; k++) {
             let date = dates[k];
-            images[year][month][date] = getImageStats(`/app/gliderport/${year}/${month}/${date}`);
+            images[year][month][date] = getImageStats(`${IMAGE_PATH}/${year}/${month}/${date}`);
             const v = videos[year].filter((fn: string) => fn.match(new RegExp(`^${date}.*mp4$`)));
             v.forEach((f: string) => {
               if (f.match(/-2-/)) images[year][month][date].CameraB!.video = true;
@@ -392,14 +392,14 @@ export const scanLatestDirectory = async () => {
     // get the largest key in data
     let keys = Object.keys(listing.data);
     let year = Math.max(...keys.map((key) => parseInt(key)));
-    let videos = fs.readdirSync(`/app/gliderport/video/${year}`);
+    let videos = fs.readdirSync(`${IMAGE_PATH}/video/${year}`);
     // get the largest month in data[year]
     let months = Object.keys(listing.data[year]);
     let month = Math.max(...months.map((key) => parseInt(key)));
-    log("rescan", `start searching /app/gliderport/${year}/${month.toString().padStart(2, "0")}`);
+    log("rescan", `start searching ${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}`);
 
     // see if this month exists and process it
-    while (isDirectory(`/app/gliderport/${year}/${month.toString().padStart(2, "0")}`)) {
+    while (isDirectory(`${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}`)) {
       // load the corresponding id
       const id = ToId(year.toString() + month.toString().padStart(2, "0"));
       let mostRecent = await pb.collection("imageFiles").getList(1, 1, { filter: `id = "${id}"` });
@@ -414,11 +414,11 @@ export const scanLatestDirectory = async () => {
         mostRecent = await pb.collection("imageFiles").getList(1, 1, { filter: `id = "${id}"` });
       }
       let res = mostRecent.items[0].data;
-      let days = fs.readdirSync(`/app/gliderport/${year}/${month.toString().padStart(2, "0")}`);
+      let days = fs.readdirSync(`${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}`);
       listing.data[year][month] = [];
       for (const day of days) {
         if (res[day] === undefined) {
-          res[day] = getImageStats(`/app/gliderport/${year}/${month.toString().padStart(2, "0")}/${day}`);
+          res[day] = getImageStats(`${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}/${day}`);
           res[day].video = videos.filter((fn: string) => fn.match(new RegExp(`^${day}.*mp4$`)));
         }
         listing.data[year][month].push(parseInt(day.slice(8, 10)));
@@ -433,11 +433,11 @@ export const scanLatestDirectory = async () => {
       if (month > 12) {
         month = 1;
         year = year + 1;
-        videos = fs.readdirSync(`/app/gliderport/video/${year}`);
+        videos = fs.readdirSync(`${IMAGE_PATH}/video/${year}`);
         listing.data[year] = {};
       }
-      if (isDirectory(`/app/gliderport/${year}/${month.toString().padStart(2, "0")}`))
-        log("rescan", `next search /app/gliderport/${year}/${month.toString().padStart(2, "0")}`);
+      if (isDirectory(`${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}`))
+        log("rescan", `next search ${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}`);
     }
     await pb
       .collection("imageFiles")

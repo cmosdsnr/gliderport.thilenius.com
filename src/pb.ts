@@ -110,8 +110,8 @@ export const pbInit = () => {
         resolve();
       } catch (error: any) {
         console.error("pbInit:         pb connected but failed to login", error.message);
-        console.log("Retrying in 15 seconds...");
-        await delay(15000); // Wait for 15 seconds before retrying the login
+        console.log("Retrying in 5 seconds...");
+        await delay(5000); // Wait for 5 seconds before retrying the login
       }
     }
   });
