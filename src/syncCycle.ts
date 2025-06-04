@@ -158,7 +158,7 @@ export const runSyncCycle = async () => {
 
   try {
     // Notify server that new data is available
-    await axios.get("https://gliderport.thilenius.com/fetchNewWind", { timeout: 5000 }); // 5-second timeout
+    await axios.get("https://gliderport.thilenius.com/api/fetchNewWind", { timeout: 5000 }); // 5-second timeout
     // await axios.get("https://tstupdate.thilenius.com/fetchNewWind", { timeout: 5000 }); // 5-second timeout
   } catch (err: any) {
     log("Interval", "Error notifying server: ", err.message);
