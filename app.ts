@@ -1,95 +1,91 @@
-/**
- *
- * **This server is built using Express and TypeScript. It sets up middleware and mounts various route modules
- * that collectively provide functionality for the Gliderport system.**
- *  Key features include:
- *
- * - Listing all available endpoints for debugging/documentation.
- * - Serving image-related routes.
- * - Handling text alert (email) messaging.
- * - Providing system status and info routes.
- * - Archiving and wind data routes.
- * - Sunrise/sunset data management.
- * - Hit counter functionality.
- * - Additional code-related operations.
- *
- * It also provides a basic debug endpoint to query status information from the database,
- * as well as a simple root endpoint to confirm that the server is running.
- *
- * @module GPUPDATE
- */
+// app.ts
+import dotenv from "dotenv";
+import express, { Request, Response, NextFunction } from "express";
+import http from "http";
+import bodyParser from "body-parser";
+import cors from "cors";
+import fileUpload from "express-fileupload";
+import path from "path";
 
-import dotenv from "dotenv"; // Loads environment variables from a .env file
-import { pb } from "pb.js"; // PocketBase client for database operations
-import { Request, Response } from "express"; // Import Express types for request/response handling
-import { app } from "startExpress.js"; // Import the Express app instance
+import { socketServer } from "socket";
+import { createApiRouter } from "apiRouter";
+import { listEndpoints } from "listEndpoints"; // <- our updated version
 
-// Load environment variables into process.env.
 dotenv.config();
 process.env.TZ = "America/Los_Angeles";
 
-// Middleware to list all available endpoints for debugging/documentation.
-import { listEndpoints } from "listEndpoints.js";
-app.use(listEndpoints());
+const PORT = process.env.PORT || 3000;
+export var app: express.Application = express();
 
-// Import and mount routes for handling image files (e.g., retrieving current images).
-import { ImageRoutes } from "ImageFiles.js";
-app.use(ImageRoutes());
+app.set("trust proxy", true);
 
-// Import and mount routes for sending text alerts (via email).
-import { textRoutes } from "./src/sendTextMessage.js";
-app.use(textRoutes());
+// 1) Body parsing & CORS
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "30mb",
+  })
+);
+app.use(
+  bodyParser.json({
+    limit: "10mb",
+  })
+);
+app.use(
+  bodyParser.urlencoded({
+    limit: "10mb",
+    extended: true,
+  })
+);
 
-// Import and mount routes that provide system status and detailed info.
-import { infoRoutes } from "info.js";
-app.use(infoRoutes());
+const corsOptions = {
+  origin: [/gliderport.*thilenius.*/, /localhost.*/, /.*/],
+  optionsSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
 
-// Import and mount routes to access archived data.
-import { archiveRoutes } from "archive.js";
-app.use(archiveRoutes());
+// 2) File‐upload (optional)
+// app.use(
+//   fileUpload({
+//     limits: { fileSize: 50 * 1024 * 1024 }, // 50mb
+//   })
+// );
 
-// Import utility to generate fixed-length IDs.
-import { ToId } from "miscellaneous.js";
+// 3) Mount listEndpoints _first_ so you can inspect everything under `/api`
+//    Note: we pass the `app` itself, so it will list _all_ routes attached to `app`.
+app.use("/api", listEndpoints(app));
 
-// Import and mount routes for sunrise/sunset data management and updates.
-import { sunRoutes } from "sun.js";
-app.use(sunRoutes());
+// 4) Mount the rest of your API under /api as well
+app.use("/api", createApiRouter());
 
-// Import and mount routes for tracking and reporting site hit counts.
-import { hitRoutes } from "hitCounter.js";
-app.use(hitRoutes());
+// 5) Serve static assets
+app.use("/images", express.static("/app/gliderport/images"));
+app.use("/docs", express.static("/app/docs"));
+app.use("/", express.static("/app/gp_dist"));
 
-// Import and mount routes for wind data and related operations.
-import { windRoutes } from "wind.js";
-app.use(windRoutes());
-
-// Import and mount additional routes for code-related operations.
-import { codeRoutes } from "codes.js";
-app.use(codeRoutes());
-
-// Import and mount additional routes for openWeather API integration.
-import { forecastRoutes } from "openWeather.js";
-app.use(forecastRoutes());
-
-// Import and mount additional routes for openWeather API integration.
-import { donorsRoutes } from "donors.js";
-app.use(donorsRoutes());
-
-// Define API endpoints.
-// Debug endpoint that queries various status fields from the PocketBase "status" collection.
-app.get("/debug", async (req: Request, res: Response) => {
-  const names = ["siteMessage", "siteHits", "fullForecast", "debug", "images", "online", "forecast", "sun", "lastWind"];
-  let ans: any = {};
-  await Promise.all(
-    names.map(async (name) => {
-      const r = await pb.collection("status").getOne(ToId(name.toLowerCase()));
-      ans = { name: r.record };
-    })
-  );
-  res.json(ans);
+// 6) SPA fallback
+app.get("*", (req: Request, res: Response) => {
+  res.sendFile("/app/gp_dist/index.html");
 });
 
-// Basic root endpoint to confirm that the server is running.
-app.get("/test", (req: Request, res: Response) => {
-  res.send("Hello, TypeScript & Express!");
+// 7) Error handler
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error(err);
+  if (err.type === "entity.too.large") {
+    return res
+      .status(413)
+      .json({ error: "Payload too large", details: err.message });
+  }
+  res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
+});
+
+// 8) HTTP + WebSocket server
+const server = http.createServer(app);
+socketServer(server);
+
+server.listen(PORT, () => {
+  console.log(``);
+  console.log(`######################################################`);
+  console.log(`         Server is running at http://localhost:${PORT}`);
+  console.log(`######################################################`);
 });
