@@ -10,14 +10,10 @@
  *
  * @module log
  */
-
 import fs from "fs";
-import { isDirectory } from "miscellaneous.js";
+import { __dirname } from "miscellaneous.js";
 
-// Determine the logs directory based on the existence of the "/app/gliderport/logs" folder.
-const logsDir = isDirectory("/app/gliderport/logs") ? "/app/gliderport/logs/" : "./public/logs/";
-// Define the log file path.
-let __logFile = logsDir + `gpUpdate.log`;
+let __logFile = `${__dirname}/gliderport/logs/gpUpdate.log`;
 
 /**
  * Logs a message to a file.

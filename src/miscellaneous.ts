@@ -43,30 +43,5 @@ export const ToId = (x: string): string => {
   return "0".repeat(15 - x.length).toLowerCase() + x;
 };
 
-export let __dirname = "";
-
-const setDir = async () => {
-  // Initialize logging and determine the archive directory.
-  const log: string[] = [""];
-
-  // Determine current file's directory using fileURLToPath.
-  const __f = fileURLToPath(import.meta.url);
-
-  try {
-    // Fall back to "/app/gliderport/bin" if local directory is not available.
-    await fsPromises.access("/app/gliderport");
-    __dirname = "/app/gliderport";
-    logStr(log, "top path", __dirname, "Path exists!");
-  } catch (err) {
-    try {
-      // Check for a local "../bin" directory.
-      await fsPromises.access(dirname(__f) + "/..");
-      __dirname = dirname(__f) + "/..";
-      logStr(log, "top path", __dirname, "Path exists!");
-    } catch (err) {
-      logStr(log, "top path", "Path does not exist.");
-    }
-  }
-  writeLog(log);
-};
-setDir();
+const __filename = fileURLToPath(import.meta.url);
+export const __dirname = path.dirname(path.dirname(__filename));

@@ -82,7 +82,7 @@ if (!siteHitsRecord.record) {
   throw new Error("Missing siteHits record");
 }
 const siteHits: any = siteHitsRecord.record;
-console.log("siteHits record loaded from PocketBase:", siteHits);
+// console.log("siteHits record loaded from PocketBase:", siteHits);
 if (!siteHits.months) throw new Error("Missing siteHits.months");
 if (!siteHits.weeks) throw new Error("Missing siteHits.weeks");
 if (!siteHits.days) throw new Error("Missing siteHits.days");

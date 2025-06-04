@@ -4,12 +4,14 @@ import express, { Request, Response, NextFunction } from "express";
 import http from "http";
 import bodyParser from "body-parser";
 import cors from "cors";
+import fs from "fs";
 import fileUpload from "express-fileupload";
 import path from "path";
 
 import { socketServer } from "socket";
 import { createApiRouter } from "apiRouter";
 import { listEndpoints } from "listEndpoints"; // <- our updated version
+import { __dirname } from "miscellaneous";
 
 dotenv.config();
 process.env.TZ = "America/Los_Angeles";
@@ -59,22 +61,39 @@ app.use("/api", listEndpoints(app));
 app.use("/api", createApiRouter());
 
 // 5) Serve static assets
-app.use("/images", express.static("/app/gliderport/images"));
-app.use("/docs", express.static("/app/docs"));
-app.use("/", express.static("/app/gp_dist"));
+//check the directory exists
+if (!fs.existsSync(`${__dirname}/gliderport/images`)) {
+  console.error(`Directory ${__dirname}/gliderport/images does not exist.`);
+  process.exit(1);
+}
+console.log(`Serving images from ${__dirname}/gliderport/images`);
+
+if (!fs.existsSync(`${__dirname}/docs`)) {
+  console.error(`Directory ${__dirname}/docs does not exist.`);
+  process.exit(1);
+}
+console.log(`Serving documents from ${__dirname}/docs`);
+
+if (!fs.existsSync(`${__dirname}/gp_dist`)) {
+  console.error(`Directory ${__dirname}/gp_dist does not exist.`);
+  process.exit(1);
+}
+console.log(`Serving front end assets from ${__dirname}/gp_dist`);
+
+app.use("/images", express.static(`${__dirname}/gliderport/images`));
+app.use("/docs", express.static(`${__dirname}/docs`));
+app.use("/", express.static(`${__dirname}/gp_dist`));
 
 // 6) SPA fallback
 app.get("*", (req: Request, res: Response) => {
-  res.sendFile("/app/gp_dist/index.html");
+  res.sendFile(`${__dirname}/gp_dist/index.html`);
 });
 
 // 7) Error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
   if (err.type === "entity.too.large") {
-    return res
-      .status(413)
-      .json({ error: "Payload too large", details: err.message });
+    return res.status(413).json({ error: "Payload too large", details: err.message });
   }
   res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
 });
