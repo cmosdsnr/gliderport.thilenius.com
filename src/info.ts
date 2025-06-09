@@ -1,64 +1,50 @@
 /**
+ * @packageDocumentation
  *
  * **This module manages the application's global debug information stored in the
  * PocketBase "status" collection. It defines and exports a `debugInfo` object
  * that holds various debugging metrics, such as timestamps, record counts,
  * hourly data, code history, open weather details, and notification history.**
  *
- * Key Responsibilities:
- * -----------------------
- * 1. **Debug Information Management:**
- *    - Defines the `debugInfo` object (of type DebugInfoData) to store debugging
+ * ## Key Responsibilities
+ * 1. **Debug Information Management**
+ *    - Defines the `debugInfo` object (of type `DebugInfoData`) to store debugging
  *      metrics and history that can be updated as new data is processed.
  *    - The data includes:
- *         - General timestamps (e.g., `tsLast`, `tsLastPre`)
- *         - Record counts and hourly data (e.g., `numberRecords`, `hourLength`, `hours`)
- *         - Code history information (e.g., `codeHistory` with fields like `length`,
- *           `date`, `tsLast`, `code`, `gpResults`, and `days`)
- *         - Open weather data (e.g., `openWeather` with `hours`, `start`, and `stop`)
- *         - Sent texts and other miscellaneous debugging data.
+ *      - General timestamps (`tsLast`, `tsLastPre`)
+ *      - Record counts and hourly data (`numberRecords`, `hourLength`, `hours`)
+ *      - Code history information (`codeHistory` with fields `length`, `date`, `tsLast`, `code`, `gpResults`, and `days`)
+ *      - Open weather data (`openWeather` with `hours`, `start`, and `stop`)
+ *      - Sent texts and other miscellaneous debugging data (`sentTexts`)
  *
- * 2. **Data Retrieval & Initialization:**
+ * 2. **Data Retrieval & Initialization**
  *    - Provides the `getDebugInfo` function to retrieve the debug information
- *      from PocketBase using a unique debug ID ("0000000000debug").
+ *      from PocketBase using a unique debug ID (`"0000000000debug"`).
  *    - If no debug record exists, it creates one and then retrieves it.
  *    - The global `debugInfo` variable is updated with the record from PocketBase.
  *
- * 3. **Data Persistence:**
+ * 3. **Data Persistence**
  *    - Exports the `saveDebugInfo` function which updates the debug record in
  *      PocketBase, ensuring that any changes to `debugInfo` are persisted.
  *
- * Dependencies:
- * -------------
- * - **PocketBase (pb):** Used for interacting with the PocketBase backend,
- *   specifically the "status" collection.
+ * 4. **Info Assembly & Routing**
+ *    - Defines the `info` function to assemble system, database, and debug data
+ *      into an `InfoResponse` object, including:
+ *      - Gliderport info (`GliderportInfo`)
+ *      - Hourly statistics (`HourEntry`)
+ *      - Server-sent status (`ServerSentData`)
+ *      - Code history overview and details (`CodeHistoryOverview` and `CodeHistoryDetails`)
+ *      - Additional debug/forecast data (`AddDataInfo`)
+ *    - Exports the `infoRoutes` function to create an Express router exposing
+ *      a `/info` endpoint for debugging and monitoring.
  *
- * Usage:
- * ------
- * - Upon module load, `getDebugInfo()` is automatically called to initialize
- *   the global `debugInfo` object.
- * - The `debugInfo` object can be modified by other parts of the application
- *   as needed.
- * - Call `saveDebugInfo()` to persist any changes to the debug information back
- *   to PocketBase.
- *
- *
- * **This module provides functionality to assemble and serve system and gliderport
- * related information from various data sources such as global variables, a MySQL database,
- * and debug information.**
- * It performs the following tasks:
- *
- * 1. Gathers gliderport information from global state.
- * 2. Queries the hours table to build an overview of hourly data and counts of gliderport records.
- * 3. Retrieves and processes the server_sent record, including parsing sunrise/sunset data and computing time deltas.
- * 4. Queries the code_history table to assemble an overview and details of recent code changes.
- * 5. Prepares additional "Add Data" information from debug data.
- *
- * All dates and durations are formatted inline using Luxon.
- *
- * Exported Functions:
- *  - info: Asynchronously assembles all relevant information into an InfoResponse object.
- *  - infoRoutes: Returns an Express router with a /info endpoint for debugging and monitoring.
+ * ## Dependencies
+ * - `express`: For HTTP routing.
+ * - `mysql2`: For SQL database connectivity.
+ * - `globals.js`: For shared global state.
+ * - `pb.js`: For interacting with PocketBase.
+ * - `SqlConnect`: For MySQL connection.
+ * - `luxon`: For date/time formatting and manipulation.
  *
  * @module info
  */
@@ -68,91 +54,156 @@ import mysql from "mysql2";
 import globals from "globals.js";
 import { pb } from "pb.js";
 import { connection } from "./SqlConnect";
-import { DateTime, Duration } from "luxon"; // Luxon for date/time handling
+import { DateTime, Duration } from "luxon";
 
 export interface GliderportInfo {
+  /** The most recent gliderport data record (raw) */
   lastRecord: any;
+  /** The earliest gliderport data record (raw) */
   firstRecord: any;
+  /** Formatted date string of the first record, or null if none */
   tdLast?: string | null;
+  /** Total number of gliderport records, or null if none */
   numberRecords?: any;
+  /** Latest hour timestamp (UNIX seconds) */
   latestHours: any;
+  /** Formatted string of the latestHours timestamp, or null if none */
   latestHoursString?: string | null;
 }
 
 export interface HourEntry {
+  /** UNIX timestamp (seconds) marking the start of the hour */
   start: number;
+  /** Formatted string for display (e.g., "yyyy-MM-dd HH") */
   startString: string;
+  /** Number of entries found in the 'hours' table for that hour */
   hoursCount: number;
+  /** Number of gliderport records recorded in that hour */
   gliderportCount: number;
 }
 
 export interface ServerSentData {
+  /** Current UNIX timestamp (seconds) when assembled */
   now: number;
-  record: any; // raw record from server_sent table
-  // For sun data, we convert it into a key/value map:
+  /** Raw record data from the server_sent SQL table */
+  record: any;
+  /** Parsed sunrise/sunset data (if present) */
   sun?: { [key: string]: string };
-  // For keys like last_record, last_image, last_forecast, include computed delta info.
+  /**
+   * Computed delta information for keys such as last_record, last_image, last_forecast.
+   * Each entry contains:
+   * - original: the original UNIX timestamp
+   * - display: formatted timestamp string
+   * - delta: human-readable difference (e.g., "1 hr, 5 min ago")
+   */
   computed?: { [key: string]: { original: number; display: string; delta: string } };
 }
 
 export interface CodeHistoryOverview {
+  /** UNIX timestamp (seconds) of the code history entry */
   date: number;
+  /** Formatted date string (e.g., "yyyy-MM-dd HH:mm:ss") */
   dateString: string;
+  /** Number of code changes contained in that entry */
   codeChanges: number;
 }
 
 export interface CodeHistoryDetails {
+  /** UNIX timestamp (seconds) of the latest code history entry */
   date: number;
+  /** Formatted date string for the latest entry */
   dateString: string;
+  /** Start/end limits for interpreting code times */
   limits: [number, number];
+  /**
+   * Array of code changes:
+   * - time: seconds since day start
+   * - timeHMS: formatted "hh:mm:ss"
+   * - description: human-readable description
+   * - code: numeric code value
+   */
   codes: Array<{ time: number; timeHMS: string; description: string; code: number }>;
 }
 
 export interface AddDataInfo {
+  /** UNIX timestamp (seconds) when addData was last called */
   lastCalled: number;
+  /** Formatted string of `lastCalled` */
   lastCalledString: string;
+  /** Number of records received since last call */
   numberRecordsReceived: number;
+  /** Last entry timestamp in 'hours' (seconds) */
   lastEntryInHours: number;
+  /** Formatted string of `lastEntryInHours` */
   lastEntryInHoursString: string;
-  hoursInfo: any[]; // assuming array of objects with ts, resultsFound, l, etc.
+  /** Array of hourly debug data entries */
+  hoursInfo: any[];
+  /** Forecast metadata */
   forecast: {
+    /** Next forecast update timestamp (seconds) */
     nextUpdate: number;
+    /** Formatted string of `nextUpdate` */
     nextUpdateString: string;
+    /** Last forecast update timestamp (seconds) */
     lastUpdate: number;
+    /** Formatted string of `lastUpdate` */
     lastUpdateString: string;
+    /** Number of forecast hours requested */
     forecastHours: number;
+    /** Forecast start time (UTC seconds) */
     forecastStart: number;
+    /** Forecast end time (UTC seconds) */
     forecastEnd: number;
   };
-  codeHistoryUpdate: any; // structure from globals.debugInfo.codeHistory
+  /** Latest code history update data from `debugInfo.codeHistory` */
+  codeHistoryUpdate: any;
 }
 
 export interface InfoResponse {
+  /** Aggregated gliderport information */
   gliderportInfo: GliderportInfo;
+  /** Hourly statistics and counts */
   hoursTable: {
     count: number;
     entries: HourEntry[];
   };
+  /** Processed server_sent status, or null if unavailable */
   serverSent: ServerSentData | null;
+  /** Code history overview and optional latest details */
   codeHistory: {
     overview: CodeHistoryOverview[];
     latestDetails?: CodeHistoryDetails;
   };
+  /** Additional data assembled from `debugInfo` */
   addData: AddDataInfo;
 }
 
 export type DebugInfoHours = {
+  /** UNIX timestamp (seconds) */
   ts: number;
+  /** Number of results found for that hour */
   resultsFound: number;
+  /** Length or count of some hourly metric */
   l: number;
 };
 
 export type DebugCodeHistory = {
+  /** Total number of code entries */
   length: number;
+  /** UNIX timestamp (seconds) of this code history record */
   date: number;
+  /** Last timestamp (seconds) when code history was updated */
   tsLast: number;
+  /** Numeric code value */
   code: number;
+  /** Number of gliderport results at time of code update */
   gpResults: number;
+  /**
+   * Array of per-day code history entries:
+   * - length: number of entries that day
+   * - date: UNIX timestamp (seconds) of day boundary
+   * - c: code count for that day
+   */
   days: {
     length: number;
     date: number;
@@ -161,32 +212,53 @@ export type DebugCodeHistory = {
 };
 
 export type DebugOpenWeather = {
+  /** Number of forecast hours */
   hours: number;
+  /** UNIX timestamp (ms) of forecast start */
   start: number;
+  /** UNIX timestamp (ms) of forecast stop */
   stop: number;
 };
 
 export type DebugSentTexts = {
+  /** Direction parameter used in sent text */
   direction: number;
+  /** Duration parameter */
   duration: number;
+  /** Speed parameter */
   speed: number;
+  /** Recipient number or identifier */
   to: string;
+  /** UNIX timestamp (ms) when text was sent */
   when: number;
 };
 
 export type DebugInfoData = {
+  /** Last processed timestamp (seconds) */
   tsLast: number;
+  /** Total number of records processed */
   numberRecords: number;
+  /** Length of an hour bucket */
   hourLength: number;
+  /** Array of hourly debug entries */
   hours: DebugInfoHours[];
+  /** Current UNIX timestamp (seconds) */
   now: number;
+  /** Code history data */
   codeHistory: DebugCodeHistory;
+  /** Open weather forecast metadata */
   openWeather: DebugOpenWeather;
+  /** Latest hours timestamp (seconds) */
   latestHours: number;
+  /** Array of sent text debug entries */
   sentTexts: DebugSentTexts[];
+  /** Previous timestamp for some operation (seconds) */
   tsLastPre: number;
 };
 
+/**
+ * Global in-memory debug information. Populated via `getDebugInfo()`.
+ */
 export let debugInfo: DebugInfoData = {
   tsLast: 0,
   numberRecords: 0,
@@ -208,27 +280,38 @@ export let debugInfo: DebugInfoData = {
   },
   latestHours: 0,
   sentTexts: [],
-
   tsLastPre: 0,
 };
 
 const debugInfoId: string = "0000000000debug";
 
-export const getDebugInfo = async () => {
-  //get debugInfo for modification
-  //debugInfo is written each time addData is called
-  //debugInfo is displayed in get info
+/**
+ * Retrieves or creates the debug information record in PocketBase and updates
+ * the global `debugInfo` variable.
+ *
+ * - Attempts to fetch the record with ID `debugInfoId` from the "status" collection.
+ * - If not found, creates a new record with empty data.
+ * - Updates the in-memory `debugInfo` object with the fetched record.
+ *
+ * @returns A promise that resolves once `debugInfo` is populated.
+ */
+export const getDebugInfo = async (): Promise<void> => {
   let statusResult = await pb.collection("status").getOne(debugInfoId);
-  if (statusResult.length === 0) {
+  if (!statusResult || !statusResult.record) {
     console.log('No status record found with name "debug". Creating it now.');
     await pb.collection("status").create({ id: debugInfoId, name: "debug", record: {} });
     statusResult = await pb.collection("status").getOne(debugInfoId);
   }
-  debugInfo = statusResult.record;
+  debugInfo = statusResult.record as DebugInfoData;
 };
 getDebugInfo();
 
-export const saveDebugInfo = async () => {
+/**
+ * Persists the current in-memory `debugInfo` object back to PocketBase.
+ *
+ * @returns A promise that resolves once the update completes.
+ */
+export const saveDebugInfo = async (): Promise<void> => {
   await pb.collection("status").update(debugInfoId, {
     record: debugInfo,
   });
@@ -236,44 +319,42 @@ export const saveDebugInfo = async () => {
 
 /**
  * Assembles and returns comprehensive information about the gliderport system.
- * This includes gliderport info, hourly statistics, server_sent status, code history,
- * and additional debug/forecast data. Dates and times are formatted inline using Luxon.
  *
- * @param connection - A MySQL connection object.
- * @returns A Promise that resolves to an object conforming to the InfoResponse interface.
+ * This includes:
+ *  1. Gliderport info from global state (`globals`).
+ *  2. Hourly statistics from the `hours` SQL table (with gliderport record counts).
+ *  3. Server-sent status from the `server_sent` SQL table (sun data, deltas).
+ *  4. Code history overview and detailed data from the `code_history` SQL table.
+ *  5. Additional "Add Data" information from `debugInfo` (formatted using Luxon).
+ *
+ * @param connection - A MySQL connection object from `mysql2`.
+ * @returns A promise that resolves to an `InfoResponse` object containing all assembled data.
  */
 export const info = async (connection: mysql.Connection): Promise<InfoResponse> => {
-  // 1. Gather gliderport information from global variables.
+  // 1. Gather gliderport information from globals.
   const gliderportInfo: GliderportInfo = {
     lastRecord: globals.lastRecord,
     firstRecord: globals.firstRecord,
     latestHours: globals.latestHours,
-    // Format tdLast as a simple date string if firstRecord exists.
     tdLast: globals.firstRecord !== null ? globals.tdLast.toDateString() : null,
     numberRecords: globals.firstRecord !== null ? globals.numberRecords : null,
-    // Convert latestHours (Unix timestamp in seconds) to a formatted string.
     latestHoursString: globals.latestHours
       ? DateTime.fromSeconds(globals.latestHours).toFormat("yyyy-MM-dd HH:mm:ss")
       : null,
   };
 
-  // 2. Query the hours table and build an array of hourly entries.
+  // 2. Query the 'hours' table and build HourEntry array.
   const [hoursResult] = await connection.promise().query("SELECT * FROM `hours` ORDER BY start DESC");
   const hrs = Array.isArray(hoursResult) ? (hoursResult as { start: number; data: string }[]) : [];
 
-  // Build an array of tuples: [start, hoursCount] based on parsed JSON data.
-  const l: [number, number][] = [];
-  hrs.forEach((v) => {
-    const d = JSON.parse(v.data) as { start: number; date: number[] };
-    l.push([v.start, d.date.length]);
-  });
-
-  // For each hourly entry, query the count of gliderport records recorded within that hour.
   const hourEntries: HourEntry[] = [];
-  for (const [start, hoursCount] of l) {
-    // Format the start and end timestamps using Luxon.
-    const startStr = DateTime.fromSeconds(start).toFormat("yyyy-MM-dd HH:mm:ss");
-    const endStr = DateTime.fromSeconds(start + 3600).toFormat("yyyy-MM-dd HH:mm:ss");
+  // Parse each row and query gliderport count for that hour
+  for (const row of hrs) {
+    const d = JSON.parse(row.data) as { start: number; date: number[] };
+    const startTs = row.start;
+    const startStr = DateTime.fromSeconds(startTs).toFormat("yyyy-MM-dd HH:mm:ss");
+    const endStr = DateTime.fromSeconds(startTs + 3600).toFormat("yyyy-MM-dd HH:mm:ss");
+
     const [countResult] = await connection
       .promise()
       .query("SELECT COUNT(*) as count FROM gliderport WHERE recorded >= ? AND recorded < ?", [startStr, endStr]);
@@ -281,22 +362,23 @@ export const info = async (connection: mysql.Connection): Promise<InfoResponse> 
       Array.isArray(countResult) && countResult[0] && (countResult[0] as { count: number }).count
         ? (countResult[0] as { count: number }).count
         : 0;
+
     hourEntries.push({
-      start,
-      // Replace "00:00" with "00" if desired for display.
+      start: startTs,
       startString: startStr.replace("00:00", "00"),
-      hoursCount,
+      hoursCount: d.date.length,
       gliderportCount: count,
     });
   }
+
   const hoursTable = {
     count: hourEntries.length,
     entries: hourEntries,
   };
 
-  // 3. Retrieve the server_sent record and process additional status information.
+  // 3. Retrieve the server_sent record and compute additional data.
   let serverSent: ServerSentData | null = null;
-  let [serverSentResults] = await connection.promise().query("SELECT * FROM `server_sent` WHERE `id`=1");
+  const [serverSentResults] = await connection.promise().query("SELECT * FROM `server_sent` WHERE `id`=1");
   if (Array.isArray(serverSentResults) && serverSentResults.length > 0) {
     const r = serverSentResults[0] as any;
     const tsNow = Math.floor(Date.now() / 1000);
@@ -305,16 +387,16 @@ export const info = async (connection: mysql.Connection): Promise<InfoResponse> 
       record: r,
     };
 
-    // Process the "sun" field if it exists.
     if (r.sun) {
       try {
         baseData.sun = JSON.parse(r.sun);
-      } catch (err) {
+      } catch {
         baseData.sun = { error: "Invalid JSON in sun field" };
       }
     }
-    // Compute delta information for keys: last_record, last_image, last_forecast.
-    const computed: { [key: string]: { original: number; display: string; delta: string } } = {};
+    const computed: {
+      [key: string]: { original: number; display: string; delta: string };
+    } = {};
     ["last_record", "last_image", "last_forecast"].forEach((key) => {
       const value = r[key];
       if (typeof value === "number") {
@@ -336,18 +418,16 @@ export const info = async (connection: mysql.Connection): Promise<InfoResponse> 
         deltaStr += Math.floor(delta) + " sec " + end;
         computed[key] = {
           original: value,
-          // Format the timestamp using Luxon.
           display: DateTime.fromSeconds(value).toFormat("yyyy-MM-dd HH:mm:ss"),
           delta: deltaStr,
         };
       }
     });
     baseData.computed = computed;
-
     serverSent = baseData;
   }
 
-  // 4. Query the code_history table to build an overview and detailed record of recent changes.
+  // 4. Query the code_history table for overview and details.
   const [codeHistoryResults] = await connection
     .promise()
     .query("SELECT * FROM code_history ORDER BY date DESC LIMIT 10");
@@ -355,7 +435,6 @@ export const info = async (connection: mysql.Connection): Promise<InfoResponse> 
   let codeHistoryDetails: CodeHistoryDetails | undefined = undefined;
   if (Array.isArray(codeHistoryResults) && codeHistoryResults.length > 0) {
     const res = codeHistoryResults as any[];
-    // Build an overview array for code history entries.
     codeHistoryOverview = res.map((entry) => {
       const parsed = JSON.parse(entry.data);
       return {
@@ -364,13 +443,11 @@ export const info = async (connection: mysql.Connection): Promise<InfoResponse> 
         codeChanges: parsed.codes.length,
       };
     });
-    // Use the first record for detailed code history information.
     const latest = res[0];
     const parsedLatest = JSON.parse(latest.data);
     const s = parsedLatest.limits[0];
-    // Map each code tuple to include formatted time (using Luxon Duration) and description.
     const codesMap = parsedLatest.codes.map((codeTuple: [number, number]) => {
-      const codesDescriptions = [
+      const descriptions = [
         "It Is dark",
         "Sled ride, bad angle",
         "Sled ride, poor angle",
@@ -386,7 +463,7 @@ export const info = async (connection: mysql.Connection): Promise<InfoResponse> 
       return {
         time: codeTuple[0],
         timeHMS: Duration.fromObject({ seconds: codeTuple[0] + 3600 * s }).toFormat("hh:mm:ss"),
-        description: codesDescriptions[codeTuple[1]] || `Code ${codeTuple[1]}`,
+        description: descriptions[codeTuple[1]] || `Code ${codeTuple[1]}`,
         code: codeTuple[1],
       };
     });
@@ -398,29 +475,27 @@ export const info = async (connection: mysql.Connection): Promise<InfoResponse> 
     };
   }
 
-  // 5. Prepare additional "Add Data" information using debugInfo.
+  // 5. Prepare additional "Add Data" info from debugInfo.
   const addData: AddDataInfo = {
     lastCalled: debugInfo.now,
     lastCalledString: DateTime.fromSeconds(debugInfo.now).toFormat("yyyy-MM-dd HH:mm:ss"),
     numberRecordsReceived: debugInfo.numberRecords,
     lastEntryInHours: debugInfo.latestHours,
     lastEntryInHoursString: DateTime.fromSeconds(debugInfo.latestHours).toFormat("yyyy-MM-dd HH:mm:ss"),
-    hoursInfo: debugInfo.hours, // Assumes this data is already properly structured.
+    hoursInfo: debugInfo.hours,
     forecast: {
       nextUpdate: debugInfo.tsLast + 3600,
       nextUpdateString: DateTime.fromSeconds(debugInfo.tsLast + 3600).toFormat("yyyy-MM-dd HH:mm:ss"),
       lastUpdate: debugInfo.tsLastPre,
       lastUpdateString: DateTime.fromSeconds(debugInfo.tsLastPre).toFormat("yyyy-MM-dd HH:mm:ss"),
       forecastHours: debugInfo.openWeather.hours,
-      // Convert from milliseconds to seconds.
       forecastStart: debugInfo.openWeather.start / 1000,
       forecastEnd: debugInfo.openWeather.stop / 1000,
     },
-    codeHistoryUpdate: debugInfo.codeHistory, // Already assumed to be formatted as needed.
+    codeHistoryUpdate: debugInfo.codeHistory,
   };
 
-  // Assemble the final JSON response object.
-  const response: InfoResponse = {
+  return {
     gliderportInfo,
     hoursTable,
     serverSent,
@@ -430,23 +505,34 @@ export const info = async (connection: mysql.Connection): Promise<InfoResponse> 
     },
     addData,
   };
-
-  return response;
 };
 
 /**
- * Creates and returns an Express router for the /info endpoint.
- * This endpoint is used for debugging purposes to display the latest assembled system information.
+ * Creates and returns an Express router for the `/info` endpoint.
  *
- * @returns An Express Router configured with the /info route.
+ * - **GET /info**: Retrieves and returns the assembled information from `info()`.
+ *
+ * @returns An Express `Router` configured with the `/info` route.
  */
-export const infoRoutes = () => {
+export const infoRoutes = (): express.Router => {
   const router = express.Router();
 
-  // GET /info - Retrieves and returns the latest information assembled by the info() function.
+  /**
+   * GET /info
+   *
+   * Retrieves the latest system and gliderport information, aggregated from various sources.
+   *
+   * @param req  - The Express request object.
+   * @param res  - The Express response object.
+   * @returns    JSON containing the assembled `InfoResponse`, or an error message if no DB connection.
+   */
   router.get("/info", async (req: Request, res: Response) => {
-    if (connection) res.send(await info(connection));
-    else res.send("<h1>No connection to database</h1>");
+    if (connection) {
+      const response = await info(connection);
+      res.json(response);
+    } else {
+      res.status(500).send("<h1>No connection to database</h1>");
+    }
   });
 
   return router;

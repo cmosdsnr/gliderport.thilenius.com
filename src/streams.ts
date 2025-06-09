@@ -1,36 +1,72 @@
-// streamRouter.ts
+/**
+ * @packageDocumentation
+ *
+ * **This module provides streaming endpoints and statistics tracking for `.ts` segment files.**
+ *
+ * - Collects per-hour and per-IP request counts.
+ * - Calculates 5-minute bitrate over recent requests.
+ * - Logs access requests to a log file.
+ * - Serves `.ts` video segments from disk under `/stream`.
+ * - Exposes a `/stats` endpoint to retrieve current streaming metrics.
+ *
+ * @module streamRouter
+ */
 import express, { Request, Response, NextFunction, Router } from "express";
 import fs from "fs";
 import path from "path";
 
 // --- Types for stats ---
-type HourBucket = string; // e.g. "2025-05-29T22:00"
+/**
+ * ISO hour bucket, e.g. "2025-05-29T22:00"
+ */
+type HourBucket = string;
+
+/**
+ * Streaming statistics structure.
+ */
 interface Stats {
+  /** Total requests per UTC hour */
   totalHitsByHour: Record<HourBucket, number>;
+  /** Requests per IP per UTC hour */
   hitsByIPByHour: Record<HourBucket, Record<string, number>>;
-  fiveMinuteBitrate?: number; // bytes/sec over last 5 minutes
+  /** Calculated bytes/sec over the last 5 minutes */
+  fiveMinuteBitrate?: number;
 }
 
+/**
+ * Tracks the last request time and size for each segment path over 5 minutes.
+ */
 type LastFiveMinutes = {
   [key: string]: {
-    date: number; // Timestamp of the last hit
-    size: number; // Size of the last hit in bytes
+    /** Timestamp (ms) of the last hit */
+    date: number;
+    /** Size (bytes) of the last hit */
+    size: number;
   };
 };
 
 const lastFiveMinutes: LastFiveMinutes = {};
 const stats: Stats = { totalHitsByHour: {}, hitsByIPByHour: {} };
 
+/**
+ * Route prefix for streaming
+ */
 const STREAM_ROUTE = "/stream";
+/**
+ * Directory on disk containing `.ts` segments
+ */
 const STREAM_DIR = "/app/gliderport/stream";
+/**
+ * Path to access log file for stream requests
+ */
 const LOG_FILE = "/app/gliderport/stream/stream_access.log";
 
 /**
- * Prune stats older than 24 hours so we keep only the last day
+ * Prune stats older than 24 hours so only the last day is kept.
  */
-function pruneOldStats() {
+function pruneOldStats(): void {
   const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-  for (const hourKey of Object.keys(stats.totalHitsByHour)) {
+  for (const hourKey in stats.totalHitsByHour) {
     const hourDate = new Date(hourKey).getTime();
     if (hourDate < cutoff) {
       delete stats.totalHitsByHour[hourKey];
@@ -40,17 +76,26 @@ function pruneOldStats() {
 }
 
 /**
- * Returns an Express.Router that:
- *  • Hooks a middleware on /stream to collect stats
- *  • Serves static files from STREAM_DIR under /stream
- *  • Exposes GET /stats (relative to wherever you mount this router)
+ * Creates and returns an Express Router with streaming and stats endpoints.
+ *
+ * - Middleware on `/stream` to collect `.ts` file access statistics.
+ * - Serves static segment files from STREAM_DIR at `/stream/*`.
+ * - Exposes GET `/stats` to return current streaming metrics.
+ *
+ * @returns {Router} Configured Express router for streaming.
  */
 export function streamRoutes(): Router {
   const router = express.Router();
 
-  // 1) Collect stats whenever a request comes into /stream/*.ts
+  /**
+   * Middleware to track stats for `.ts` segment requests under STREAM_ROUTE.
+   *
+   * @param req Express request object
+   * @param res Express response object
+   * @param next Next middleware function
+   */
   router.use(STREAM_ROUTE, (req: Request, res: Response, next: NextFunction) => {
-    // Only count “.ts” files under /stream
+    // Only track .ts file requests
     if (!req.path.endsWith(".ts")) {
       return next();
     }
@@ -64,40 +109,42 @@ export function streamRoutes(): Router {
 
     pruneOldStats();
 
-    // Determine client IP (X-Forwarded-For or socket)
+    // Determine client IP (X-Forwarded-For or remote address)
     const fwd = req.headers["x-forwarded-for"];
     let ip = typeof fwd === "string" ? fwd.split(",")[0].trim() : req.socket.remoteAddress || "unknown";
     ip = ip.replace(/^::ffff:/, "");
 
-    // Bucket by UTC hour
+    // Bucket by UTC hour key
     const now = new Date();
     const hourKey = now.toISOString().slice(0, 13) + ":00";
 
+    // Update total and per-IP counts
     stats.totalHitsByHour[hourKey] = (stats.totalHitsByHour[hourKey] || 0) + 1;
     stats.hitsByIPByHour[hourKey] = stats.hitsByIPByHour[hourKey] || {};
     stats.hitsByIPByHour[hourKey][ip] = (stats.hitsByIPByHour[hourKey][ip] || 0) + 1;
 
-    // Track last‐5‐minute bitrate
+    // Track last 5-minute bitrate
     lastFiveMinutes[req.path] = {
       date: Date.now(),
-      size: fs.statSync(path.join(STREAM_DIR, req.path)).size,
+      size: fs.statSync(fullPath).size,
     };
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-    let sum = 0;
-    let oldestDate = Date.now();
+    let sumSize = 0;
+    let oldest = Date.now();
     for (const key in lastFiveMinutes) {
-      if (lastFiveMinutes[key].date < fiveMinutesAgo) {
+      const rec = lastFiveMinutes[key];
+      if (rec.date < fiveMinutesAgo) {
         delete lastFiveMinutes[key];
       } else {
-        sum += lastFiveMinutes[key].size;
-        if (lastFiveMinutes[key].date < oldestDate) {
-          oldestDate = lastFiveMinutes[key].date;
+        sumSize += rec.size;
+        if (rec.date < oldest) {
+          oldest = rec.date;
         }
       }
     }
-    stats.fiveMinuteBitrate = oldestDate === Date.now() ? 0 : Math.round((sum / (Date.now() - oldestDate)) * 1000); // bytes/sec
+    stats.fiveMinuteBitrate = oldest === Date.now() ? 0 : Math.round((sumSize / (Date.now() - oldest)) * 1000);
 
-    // Append log entry
+    // Append to access log file
     const logLine = `${now.toISOString()} ${ip} ${req.path}\n`;
     fs.appendFile(LOG_FILE, logLine, (err) => {
       if (err) console.error("Log write failed:", err);
@@ -106,10 +153,13 @@ export function streamRoutes(): Router {
     next();
   });
 
-  // 2) Serve all files under STREAM_DIR at /stream/*
+  // Serve static `.ts` files from STREAM_DIR at STREAM_ROUTE
   router.use(STREAM_ROUTE, express.static(STREAM_DIR));
 
-  // 3) Expose a “/stats” endpoint (e.g. GET /stats)
+  /**
+   * GET /stats
+   * Returns current in-memory streaming statistics.
+   */
   router.get("/stats", (_req: Request, res: Response) => {
     res.json(stats);
   });

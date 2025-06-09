@@ -1,18 +1,16 @@
 import { Request, Response, Router } from "express";
 import { pb } from "pb.js";
-import { ToId } from "miscellaneous.js";
-import { connection } from "./SqlConnect.js";
 
 /**
- * Fetches donor records from PocketBase.
+ * Fetches donor names from the PocketBase “donors” collection.
  *
- * Queries the “donors” collection in PocketBase and returns the
- * resulting JSON array of donor objects.
+ * Queries PocketBase for up to 200 donor records, sorted by creation date
+ * in descending order, and returns an array of donor names.
  *
- * @returns A promise that resolves to an array of donor records.
  * @throws {Error} If the PocketBase query fails.
+ * @returns {Promise<string[]>} A promise that resolves to an array of donor names.
  */
-const fetchDonors = async (): Promise<any[]> => {
+const fetchDonors = async (): Promise<string[]> => {
   try {
     const res = await pb.collection("donors").getFullList(200, {
       sort: "-created",
@@ -31,7 +29,10 @@ const fetchDonors = async (): Promise<any[]> => {
 /**
  * Creates and returns an Express router for donor-related endpoints.
  *
- * @returns An Express Router with donor routes mounted.
+ * Exposes the following routes:
+ * - GET /getDonors: Retrieve all donor names.
+ *
+ * @returns {Router} An Express Router configured with donor routes.
  */
 export const donorsRoutes = (): Router => {
   const router = Router();
@@ -39,11 +40,13 @@ export const donorsRoutes = (): Router => {
   /**
    * GET /getDonors
    *
-   * Retrieve all donor records.
+   * Retrieves all donor names from PocketBase by calling {@link fetchDonors}.
    *
    * @name GetDonors
    * @route GET /getDonors
-   * @returns 200 - JSON array of donors
+   * @returns {Promise<void>}
+   *   - 200: JSON array of donor names.
+   *   - 500: JSON error if retrieval fails.
    */
   router.get("/getDonors", async (req: Request, res: Response) => {
     try {

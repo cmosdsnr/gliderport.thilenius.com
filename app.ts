@@ -1,96 +1,121 @@
-// app.ts
+/**
+ * @packageDocumentation
+ *
+ * **Main application entry point for the Gliderport server.**
+ *
+ * Responsibilities:
+ * - Load environment variables and set timezone.
+ * - Configure Express app with body parsing, CORS, and optional file upload.
+ * - Mount diagnostics (listEndpoints) and API routes under `/api`.
+ * - Serve static assets (images, docs, frontend SPA) from disk.
+ * - Provide SPA fallback to `index.html` for client-side routing.
+ * - Centralized error handling for payload limits and other errors.
+ * - Initialize HTTP and WebSocket servers.
+ *
+ * @module app
+ */
 import dotenv from "dotenv";
 import express, { Request, Response, NextFunction } from "express";
 import http from "http";
 import bodyParser from "body-parser";
 import cors from "cors";
 import fs from "fs";
-import fileUpload from "express-fileupload";
 import path from "path";
 
 import { socketServer } from "socket";
 import { createApiRouter } from "apiRouter";
-import { listEndpoints } from "listEndpoints"; // <- our updated version
+import { listEndpoints } from "listEndpoints";
 import { __dirname } from "miscellaneous";
 
+// Load environment variables and set timezone
 dotenv.config();
 process.env.TZ = "America/Los_Angeles";
 
+/** Port to listen on (from env or default 3000) */
 const PORT = process.env.PORT || 3000;
-export var app: express.Application = express();
+
+/** Express application instance */
+export const app = express();
 
 app.set("trust proxy", true);
 
-// 1) Body parsing & CORS
-app.use(
-  express.urlencoded({
-    extended: true,
-    limit: "30mb",
-  })
-);
-app.use(
-  bodyParser.json({
-    limit: "10mb",
-  })
-);
-app.use(
-  bodyParser.urlencoded({
-    limit: "10mb",
-    extended: true,
-  })
-);
+// -----------------------------------------------------------------------------
+/**
+ * Body parsing middleware.
+ * - Parses URL-encoded data (form submissions).
+ * - Parses JSON bodies up to 10MB.
+ */
+app.use(express.urlencoded({ extended: true, limit: "30mb" }));
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 
+// -----------------------------------------------------------------------------
+/**
+ * CORS configuration:
+ * - Allows origins matching gliderport.thilenius.com, localhost, or any.
+ * - Returns HTTP 200 on successful preflight.
+ */
 const corsOptions = {
   origin: [/gliderport.*thilenius.*/, /localhost.*/, /.*/],
   optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 
-// 2) File‐upload (optional)
-// app.use(
-//   fileUpload({
-//     limits: { fileSize: 50 * 1024 * 1024 }, // 50mb
-//   })
-// );
-
-// 3) Mount listEndpoints _first_ so you can inspect everything under `/api`
-//    Note: we pass the `app` itself, so it will list _all_ routes attached to `app`.
+// -----------------------------------------------------------------------------
+/**
+ * Diagnostic route: lists all registered endpoints under `/api/listEndpoints`.
+ */
 app.use("/api", listEndpoints(app));
 
-// 4) Mount the rest of your API under /api as well
+/**
+ * Mounts the main API router under `/api`.
+ */
 app.use("/api", createApiRouter());
 
-// 5) Serve static assets
-//check the directory exists
-if (!fs.existsSync(`${__dirname}/gliderport/images`)) {
-  console.error(`Directory ${__dirname}/gliderport/images does not exist.`);
-  process.exit(1);
-}
-console.log(`Serving images from ${__dirname}/gliderport/images`);
-
-if (!fs.existsSync(`${__dirname}/docs`)) {
-  console.error(`Directory ${__dirname}/docs does not exist.`);
-  process.exit(1);
-}
-console.log(`Serving documents from ${__dirname}/docs`);
-
-if (!fs.existsSync(`${__dirname}/gp_dist`)) {
-  console.error(`Directory ${__dirname}/gp_dist does not exist.`);
-  process.exit(1);
-}
-console.log(`Serving front end assets from ${__dirname}/gp_dist`);
-
-app.use("/images", express.static(`${__dirname}/gliderport/images`));
-app.use("/docs", express.static(`${__dirname}/docs`));
-app.use("/", express.static(`${__dirname}/gp_dist`));
-
-// 6) SPA fallback
-app.get("*", (req: Request, res: Response) => {
-  res.sendFile(`${__dirname}/gp_dist/index.html`);
+// -----------------------------------------------------------------------------
+/**
+ * Verify required static directories exist; exit if missing.
+ */
+["images", "docs", "gp_dist"].forEach((dir) => {
+  const fullPath = path.join(__dirname, dir === "images" ? "/gliderport/images" : `/${dir}`);
+  if (!fs.existsSync(fullPath)) {
+    console.error(`Directory ${fullPath} does not exist.`);
+    process.exit(1);
+  }
 });
 
-// 7) Error handler
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+console.log(`Serving images from ${__dirname}/gliderport/images`);
+console.log(`Serving documents from ${__dirname}/docs`);
+console.log(`Serving front end assets from ${__dirname}/gp_dist`);
+
+/** Serve static assets */
+app.use("/images", express.static(path.join(__dirname, "/gliderport/images")));
+
+//back end docs (generated in gliderportFrontWEnd)
+app.use("/docs_frontend", express.static(path.join(__dirname, "/docs/FrontEnd")));
+//back end docs (generated in gp3_pi3_server)
+app.use("/docs_gp_server", express.static(path.join(__dirname, "/docs/gp_pi3")));
+//back end docs (generated in gliderport)
+app.use("/docs", express.static(path.join(__dirname, "/docs")));
+
+app.use("/", express.static(path.join(__dirname, "/gp_dist")));
+
+// -----------------------------------------------------------------------------
+/**
+ * Single-page application (SPA) fallback.
+ * Redirects all unmatched routes to `index.html`.
+ */
+app.get("*", (_req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, "/gp_dist/index.html"));
+});
+
+// -----------------------------------------------------------------------------
+/**
+ * Global error handler.
+ * - Catches "Payload too large" errors and returns 413.
+ * - Logs other errors and returns 500.
+ */
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
   if (err.type === "entity.too.large") {
     return res.status(413).json({ error: "Payload too large", details: err.message });
@@ -98,13 +123,16 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
 });
 
-// 8) HTTP + WebSocket server
+// -----------------------------------------------------------------------------
+/**
+ * Create HTTP server and attach WebSocket server.
+ */
 const server = http.createServer(app);
 socketServer(server);
 
+/** Start listening for HTTP and WebSocket connections. */
 server.listen(PORT, () => {
-  console.log(``);
-  console.log(`######################################################`);
+  console.log(`\n######################################################`);
   console.log(`         Server is running at http://localhost:${PORT}`);
   console.log(`######################################################`);
 });

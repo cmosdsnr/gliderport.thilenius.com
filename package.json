@@ -12,7 +12,8 @@
     "dev": "tsup --format esm app.ts --watch gp_dist/**/* --onSuccess \"node dist/app.js\"",
     "dev2": "tsx watch app.ts NODE_OPTIONS=--trace-warnings",
     "start": "node dist/app.js",
-    "build": "tsup --format esm app.ts"
+    "build": "tsup --format esm app.ts",
+    "docs": "typedoc"
   },
   "dependencies": {
     "@types/luxon": "^3.4.2",

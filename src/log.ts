@@ -1,80 +1,84 @@
 /**
+ * @packageDocumentation
  *
  * This module provides logging utilities for the application.
  * It includes functions to log messages to a file, append messages to an in-memory log array,
- * and output the log array to the console.
+ * and output the log array to the console or file.
  *
  * The module determines the log directory by checking if "/app/gliderport/logs" exists.
  * If it does, logs are written there; otherwise, it falls back to "/public/logs/".
  *
- *
  * @module log
  */
+
 import fs from "fs";
 import { __dirname } from "miscellaneous.js";
 
+// Determine the log file path.
 let __logFile = `${__dirname}/gliderport/logs/gpUpdate.log`;
 
 /**
- * Logs a message to a file.
+ * Appends a formatted log entry to the log file.
  *
- * Prepends the message with the current date and time in the format MM-DD-YYYY HH:mm:ss.
- * The first argument is padded to a fixed width for alignment.
+ * - Prepends the message with the current date and time in `MM-DD-YYYY HH:mm:ss` format.
+ * - Pads the first argument (label) to 17 characters for alignment.
+ * - Joins all arguments into a single string and writes it to the file.
  *
- * @param {...any} args - The message components to log. The first element is used as a label.
+ * @param args - The message components to log. The first element is used as a label.
  */
-export const log = (...args: any[]) => {
+export const log = (...args: any[]): void => {
   const d = new Date();
   const date = `${d.getMonth() + 1}-${d.getDate()}-${d.getFullYear()}`;
-  // Format the current time with leading zeros.
   const time = `${d.getHours()}:${d.getMinutes().toString().padStart(2, "0")}:${d
     .getSeconds()
     .toString()
     .padStart(2, "0")}`;
-  // Append a colon to the first argument and pad it to 17 characters.
-  args[0] += ":";
-  args[0] = args[0].toString().padEnd(17, " ");
-  // Join all arguments into a single string.
+
+  // Label formatting: append colon and pad to 17 characters.
+  args[0] = args[0].toString() + ":";
+  args[0] = args[0].padEnd(17, " ");
+
+  // Join all arguments into one message string.
   const message = args.join(" ");
-  // Append the formatted log entry to the log file.
+
+  // Append to log file with newline.
   fs.appendFileSync(__logFile, `${date} ${time} ${message}\n`);
 };
 
 /**
- * Appends a formatted log message to a provided log array.
+ * Appends a formatted log entry to an in-memory log array.
  *
- * The log message is constructed similarly to the `log` function,
- * with the first argument padded to 25 characters.
+ * - The first argument is the log array to which to append.
+ * - The next arguments form the log message, with the first of those padded to 25 characters.
+ * - Prepends date and time in `MM-DD-YYYY HH:mm:ss` format.
  *
- * @param {...any} args - The message components to log. The first element is used as a label.
+ * @param logArray - The in-memory array of log strings to which the entry will be appended.
+ * @param args     - The message components to log. The first message component is treated as a label.
  */
-export const logStr = (...args: any[]) => {
-  const logArray: string[] = args[0];
-  // Remove the log array from the arguments.
-  args.shift();
+export const logStr = (logArray: string[], ...args: any[]): void => {
   const d = new Date();
   const date = `${d.getMonth() + 1}-${d.getDate()}-${d.getFullYear()}`;
-  // Format the current time with leading zeros.
   const time = `${d.getHours()}:${d.getMinutes().toString().padStart(2, "0")}:${d
     .getSeconds()
     .toString()
     .padStart(2, "0")}`;
-  // Append a colon to the first argument and pad it to 25 characters.
-  args[0] += ":";
-  args[0] = args[0].toString().padEnd(25, " ");
-  // Join all arguments into a single string.
+
+  // Label formatting: append colon and pad to 25 characters.
+  args[0] = args[0].toString() + ":";
+  args[0] = args[0].padEnd(25, " ");
+
+  // Join remaining arguments into one message string.
   const message = args.join(" ");
-  // Append the formatted message to the provided log array.
+
+  // Append to the provided log array with timestamp.
   logArray.push(`${date} ${time} ${message}`);
 };
 
 /**
- * Outputs the log array to the console.
+ * Writes the contents of a log array to the log file, each entry on a new line.
  *
- * @param {string[]} log - The log array to output.
+ * @param logArray - The array of log strings to write to the file.
  */
-export const writeLog = (log: string[]) => {
-  //   console.log(log.join("\n"));
-  // Uncomment the following line to also append the log to the file:
-  fs.appendFileSync(__logFile, log.join("\n") + "\n");
+export const writeLog = (logArray: string[]): void => {
+  fs.appendFileSync(__logFile, logArray.join("\n") + "\n");
 };

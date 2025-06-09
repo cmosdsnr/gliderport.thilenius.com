@@ -1,40 +1,25 @@
 /**
- *
+ * @packageDocumentation
  *
  * **This module calculates sun-related times (e.g., sunrise, sunset, and other events)
  * for La Jolla, CA using the SunCalc library, and updates this data in the PocketBase
  * "status" collection.**
  *
- * Key Responsibilities:
- * - Sun Times Calculation:
- *   - Computes sun-related times for a specific date and location (latitude: 32.89, longitude: -117.25).
- *   - On the first run, calculates for today's 10 AM; on subsequent runs, for the next day at 10 AM.
+ * ## Key Responsibilities
+ * - **Sun Times Calculation**: Computes sun times for a specific date at latitude 32.89, longitude -117.25.
+ *   - On first run, calculates for today's 10 AM; on subsequent runs, for the next day at 10 AM.
+ * - **Database Update**: Logs computed times and updates the PocketBase "status" record with UNIX timestamps.
+ * - **Scheduled Updates**: Uses node-cron to run daily at 10:00 PM (America/Los_Angeles).
+ * - **Manual Trigger Endpoint**: Exposes GET /UpdateSun to manually trigger and inspect current sun data.
  *
- * - Database Update:
- *   - Converts the computed sun times to UNIX timestamps (seconds since epoch) and updates the
- *     PocketBase "status" collection using a unique ID generated via the ToId helper.
- *
- * - Scheduled Updates:
- *   - Uses node-cron to schedule a daily update of sun data at 10:00 PM.
- *
- * - Module Initialization & Debug Route:
- *   - Automatically updates sun data on module load.
- *   - Provides an Express route (/UpdateSun) for manually triggering the update and inspecting current sun data.
- *
- * Dependencies:
- * - PocketBase (pb): For interacting with the PocketBase backend.
- * - node-cron: For scheduling periodic updates.
- * - SunCalc: For computing sun times.
- * - ToId: For generating unique IDs from strings.
- * - log.js: For logging operations.
- *
- * Usage:
- * - Importing this module will automatically initialize and update the sun data.
- * - The cron job updates the sun data every day at 10:00 PM.
- * - The /UpdateSun endpoint can be used to manually trigger an update and view the current sun data.
+ * ## Dependencies
+ * - `pocketbase` (`pb`): For updating status.
+ * - `node-cron`: For scheduling daily updates.
+ * - `suncalc`: For computing sun times.
+ * - `miscellaneous` (`ToId`): For generating fixed-length IDs.
+ * - `log.js` (`logStr`, `writeLog`): For logging operations.
  *
  * @module sun
- *
  */
 
 import { Request, Response, Router } from "express";
@@ -44,86 +29,86 @@ import SunCalc from "suncalc";
 import { ToId } from "miscellaneous.js";
 import { logStr, writeLog } from "log.js";
 
+/**
+ * Holds the most recently computed sun times after calling updateSunData().
+ */
 export let sunData: SunCalc.GetTimesResult;
 let initialized = false;
 
 /**
  * Computes sun times for a given date at La Jolla, CA.
  *
- * @param {Date} y - The date for which to calculate sun times.
- * @returns {SunCalc.GetTimesResult} The sun times for the specified date and location.
+ * @param date - The target date for which to calculate sun times.
+ * @returns SunCalc.GetTimesResult containing events like sunrise, sunset, solar noon, etc.
  */
-export const getSun = (y: Date): SunCalc.GetTimesResult => {
-  // La Jolla latitude and longitude.
-  const lat = 32.89;
-  const long = -117.25;
-  return SunCalc.getTimes(y, lat, long);
+export const getSun = (date: Date): SunCalc.GetTimesResult => {
+  const LATITUDE = 32.89;
+  const LONGITUDE = -117.25;
+  return SunCalc.getTimes(date, LATITUDE, LONGITUDE);
 };
 
 /**
- * Updates the sun data by computing sun times for a target date and updating the PocketBase "status" collection.
+ * Calculates sun times at 10 AM local time and updates PocketBase with UNIX timestamps.
  *
- * On the first run, the target time is set to today's 10 AM. On subsequent runs, the target
- * time is set to 10 AM of the next day.
- *
- * The function logs the computed sunrise and sunset times, converts them to UNIX timestamps,
- * and updates the PocketBase "status" collection with the new sun data.
- *
- * @returns {void}
+ * - On first invocation: calculates for today at 10 AM.
+ * - On subsequent invocations: increments to next day at 10 AM.
+ * - Logs sunrise and sunset to the application log.
+ * - Converts all sun event times to seconds since epoch and updates the `status` record.
  */
 export const updateSunData = (): void => {
-  // Create a Date object for 10 AM.
-  const d = new Date();
-  d.setHours(10);
-  // On the first run, use today's 10 AM; afterwards, use the next day.
-  if (!initialized) {
-    initialized = true;
+  const date = new Date();
+  date.setHours(10, 0, 0, 0);
+  if (initialized) {
+    date.setDate(date.getDate() + 1);
   } else {
-    d.setDate(d.getDate() + 1);
+    initialized = true;
   }
 
-  // Compute sun times for the specified date and location.
-  sunData = getSun(d);
-  const log: string[] = [];
+  // Compute times and log
+  sunData = getSun(date);
+  const log: string[] = [""];
   logStr(
     log,
     "updateSunData",
-    "Sun Rise:",
+    "Sunrise:",
     sunData.sunrise.toLocaleString(),
-    "Sun Set:",
+    "Sunset:",
     sunData.sunset.toLocaleString()
   );
   writeLog(log);
 
-  // Convert each sun event time to a UNIX timestamp (in seconds).
-  const sd: Record<string, number> = {};
-  for (const [k, v] of Object.entries(sunData)) {
-    sd[k] = Math.floor(v.getTime() / 1000);
-  }
+  // Convert to UNIX seconds and prepare record
+  const record: Record<string, number> = {};
+  Object.entries(sunData).forEach(([event, time]) => {
+    record[event] = Math.floor(time.getTime() / 1000);
+  });
 
-  // Update the sun data in the PocketBase "status" collection.
-  pb.collection("status").update(ToId("sun"), { record: sd });
+  // Update PocketBase status
+  pb.collection("status").update(ToId("sun"), { record });
 };
 
-// Immediately update sun data on module load.
+// Immediately perform an initial update on load
 updateSunData();
 
-// Schedule updateSunData to run every day at 10:00 PM in Los Angeles time.
-cron.schedule("0 22 * * *", updateSunData);
+// Schedule daily updates at 22:00 (10 PM) America/Los_Angeles time
+cron.schedule("0 22 * * *", updateSunData, { timezone: "America/Los_Angeles" });
 
 /**
- * Creates and returns an Express router for sun data update endpoints.
+ * Provides Express routes to interact with sun data.
  *
- * Exposed Endpoints:
- * - GET /UpdateSun: Manually triggers a sun data update and returns the current sun data.
+ * Exposes:
+ * - GET /UpdateSun: Manually triggers updateSunData() and returns the latest sunData.
  *
- * @returns {Router} An Express router with the /UpdateSun endpoint.
+ * @returns Express Router configured with sun endpoints.
  */
 export const sunRoutes = (): Router => {
   const router = Router();
 
-  // Debug endpoint to manually update sun data and return the current sunData.
-  router.get("/UpdateSun", (req: Request, res: Response) => {
+  /**
+   * GET /UpdateSun
+   * Triggers a sun data recalculation and returns the current sunData JSON.
+   */
+  router.get("/UpdateSun", (_req: Request, res: Response) => {
     updateSunData();
     res.json(sunData);
   });

@@ -1,10 +1,11 @@
 /**
+ * @packageDocumentation
  *
  * Manages code history for the Gliderport system by:
- *  - Converting SQL records to PocketBase (sqlToPbCodeHistory)
- *  - Generating wind condition codes (getCode)
- *  - Initializing and updating today's codes (initialize, updateCodeHistory)
- *  - Exposing Express endpoints for manual triggers and querying codes (codeRoutes)
+ * - Converting SQL records to PocketBase (`sqlToPbCodeHistory`)
+ * - Generating wind condition codes (`getCode`)
+ * - Initializing and updating today’s codes (`initialize`, `updateCodeHistory`)
+ * - Exposing Express endpoints for manual triggers and querying codes (`codeRoutes`)
  *
  * Uses Luxon and sun.js for date/time and sunrise/sunset calculations.
  *
@@ -15,15 +16,20 @@ import { Request, Response, Router } from "express";
 import { getSun } from "sun.js";
 import { DateTime } from "luxon";
 import { WindTable } from "wind.js";
-import { forecast } from "./openWeather";
 
 /**
- * A single wind code entry: [secondsSinceLocalMidnight, codeValue].
+ * A single wind code entry.
+ * @typedef CodeEntry
+ * @type {[number, number]}
+ * @property {number} 0 – Seconds since local midnight (UNIX seconds).
+ * @property {number} 1 – Code value (see {@link WindCode}).
  */
 export type CodeEntry = [number, number];
 
 /**
  * A full day of wind code entries.
+ * @typedef DayOfCodes
+ * @type {CodeEntry[]}
  */
 export type DayOfCodes = CodeEntry[];
 
@@ -32,10 +38,10 @@ export type DayOfCodes = CodeEntry[];
  */
 export let codes: DayOfCodes[] = [];
 
-// Internal state tracking current processing day boundaries
-let dayTs = 0; // Local midnight (UNIX seconds)
-let sunriseTs = 0; // Sunrise time (UNIX seconds)
-let sunsetTs = 0; // Sunset time (UNIX seconds)
+// Internal state tracking current processing day boundaries:
+let dayTs = 0; // Local midnight (UNIX seconds).
+let sunriseTs = 0; // Sunrise time (UNIX seconds).
+let sunsetTs = 0; // Sunset time (UNIX seconds).
 
 /**
  * Discrete wind condition codes.
@@ -58,43 +64,38 @@ export enum WindCode {
  * Returns the UNIX timestamp of local midnight in America/Los_Angeles
  * for the given UTC timestamp.
  *
- * @param ts - UTC timestamp in seconds
- * @returns Local midnight timestamp (seconds)
+ * @param ts - UTC timestamp in seconds.
+ * @returns Local midnight timestamp (seconds).
  */
 export function getLastMidnightLA(ts: number): number {
-  // 1) Build a Luxon DateTime in the America/Los_Angeles zone
   const dtLA = DateTime.fromSeconds(ts, { zone: "America/Los_Angeles" });
-  // 2) Snap to the start of that local day (i.e. midnight)
   const midnightLA = dtLA.startOf("day");
-  // 3) Convert back to a UNIX timestamp (seconds)
   return Math.floor(midnightLA.toSeconds());
 }
 
 /**
  * Computes a wind condition code based on wind speed, wind direction, and ambient light.
  *
- * The function evaluates the provided wind speed and direction. If it is dark (isItDark is true),
- * it returns the corresponding dark condition code. Otherwise, it applies the following logic:
+ * - If `isItDark` is true, returns {@link WindCode.IT_IS_DARK}.
+ * - Otherwise, applies thresholds:
+ *   - **Low speed (< 60)**:
+ *     - direction > 310 or < 230 → `SLED_RIDE_BAD_ANGLE`
+ *     - direction > 302 or < 236 → `SLED_RIDE_POOR_ANGLE`
+ *     - else → `SLED_RIDE`
+ *   - **Moderate speed (60 ≤ speed < 210)**:
+ *     - direction > 310 or < 230 → `BAD_ANGLE`
+ *     - direction > 302 or < 236 → `POOR_ANGLE`
+ *     - else:
+ *       - speed ≤ 110 → `GOOD`
+ *       - speed < 150 → `EXCELLENT`
+ *       - otherwise → `SPEED_BAR`
+ *   - **High speed (≥ 210)**:
+ *     - → `TOO_WINDY`
  *
- * - For low wind speeds (less than 60):
- *   - If the direction is very unfavorable (direction > 310 or direction < 230), return SLED_RIDE_BAD_ANGLE.
- *   - If the direction is slightly less extreme (direction > 302 or direction < 236), return SLED_RIDE_POOR_ANGLE.
- *   - Otherwise, return SLED_RIDE.
- *
- * - For moderate wind speeds (60 to less than 210):
- *   - If the direction is very unfavorable, return BAD_ANGLE.
- *   - If the direction is slightly less favorable, return POOR_ANGLE.
- *   - Otherwise, the wind speed determines:
- *       - If speed is less than or equal to 110, return GOOD.
- *       - If speed is less than 150, return EXCELLENT.
- *       - Otherwise, return SPEED_BAR.
- *
- * - For high wind speeds (210 and above), return TOO_WINDY.
- *
- * @param speed - The wind speed.
- * @param direction - The wind direction in degrees.
- * @param isItDark - Whether it is dark. Defaults to false.
- * @returns {WindCode} A numeric code (from the WindCode enum) corresponding to the wind conditions.
+ * @param speed     - Wind speed.
+ * @param direction - Wind direction in degrees.
+ * @param isItDark  - Whether it is dark. Defaults to `false`.
+ * @returns A {@link WindCode} corresponding to the wind conditions.
  */
 export function getCode(speed: number, direction: number, isItDark: boolean = false): WindCode {
   if (isItDark) {
@@ -129,26 +130,27 @@ export function getCode(speed: number, direction: number, isItDark: boolean = fa
 }
 
 /**
- * Computes a WindCode based on wind speed, wind direction, and light conditions.
- * Returns IT_IS_DARK if `isItDark` is true; otherwise applies thresholds.
+ * Updates the code history for the current day based on a new wind table.
+ * - Finds the most recent code entry and processes new windTable entries until sunset.
+ * - Appends code changes at 2-minute intervals.
+ * - When sunset is reached, pushes a `IT_IS_DARK` entry at sunset, then advances to next day.
+ * - Continues processing until windTable is exhausted.
+ * - Finally, prunes history older than 15 days.
  *
- * @param speed - Wind speed in appropriate units
- * @param direction - Wind direction in degrees
- * @param isItDark - True if timestamp is before sunrise or after sunset
- * @returns Corresponding WindCode enum value
+ * @param windTable - Sorted array of `{ timestamp: number; speed: number; direction: number; }`.
  */
-export const updateCodes = (windTable: WindTable) => {
-  if (codes.length == 0) {
+export const updateCodes = (windTable: WindTable): void => {
+  if (codes.length === 0) {
     console.log("codes not initialized");
     return;
   }
   const lastDay = codes[codes.length - 1];
-  if (lastDay.length == 0) {
+  if (lastDay.length === 0) {
     console.log("last Day is empty");
     return;
   }
+
   let lastTs = lastDay[lastDay.length - 1][0];
-  // search for first timestamp in the windTable that is greater than lastTs
   let idx = windTable.length - 1;
   while (idx > 0 && windTable[idx].timestamp > lastTs) idx--;
   while (idx < windTable.length && windTable[idx].timestamp < lastDay[lastDay.length - 1][0] + 120) idx++;
@@ -160,6 +162,7 @@ export const updateCodes = (windTable: WindTable) => {
       while (idx < windTable.length && windTable[idx].timestamp < v.timestamp + 120) idx++;
     } else idx++;
   }
+
   if (idx < windTable.length && windTable[idx].timestamp >= sunsetTs) {
     lastDay.push([sunsetTs, WindCode.IT_IS_DARK]);
     dayTs += 24 * 3600;
@@ -169,12 +172,12 @@ export const updateCodes = (windTable: WindTable) => {
   }
 
   while (windTable.length > idx) {
-    let day: any = [];
+    let day: CodeEntry[] = [];
     while (idx < windTable.length && windTable[idx].timestamp < sunriseTs) idx++;
     if (idx >= windTable.length) break;
 
     if (windTable[idx].timestamp > sunsetTs) {
-      //we have no data points for this day
+      // No data points for this day
       day.push([sunriseTs, WindCode.NO_DATA]);
     } else {
       const code = getCode(windTable[idx].speed, windTable[idx].direction);
@@ -190,6 +193,7 @@ export const updateCodes = (windTable: WindTable) => {
         } else idx++;
       }
     }
+
     day.push([sunsetTs, WindCode.IT_IS_DARK]);
     codes.push(day);
     day = [];
@@ -199,7 +203,7 @@ export const updateCodes = (windTable: WindTable) => {
     sunsetTs = Math.floor(sunData.sunset.getTime() / 1000);
   }
 
-  // Remove days older than 15 days
+  // Prune days older than 15 days
   let fTs = codes[0][0][0];
   const lTs = codes[codes.length - 1][codes[codes.length - 1].length - 1][0];
   while (lTs - fTs > 15 * 24 * 3600) {
@@ -209,26 +213,29 @@ export const updateCodes = (windTable: WindTable) => {
 };
 
 /**
- * Converts the entire windTable into daily code sequences and populates the `codes` array.
- * Iterates through each day, seeding at sunrise, tracking changes until sunset,
- * then closing out and moving to the next day.
+ * Converts an entire wind table into daily code sequences and populates `codes`.
+ * - Initializes `dayTs` at local midnight of the first wind record.
+ * - Retrieves sunrise/sunset times for that day.
+ * - Iterates through windTable:
+ *   - Skips until sunrise, then captures first code at sunrise.
+ *   - Records code changes every 2 minutes until sunset.
+ *   - Pushes a `IT_IS_DARK` entry at sunset, advances to next day, and repeats.
  *
- * @param windTable - Sorted array of { timestamp, speed, direction }
+ * @param windTable - Sorted array of `{ timestamp: number; speed: number; direction: number; }`.
  */
-export const convertToCodes = (windTable: WindTable) => {
+export const convertToCodes = (windTable: WindTable): void => {
   dayTs = getLastMidnightLA(windTable[0].timestamp);
-  const dt = DateTime.fromSeconds(dayTs).toJSDate();
-  let sunData = getSun(dt);
+  let sunData = getSun(DateTime.fromSeconds(dayTs).toJSDate());
   sunriseTs = Math.floor(sunData.sunrise.getTime() / 1000);
   sunsetTs = Math.floor(sunData.sunset.getTime() / 1000);
 
   let idx = 0;
-  let day: any[] = [];
+  let day: CodeEntry[] = [];
 
   while (windTable.length > idx) {
     while (windTable[idx].timestamp < sunriseTs) idx++;
     if (windTable[idx].timestamp > sunsetTs) {
-      //we have no data points for this day
+      // No data points for this day
       day.push([sunriseTs, WindCode.NO_DATA]);
     } else {
       const code = getCode(windTable[idx].speed, windTable[idx].direction);
@@ -244,6 +251,7 @@ export const convertToCodes = (windTable: WindTable) => {
         } else idx++;
       }
     }
+
     if (idx < windTable.length) {
       day.push([sunsetTs, WindCode.IT_IS_DARK]);
       codes.push(day);
@@ -252,39 +260,41 @@ export const convertToCodes = (windTable: WindTable) => {
       sunData = getSun(DateTime.fromSeconds(dayTs).toJSDate());
       sunriseTs = Math.floor(sunData.sunrise.getTime() / 1000);
       sunsetTs = Math.floor(sunData.sunset.getTime() / 1000);
-    } else codes.push(day);
+    } else {
+      codes.push(day);
+    }
   }
 };
 
 /**
- * Handler for GET /getWindTableCodes
- * Calculates wind codes for each windTable entry, including darkness based on sunrise/sunset.
- * Returns a list of timestamps (in seconds), ISO date strings, and their corresponding code whenever it changes.
+ * Handler for GET `/getWindTableCodes`.
+ * Responds with the current `codes` array, containing arrays of
+ * `[timestamp: number, code: number]` entries for each day.
  *
- * @route GET /getWindTableCodes
- * @returns Array<{ timestamp: number; date: string; code: WindCode }>
+ * @param req - Express request (unused).
+ * @param res - Express response.
  */
-async function getWindTableCodesHandler(req: Request, res: Response) {
+async function getWindTableCodesHandler(req: Request, res: Response): Promise<void> {
   res.status(200).json({ codes });
 }
 
 /**
- * This module defines an Express router that exposes endpoints for managing and updating the code history.
+ * Defines an Express router that exposes endpoints for managing and querying code history.
  *
- * It provides the following endpoints:
- * - GET /updateCodeHistory: Triggers an update of the current day's code history based on new wind data.
- * - GET /sqlToPbCodeHistory: Imports SQL code history records into the PocketBase "codeHistory" collection.
+ * Exposed Endpoints:
+ * - **GET /getWindTableCodes**: Returns the entire `codes` array.
  *
- * These endpoints are primarily used for administrative and debugging purposes to ensure that the
- * code history data remains synchronized between the SQL database and PocketBase.
- *
- * @returns {Router} An Express Router configured with the code history endpoints.
- *
+ * @returns An `Express.Router` configured with code-history endpoints.
  */
 export const codeRoutes = (): Router => {
   const router = Router();
 
-  // New route: code changes in the windTable
+  /**
+   * Retrieves the current wind-table code history.
+   *
+   * @route GET /getWindTableCodes
+   * @returns JSON object with the `codes` array.
+   */
   router.get("/getWindTableCodes", getWindTableCodesHandler);
 
   return router;

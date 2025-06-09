@@ -1,159 +1,145 @@
+/**
+ * @packageDocumentation
+ *
+ * **This module implements a WebSocket server for real-time updates to connected clients.**
+ * - Tracks connected clients and their metadata (ID, IP, last message time).
+ * - Provides functions to broadcast new wind data or images to all clients.
+ * - Pings clients every 45 seconds to detect and remove stale connections.
+ *
+ * @module socketServer
+ */
+
 import WebSocket, { WebSocketServer } from "ws";
 import http from "http";
 import { WindTableRecord } from "./wind";
 
-const clients = new Map();
+/**
+ * Metadata stored for each connected WebSocket client.
+ */
+interface ClientMetadata {
+  /** Unique client identifier (UUID v4) */
+  id: string;
+  /** Client IP address */
+  ip: string;
+  /** Timestamp (ms) of the last received message or pong */
+  lastMessage: number;
+}
 
-const updateClients = () => {
-  const t = [...clients.keys()];
-  const clientCount = t.length;
-  console.log("Number of clients: ", clientCount);
-  t.forEach((client) => {});
-};
+/** Map of WebSocket connections to their metadata. */
+const clients = new Map<WebSocket, ClientMetadata>();
 
-export const transmitNewRecords = (records: WindTableRecord[]) => {
-  [...clients.keys()].forEach((client) => {
-    client.send(
-      JSON.stringify({
-        command: "newRecords",
-        records: records,
-      })
-    );
+/**
+ * Logs the current number of connected clients.
+ */
+function updateClients(): void {
+  const count = clients.size;
+  console.log("Number of clients:", count);
+}
+
+/**
+ * Broadcasts new wind table records to all connected clients.
+ *
+ * @param records - Array of wind data records to send.
+ */
+export function transmitNewRecords(records: WindTableRecord[]): void {
+  const payload = JSON.stringify({ command: "newRecords", records });
+  for (const client of clients.keys()) {
+    client.send(payload);
+  }
+}
+
+/**
+ * Broadcasts a new image update to all connected clients.
+ *
+ * @param camera - Camera number (1 or 2).
+ * @param image  - Base64-encoded image data.
+ * @param date   - Timestamp (ms) when the image was captured.
+ */
+export function transmitNewImage(camera: number, image: string, date: number): void {
+  const payload = JSON.stringify({
+    command: "newImage",
+    imageInfo: { camera, image, date },
   });
-};
-export const transmitNewImage = (camera: number, image: string, date: number) => {
-  console.log("transmitNewImage");
-  [...clients.keys()].forEach((client) => {
-    client.send(
-      JSON.stringify({
-        command: "newImage",
-        imageInfo: { camera, image, date },
-      })
-    );
-  });
-};
+  for (const client of clients.keys()) {
+    client.send(payload);
+  }
+}
 
-export const transmitNewImageMobile = (camera: number, image: string, date: number) => {
-  console.log("transmitNewImage");
-  [...clients.keys()].forEach((client) => {
-    client.send(
-      JSON.stringify({
-        command: "newImage",
-        imageInfo: { camera, image, date },
-      })
-    );
-  });
-};
+/**
+ * Alias for `transmitNewImage`, for mobile-specific logic if needed.
+ *
+ * @param camera - Camera number.
+ * @param image  - Base64-encoded image data.
+ * @param date   - Timestamp (ms).
+ */
+export const transmitNewImageMobile = transmitNewImage;
 
-export const socketServer = (server: http.Server) => {
+/**
+ * Starts a WebSocket server on the given HTTP server to handle real-time client communication.
+ *
+ * @param server - An HTTP server on which to mount the WebSocket server.
+ */
+export function socketServer(server: http.Server): void {
   const wss = new WebSocketServer({ server });
-  console.log("Starting webSocketServer on port ", process.env.PORT);
+  console.log("Starting WebSocket server on port", process.env.PORT);
 
   wss.on("connection", (ws, req) => {
-    const metadata = {
+    // Generate client metadata
+    const metadata: ClientMetadata = {
       id: uuidv4(),
-      ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress?.replace(/.*:/, ""),
+      ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress?.replace(/.*:/, "") || "unknown",
       lastMessage: Date.now(),
     };
     clients.set(ws, metadata);
     updateClients();
-    //add to hit counter database
-    const date = new Date();
-    const dateStr =
-      date.getUTCFullYear() +
-      "-" +
-      ("00" + (date.getUTCMonth() + 1)).slice(-2) +
-      "-" +
-      ("00" + date.getUTCDate()).slice(-2) +
-      " " +
-      ("00" + date.getUTCHours()).slice(-2) +
-      ":" +
-      ("00" + date.getUTCMinutes()).slice(-2) +
-      ":" +
-      ("00" + date.getUTCSeconds()).slice(-2);
 
+    // Remove client on close
     ws.on("close", () => {
       clients.delete(ws);
       updateClients();
     });
 
-    ws.on("message", (messageAsString: string) => {
-      const message = JSON.parse(messageAsString);
-      const metadata = clients.get(ws);
-      message.debug = "";
-
-      if (message.command === "fetchData") {
-        message.sender = metadata.id;
-        switch (message.subCommand) {
-          case "Status":
-            // Status(message);
-            break;
-          case "Forecast":
-            // Forecast(message);
-            break;
-          case "ForecastFull":
-            // ForecastFull(message);
-            break;
-          case "Image1":
-            // Image1(message);
-            break;
-          case "BigImage1":
-            // BigImage1(message);
-            break;
-          case "Image2":
-            // Image2(message);
-            break;
-          case "BigImage2":
-            // BigImage2(message);
-            break;
-          case "CurrentData":
-            // CurrentData(message);
-            break;
-          case "Message":
-            // Message(message);
-            break;
-          case "Clients":
-            // Clients(message);
-            break;
-          case "UnloadClients":
-            // UnloadClients();
-            break;
-          default:
-            // Unknown(message);
-            break;
-        }
-      } else if (message.command === "pong") {
-        metadata.lastMessage = Date.now();
-        clients.set(ws, metadata);
-        console.log("pong from: ", metadata.id);
+    // Handle incoming messages
+    ws.on("message", (msgString: string) => {
+      const message = JSON.parse(msgString);
+      const meta = clients.get(ws)!;
+      if (message.command === "pong") {
+        meta.lastMessage = Date.now();
+        console.log("pong from:", meta.id);
+      } else if (message.command === "fetchData") {
+        // Placeholder for handling various fetchData sub-commands
+        // e.g. Status, Forecast, Image1, etc.
       }
     });
   });
 
+  // Periodically ping clients and remove those that fail to respond
   setInterval(() => {
-    //check for clients that have not sent a pong in 30 seconds
-    [...clients.keys()].forEach((client) => {
-      const metadata = clients.get(client);
-      if (Date.now() - metadata.lastMessage > 45000) {
-        console.log("client timed out: ", metadata.id);
+    const now = Date.now();
+    for (const [client, meta] of clients.entries()) {
+      if (now - meta.lastMessage > 45_000) {
+        console.log("Client timed out:", meta.id);
         client.close();
         clients.delete(client);
+      } else {
+        client.send(JSON.stringify({ command: "ping" }));
       }
-    });
-    console.log("pinging clients");
-    const t = [...clients.keys()];
-    t.forEach((client) => {
-      client.send(JSON.stringify({ command: "ping" }));
-    });
-  }, 45000);
+    }
+    console.log("Pinging clients");
+  }, 45_000);
 
-  function uuidv4() {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-      var r = (Math.random() * 16) | 0,
-        v = c == "x" ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  }
+  console.log("WebSocket server is up");
+}
 
-  console.log("wss up");
-};
+/**
+ * Generates a UUID v4 string.
+ *
+ * @returns A random UUID v4.
+ */
+function uuidv4(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
