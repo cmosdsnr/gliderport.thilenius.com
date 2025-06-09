@@ -92,11 +92,11 @@ console.log(`Serving front end assets from ${__dirname}/gp_dist`);
 app.use("/images", express.static(path.join(__dirname, "/gliderport/images")));
 
 //back end docs (generated in gliderportFrontWEnd)
-app.use("/docs_frontend", express.static(path.join(__dirname, "/docs/FrontEnd")));
+app.use("/docs/frontend", express.static(path.join(__dirname, "/docs_frontend")));
 //back end docs (generated in gp3_pi3_server)
-app.use("/docs_gp_server", express.static(path.join(__dirname, "/docs/gp_pi3")));
+app.use("/docs/gp_server", express.static(path.join(__dirname, "/docs_gp_server")));
 //back end docs (generated in gliderport)
-app.use("/docs", express.static(path.join(__dirname, "/docs")));
+app.use("/docs/backend", express.static(path.join(__dirname, "/docs")));
 
 app.use("/", express.static(path.join(__dirname, "/gp_dist")));
 
