@@ -100,6 +100,8 @@ app.use("/docs/backend", express.static(path.join(__dirname, "/docs")));
 
 app.use("/", express.static(path.join(__dirname, "/gp_dist")));
 
+app.use("/stream", express.static(path.join(__dirname, "/stream")));
+
 // -----------------------------------------------------------------------------
 /**
  * Single-page application (SPA) fallback.
