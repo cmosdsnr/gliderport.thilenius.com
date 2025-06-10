@@ -19,8 +19,14 @@ const validationSchema = yup.object().shape({
         .required('Please confirm your password'),
 });
 
-
-export default function ChangePasswordModal() {
+/**
+ * ChangePasswordModal component allows users to change their password.
+ * It provides a form for new password input and handles password change logic.
+ *
+ * @component
+ * @returns {React.ReactElement} Modal for changing password.
+ */
+export function ChangePasswordModal(): React.ReactElement {
     const { closeModal } = useModal();
     const { pb } = useAuth();
     const [error, setError] = useState<string>('');
@@ -79,3 +85,4 @@ export default function ChangePasswordModal() {
         </Modal>
     );
 }
+export default ChangePasswordModal;

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * AuthContext for the Gliderport application.
+ * Provides authentication, user profile, and settings management using PocketBase.
+ */
 import React, { useState, useEffect, useContext, ReactNode } from 'react'
 import { formatter } from 'components/Globals'
 import PocketBase from "pocketbase";
@@ -8,10 +13,29 @@ interface AuthProviderProps {
     children: ReactNode;
 }
 
+/**
+ * AuthContextType defines the shape of the authentication context.
+ * - pb: PocketBase instance for API access.
+ * - currentUser: The currently authenticated user or null.
+ * - changePassword: Function to change the user's password.
+ * - avatar: URL string for the user's avatar image.
+ * - login: Function to log in with email and password.
+ * - googleLogin: Function to log in with Google OAuth.
+ * - logout: Function to log out the current user.
+ * - signUp: Function to register a new user.
+ * - sendVerification: Function to send a verification email.
+ * - requestVerification: Function to request email verification.
+ * - resetPassword: Function to send a password reset email.
+ * - changeEmail: Function to request an email change.
+ * - changeAvatar: Function to update the user's avatar.
+ * - updateUser: Function to update a user field.
+ * - updateUserSettings: Function to update user settings.
+ * - reloadUserInfo: Function to reload the current user's info from the server.
+ */
 export interface AuthContextType {
     pb: PocketBase;
     currentUser: User | null;
-    ChangePassword: (transaction: any) => void;
+    changePassword: (transaction: any) => void;
     avatar: string;
     login: (email: string, password: string) => any;
     googleLogin: () => void;
@@ -20,7 +44,7 @@ export interface AuthContextType {
     sendVerification: (email: string) => void;
     requestVerification: () => void;
     resetPassword: (email: string) => void;
-    ChangeEmail: (newEmail: string) => void;
+    changeEmail: (newEmail: string) => void;
     changeAvatar: (data: FormData) => void;
     updateUser: (name: string, value: any) => Promise<boolean>;
     updateUserSettings: (obj: Partial<UserSettings>, textMe?: boolean) => Promise<boolean>;
@@ -29,6 +53,11 @@ export interface AuthContextType {
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined)
 
+/**
+ * Custom hook to access the AuthContext.
+ * @returns {AuthContextType} The authentication context.
+ * @throws Error if used outside of an AuthProvider.
+ */
 export function useAuth(): AuthContextType {
     const context = useContext(AuthContext)
     if (context === undefined) {
@@ -37,7 +66,12 @@ export function useAuth(): AuthContextType {
     return context
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
+/**
+ * AuthProvider component that wraps its children with authentication context.
+ * @param props - The children to provide context to.
+ * @returns {React.ReactElement} The provider with authentication context.
+ */
+export function AuthProvider({ children }: AuthProviderProps): React.ReactElement {
 
     const defaultAvatar = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port + "/images/user.png"
     const [avatar, setAvatar] = useState<string>(defaultAvatar);
@@ -52,7 +86,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     }, []);
 
-    const ChangePassword = async () => { if (pb.authStore.record) resetPassword(pb.authStore.record.email) }
+    // Change password for the current user, or prompt if using Google login
+    const changePassword = async () => {
+        if (pb.authStore.record) resetPassword(pb.authStore.record.email)
+    }
 
     useEffect(() => {
         if (currentUser)
@@ -64,6 +101,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setCurrentUser(record);
     }
 
+    // Log in with email and password
     const login = async (email: string, password: string) => {
         try {
             await pb.collection('users').authWithPassword(email, password);
@@ -76,8 +114,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     }
 
+    // Log in with Google OAuth
     const googleLogin = async () => {
-
         //all-in-1 google login
         //explanation: https://pocketbase.io/docs/authentication
         //get key and secret from google developer console, and set them in pocketbase auth configuration 
@@ -124,11 +162,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // setIsLoggedIn(true);
     }
 
+    // Log out the current user
     const logout = () => {
         pb.authStore.clear();
         setCurrentUser(null);
     }
 
+    // Register a new user
     const signUp = async (data: SignUp) => {
         await pb
             .collection('users')
@@ -143,23 +183,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
             })
     }
 
-
+    // Send a verification email for any given email address
     const sendVerification = async (email: string) => {
+        if (pb.authStore.record?.provider === 'google') {
+            alert('You are logged in with Google. Please manage your account there.');
+            return;
+        }
         if (await pb.collection('users').requestVerification(email)) console.log("Verification Email Sent!")
     }
 
+    // Request email verification for the current user
     const requestVerification = async () => {
+        if (pb.authStore.record?.provider === 'google') {
+            alert('You are logged in with Google. Please manage your account there.');
+            return;
+        }
         if (await pb.collection('users').requestVerification(pb.authStore.record?.email)) alert('Verification Email Sent! Check your inbox.')
         else alert('Error sending verification email.')
     }
 
+    // Send a password reset email, or prompt if using Google login
     const resetPassword = async (email: string) => {
+        // Check if the user is logged in via Google OAuth
+        if (pb.authStore.record?.provider === 'google') {
+            alert('You are logged in with Google. Please visit your Google Account to change your password.');
+            return;
+        }
         if (await pb.collection('users').requestPasswordReset(email)) alert('Password Reset Email Sent to ' + email + '! Check your inbox.')
         else alert('Error sending Password Reset email.')
     }
 
-    const ChangeEmail = async (newEmail: string) => await pb.collection('users').requestEmailChange(newEmail);
+    // Request an email change, or prompt if using Google login
+    const changeEmail = async (newEmail: string) => {
+        // Check if the user is logged in via Google OAuth
+        if (pb.authStore.record?.provider === 'google') {
+            alert('You are logged in with Google. Please visit your Google Account to change your email.');
+            return;
+        }
+        return await pb.collection('users').requestEmailChange(newEmail);
+    };
 
+    // Change the user's avatar
     const changeAvatar = async (data: FormData) => {
         if (pb.authStore.record) {
             await pb.collection("users").update(pb.authStore.record.id, data);
@@ -168,6 +232,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     }
 
+    // Update a user field
     const updateUser = async (name: string, value: any) => {
         if (pb.authStore.record) {
             const data = { ...pb.authStore.record, [name]: value };
@@ -179,8 +244,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return true;
     }
 
-
-
+    // Update user settings
     const updateUserSettings = async (obj: Partial<UserSettings>, textMe?: boolean) => {
         if (currentUser) {
             let t: UserSettings = { ...currentUser.settings, ...obj };
@@ -193,6 +257,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return true;
     }
 
+    // Reload the current user's info from the server
     const reloadUserInfo = async () => {
         await pb.collection("users").authRefresh();
         if (pb.authStore.record) {
@@ -200,15 +265,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     }
 
-
-
-
-
-
     const value: AuthContextType = {
         pb,
         currentUser,
-        ChangePassword,
+        changePassword,
         avatar,
         login,
         googleLogin,
@@ -217,13 +277,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         sendVerification,
         requestVerification,
         resetPassword,
-        ChangeEmail,
+        changeEmail,
         changeAvatar,
-
         updateUser,
         updateUserSettings,
         reloadUserInfo,
-
     }
 
     return (

@@ -8,7 +8,12 @@ import { DateTime } from 'luxon';
 type ViewOption = 'day' | 'week' | 'month';
 type MetricOption = 'total' | 'unique';
 
-const StatsHitsComponent = () => {
+/**
+ * StatsHitsComponent displays site statistics and a chart of visits.
+ * Allows toggling between day/week/month and total/unique metrics.
+ * @returns {React.ReactElement} The rendered stats hits component.
+ */
+export function StatsHitsComponent(): React.ReactElement {
     const { siteHits } = useStatusCollection();
 
     // 1) New state for "view" (day/week/month) and "metric" (total/unique)

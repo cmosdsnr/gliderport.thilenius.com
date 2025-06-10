@@ -1,24 +1,58 @@
-import React, { useState, useEffect } from 'react'
-import { DayOfCodes } from '../History/History'
-import { codes } from '../Globals'
+/**
+ * 
+ * @packageDocumentation
+ *   React component that fetches and displays today's wind forecast codes
+ *   in a simple table format. Retrieves forecast codes from the server,
+ *   removes the final "dark" entry, and displays each timestamp and code.
+ */
+import React, { useState, useEffect } from 'react';
+import { DayOfCodes } from '../History/History';
+import { codes } from '../Globals';
 
-const Today = () => {
+/**
+ * Displays today's wind forecast codes in a table.
+ *
+ * Fetches forecast codes from the API, removes the final "dark" entry,
+ * and displays each timestamp and code.
+ *
+ * @returns {React.ReactElement} The rendered forecast table.
+ */
+export function Today(): React.ReactElement {
+    /**
+     * State holding an array of forecast entries for today.
+     * Each entry is a tuple [timestampSec, codeValue].
+     */
     const [today, setToday] = useState<DayOfCodes>([]);
 
     useEffect(() => {
-        const fetchForecastCodes = async () => {
+        /**
+         * Fetches forecast codes from the API and updates state with
+         * today's codes, excluding the final dark period entry.
+         *
+         * @async
+         * @function fetchForecastCodes
+         * @returns {Promise<void>}
+         */
+        const fetchForecastCodes = async (): Promise<void> => {
             try {
-                const url = new URL("/getForecastCodes", import.meta.env.VITE_UPDATE_SERVER_URL);
+                const url = new URL("/api/getForecastCodes", import.meta.env.VITE_SERVER_URL.toString());
                 const res = await fetch(url.toString());
-                if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status} ${res.statusText}`);
+                }
                 const forecastCodes: any = await res.json();
-                forecastCodes[0].pop(); // remove last element (it is dark)
-                setToday(forecastCodes[0]);
+
+                // Remove the final "dark" entry if present
+                if (Array.isArray(forecastCodes[0])) {
+                    forecastCodes[0].pop();
+                }
+
+                setToday(forecastCodes[0] as DayOfCodes);
             } catch (err: any) {
-                console.error(err.message);
-                return;
+                console.error('Error fetching forecast codes:', err.message);
             }
-        }
+        };
+
         fetchForecastCodes();
     }, []);
 
@@ -30,26 +64,26 @@ const Today = () => {
                 </tr>
             </thead>
             <tbody>
-                {today?.map((code, i) => {
+                {today.map((codeEntry, i) => {
+                    const [ts, code] = codeEntry;
                     return (
                         <tr key={i}>
                             <td className="forecast-time">
-                                {new Date(code[0] * 1000)
+                                {new Date(ts * 1000)
                                     .toLocaleTimeString('en-GB', {
                                         hour: '2-digit',
-                                        hour12: false
+                                        hour12: false,
                                     })}
                             </td>
                             <td className="forecast-wind">
-                                {codes[code[1]].code}
+                                {codes[code]?.code ?? 'Unknown'}
                             </td>
                         </tr>
-                    )
-                })
-                }
+                    );
+                })}
             </tbody>
         </table>
-    )
-}
+    );
+};
 
-export default Today
+export default Today;

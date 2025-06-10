@@ -19,7 +19,12 @@ const CustomInput = forwardRef(
 
 interface StatsImageComponentProps { }
 
-const StatsImageComponent: React.FC<StatsImageComponentProps> = () => {
+/**
+ * StatsImageComponent displays a date picker, camera selector, image/video details,
+ * and a list of images for the selected day and hour range.
+ * @returns {React.ReactElement} The rendered stats image component.
+ */
+export function StatsImageComponent(): React.ReactElement {
     // Date and listing state (for date filtering)
     const [pickedDate, setPickedDate] = useState(new Date());
     const [listing, setListing] = useState<any>({});
@@ -69,7 +74,15 @@ const StatsImageComponent: React.FC<StatsImageComponentProps> = () => {
         }
         setFromHourOptions(fromOptions);
 
-        fetch(import.meta.env.VITE_UPDATE_SERVER_URL + `/imageCount?date=${imageDay}&from=${hourRange[0]}&to=${hourRange[1]}&camera=${camera == "CameraA" ? 1 : 2}`)
+
+        const url = new URL('/api/imageCount', import.meta.env.VITE_SERVER_URL.toString());
+        url.searchParams.set('date', imageDay!);
+        url.searchParams.set('from', hourRange[0].toString());
+        url.searchParams.set('to', hourRange[1].toString());
+        url.searchParams.set('camera', camera == "CameraA" ? '1' : '2');
+
+        // fetch(import.meta.env.VITE_SERVER_URL + `/api/imageCount?date=${imageDay}&from=${hourRange[0]}&to=${hourRange[1]}&camera=${camera == "CameraA" ? 1 : 2}`)
+        fetch(url.toString())
             .then((res) => res.json())
             .then((data) => {
                 if (data.error) {
@@ -87,7 +100,8 @@ const StatsImageComponent: React.FC<StatsImageComponentProps> = () => {
 
     // Fetch listing data for date selection when component mounts
     useEffect(() => {
-        fetch(import.meta.env.VITE_UPDATE_SERVER_URL + "/listing")
+        const url = new URL('/api/listing', import.meta.env.VITE_SERVER_URL.toString());
+        fetch(url.toString())
             .then((response) => response.json())
             .then((data) => {
                 setListing(data);
@@ -113,7 +127,12 @@ const StatsImageComponent: React.FC<StatsImageComponentProps> = () => {
         const month = (pickedDate.getMonth() + 1).toString().padStart(2, "0");
         const day = pickedDate.getDate().toString().padStart(2, "0");
         const key = `${year}-${month}-${day}`;
-        fetch(import.meta.env.VITE_UPDATE_SERVER_URL + `/getImageData?year=${year}&month=${month}`)
+        const url = new URL('/api/getImageData', import.meta.env.VITE_SERVER_URL.toString());
+        url.searchParams.set('year', year.toString());
+        url.searchParams.set('month', month.toString());
+
+        // fetch(import.meta.env.VITE_SERVER_URL + `/api/getImageData?year=${year}&month=${month}`)
+        fetch(url.toString())
             .then((response) => response.json())
             .then((data) => {
                 if (data.hasOwnProperty(key)) {
@@ -152,14 +171,14 @@ const StatsImageComponent: React.FC<StatsImageComponentProps> = () => {
 
     const getImageDirectoryUrl = () => {
         const [year, month] = imageDay!.split('-');
-        return `${import.meta.env.VITE_UPDATE_SERVER_URL}/images/${year}/${month}/${imageDay}/`;
+        return `${import.meta.env.VITE_SERVER_URL}/images/${year}/${month}/${imageDay}/`;
     }
 
     // Handler for clicking an image item
     const handleImageClick = (item: string) => {
         //split imageDay on'-' to get year, month and day
         const [year, month] = imageDay!.split('-');
-        const itemUrl = `${import.meta.env.VITE_UPDATE_SERVER_URL}/images/${year}/${month}/${imageDay}/${item}`;
+        const itemUrl = `${import.meta.env.VITE_SERVER_URL}/images/${year}/${month}/${imageDay}/${item}`;
         fetch(itemUrl)
             .then((res) => res.json())
             .then((data) => {
@@ -174,7 +193,7 @@ const StatsImageComponent: React.FC<StatsImageComponentProps> = () => {
 
     const openVideoModal = () => {
         const [year] = imageDay!.split("-");
-        const videoUrl = `${import.meta.env.VITE_UPDATE_SERVER_URL}/images/video/${year}/${video}`;
+        const videoUrl = `${import.meta.env.VITE_SERVER_URL}/images/video/${year}/${video}`;
         setSelectedVideo(videoUrl);
         setShowModal(true);
     };

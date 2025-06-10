@@ -1,8 +1,27 @@
+/**
+ * ## Message Logger Context & Components
+ *
+ * Provides a React Context for logging messages (sent/received) with arbitrary data,
+ * and UI components to display and manage the message log.
+ *
+ * @packageDocumentation MessageLogger
+ */
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Table, Container, Button } from 'react-bootstrap';
 import { useData } from 'contexts/DataContext';
 import './admin.css';
 
+/**
+ * Represents a single message record in the logger.
+ *
+ * Message
+ * {number} direction - 0 for SENT, 1 for RECEIVED
+ * {string|null} command - The command name, if any
+ * {string|null} subcommand - The subcommand name, if any
+ * {any|null} data - The payload data associated with this message
+ * {Date} timestamp - When the message was logged
+ */
 export type Message = {
     direction: number;
     command: string | null;
@@ -11,7 +30,17 @@ export type Message = {
     timestamp: Date;
 };
 
-type MessageContextType = {
+/**
+ * Shape of the MessageContext value.
+ *
+ * MessageContextType
+ * {Message[]} messages - Array of logged messages
+ * {(direction: number, command: string|null, subcommand: string|null, data: any|null) => void} messageLogger
+ *           - Function to log a new message
+ * {number} chartLength - Current length of the message chart (alias for messages.length)
+ * {(length: number) => void} setChartLength - Setter for chartLength (rarely used)
+ */
+export type MessageContextType = {
     messages: Message[];
     messageLogger: (
         direction: number,
@@ -23,6 +52,10 @@ type MessageContextType = {
     setChartLength: (length: number) => void;
 };
 
+/**
+ * React Context for message logging.
+ * Default values are no-op.
+ */
 const MessageContext = createContext<MessageContextType>({
     messages: [],
     messageLogger: () => { },
@@ -30,18 +63,27 @@ const MessageContext = createContext<MessageContextType>({
     setChartLength: () => { },
 });
 
+/**
+ * Provider component for MessageContext.
+ * Manages the messages state and provides logging function.
+ *
+ * @param {object} props
+ * @param {React.ReactNode} props.children - Child components
+ * @returns {React.ReactElement}
+ */
 export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [chartLength, setChartLength] = useState<number>(0);
 
+    /**
+     * Logs a new message into the context state, keeping max 500 entries.
+     */
     const messageLogger = (
         direction: number,
         command: string | null,
         subcommand: string | null,
         data: any | null
     ) => {
-        // const sanitizedData =
-        //     data && JSON.stringify(data).length > 300 ? 'Data not shown due to length' : data;
         const newMessage: Message = {
             direction,
             command,
@@ -51,7 +93,6 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         };
         setMessages(prev => {
             const updated = [...prev, newMessage];
-            // Only keep the last 500 messages
             return updated.length > 500 ? updated.slice(updated.length - 500) : updated;
         });
     };
@@ -63,13 +104,20 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
 };
 
-
-
+/**
+ * Props for the DataCell component.
+ */
 type DataCellProps = {
     fullData: string;
     maxLength?: number;
 };
 
+/**
+ * Table cell that truncates long text and reveals full text on hover.
+ *
+ * @param {DataCellProps} props
+ * @returns {React.ReactElement}
+ */
 export const DataCell: React.FC<DataCellProps> = ({ fullData, maxLength = 100 }) => {
     const [hover, setHover] = useState(false);
     const displayData =
@@ -79,10 +127,7 @@ export const DataCell: React.FC<DataCellProps> = ({ fullData, maxLength = 100 })
 
     return (
         <td
-            style={{
-                whiteSpace: 'normal',
-                wordBreak: 'break-word',
-            }}
+            style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
         >
@@ -91,52 +136,47 @@ export const DataCell: React.FC<DataCellProps> = ({ fullData, maxLength = 100 })
     );
 };
 
-
-// Custom hook for convenience
+/**
+ * Hook to access the MessageContext.
+ *
+ * @returns {MessageContextType}
+ */
 export const useMessages = () => useContext(MessageContext);
 
-export const MessageLoggerComponent: React.FC = () => {
+/**
+ * Component that renders the message log with pause/resume and data summary.
+ *
+ * @returns {React.ReactElement}
+ */
+export function MessageLogger(): React.ReactElement {
     const { messages, chartLength } = useMessages();
-    // Local state to control pause/resume.
     const [paused, setPaused] = useState(false);
-    // Local copy of messages used for display when paused.
-    const [displayedMessages, setDisplayedMessages] = useState(messages);
+    const [displayedMessages, setDisplayedMessages] = useState<Message[]>(messages);
 
-    // Whenever the global messages change and we are not paused, update the displayedMessages.
     useEffect(() => {
         if (!paused) {
             setDisplayedMessages(messages);
         }
     }, [messages, paused]);
 
-    // Toggle pause/resume state.
     const togglePaused = () => {
         setPaused(prev => !prev);
-        // When resuming, update displayedMessages immediately.
         if (paused) {
             setDisplayedMessages(messages);
         }
     };
 
-    // Helper function to convert msg.data to string.
     const getDataString = (data: any): string => {
-        if (data === null) return "";
-        if (typeof data === 'object') return JSON.stringify(data);
-        return data;
+        if (data === null) return '';
+        return typeof data === 'object' ? JSON.stringify(data) : String(data);
     };
 
-    // Maximum characters to display when not hovered.
     const maxLength = 80;
 
     return (
         <Container className="mt-4">
-
             <DataSummaryComponent />
-            <Button
-                variant={paused ? 'warning' : 'secondary'}
-                onClick={togglePaused}
-                className={paused ? 'flash' : ''}
-            >
+            <Button variant={paused ? 'warning' : 'secondary'} onClick={togglePaused} className={paused ? 'flash' : ''}>
                 {paused ? 'Resume' : 'Pause'} Updates
             </Button>
 
@@ -151,56 +191,47 @@ export const MessageLoggerComponent: React.FC = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {displayedMessages.slice().reverse().map((msg, index) => {
-                        const fullData = getDataString(msg.data);
-                        const displayData =
-                            fullData.length > maxLength ? fullData.substring(0, maxLength) + '...' : fullData;
-                        return (
-                            <tr key={index}>
-                                <td
-                                    style={{
-                                        fontWeight: 'bold',
-                                        color: msg.direction === 0 ? 'blue' : 'red',
-                                    }}
-                                >
-                                    {msg.direction === 0 ? 'SENT' : 'RECEIVED'}
-                                </td>
-                                <td>{msg.command}</td>
-                                <td>{msg.subcommand}</td>
-                                <td>{msg.timestamp.toLocaleString()}</td>
-                                <DataCell fullData={getDataString(msg.data)} maxLength={100} />
-                            </tr>
-                        );
-                    })}
+                    {displayedMessages.slice().reverse().map((msg, index) => (
+                        <tr key={index}>
+                            <td style={{ fontWeight: 'bold', color: msg.direction === 0 ? 'blue' : 'red' }}>
+                                {msg.direction === 0 ? 'SENT' : 'RECEIVED'}
+                            </td>
+                            <td>{msg.command}</td>
+                            <td>{msg.subcommand}</td>
+                            <td>{msg.timestamp.toLocaleString()}</td>
+                            <DataCell fullData={getDataString(msg.data)} maxLength={100} />
+                        </tr>
+                    ))}
                 </tbody>
             </Table>
         </Container>
     );
 };
 
-
-
+/**
+ * Props for ExpandableObjectCell component.
+ */
 type ExpandableObjectCellProps = {
     obj: any;
 };
 
+/**
+ * Recursively renders an object as an expandable nested table cell.
+ *
+ * @param {ExpandableObjectCellProps} props
+ * @returns {React.ReactElement}
+ */
 export const ExpandableObjectCell: React.FC<ExpandableObjectCellProps> = ({ obj }) => {
     const [expanded, setExpanded] = useState(false);
 
-    // If the value is not an object, just render it
     if (typeof obj !== 'object' || obj === null) {
         return <>{String(obj)}</>;
     }
 
-    // If not expanded, display a clickable "object" label
     if (!expanded) {
         return (
             <span
-                style={{
-                    color: 'blue',
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
-                }}
+                style={{ color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
                 onClick={() => setExpanded(true)}
             >
                 object
@@ -208,12 +239,11 @@ export const ExpandableObjectCell: React.FC<ExpandableObjectCellProps> = ({ obj 
         );
     }
 
-    // When expanded, render a nested table for the object.
     return (
         <Table bordered size="sm" style={{ margin: 0, borderCollapse: 'collapse', width: '100%' }}>
             <tbody>
-                {Object.entries(obj).map(([key, value], index) => (
-                    <tr key={index}>
+                {Object.entries(obj).map(([key, value], idx) => (
+                    <tr key={idx}>
                         <td style={{ padding: '2px', border: '1px solid #000' }}>{key}</td>
                         <td style={{ padding: '2px', border: '1px solid #000' }}>
                             {typeof value === 'object' && value !== null ? (
@@ -229,14 +259,21 @@ export const ExpandableObjectCell: React.FC<ExpandableObjectCellProps> = ({ obj 
     );
 };
 
-const renderValue = (value: any): React.ReactNode => {
-    if (typeof value === 'object' && value !== null) {
-        return <ExpandableObjectCell obj={value} />;
-    }
-    return String(value);
+/**
+ * Renders a value, delegating objects to ExpandableObjectCell.
+ *
+ * @param {any} value - Value to render.
+ * @returns {React.ReactElement}
+ */
+const renderValue = (value: any): React.ReactElement => {
+    return typeof value === 'object' && value !== null ? <ExpandableObjectCell obj={value} /> : <>{String(value)}</>;
 };
 
-
+/**
+ * Summarizes key DataContext values and message count in a table.
+ *
+ * @returns {React.ReactElement}
+ */
 const DataSummaryComponent: React.FC = () => {
     const {
         clients,
@@ -251,45 +288,31 @@ const DataSummaryComponent: React.FC = () => {
         lastForecast,
         numberConnections,
     } = useData();
-
     const { messages } = useMessages();
-    const chartLength = messages.length;
 
-    // Prepare an array of variables to display.
     const dataSummary: any[] = [
         { name: 'clients', value: clients },
-        { name: 'lastCheck', value: lastCheck.toString() + " (" + new Date(1000 * lastCheck).toLocaleString() + ")" },
+        { name: 'lastCheck', value: lastCheck.toString() + ' (' + new Date(lastCheck * 1000).toLocaleString() + ')' },
         { name: 'passedSeconds', value: passedSeconds },
         { name: 'offline', value: offline },
         { name: 'lastForecast', value: lastForecast },
         { name: 'numberConnections', value: numberConnections },
-        { name: 'chartLength', value: chartLength },
+        { name: 'chartLength', value: messages.length },
     ];
 
     return (
-        <Container style={{ marginBottom: "50px" }} className="mt-4">
+        <Container style={{ marginBottom: '50px' }} className="mt-4">
             <h2>Data Summary</h2>
             <style>{`
-             /* Applies to the outer table */
-.table {
-  border-collapse: collapse;
-  border: 1px solid #000 !important;
-}
-
-/* All table cells have borders */
-.table td, 
-.table th {
-  border: 1px solid #000 !important; 
-  margin: 0 !important;
-  padding: 0px !important;
-}
-
-            `}</style>
+         /* Styled summary table */
+         .table { border-collapse: collapse; border: 1px solid #000 !important; }
+         .table td, .table th { border:1px solid #000 !important; margin:0; padding:2px !important; }
+      `}</style>
             <Table striped bordered hover style={{ width: 'auto' }}>
                 <tbody>
-                    {dataSummary.map((item, index) => (
-                        <tr key={index}>
-                            <td >{item.name}</td>
+                    {dataSummary.map((item, idx) => (
+                        <tr key={idx}>
+                            <td>{item.name}</td>
                             <td style={{ textAlign: 'right' }}>{renderValue(item.value)}</td>
                         </tr>
                     ))}
@@ -298,4 +321,3 @@ const DataSummaryComponent: React.FC = () => {
         </Container>
     );
 };
-

@@ -1,18 +1,38 @@
+/**
+ * @packageDocumentation Debug
+ *
+ * Renders live camera streams and displays the most recent wind sensor record.
+ * Subscribes to PocketBase wind collection for real-time updates.
+ *
+ * **Known issues:**
+ * - Cleanup unsubscribes from `posts` instead of `wind` subscription, so the wind subscription may remain active.
+ */
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Spinner } from 'react-bootstrap';
 import { useData } from 'contexts/DataContext';
-import { pb } from '@/contexts/pb'
+import { pb } from '@/contexts/pb';
 import HLSPlayer from '../HlsPlayer';
 
-
-const Debug: React.FC = () => {
+/**
+ * Debug component props: none.
+ *
+ * @returns React.ReactElement rendering camera streams and latest wind data.
+ */
+export function Debug(): React.ReactElement {
+    // Access camera image URLs from shared data context
     const { cameraImages } = useData();
-    const [currentIndex1, setCurrentIndex1] = useState(0);
-    const [currentIndex2, setCurrentIndex2] = useState(0);
 
-    // get latest record from wind collection
+    // Current index for each camera feed (not used in this component)
+    const [currentIndex1, setCurrentIndex1] = useState<number>(0);
+    const [currentIndex2, setCurrentIndex2] = useState<number>(0);
+
+    // Holds the latest wind record fetched from PocketBase
     const [latestRecord, setLatestRecord] = useState<any>(null);
 
+    /**
+     * Fetches the latest record from the wind collection on mount,
+     * then subscribes to real-time creates to update `latestRecord`.
+     */
     useEffect(() => {
         const fetchLatestRecord = async () => {
 
@@ -35,7 +55,7 @@ const Debug: React.FC = () => {
         });
 
         return () => {
-            pb.collection('posts').unsubscribe();
+            pb.collection('wind').unsubscribe();
         };
 
     }, []);
@@ -44,13 +64,13 @@ const Debug: React.FC = () => {
         <Row>
             <div>
                 <h1>Camera Stream</h1>
-                <HLSPlayer src="http://gpupdate.thilenius.com/stream/camera1/index.m3u8"
+                <HLSPlayer src={import.meta.env.VITE_SERVER_URL + "/stream/camera1/index.m3u8"}
                 />
             </div>
 
             <div>
                 <h1>Camera Stream</h1>
-                <HLSPlayer src="http://gpupdate.thilenius.com/stream/camera2/index.m3u8"
+                <HLSPlayer src={import.meta.env.VITE_SERVER_URL + "/stream/camera2/index.m3u8"}
                 />
             </div>
             <Col>

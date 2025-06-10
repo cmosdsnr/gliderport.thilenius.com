@@ -1,10 +1,19 @@
+/**
+ * @packageDocumentation
+ * Contact page for the Gliderport application.
+ * Displays contact information and a description of the site.
+ */
 import React from 'react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container';
 import 'css/contact.css';
 
-const Contact: React.FC = () => {
+/**
+ * Contact component displays contact information and a description of the site.
+ * @returns {React.ReactElement} The rendered contact page.
+ */
+export function Contact(): React.ReactElement {
     return (
         <Container fluid>
             <div className="selectionBox">

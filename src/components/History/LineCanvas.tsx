@@ -1,4 +1,12 @@
-// src/components/LineCanvas.tsx
+/**
+ * 
+ * @packageDocumentation
+ *   Renders a horizontal time-series view of wind “codes” for a single day.
+ *   Each colored segment represents an interval during which a particular code applied,
+ *   overlaid on a lightweight line chart (with a transparent dummy line).
+ *   Includes custom hour ticks, background slices, and tooltips showing the code label.
+ */
+
 import React, { useMemo } from 'react';
 import {
     ComposedChart,
@@ -13,7 +21,19 @@ import { format } from 'date-fns';
 import { codes, codeDef } from '../Globals';
 import { DayOfCodes } from './History';
 
-
+/**
+ * Props for the LineCanvas component.
+ *
+ * LineCanvasProps
+ * {DayOfCodes} data
+ *   Array of [absoluteTimestampSec, code] entries for one day.
+ * {number} dayStart
+ *   UNIX timestamp (seconds) for local midnight of this day.
+ * {[number, number]} limits
+ *   Tuple [startHourLocal, endHourLocal] in 24h (e.g. [6, 20]).
+ * {number} width
+ *   Pixel width of the chart container.
+ */
 interface LineCanvasProps {
     /** Array of [absoluteTimestampSec, code] for one day */
     data: DayOfCodes;
@@ -24,19 +44,34 @@ interface LineCanvasProps {
     /** pixel width of the chart container */
     width: number;
 }
-const LineCanvas: React.FC<LineCanvasProps> = ({ data, dayStart, limits, width }) => {
 
-    const startTs = Number(dayStart + 3600 * limits[0]);
-    const endTs = Number(dayStart + 3600 * limits[1]);
-    const totalHours = limits[1] - limits[0];
+/**
+ * LineCanvas
+ *
+ * Displays a compact horizontal chart of wind code intervals between `limits[0]` and `limits[1]` hours.
+ * Uses colored ReferenceArea slices for each code segment, hour ticks at the bottom,
+ * and a tooltip that shows the code name on hover.
+ *
+ * @param props - LineCanvasProps
+ * @returns {React.ReactElement}
+ */
+export function LineCanvas({ data, dayStart, limits, width }: LineCanvasProps): React.ReactElement {
+    const [startHour, endHour] = limits;
+    const startTs = dayStart + 3600 * startHour;
+    const endTs = dayStart + 3600 * endHour;
+    const totalHours = endHour - startHour;
 
-    // Build ticks: one mark per whole hour
+    // Build ticks: one timestamp per whole hour
     const ticks = useMemo(
-        () => Array.from({ length: totalHours + 1 }, (_, i) => startTs + 3600 * i),
-        [startTs, endTs]
+        () =>
+            Array.from(
+                { length: totalHours + 1 },
+                (_, i) => startTs + 3600 * i
+            ),
+        [startTs, totalHours]
     );
 
-    // Compute date label (Today/Tomorrow or weekday + M/d)
+    // Compute date label: “Today”, “Tomorrow”, or abbreviated weekday + M/d
     const dateLabel = useMemo(() => {
         const dtNow = new Date();
         const dtStart = new Date(dayStart * 1000 + 12 * 3600 * 1000);
@@ -47,13 +82,13 @@ const LineCanvas: React.FC<LineCanvasProps> = ({ data, dayStart, limits, width }
         return format(dtStart, 'EEE M/d');
     }, [dayStart]);
 
-    // chartData: one point per boundary (for domain inference) in seconds
+    // Chart data: include a dummy value (0) so the chart has points for domain inference
     const chartData = useMemo(
         () => data.map(([ts, code]) => ({ ts, code, dummy: 0 })),
         [data]
     );
 
-    // segments: colored background slices between code changes
+    // Compute colored background segments between code changes
     const segments = useMemo(() => {
         const segs: { x1: number; x2: number; color: string }[] = [];
         let prevCode = codeDef.IT_IS_DARK;
@@ -67,11 +102,11 @@ const LineCanvas: React.FC<LineCanvasProps> = ({ data, dayStart, limits, width }
         // final slice to endHour
         segs.push({ x1: prevTs, x2: endTs, color: codes[codeDef.IT_IS_DARK].color });
         return segs;
-    }, [data, dayStart, startTs, endTs]);
+    }, [data, startTs, endTs]);
 
     return (
         <div style={{ width, height: 60, position: 'relative' }}>
-            {/* date label */}
+            {/* date label overlay */}
             <div
                 style={{
                     position: 'absolute',
@@ -91,20 +126,24 @@ const LineCanvas: React.FC<LineCanvasProps> = ({ data, dayStart, limits, width }
             </div>
 
             <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chartData} margin={{ top: 0, right: 10, left: 10, bottom: 5 }}>
+                <ComposedChart
+                    data={chartData}
+                    margin={{ top: 0, right: 10, left: 10, bottom: 5 }}
+                >
                     <XAxis
                         dataKey="ts"
                         type="number"
                         domain={[startTs, endTs]}
                         ticks={ticks}
-                        tickFormatter={h => `${(h - dayStart) / 3600}`}
+                        tickFormatter={(h) => `${(h - dayStart) / 3600}`}
                         axisLine={false}
                         tickLine={{ stroke: '#ccc' }}
                         height={20}
-                        allowDataOverflow={true}
+                        allowDataOverflow
                         interval={0}
                     />
                     <YAxis type="number" domain={[0, 1]} hide />
+                    {/* transparent dummy line to establish shape */}
                     <Line
                         type="monotone"
                         dataKey="dummy"
@@ -116,14 +155,12 @@ const LineCanvas: React.FC<LineCanvasProps> = ({ data, dayStart, limits, width }
                         <ReferenceArea key={i} x1={s.x1} x2={s.x2} y1={0} y2={1} fill={s.color} />
                     ))}
 
-                    {/* custom tooltip */}
+                    {/* custom tooltip showing code label */}
                     <Tooltip
                         cursor={false}
                         content={({ active, payload, label }) => {
                             if (!active || !payload || !payload.length) return null;
-                            // payload[0].payload is the full data object: { ts, code, dummy }
                             const { code } = payload[0].payload as any;
-                            const hh = Math.floor(label);
                             return (
                                 <div
                                     style={{

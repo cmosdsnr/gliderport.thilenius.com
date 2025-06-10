@@ -3,7 +3,7 @@ export const smooth = (x: number, xs: number[], ys: number[]): number => {
     return 0; // Placeholder return
 }
 
-export default class Spline {
+export class Spline {
     private xs: number[];
     private ys: number[];
     private ks: number[];
@@ -55,3 +55,5 @@ export default class Spline {
         [m[k], m[l]] = [m[l], m[k]];
     }
 }
+
+export default Spline

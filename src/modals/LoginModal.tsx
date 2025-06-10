@@ -10,8 +10,15 @@ import { useModal, ModalType } from './Modals'
 import './modals.css'
 import mySvg from 'images/314px-Google__G__Logo.svg_-294x300.png'
 
-
-const LoginModal = () => {
+/** 
+ * LoginModal component provides a login form for users to authenticate.
+ * It includes fields for email and password, handles login logic,              
+ * and integrates Google login functionality.
+ * It also provides links for password reset and sign-up.
+ * @component
+ * @returns {React.ReactElement} Modal for user login.
+ **/
+function LoginModal(): React.ReactElement {
     const [isError, setIsError] = useState(false);
     // const { mutate: login, isLoading, isSuccess, isError, reset: loginReset } = useLogin()
     const { register, handleSubmit, formState: { errors } } = useForm()

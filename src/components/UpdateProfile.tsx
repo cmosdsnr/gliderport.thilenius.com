@@ -1,18 +1,27 @@
+/**
+ * @packageDocumentation
+ * UpdateProfile page for the Gliderport application.
+ * Allows the user to update their email and/or password.
+ */
 import React, { useRef, useState } from 'react'
 import { Form, Button, Card, Alert } from 'react-bootstrap'
 import { useAuth } from '@/contexts/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
 
-export default function UpdateProfile() {
+/**
+ * UpdateProfile component allows the user to update their email and/or password.
+ * @returns {React.ReactElement} The rendered update profile form.
+ */
+export function UpdateProfile(): React.ReactElement {
     const emailRef = useRef<HTMLInputElement>(null)
     const passwordRef = useRef<HTMLInputElement>(null)
     const passwordConfirmRef = useRef<HTMLInputElement>(null)
-    const { currentUser, updateUserEmail, updateUserPassword } = useAuth()
+    const { currentUser, changeEmail, changePassword } = useAuth()
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
 
-    function handleSubmit(e) {
+    function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
         if (passwordConfirmRef.current && passwordRef.current && passwordConfirmRef.current.value !== passwordRef.current.value) {
             return setError('Passwords do not match')
@@ -20,10 +29,10 @@ export default function UpdateProfile() {
 
         const promises = []
         if (emailRef.current && emailRef.current.value !== currentUser?.email) {
-            promises.push(updateUserEmail(emailRef.current.value))
+            promises.push(changeEmail(emailRef.current.value))
         }
         if (passwordRef.current?.value) {
-            promises.push(updateUserPassword(passwordRef.current.value))
+            promises.push(changePassword(passwordRef.current.value))
         }
         Promise.all(promises).then(() => {
             navigate('/')
@@ -65,3 +74,5 @@ export default function UpdateProfile() {
         </div>
     )
 }
+
+export default UpdateProfile;

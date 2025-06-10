@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * Equipment page for the Gliderport application.
+ * Displays information and manuals for various equipment and systems at the gliderport.
+ */
 import React, { useState } from 'react'
 import { Row, Col } from 'react-bootstrap'
 import Nav from 'react-bootstrap/Nav'
@@ -11,6 +16,9 @@ import RaspberryPi3 from 'images/Equipment/Pi/RaspberryPi3.jpg'
 import RaspberryAndESP32 from 'images/Equipment/Pi/RaspberryAndESP32.jpg'
 import ESP32Box from 'images/Equipment/Pi/ESP32Box.jpg'
 
+/**
+ * Props for the MyPill navigation component.
+ */
 interface MyPillProps {
     no: number;
     name: string;
@@ -18,7 +26,12 @@ interface MyPillProps {
     page: number;
 }
 
-const MyPill: React.FC<MyPillProps> = ({ no, name, handleClick, page }) => {
+/**
+ * Navigation pill component for equipment pages.
+ * @param props - MyPillProps
+ * @returns {React.ReactElement}
+ */
+function MyPill({ no, name, handleClick, page }: MyPillProps): React.ReactElement {
     return (
         <center>
             <Nav.Item onClick={() => { handleClick({ no }) }} className={page === no ? "eqNav active" : "eqNav"}>{name}</Nav.Item>
@@ -26,48 +39,11 @@ const MyPill: React.FC<MyPillProps> = ({ no, name, handleClick, page }) => {
     )
 }
 
-export default function Equipment() {
-    const [page, setPage] = useState<number>(0)
-
-    return (<Row>
-        <Col xs={12} md={3}>
-            <Navbar
-                expand="md"
-                id="cvNavContainer"
-                className='navbar-light'
-            >
-                <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                <Navbar.Collapse id="basic-navbar-nav">
-                    <Nav defaultActiveKey="/cv" className="flex-column" style={{ width: "100%" }}>
-                        <MyPill no={0} page={page} handleClick={() => { setPage(0) }} name="Manuals" />
-                        <MyPill no={1} page={page} handleClick={() => { setPage(1) }} name="Camera" />
-                        <MyPill no={2} page={page} handleClick={() => { setPage(2) }} name="Radio" />
-                        <MyPill no={3} page={page} handleClick={() => { setPage(3) }} name="Netatmo" />
-                        <MyPill no={4} page={page} handleClick={() => { setPage(4) }} name="Surfline" />
-                        <MyPill no={5} page={page} handleClick={() => { setPage(5) }} name="Internet" />
-                        <MyPill no={6} page={page} handleClick={() => { setPage(6) }} name="Esp32" />
-                        <MyPill no={7} page={page} handleClick={() => { setPage(7) }} name="Raspberry" />
-                    </Nav>
-                </Navbar.Collapse>
-            </Navbar>
-        </Col>
-
-        <Col xs={12} md={{ span: 8, offset: 1 }}>
-            {page === 0 ? <Manuals /> :
-                page === 1 ? <Camera /> :
-                    page === 2 ? <Radio /> :
-                        page === 3 ? <Netatmo /> :
-                            page === 4 ? <Surfline /> :
-                                page === 5 ? <Internet /> :
-                                    page === 6 ? <Esp32 /> : <Raspberry />
-
-            }
-        </Col>
-    </Row>
-    )
-}
-
-const Manuals: React.FC = () => {
+/**
+ * Manuals section for the Equipment page.
+ * @returns {React.ReactElement}
+ */
+function Manuals(): React.ReactElement {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>
             <ul>
@@ -118,8 +94,11 @@ const Manuals: React.FC = () => {
     )
 }
 
-
-const Camera: React.FC = () => {
+/**
+ * Camera section for the Equipment page.
+ * @returns {React.ReactElement}
+ */
+function Camera(): React.ReactElement {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>
             <div>
@@ -155,8 +134,11 @@ const Camera: React.FC = () => {
     )
 }
 
-
-const Radio: React.FC = () => {
+/**
+ * Radio section for the Equipment page.
+ * @returns {React.ReactElement}
+ */
+function Radio(): React.ReactElement {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>
             <h1>Radio Setup</h1>
@@ -176,13 +158,21 @@ const Radio: React.FC = () => {
     )
 }
 
-const Netatmo: React.FC = () => {
+/**
+ * Netatmo section for the Equipment page.
+ * @returns {React.ReactElement}
+ */
+function Netatmo(): React.ReactElement {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}><h1>Netatmo Setup</h1></Col>
     )
 }
 
-const Surfline: React.FC = () => {
+/**
+ * Surfline section for the Equipment page.
+ * @returns {React.ReactElement}
+ */
+function Surfline(): React.ReactElement {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>
             <h1>Surfline</h1>
@@ -193,13 +183,22 @@ const Surfline: React.FC = () => {
         </Col>
     )
 }
-const Internet: React.FC = () => {
+
+/**
+ * Internet section for the Equipment page.
+ * @returns {React.ReactElement}
+ */
+function Internet(): React.ReactElement {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}><h1>Gliderport Software</h1></Col>
     )
 }
 
-const Esp32: React.FC = () => {
+/**
+ * Esp32 section for the Equipment page.
+ * @returns {React.ReactElement}
+ */
+function Esp32(): React.ReactElement {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>
             <h1>ESP32 setup</h1>
@@ -213,8 +212,59 @@ const Esp32: React.FC = () => {
     )
 }
 
-const Raspberry: React.FC = () => {
+/**
+ * Raspberry section for the Equipment page.
+ * @returns {React.ReactElement}
+ */
+function Raspberry(): React.ReactElement {
     return (
         <Col xs={12} md={9} lg={{ span: 8, offset: 1 }}>Raspberry</Col>
     )
 }
+
+/**
+ * Main Equipment component for the Equipment page.
+ * @returns {React.ReactElement} The Equipment page JSX.
+ */
+export function Equipment(): React.ReactElement {
+    const [page, setPage] = useState<number>(0)
+
+    return (<Row>
+        <Col xs={12} md={3}>
+            <Navbar
+                expand="md"
+                id="cvNavContainer"
+                className='navbar-light'
+            >
+                <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                <Navbar.Collapse id="basic-navbar-nav">
+                    <Nav defaultActiveKey="/cv" className="flex-column" style={{ width: "100%" }}>
+                        <MyPill no={0} page={page} handleClick={() => { setPage(0) }} name="Manuals" />
+                        <MyPill no={1} page={page} handleClick={() => { setPage(1) }} name="Camera" />
+                        <MyPill no={2} page={page} handleClick={() => { setPage(2) }} name="Radio" />
+                        <MyPill no={3} page={page} handleClick={() => { setPage(3) }} name="Netatmo" />
+                        <MyPill no={4} page={page} handleClick={() => { setPage(4) }} name="Surfline" />
+                        <MyPill no={5} page={page} handleClick={() => { setPage(5) }} name="Internet" />
+                        <MyPill no={6} page={page} handleClick={() => { setPage(6) }} name="Esp32" />
+                        <MyPill no={7} page={page} handleClick={() => { setPage(7) }} name="Raspberry" />
+                    </Nav>
+                </Navbar.Collapse>
+            </Navbar>
+        </Col>
+
+        <Col xs={12} md={{ span: 8, offset: 1 }}>
+            {page === 0 ? <Manuals /> :
+                page === 1 ? <Camera /> :
+                    page === 2 ? <Radio /> :
+                        page === 3 ? <Netatmo /> :
+                            page === 4 ? <Surfline /> :
+                                page === 5 ? <Internet /> :
+                                    page === 6 ? <Esp32 /> : <Raspberry />
+
+            }
+        </Col>
+    </Row>
+    )
+}
+
+export default Equipment;

@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docs:generate": "typedoc",
+    "docs:serve": "yarn docs:generate && http-server docs -o"
   },
   "dependencies": {
     "@emotion/react": "^11.10.0",
@@ -56,20 +58,25 @@
     "react-use-websocket": "^4.2.0",
     "react-viewer": "^3.2.2",
     "recharts": "^2.15.3",
-    "typescript": "^4.4.4",
+    "typescript": "^5.8.3",
     "vinyl-ftp": "^0.6.1",
     "web-vitals": "^1.0.1",
     "yup": "^1.6.1"
   },
   "devDependencies": {
+    "@rollup/plugin-strip": "^3.0.4",
+    "@types/lodash": "^4.17.17",
     "@types/luxon": "^3.6.2",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.6",
     "@types/react-modal": "^3.13.1",
     "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^2.0.1",
     "ftp-deploy": "^2.4.3",
-    "vite": "^3.0.7"
+    "http-server": "^14.1.1",
+    "typedoc": "^0.28.5",
+    "typedoc-plugin-markdown": "^4.6.4",
+    "vite": "^6.3.5"
   },
   "overrides": {
     "react-toggle-slider": {

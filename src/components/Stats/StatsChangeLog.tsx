@@ -1,35 +1,16 @@
-import React, { useState, useEffect, useRef, forwardRef, JSX } from 'react'
+/**
+ * 
+ * @packageDocumentation
+ *   Displays a list of site changes and updates. Hovering over a date shows the corresponding change details.
+ *   Used in the Gliderport statistics page.
+ */
+import React, { useState } from 'react'
 import { Row, Col } from 'react-bootstrap'
 import './stats.css'
 
-
-
-const StatsChangeLogComponent = () => {
-    const [changeText, setChangeText] = useState<JSX.Element>(<></>)
-    const [changeId, setChangeId] = useState<number>(0)
-
-    return (
-        <Row>
-            <center>
-                <h2>Changes & Updates</h2>
-            </center>
-            <Col xs={2}>
-                {changes.map((v: Change, i) => {
-                    return (<h5 key={i}
-                        style={{ backgroundColor: changeId === i ? "lightblue" : "white" }}
-                        onMouseEnter={() => { setChangeId(i); setChangeText(v.html) }}>{v.date}</h5>)
-                })
-                }
-            </Col>
-            <Col xs={10}>{changeText}</Col>
-        </Row>
-    )
-}
-
-
 type Change = {
     date: string,
-    html: JSX.Element
+    html: React.ReactElement
 }
 
 const changes: Change[] = [
@@ -226,5 +207,32 @@ const changes: Change[] = [
             </>
     }
 ]
+
+/**
+ * StatsChangeLogComponent displays a list of site changes and updates.
+ * Hovering over a date shows the corresponding change details.
+ * @returns {React.ReactElement} The rendered change log component.
+ */
+export function StatsChangeLogComponent(): React.ReactElement {
+    const [changeText, setChangeText] = useState<React.ReactElement>(<></>)
+    const [changeId, setChangeId] = useState<number>(0)
+
+    return (
+        <Row>
+            <center>
+                <h2>Changes & Updates</h2>
+            </center>
+            <Col xs={2}>
+                {changes.map((v: Change, i) => {
+                    return (<h5 key={i}
+                        style={{ backgroundColor: changeId === i ? "lightblue" : "white" }}
+                        onMouseEnter={() => { setChangeId(i); setChangeText(v.html) }}>{v.date}</h5>)
+                })
+                }
+            </Col>
+            <Col xs={10}>{changeText}</Col>
+        </Row>
+    )
+}
 
 export default StatsChangeLogComponent;

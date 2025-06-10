@@ -1,4 +1,11 @@
-// src/components/CircleCanvas.tsx
+/**
+ * 
+ * @packageDocumentation
+ *   React component that renders a circular time-coded pie chart for a single day.
+ *   It shows colored segments for each “code” interval, hour tick marks around the edge,
+ *   and a center label (“Today”, “Tomorrow”, or date).
+ */
+
 import React, { useMemo } from 'react';
 import {
     PieChart,
@@ -13,30 +20,44 @@ import { codes, codeDef } from '../Globals';
 import { format } from 'date-fns';
 import { DayOfCodes } from './History';
 
+/**
+ * Props for the CircleCanvas component.
+ */
 interface CircleCanvasProps {
-    /** Array of [absoluteTimestampSec, code] for one day */
+    /** Array of tuples [absoluteTimestampSec, code] covering one day. */
     data: DayOfCodes;
-    /** UNIX timestamp (sec) for local midnight of this day */
+    /** UNIX timestamp (seconds) for local midnight of this day. */
     dayStart: number;
-    /** [startHourLocal, endHourLocal] in 24h hours (e.g. [6, 20]) */
+    /** [startHourLocal, endHourLocal] in 24h (e.g. [6, 20]). */
     limits: [number, number];
-    /** pixel width of the chart container */
+    /** Pixel width (and height) of the chart container. */
     width: number;
 }
 
-const CircleCanvas: React.FC<CircleCanvasProps> = ({ data, dayStart, limits, width }) => {
+/**
+ * Renders a circular pie chart of coded intervals over a single day.
+ * 
+ * @param props - CircleCanvasProps
+ * @returns {React.ReactElement}
+ */
+export function CircleCanvas({ data, dayStart, limits, width }: CircleCanvasProps): React.ReactElement {
     const [startHour, endHour] = limits;
     const totalSec = (endHour - startHour) * 3600;
     let prevCode = codeDef.IT_IS_DARK;
     let lastTime = dayStart + startHour * 3600;
 
-    // Build slices (percent of totalSec)
+    /**
+     * Build the main pie slices as percentage of totalSec.
+     * Each slice covers the span between code changes.
+     *
+     * @type {{ name: string; value: number; color: string }[]}
+     */
     const pieData = useMemo(() => {
         const slices: { name: string; value: number; color: string }[] = [];
         prevCode = codeDef.IT_IS_DARK;
         lastTime = dayStart + startHour * 3600;
 
-        data.forEach(([ts, nextCode], idx) => {
+        data.forEach(([ts, nextCode]) => {
             const span = ts - lastTime;
             slices.push({
                 name: `${codes[prevCode].code}`,
@@ -58,7 +79,9 @@ const CircleCanvas: React.FC<CircleCanvasProps> = ({ data, dayStart, limits, wid
         return slices;
     }, [data, dayStart, startHour, endHour]);
 
-    // Center label
+    /**
+     * Compute the center label: “Today”, “Tomorrow”, or formatted weekday/date.
+     */
     const centerLabel = useMemo(() => {
         const dtNow = new Date();
         const dtTomorrow = new Date(dtNow.getTime() + 24 * 3600 * 1000);
@@ -68,10 +91,18 @@ const CircleCanvas: React.FC<CircleCanvasProps> = ({ data, dayStart, limits, wid
         return format(dtStart, 'EEEE M/d');
     }, [data]);
 
-
+    /**
+     * Generate integer hour tick entries for the outer ring.
+     *
+     * @type {{ hour: number; value: number }[]}
+     */
     const hourTicks = useMemo(
-        () => Array.from({ length: endHour - startHour }, (_, hour) => ({ hour: hour + startHour, value: 1 })),
-        []
+        () =>
+            Array.from(
+                { length: endHour - startHour },
+                (_, i) => ({ hour: i + startHour, value: 1 })
+            ),
+        []  // ← should include [startHour, endHour]
     );
 
     return (
@@ -85,20 +116,21 @@ const CircleCanvas: React.FC<CircleCanvasProps> = ({ data, dayStart, limits, wid
                         dataKey="value"
                         startAngle={80}
                         endAngle={-260}
-                        // a thin ring just outside your main pie:
                         innerRadius={width * 0.45}
                         outerRadius={width * 0.48}
                         isAnimationActive={false}
                         paddingAngle={0}
                         labelLine={false}
-                        // transparent fill so only stroke shows:
                         fill="transparent"
                         stroke="#999"
                         strokeWidth={1}
-                        // custom label at each tick’s mid-angle:
+                        /**
+                         * Position each hour label around the ring.
+                         * @param {{ cx: number, cy: number, midAngle: number, hour: number }} params
+                         */
                         label={({ cx, cy, midAngle, hour }) => {
                             const RAD = Math.PI / 180;
-                            const r = width * 0.46;            // push labels just outside the ring
+                            const r = width * 0.46;
                             const x = cx + r * Math.cos(-midAngle * RAD);
                             const y = cy + r * Math.sin(-midAngle * RAD);
                             return (
@@ -118,6 +150,8 @@ const CircleCanvas: React.FC<CircleCanvasProps> = ({ data, dayStart, limits, wid
                             <Cell key={`tick-cell-${i}`} />
                         ))}
                     </Pie>
+
+                    {/* ──────────── MAIN PIE ──────────── */}
                     <Pie
                         data={pieData}
                         dataKey="value"
@@ -150,7 +184,7 @@ const CircleCanvas: React.FC<CircleCanvasProps> = ({ data, dayStart, limits, wid
                     <Tooltip formatter={(val: number) => ``} separator="" />
                 </PieChart>
             </ResponsiveContainer>
-        </Canvas >
+        </Canvas>
     );
 };
 

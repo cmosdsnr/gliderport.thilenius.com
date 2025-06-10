@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * Forecast page for the Gliderport application.
+ * Displays a 5-day forecast with interactive charts for wind, temperature, humidity, pressure, and cloud cover.
+ */
 import React, { useState, useEffect, useMemo } from "react";
 import {
     ResponsiveContainer,
@@ -13,7 +18,7 @@ import {
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
 import { motion } from "framer-motion";
-import { useLocalStorageState } from "@/hooks/useLocalStorageState";
+import useLocalStorageState from "@/hooks/useLocalStorageState";
 import { useStatusCollection } from "@/contexts/StatusCollection";
 import "./Forecast.css"
 // --------------------------------------------------------------------
@@ -153,13 +158,25 @@ const tickFormatter = (idx: number, startHour: number) => {
 // Selectable multi‑series chart                                       
 // --------------------------------------------------------------------
 
-interface ChartProps { data: any, bands: { x1: number; x2: number; fill: string; label: string }[], ticks: number[], startHour: number, seriesOptions?: SeriesOptions, title?: string }
+interface ChartProps {
+    data: any,
+    bands: { x1: number; x2: number; fill: string; label: string }[],
+    ticks: number[],
+    startHour: number,
+    seriesOptions?: SeriesOptions,
+    title?: string
+}
 
 
 // --------------------------------------------------------------------
 // Wind Speed & Direction chart                                        
 // --------------------------------------------------------------------
-function WindChart({ data, bands, ticks, startHour }: ChartProps) {
+/**
+ * Wind Speed & Direction chart component.
+ * @param props - ChartProps
+ * @returns {React.ReactElement}
+ */
+function WindChart({ data, bands, ticks, startHour }: ChartProps): React.ReactElement {
 
     const speedColor = "#0088fe";
     const gustColor = "#cc88fe";
@@ -264,7 +281,12 @@ type SeriesOptions = {
     color: string;
 }[];
 
-function Chart({ data, bands, ticks, startHour, seriesOptions, title }: ChartProps) {
+/**
+ * Generic multi-series chart component.
+ * @param props - ChartProps
+ * @returns {React.ReactElement}
+ */
+function Chart({ data, bands, ticks, startHour, seriesOptions, title }: ChartProps): React.ReactElement {
 
     return (
         <Card className="shadow-lg mb-4">
@@ -322,7 +344,11 @@ function Chart({ data, bands, ticks, startHour, seriesOptions, title }: ChartPro
 // --------------------------------------------------------------------
 // Container component                                                  
 // --------------------------------------------------------------------
-export default function ForecastChart() {
+/**
+ * Main ForecastChart component for displaying the 5-day forecast charts.
+ * @returns {React.ReactElement} The rendered forecast charts.
+ */
+export function ForecastChart(): React.ReactElement {
     const [startHour, setStartHour] = useState<number>(0);
     const [error, setError] = useState<string | null>(null);
 
@@ -337,8 +363,8 @@ export default function ForecastChart() {
         charts        // default when user visits the first time
     );
     const toggle = (key: string) =>
-        setSelected((prev) =>
-            prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+        setSelected((prev: any) =>
+            prev.includes(key) ? prev.filter((k: string) => k !== key) : [...prev, key]
         );
 
     const tempOptions = [
@@ -391,3 +417,5 @@ export default function ForecastChart() {
         </>
     );
 }
+
+export default ForecastChart;

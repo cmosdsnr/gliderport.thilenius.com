@@ -1,3 +1,9 @@
+/**
+ * @packageDocumentation
+ * HLSPlayer component for playing HLS video streams in the Gliderport application.
+ * Handles native HLS (Safari) and Hls.js for other browsers.
+ * Includes auto-recovery on network/visibility changes.
+ */
 import React, { useEffect, useRef } from 'react';
 import Hls from 'hls.js';
 
@@ -16,14 +22,22 @@ interface HLSPlayerProps {
     muted?: boolean;
 }
 
-const HLSPlayer: React.FC<HLSPlayerProps> = ({
+/**
+ * HLSPlayer component for playing HLS video streams.
+ * Handles native HLS (Safari) and Hls.js for other browsers.
+ * Includes auto-recovery on network/visibility changes.
+ * 
+ * @param props - The props for the HLSPlayer component.
+ * @returns {React.ReactElement} The rendered video player.
+ */
+export function HLSPlayer({
     src,
     width = 800,
     height,
     controls = true,
     autoPlay = true,
     muted = true,
-}) => {
+}: HLSPlayerProps): React.ReactElement {
     const videoRef = useRef<HTMLVideoElement>(null);
     const hlsRef = useRef<Hls | null>(null);
 
@@ -117,6 +131,6 @@ const HLSPlayer: React.FC<HLSPlayerProps> = ({
             Your browser does not support HTML5 video.
         </video>
     );
-};
+}
 
 export default HLSPlayer;

@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 
 /**
  * React hook that syncs a piece of state with localStorage.
+ * @param key - The localStorage key to use.
+ * @param defaultValue - The default value if nothing is found in localStorage.
+ * @returns A tuple containing the state and a setter function.
  */
 export function useLocalStorageState<T>(
     key: string,
@@ -28,3 +31,5 @@ export function useLocalStorageState<T>(
 
     return [state, setState];
 }
+
+export default useLocalStorageState;

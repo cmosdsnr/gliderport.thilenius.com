@@ -5,7 +5,14 @@ import { useForm } from 'react-hook-form'
 import useChangeEmail from 'hooks/useChangeEmail'
 import { useModal } from './Modals'
 
-export default function ChangeEmailModal() {
+/**
+ * ChangeEmailModal component allows users to change their email address.
+ * It provides a form for email input and handles email change logic.
+ *
+ * @component
+ * @returns {React.ReactElement} Modal for changing email.
+ */
+export function ChangeEmailModal(): React.ReactElement {
 
     const { register, handleSubmit } = useForm()
     const { mutate: changeEmail, isLoading } = useChangeEmail()
@@ -39,3 +46,4 @@ export default function ChangeEmailModal() {
 
     )
 }
+export default ChangeEmailModal;

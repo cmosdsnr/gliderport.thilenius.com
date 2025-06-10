@@ -7,7 +7,12 @@ interface ImageListViewerProps {
     url: string;
 }
 
-const ImageListViewer: React.FC<ImageListViewerProps> = ({ imageList, url }) => {
+/**
+ * ImageListViewer displays a modal image viewer with slider and navigation for a list of images.
+ * @param props - The image list and base URL.
+ * @returns {React.ReactElement} The rendered image list viewer.
+ */
+export function ImageListViewer({ imageList, url }: ImageListViewerProps): React.ReactElement {
     const [showModal, setShowModal] = useState<boolean>(false);
     const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
     const [sliderValue, setSliderValue] = useState<number>(0);
@@ -15,6 +20,7 @@ const ImageListViewer: React.FC<ImageListViewerProps> = ({ imageList, url }) => 
     const imageRef = useRef<HTMLImageElement>(null);
 
     const openModal = (index: number) => {
+        console.log("Opening modal for image:", url + imageList[index]);
         setCurrentImageIndex(index);
         setSliderValue(index);
         setShowModal(true);

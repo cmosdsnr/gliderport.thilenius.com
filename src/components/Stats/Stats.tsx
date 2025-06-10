@@ -1,33 +1,43 @@
-import React, { useState, useEffect, useRef, forwardRef, JSX } from 'react'
+/**
+ * 
+ * @packageDocumentation
+ *   Main statistics page for the Gliderport application.
+ *   Renders a responsive two-column layout displaying various stats components.
+ *   Left column shows hits, images, and useful links; right column shows change logs.
+ */
+import React from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Row, Col, Form } from 'react-bootstrap'
-import { useData } from 'contexts/DataContext'
-import './stats.css'
+import { Row, Col } from 'react-bootstrap';
 import StatsImageComponent from './StatsImage';
 import StatsHitsComponent from './StatsHits';
 import StatsChangeLogComponent from './StatsChangeLog';
 import StatsUsefulLinksComponent from './StatsUsefulLinks';
 
-export default function StatsPage() {
+/**
+ * StatsPage component assembles individual stat widgets into a cohesive layout.
+ * 
+ * @returns {React.ReactElement} A two-column stats dashboard.
+ */
+export function StatsPage(): React.ReactElement {
     return (
         <>
             <Row>
                 <Col xs={12} md={6} className="stats-col">
-
                     <StatsHitsComponent />
                     <StatsImageComponent />
                     <StatsUsefulLinksComponent />
-                </Col >
+                </Col>
 
                 <Col xs={12} md={6} className="leftBorder">
                     <StatsChangeLogComponent />
                 </Col>
-            </Row >
-
-
+            </Row>
         </>
-    )
+    );
 }
+
+export default StatsPage;
+
 
 // var lineInc = 2,
 //     majMarkDegree = 10,

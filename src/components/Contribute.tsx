@@ -1,15 +1,28 @@
+/**
+ * @packageDocumentation
+ * Contribute page for the Gliderport application.
+ * Displays a message about contributions and lists donors who have supported the project.
+ * Fetches donor data from the server on mount and displays it.
+ */
 import React, { useEffect } from 'react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
 type Donor = string[];
 
-
-export default function Contribute() {
+/**
+ * Contribute component displays a message about contributions
+ * and lists donors who have supported the project.
+ *
+ * It fetches donor data from the server on mount and displays it.
+ *
+ * @returns {React.ReactElement} The rendered component.
+ */
+export function Contribute(): React.ReactElement {
     const [donors, setDonors] = React.useState<Donor>([]);
 
     useEffect(() => {
-        const url = new URL("/getDonors", import.meta.env.VITE_UPDATE_SERVER_URL);
+        const url = new URL("/api/getDonors", import.meta.env.VITE_SERVER_URL.toString());
         fetch(url.toString()).then((res) => res.json())
             .then((data) => setDonors(data));
     }, []);
@@ -51,3 +64,5 @@ export default function Contribute() {
         </div>
     );
 }
+
+export default Contribute;

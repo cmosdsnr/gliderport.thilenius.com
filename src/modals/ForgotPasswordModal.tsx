@@ -6,7 +6,15 @@ import { useForm } from 'react-hook-form'
 import { useAuth } from '@/contexts/AuthContext'
 import { useModal, ModalType } from './Modals'
 
-export default function ForgotPasswordModal() {
+/**
+ * ForgotPasswordModal component allows users to reset their password.
+ * It provides a form for email input and handles password reset logic.
+ * It also includes links for login and sign-up.
+ *
+ * @component
+ * @returns {React.ReactElement} Modal for password reset.
+ */
+export function ForgotPasswordModal() {
     const { register, handleSubmit } = useForm()
     const { resetPassword } = useAuth();
     const { openModal, closeModal } = useModal();
@@ -43,3 +51,4 @@ export default function ForgotPasswordModal() {
         </Modal>
     )
 }
+export default ForgotPasswordModal;

@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * Dashboard page for the Gliderport application.
+ * Displays user profile information and settings, allows editing, and provides logout functionality.
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Alert, Row, Col } from 'react-bootstrap';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,7 +11,17 @@ import { PhoneNumberInput } from './PhoneNumber';
 import TextField from '@mui/material/TextField';
 import { ToggleSlider } from 'react-toggle-slider';
 
-function useOutsideAlerter(ref: React.RefObject<HTMLDivElement | null>, setEditing: React.Dispatch<React.SetStateAction<number>>) {
+/**
+ * Custom hook to handle clicks outside a specified element.
+ * When a click occurs outside the element, it sets the editing state to 0.
+ *
+ * @param ref - The reference to the element to monitor for outside clicks.
+ * @param setEditing - Function to update the editing state.
+ */
+export function useOutsideAlerter(
+    ref: React.RefObject<HTMLDivElement | null>,
+    setEditing: React.Dispatch<React.SetStateAction<number>>
+): void {
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (ref.current && !ref.current.contains(event.target as Node)) {
@@ -20,7 +35,14 @@ function useOutsideAlerter(ref: React.RefObject<HTMLDivElement | null>, setEditi
     }, [ref, setEditing]);
 }
 
-export default function Dashboard() {
+/**
+ * Dashboard component displays user profile information and settings.
+ * Allows editing of user details, mobile number, and text alert settings.
+ * Provides functionality to send a test SMS and log out.
+ * 
+ * @returns {React.ReactElement} The dashboard UI.
+ */
+export function Dashboard(): React.ReactElement {
     const [error, setError] = useState<string>("");
     const [editing, setEditing] = useState<number>(0);
     const editRef = useRef<HTMLDivElement | null>(null);
@@ -40,9 +62,12 @@ export default function Dashboard() {
 
     const sendTestSms = () => {
         if (currentUser) {
-            const url = `${import.meta.env.VITE_UPDATE_SERVER_URL}/sendTestSms?name=${currentUser.firstName}&to=${currentUser.settings.address}`;
+            const url = new URL('/api/sendTestSms', import.meta.env.VITE_SERVER_URL.toString());
+            url.searchParams.set('name', currentUser.firstName || '');
+            url.searchParams.set('to', currentUser.settings.address || '');
+            // const url = `${import.meta.env.VITE_SERVER_URL}/api/sendTestSms?name=${currentUser.firstName}&to=${currentUser.settings.address}`;
             console.log(url);
-            fetch(url);
+            fetch(url.toString());
             alert("Please check your phone for the test SMS");
         }
     }
@@ -245,3 +270,4 @@ export default function Dashboard() {
         </Row>
     )
 }
+export default Dashboard;

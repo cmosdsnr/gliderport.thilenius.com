@@ -1,9 +1,19 @@
+/**
+ * @packageDocumentation
+ * Status page for the Gliderport application.
+ * Displays the Gliderport Internet Status History and a visual history of online/offline status.
+ */
 import React, { useState, useEffect, useRef } from 'react'
 import { Row, Col } from 'react-bootstrap'
 import StatusCanvas from './StatusCanvas'
 import { useData } from 'contexts/DataContext'
 
-export default function Status() {
+/**
+ * Status component displays the Gliderport Internet Status History.
+ * Shows a visual history of online/offline status and the last check time.
+ * @returns {React.ReactElement} The rendered status history component.
+ */
+export function Status(): React.ReactElement {
     const [lastStatus, setLastStatus] = useState<string>("")
     const rowRef = useRef<HTMLDivElement>(null)
     const width = useRef<number>(0)
@@ -81,3 +91,5 @@ export default function Status() {
         </>
     )
 }
+
+export default Status;

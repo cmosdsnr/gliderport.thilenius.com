@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * PhoneNumberInput component for the Gliderport application.
+ * Handles phone number formatting, carrier lookup, and SMS gateway address generation.
+ */
 import React, { useState, useEffect, ChangeEvent } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -34,7 +39,13 @@ interface User {
     phone: string
 }
 
-export const PhoneNumberInput: React.FC<PhoneNumberInputProps> = (props) => {
+/**
+ * PhoneNumberInput component for entering and formatting a phone number,
+ * and looking up the carrier to generate an SMS gateway address.
+ * @param props - Input props and handlers.
+ * @returns {React.ReactElement} The rendered phone number input.
+ */
+export function PhoneNumberInput(props: PhoneNumberInputProps): React.ReactElement {
     const { updateUserText, ...rest } = props
     const { currentUser, updateUser, updateUserSettings } = useAuth()
 
@@ -66,8 +77,14 @@ export const PhoneNumberInput: React.FC<PhoneNumberInputProps> = (props) => {
     const gatewayPhoneNumber = (value: string): void => {
         const numbersOnly = value.replace(/[^\d]/g, '')
         if (numbersOnly.length === 10) {
-            const url = `${import.meta.env.VITE_UPDATE_SERVER_URL}/PhoneFinder?area=${numbersOnly.slice(0, 3)}&prefix=${numbersOnly.slice(3, 6)}&number=${numbersOnly.slice(6, 10)}`
-            fetch(url)
+
+            const url = new URL('/api/PhoneFinder', import.meta.env.VITE_SERVER_URL.toString());
+            url.searchParams.set('area', numbersOnly.slice(0, 3));
+            url.searchParams.set('prefix', numbersOnly.slice(3, 6));
+            url.searchParams.set('number', numbersOnly.slice(6, 10));
+
+            // const url = `${import.meta.env.VITE_SERVER_URL}/api/PhoneFinder?area=${numbersOnly.slice(0, 3)}&prefix=${numbersOnly.slice(3, 6)}&number=${numbersOnly.slice(6, 10)}`
+            fetch(url.toString())
                 .then(response => response.text())
                 .then(carrier => {
                     if (carrier.length > 0 && provider[carrier] !== undefined) {

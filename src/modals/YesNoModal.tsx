@@ -1,7 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 
-const YesNoModal = ({ message, onYes, onNo, open }: any) => {
+/**
+ * Props for the YesNoModal component.
+ */
+interface YesNoModalProps {
+    message: string;
+    onYes: () => void;
+    onNo: () => void;
+    open: boolean;
+}
+
+/**
+ * Renders a modal dialog with a message and Yes/No buttons.
+ * @param props - The props for the YesNoModal component.
+ *   - message: The message to display in the modal.
+ *   - onYes: Callback when the user clicks "Yes".
+ *   - onNo: Callback when the user clicks "No".
+ *   - open: Whether the modal is open.
+ */
+export function YesNoModal({ message, onYes, onNo, open }: YesNoModalProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
@@ -28,6 +46,6 @@ const YesNoModal = ({ message, onYes, onNo, open }: any) => {
             </div>
         </Modal>
     );
-};
+}
 
 export default YesNoModal;

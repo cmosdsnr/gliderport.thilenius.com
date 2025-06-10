@@ -1,4 +1,3 @@
-// RemoteFrame.tsx
 import React, {
     useEffect,
     useRef,
@@ -7,101 +6,128 @@ import React, {
     useImperativeHandle,
 } from 'react';
 
+/**
+ * Handle exposed by RemoteFrame to allow parent components to send messages.
+ */
 export interface RemoteFrameHandle {
-    /** Send a message to the remote page. */
+    /**
+     * Post a message payload to the embedded iframe.
+     * @param payload Arbitrary data to send via postMessage
+     */
     post: (payload: any) => void;
 }
 
+/**
+ * Props for the RemoteFrame component.
+ */
 interface RemoteFrameProps {
-    /** Absolute or relative URL of the page to embed. */
+    /** URL or path of the page to embed in the iframe. */
     src: string;
-    /** Optional origin check for incoming messages.  E.g. "https://example.com". */
-    expectedOrigin?: string | string[];
-    /** Callback when the remote page sends data back. */
+    /**
+     * Expected origin(s) of messages from the iframe. If provided, only messages
+     * from matching origin(s) will be forwarded.
+     */
+    expectedOrigin?: string | string[] | RegExp;
+    /**
+     * Callback invoked when a validated message is received from the iframe.
+     * @param data The data payload posted by the remote page
+     */
     onMessage?: (data: any) => void;
-    /** Height in css units (defaults to 100%). */
+    /** CSS height (e.g. '100%', '600px') for the iframe. Defaults to '100%'. */
     height?: string | number;
-    /** Width in css units (defaults to 100%). */
+    /** CSS width (e.g. '100%', '800px') for the iframe. Defaults to '100%'. */
     width?: string | number;
 }
 
 /**
- * A small wrapper around <iframe> that:
- *  1. Loads an external page.
- *  2. Sets up window.postMessage communication both ways.
- *  3. Gives the parent component an imperative handle (`post`) so it can talk
- *     to the frame without ref drilling.
+ * RemoteFrame wraps an iframe and enables two-way postMessage communication.
  *
- * Usage:
+ * Features:
+ * - Exposes an imperative `post` method via ref to send messages to the iframe.
+ * - Validates incoming messages against expectedOrigin.
+ * - Calls onMessage when a valid message arrives.
+ *
+ * @example
  * ```tsx
  * const ref = useRef<RemoteFrameHandle>(null);
- *
  * <RemoteFrame
  *   ref={ref}
- *   src="https://example.com/widget"
+ *   src="https://example.com"
  *   expectedOrigin="https://example.com"
- *   onMessage={data => console.log('👂', data)}
+ *   onMessage={data => console.log(data)}
  * />
- *
- * // later…
+ * // later:
  * ref.current?.post({ type: 'ping' });
  * ```
+ * @param props - The props for the RemoteFrame component.
+ * @param ref - Ref to expose the post method.
+ * @returns {React.ReactElement} The rendered iframe.
  */
-const RemoteFrame = forwardRef<RemoteFrameHandle, RemoteFrameProps>(
-    (
-        { src, expectedOrigin, onMessage, height = '100%', width = '100%' },
+export function RemoteFrameComponent(
+    { src, expectedOrigin, onMessage, height = '100%', width = '100%' }: RemoteFrameProps,
+    ref: React.Ref<RemoteFrameHandle>
+): React.ReactElement {
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+    const [ready, setReady] = useState(false);
+
+    // Expose the `post` method via ref
+    useImperativeHandle(
         ref,
-    ) => {
-        const iframeRef = useRef<HTMLIFrameElement>(null);
-        const [ready, setReady] = useState(false);
+        () => ({
+            /**
+             * Send a payload to the iframe via postMessage.
+             * No-op if the iframe isn't loaded yet.
+             */
+            post: (payload: any) => {
+                if (!ready) return;
+                const win = iframeRef.current?.contentWindow;
+                if (win) {
+                    win.postMessage(payload, '*');
+                }
+            },
+        }),
+        [ready]
+    );
 
-        /* ------------------------------------------------------------
-         *  Expose imperative handle
-         * ---------------------------------------------------------- */
-        useImperativeHandle(
-            ref,
-            () => ({
-                post: payload => {
-                    if (!ready || !iframeRef.current?.contentWindow) return;
-                    iframeRef.current.contentWindow.postMessage(payload, '*');
-                },
-            }),
-            [ready],
-        );
+    /** Mark iframe as ready once loaded */
+    const handleLoad = () => setReady(true);
 
-        /* ------------------------------------------------------------
-         *  Listen for load → mark frame ready
-         * ---------------------------------------------------------- */
-        const handleLoad = () => setReady(true);
+    /**
+     * Listen for messages from the iframe and forward valid ones via onMessage.
+     */
+    useEffect(() => {
+        const handler = (ev: MessageEvent) => {
+            let valid = false;
+            if (!expectedOrigin) {
+                valid = true;
+            } else if (typeof expectedOrigin === 'string') {
+                valid = ev.origin === expectedOrigin;
+            } else if (expectedOrigin instanceof RegExp) {
+                valid = expectedOrigin.test(ev.origin);
+            } else if (Array.isArray(expectedOrigin)) {
+                valid = expectedOrigin.includes(ev.origin);
+            }
+            if (valid) {
+                onMessage?.(ev.data);
+            }
+        };
+        window.addEventListener('message', handler);
+        return () => {
+            window.removeEventListener('message', handler);
+        };
+    }, [expectedOrigin, onMessage]);
 
-        /* ------------------------------------------------------------
-         *  Listen for postMessage events from remote
-         * ---------------------------------------------------------- */
-        useEffect(() => {
-            const handler = (ev: MessageEvent) => {
-                const ok =
-                    !expectedOrigin ||                      // no filter → allow all
-                    (typeof expectedOrigin === 'string' && ev.origin === expectedOrigin) ||
-                    (Array.isArray(expectedOrigin) && expectedOrigin.includes(ev.origin)) ||
-                    (expectedOrigin instanceof RegExp && expectedOrigin.test(ev.origin));
+    return (
+        <iframe
+            ref={iframeRef}
+            src={src}
+            title="remote-frame"
+            style={{ border: 'none', height, width }}
+            onLoad={handleLoad}
+        />
+    );
+}
 
-                if (ok) onMessage?.(ev.data);
-            };
-
-            window.addEventListener('message', handler);
-            return () => window.removeEventListener('message', handler);
-        }, [expectedOrigin, onMessage]);
-
-        return (
-            <iframe
-                ref={iframeRef}
-                src={src}
-                style={{ border: 'none', height, width }}
-                onLoad={handleLoad}
-                title="remote-frame"
-            />
-        );
-    },
-);
+const RemoteFrame = forwardRef<RemoteFrameHandle, RemoteFrameProps>(RemoteFrameComponent);
 
 export default RemoteFrame;

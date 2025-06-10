@@ -1,24 +1,29 @@
 {
     "compilerOptions": {
-    "baseUrl": "src",
-    "paths": {
-        "@/*": ["*"]
+        "baseUrl": "src",
+        "paths": {
+            "@/*": ["*"]
+        },
+        "lib": ["DOM", "DOM.Iterable", "ESNext"],
+        "allowJs": false,
+        "esModuleInterop": false,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "module": "ESNext",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "target": "ESNext",
+        "jsx": "react-jsx",            // or "react-jsxdev" for dev mode
+        "moduleResolution": "Node",    // so imports like 'react-router/dom' resolve
+        "skipLibCheck": true,          // skip type-checking node_modules
+        "types": [
+            "vite/client",
+            "react",
+            "react-dom"
+        ]
     },
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "allowJs": false,
-    "skipLibCheck": false,
-    "esModuleInterop": false,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react",
-      "target": "ESNext",
-      "types": ["vite/client"]
-    },
-    "typeRoots": ["./node_modules/@types", "./src/types"]
-  }
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "include": ["src/**/*"]
+  } 

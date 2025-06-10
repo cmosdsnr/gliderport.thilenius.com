@@ -5,7 +5,12 @@ interface StatsUsefulLinksProps {
     // define your props here if you have any
 }
 
-const StatsUsefulLinksComponent: React.FC<StatsUsefulLinksProps> = (props) => {
+/**
+ * StatsUsefulLinksComponent displays a list of useful external links.
+ * @param props - Component props (currently unused).
+ * @returns {React.ReactElement} The rendered useful links section.
+ */
+export function StatsUsefulLinksComponent(props: StatsUsefulLinksProps): React.ReactElement {
     return (
         <Row className="blueBorder">
             <h4>Some useful links:</h4>

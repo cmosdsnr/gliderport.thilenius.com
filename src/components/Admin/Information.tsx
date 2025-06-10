@@ -1,6 +1,22 @@
+/**
+ * ## InfoDisplay Component
+ *
+ * Fetches and displays comprehensive gliderport system information, including:
+ *  - Gliderport record metadata
+ *  - Hourly stats overview
+ *  - Server-sent sunrise/sunset and computed deltas
+ *  - Code history summaries and details
+ *  - Add-data (ETL) process details
+ *
+ * Data is retrieved from the `/api/info` endpoint on mount.
+ *
+ * @component
+ */
 import React, { useEffect, useState } from 'react';
 
-
+/**
+ * Gliderport info returned from the API.
+ */
 interface GliderportInfo {
     lastRecord: any;
     firstRecord: any;
@@ -10,23 +26,26 @@ interface GliderportInfo {
     latestHoursString?: string | null;
 }
 
+/**
+ * Status data pushed from the server (sun times, computed deltas).
+ */
 interface ServerSentData {
     now: number;
-    record: any; // raw record from server_sent table
-    // For sun data, we convert it into a key/value map:
+    record: any;
     sun?: { [key: string]: string };
-    // For keys like last_record, last_image, last_forecast, include computed delta info.
     computed?: { [key: string]: { original: number; display: string; delta: string } };
 }
 
-
+/**
+ * Metadata about the add-data (ETL) process and schedule.
+ */
 interface AddDataInfo {
     lastCalled: number;
     lastCalledString: string;
     numberRecordsReceived: number;
     lastEntryInHours: number;
     lastEntryInHoursString: string;
-    hoursInfo: any[]; // assuming array of objects with ts, resultsFound, l, etc.
+    hoursInfo: any[];
     forecast: {
         nextUpdate: number;
         nextUpdateString: string;
@@ -36,41 +55,44 @@ interface AddDataInfo {
         forecastStart: number;
         forecastEnd: number;
     };
-    codeHistoryUpdate: any; // structure from globals.debugInfo.codeHistory
+    codeHistoryUpdate: any;
 }
 
+/**
+ * Combined API response shape.
+ */
 interface InfoResponse {
     gliderportInfo: GliderportInfo;
-    hoursTable: {
-        count: number;
-        entries: HourEntry[];
-    };
+    hoursTable: { count: number; entries: HourEntry[] };
     serverSent: ServerSentData | null;
-    codeHistory: {
-        overview: CodeHistoryOverview[];
-        latestDetails?: CodeHistoryDetails;
-    };
+    codeHistory: { overview: CodeHistoryOverview[]; latestDetails?: CodeHistoryDetails };
     addData: AddDataInfo;
 }
 
-
+/**
+ * Single hour bucket entry.
+ */
 interface HourEntry {
     start: number;
     startString: string;
     hoursCount: number;
     gliderportCount: number;
 }
-type CodeHistory = {
-    overview: CodeHistoryOverview[];
-    latestDetails?: CodeHistoryDetails;
-};
 
+type CodeHistory = { overview: CodeHistoryOverview[]; latestDetails?: CodeHistoryDetails };
+
+/**
+ * Overview entry for code history.
+ */
 interface CodeHistoryOverview {
     date: number;
     dateString: string;
     codeChanges: number;
 }
 
+/**
+ * Detailed code-history record.
+ */
 interface CodeHistoryDetails {
     date: number;
     dateString: string;
@@ -78,12 +100,13 @@ interface CodeHistoryDetails {
     codes: Array<{ time: number; timeHMS: string; description: string; code: number }>;
 }
 
-interface InfoDisplayProps {
-    info: InfoResponse;
-}
-
-const InfoDisplay = () => {
-
+/**
+ * Displays system and gliderport information fetched from backend.
+ *
+ * @returns {React.ReactElement}
+ */
+export function InfoDisplay(): React.ReactElement {
+    // State hooks for each data segment
     const [gliderportInfo, setGliderportInfo] = useState<GliderportInfo>({
         lastRecord: null,
         firstRecord: null,
@@ -92,16 +115,14 @@ const InfoDisplay = () => {
         latestHours: 0,
         latestHoursString: null,
     });
-    const [hoursTable, setHoursTable] = useState({
+
+    const [hoursTable, setHoursTable] = useState<{ count: number; entries: HourEntry[] }>({
         count: 0,
         entries: [],
     });
-    const [serverSent, setServerSent] = useState<ServerSentData | null>(null);
-    const [codeHistory, setCodeHistory] = useState<CodeHistory>({
-        overview: [],
-        latestDetails: undefined,
 
-    });
+    const [serverSent, setServerSent] = useState<ServerSentData | null>(null);
+    const [codeHistory, setCodeHistory] = useState<CodeHistory>({ overview: [], latestDetails: undefined });
     const [addData, setAddData] = useState<AddDataInfo>({
         lastCalled: 0,
         lastCalledString: "",
@@ -110,30 +131,32 @@ const InfoDisplay = () => {
         lastEntryInHoursString: "",
         hoursInfo: [],
         forecast: {
-            nextUpdate: 0,  // timestamp
-            nextUpdateString: "",                       // string
-            lastUpdate: 0,  // timestamp
-            lastUpdateString: "",                       // string
-            forecastHours: 0,                          // number
-            forecastStart: 0,                          // number
-            forecastEnd: 0,                            // number
+            nextUpdate: 0,
+            nextUpdateString: "",
+            lastUpdate: 0,
+            lastUpdateString: "",
+            forecastHours: 0,
+            forecastStart: 0,
+            forecastEnd: 0,
         },
         codeHistoryUpdate: {},
     });
 
-
+    /**
+     * Fetches InfoResponse from API on mount.
+     */
     useEffect(() => {
-        // Fetch data from the server
-        fetch(import.meta.env.VITE_UPDATE_SERVER_URL + '/info')
-            .then((res) => res.json())
-            .then((data) => {
+        const url = new URL('/api/info', import.meta.env.VITE_SERVER_URL.toString());
+        fetch(url.toString())
+            .then(res => res.json())
+            .then((data: InfoResponse) => {
                 setServerSent(data.serverSent);
                 setGliderportInfo(data.gliderportInfo);
                 setHoursTable(data.hoursTable);
                 setCodeHistory(data.codeHistory);
                 setAddData(data.addData);
             })
-            .catch((err) => console.error(err));
+            .catch(err => console.error('Failed to fetch /api/info:', err));
     }, []);
 
     return (
@@ -190,7 +213,7 @@ const InfoDisplay = () => {
 
             {/* Hours Table Section */}
             <h3>Hours has {hoursTable.count} entries</h3>
-            <table style={{ textAlign: "center" }}>
+            <table style={{ textAlign: 'center' }}>
                 <thead>
                     <tr>
                         <th>Hour Start</th>
@@ -199,8 +222,8 @@ const InfoDisplay = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {hoursTable.entries.map((entry: HourEntry, index: number) => (
-                        <tr key={index}>
+                    {hoursTable.entries.map((entry, idx) => (
+                        <tr key={idx}>
                             <td>{entry.startString}</td>
                             <td>{entry.hoursCount}</td>
                             <td>{entry.gliderportCount}</td>
@@ -215,9 +238,7 @@ const InfoDisplay = () => {
                 <table>
                     <tbody>
                         <tr>
-                            <td>
-                                <b>Now</b>
-                            </td>
+                            <td><b>Now</b></td>
                             <td>({serverSent.now})</td>
                         </tr>
                         {serverSent.sun &&
@@ -231,9 +252,7 @@ const InfoDisplay = () => {
                             Object.entries(serverSent.computed).map(([key, comp]) => (
                                 <tr key={key}>
                                     <td>{key}</td>
-                                    <td>
-                                        ({comp.original}) <b>{comp.display}</b> ({comp.delta})
-                                    </td>
+                                    <td>({comp.original}) <b>{comp.display}</b> ({comp.delta})</td>
                                 </tr>
                             ))}
                     </tbody>
@@ -246,14 +265,11 @@ const InfoDisplay = () => {
             <h3>Code History Table (last 10 overview)</h3>
             <table>
                 <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Code Changes</th>
-                    </tr>
+                    <tr><th>Date</th><th>Code Changes</th></tr>
                 </thead>
                 <tbody>
-                    {codeHistory.overview.map((entry: CodeHistoryOverview, index: number) => (
-                        <tr key={index}>
+                    {codeHistory.overview.map((entry, idx) => (
+                        <tr key={idx}>
                             <td>{entry.dateString}</td>
                             <td>{entry.codeChanges} changes</td>
                         </tr>
@@ -264,46 +280,20 @@ const InfoDisplay = () => {
             {/* Code History Latest Details Section */}
             {codeHistory.latestDetails && (
                 <>
-                    <h3>
-                        Latest Code History Table details for{" "}
-                        {codeHistory.latestDetails.dateString} with{" "}
-                        {codeHistory.latestDetails.codes.length} code changes
-                    </h3>
+                    <h3>Latest Code History Table details for {codeHistory.latestDetails.dateString} with {codeHistory.latestDetails.codes.length} code changes</h3>
                     <table>
                         <tbody>
-                            <tr>
-                                <td>start</td>
-                                <td>{codeHistory.latestDetails.limits[0]} hr</td>
-                                <td>{codeHistory.latestDetails.limits[0] * 3600} s</td>
-                            </tr>
-                            <tr>
-                                <td>stop</td>
-                                <td>{codeHistory.latestDetails.limits[1]} hr</td>
-                                <td>{codeHistory.latestDetails.limits[1] * 3600} s</td>
-                            </tr>
+                            <tr><td>start</td><td>{codeHistory.latestDetails.limits[0]} hr</td><td>{codeHistory.latestDetails.limits[0] * 3600} s</td></tr>
+                            <tr><td>stop</td><td>{codeHistory.latestDetails.limits[1]} hr</td><td>{codeHistory.latestDetails.limits[1] * 3600} s</td></tr>
                             {codeHistory.latestDetails.codes.length > 0 && (
                                 <tr>
                                     <td>First at</td>
-                                    <td>
-                                        {codeHistory.latestDetails.codes[0].time} s after start
-                                    </td>
-                                    <td>
-                                        {codeHistory.latestDetails.codes[0].timeHMS} from day start
-                                    </td>
+                                    <td>{codeHistory.latestDetails.codes[0].time} s after start</td>
+                                    <td>{codeHistory.latestDetails.codes[0].timeHMS} from day start</td>
                                 </tr>
                             )}
-                            <tr>
-                                <td>Sunrise</td>
-                                <td>{/* Add sunrise info here if available */}</td>
-                            </tr>
-                            {codeHistory.latestDetails.codes.map((codeItem, index) => (
-                                <tr key={index}>
-                                    <td>{codeItem.time}</td>
-                                    <td>{codeItem.timeHMS}</td>
-                                    <td>
-                                        {codeItem.description} ({codeItem.code})
-                                    </td>
-                                </tr>
+                            {codeHistory.latestDetails.codes.map((ci, j) => (
+                                <tr key={j}><td>{ci.time}</td><td>{ci.timeHMS}</td><td>{ci.description} ({ci.code})</td></tr>
                             ))}
                         </tbody>
                     </table>
@@ -315,65 +305,20 @@ const InfoDisplay = () => {
             <p>Data and Hours table update Info:</p>
             <table>
                 <tbody>
-                    <tr>
-                        <td>Last called:</td>
-                        <td>
-                            {addData.lastCalledString} ({addData.lastCalled})
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Received records:</td>
-                        <td>
-                            {addData.numberRecordsReceived} records received from PI3 and added to
-                            gliderport table
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Last entry in hours table:</td>
-                        <td>
-                            {addData.lastEntryInHoursString} ({addData.lastEntryInHours})
-                        </td>
-                    </tr>
-                    {addData.hoursInfo &&
-                        addData.hoursInfo.map((hourInfo: any, index: number) => (
-                            <tr key={index}>
-                                <td>Hour {index + 1}:</td>
-                                <td>
-                                    Found {hourInfo.resultsFound} entries in gliderport for the hour{" "}
-                                    {hourInfo.tsString || hourInfo.ts}
-                                </td>
-                            </tr>
-                        ))}
-                    <tr>
-                        <td>Next forecast update:</td>
-                        <td>
-                            {addData.forecast.nextUpdateString} (
-                            {addData.forecast.nextUpdate})
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Last forecast update:</td>
-                        <td>
-                            {addData.forecast.lastUpdateString} (
-                            {addData.forecast.lastUpdate})
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Forecast hours:</td>
-                        <td>{addData.forecast.forecastHours}</td>
-                    </tr>
-                    <tr>
-                        <td>Forecast start:</td>
-                        <td>{addData.forecast.forecastStart}</td>
-                    </tr>
-                    <tr>
-                        <td>Forecast end:</td>
-                        <td>{addData.forecast.forecastEnd}</td>
-                    </tr>
-                    {/* Add more rows for codeHistoryUpdate if desired */}
+                    <tr><td>Last called:</td><td>{addData.lastCalledString} ({addData.lastCalled})</td></tr>
+                    <tr><td>Received records:</td><td>{addData.numberRecordsReceived} records received from PI3 and added to gliderport table</td></tr>
+                    <tr><td>Last entry in hours table:</td><td>{addData.lastEntryInHoursString} ({addData.lastEntryInHours})</td></tr>
+                    {addData.hoursInfo.map((hi, k) => (
+                        <tr key={k}><td>Hour {k + 1}:</td><td>Found {hi.resultsFound} entries for {hi.tsString || hi.ts}</td></tr>
+                    ))}
+                    <tr><td>Next forecast update:</td><td>{addData.forecast.nextUpdateString} ({addData.forecast.nextUpdate})</td></tr>
+                    <tr><td>Last forecast update:</td><td>{addData.forecast.lastUpdateString} ({addData.forecast.lastUpdate})</td></tr>
+                    <tr><td>Forecast hours:</td><td>{addData.forecast.forecastHours}</td></tr>
+                    <tr><td>Forecast start:</td><td>{addData.forecast.forecastStart}</td></tr>
+                    <tr><td>Forecast end:</td><td>{addData.forecast.forecastEnd}</td></tr>
                 </tbody>
             </table>
-            <div style={{ height: "300px" }}></div>
+            <div style={{ height: '300px' }} />
         </div>
     );
 };

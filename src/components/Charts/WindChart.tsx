@@ -1,3 +1,13 @@
+// WindChart.tsx
+/**
+ * WindChart component renders a time-series wind data chart with colored gradients.
+ *
+ * It fetches readings from DataContext, applies filter and fill logic from FilterContext,
+ * and displays an area plot with gradient overlays indicating wind code states.
+ * A toggleable Legend explains the color codes.
+ *
+ * @packageDocumentation WindChart
+ */
 import React, { useEffect, useState, useRef, MouseEvent } from 'react'
 import * as d3 from 'd3'
 import { Col } from 'react-bootstrap'
@@ -6,240 +16,239 @@ import { getGradients } from './ColorGradients'
 import Legend from './Legend'
 import { useData, Reading } from '@/contexts/DataContext'
 
+/**
+ * Props for WindChart.
+ * clientWidth - width of the drawing container in pixels
+ * label - label for the Y axis
+ */
 interface WindChartProps {
-    clientWidth: number,
-    label: string,
+    clientWidth: number
+    label: string
 }
 
-const WindChart = ({ clientWidth, label }: WindChartProps) => {
+/**
+ * Renders a D3-powered wind data chart.
+ *
+ * - Uses DataContext to retrieve `readings`.
+ * - Uses FilterContext (`filterData`, `fillForFilter`) to compute boundaries and direction history.
+ * - Draws X and Y axes aligned to 2‑hour ticks in LA time.
+ * - Fills area between min/max, overlays gradient color blocks per state transitions.
+ * - Provides a button to toggle the Color Code Legend.
+ *
+ * @param props - component props
+ * @returns React element containing the chart
+ */
 
-    const chartRef = useRef(null);
+export function WindChart({ clientWidth, label }: WindChartProps): React.ReactElement {
+    const chartRef = useRef<HTMLDivElement>(null)
 
-    const [limits, setLimits] = useState<null | Limits>(null);
-    const [showLegend, setShowLegend] = useState(false);
-    const [width, setWidth] = useState(0);
-    const [height, setHeight] = useState(0);
-    const [svgWidth, setSvgWidth] = useState(0);
-    const [svgHeight, setSvgHeight] = useState(0);
+    const [limits, setLimits] = useState<Limits | null>(null)
+    const [showLegend, setShowLegend] = useState<boolean>(false)
+    const [width, setWidth] = useState<number>(0)
+    const [height, setHeight] = useState<number>(0)
+    const [svgWidth, setSvgWidth] = useState<number>(0)
+    const [svgHeight, setSvgHeight] = useState<number>(0)
 
-    const [direction, setDirection] = useState([[0, 0]]);
-    const [min, setMin] = useState([[0, 0]]);
-    const [max, setMax] = useState<[number, number][]>([[0, 0]]);
+    const [direction, setDirection] = useState<[number, number][]>([[0, 0]])
+    const [min, setMin] = useState<[number, number][]>([[0, 0]])
+    const [max, setMax] = useState<[number, number][]>([[0, 0]])
+    const [scaled, setScaled] = useState<[number, number][]>([])
 
-    const [scaled, setScaled] = useState<[number, number][]>([]);
-
-    const { readings } = useData();
+    const { readings } = useData()
     const { filterData, fillForFilter } = useFilter()
 
     const margin = { top: 10, right: 60, bottom: 30, left: 30 }
 
-
+    /**
+     * Compute inner and svg dimensions when container width changes.
+     */
     useEffect(() => {
         setWidth(clientWidth - margin.left - margin.right)
         setHeight(Math.floor(clientWidth / 5) - margin.top - margin.bottom)
         setSvgWidth(clientWidth)
         setSvgHeight(Math.floor(clientWidth / 5))
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // margin and functions assumed stable
     }, [clientWidth])
 
+    /**
+     * Apply filtering logic when raw readings or drawing width change.
+     */
     useEffect(() => {
         if (width > 0 && readings?.length > 1) {
-            // debugger
-            const { fTop, fBottom, limits, filled }: FilterReturnDataType = filterData(readings, width);
+            const { fTop, fBottom, limits, filled }: FilterReturnDataType = filterData(readings, width)
             setLimits(limits)
             setMax(fTop)
             setMin(fBottom)
             setScaled(filled)
-            const f = fillForFilter(readings, width, "direction")
-            setDirection(f.filled)
+            const dir = fillForFilter(readings, width, 'direction')
+            setDirection(dir.filled)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // filterData and fillForFilter stability assumed
     }, [readings, width])
 
-
-    //redraw on size change or data change
+    /**
+     * Clear and redraw the chart on min/max changes.
+     */
     useEffect(() => {
-        // if there is no width we should not be here
-        if (!width) { return }
-        if (!limits) { return }
+        if (!width || !limits) return
 
-        // grab, clear and resize char container
-        var svgContainer = d3.select(chartRef.current)
-        svgContainer.selectAll("*").remove()
-        var svg = svgContainer.append("svg")
-            .attr("height", svgHeight)
-            .attr("width", svgWidth)
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        const container = d3.select(chartRef.current)
+        container.selectAll('*').remove()
 
-        var svgDefs = svg.append('defs')
+        const svg = container
+            .append('svg')
+            .attr('width', svgWidth)
+            .attr('height', svgHeight)
+            .append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`)
 
+        const svgDefs = svg.append('defs')
 
-        var timeSinceLastHourMark = limits.tsStart % (1 * 60 * 60)
-        var td = new Date((limits.tsStart - timeSinceLastHourMark) * 1000);
-        var tickCnt = 1 + Math.floor((timeSinceLastHourMark + (limits.tsStop - limits.tsStart)) / (2 * 3600))
+        // Align X-axis ticks to two-hour LA-time boundaries
+        const startDate = new Date(limits.tsStart * 1000)
+        startDate.setMinutes(0, 0, 0)
+        const hour = parseInt(
+            new Intl.DateTimeFormat('en-US', {
+                timeZone: 'America/Los_Angeles', hour: '2-digit', hour12: false,
+            }).format(startDate), 10)
+        if (hour % 2 === 1) startDate.setTime(startDate.getTime() - 3600000)
 
+        const tickValues = d3.range(startDate.getTime() / 1000, limits.tsStop, 2 * 3600)
 
-
-        const start = new Date(limits.tsStart * 1000);
-        start.setMinutes(0, 0, 0); // Set minutes, seconds, and milliseconds to zero
-        const localHour = parseInt(
-            new Intl.DateTimeFormat("en-US", {
-                timeZone: "America/Los_Angeles",
-                hour: "2-digit",
-                hour12: false,
-            }).format(start),
-            10
-        );
-        //if localHour is odd subtract one hour from start
-        const localHourOffset = localHour % 2 === 1 ? 60 * 60 * 1000 : 0;
-        start.setTime(start.getTime() - localHourOffset);
-
-        const tickValues = d3.range(start.getTime() / 1000, limits.tsStop, 2 * 3600);
-
-        // Add X axis --> it is a date format
-        var x = d3.scaleLinear()
+        const x = d3.scaleLinear()
             .domain([limits.tsStart, limits.tsStop])
-            .range([margin.left, width]);
+            .range([margin.left, width])
 
-        svg.append("g")
-            .attr("transform", "translate(0," + (height + 10) + ")")
+        svg.append('g')
+            .attr('transform', `translate(0,${height + 10})`)
             .attr('class', 'x axis-grid')
             .call(
-                d3
-                    .axisBottom(x)
+                d3.axisBottom(x)
                     .tickSize(-height)
                     .tickValues(tickValues)
-                    .tickFormat((d: any): string => {
-                        const td = new Date((d as number) * 1000);
-                        const localTime = td.toLocaleTimeString("en-US", {
-                            timeZone: "America/Los_Angeles",
-                            hour: "2-digit",
-                            hour12: false,
-                        });
-                        const localDate = td.toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" });
-                        return localTime === "00" ? localDate : localTime;
+                    .tickFormat((d: any) => {
+                        const t = new Date(d * 1000)
+                        const hh = t.toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: '2-digit', hour12: false })
+                        return hh === '00'
+                            ? t.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' })
+                            : hh
                     })
             )
 
-        // Add Y axis
-        const dataMax = d3.max(max, function (d) { return d[1] })
-        var y = d3.scaleLinear()
-            .domain([0, dataMax != undefined && dataMax > 12 ? dataMax : 12])
-            .range([(height + 5), 0])
-        svg.append("g")
-            .attr("transform", "translate(" + margin.left + ",5)")
-            .attr('class', 'y axis-grid')
-            .call(d3.axisLeft(y).ticks(4)
-                .tickSize(-width + margin.right))
-        svg.append("g")
-            .attr("transform", "translate(" + width + ",5)")
-            .attr('class', 'y axis-grid')
-            .call(d3.axisRight(y).ticks(4)
-                .tickSize(-width + margin.left))
-        svg.append("text")
-            .attr("class", "y label")
-            .attr("text-anchor", "middle")
-            .attr("y", ".75em")
-            .attr("x", -150)
-            .attr("transform", "rotate(-90)")
-            .text(label);
-        var cp = svg.append("clipPath").attr("id", "cp")
+        const dataMax = d3.max(max, d => d[1]) ?? 12
+        const y = d3.scaleLinear()
+            .domain([0, dataMax > 12 ? dataMax : 12])
+            .range([height + 5, 0])
 
-        if (max.length > 1)
-            cp.append("path")
+        svg.append('g')
+            .attr('transform', `translate(${margin.left},5)`)
+            .attr('class', 'y axis-grid')
+            .call(d3.axisLeft(y).ticks(4).tickSize(-width + margin.right))
+
+        svg.append('g')
+            .attr('transform', `translate(${width},5)`)
+            .attr('class', 'y axis-grid')
+            .call(d3.axisRight(y).ticks(4).tickSize(-width + margin.left))
+
+        svg.append('text')
+            .attr('class', 'y label')
+            .attr('text-anchor', 'middle')
+            .attr('y', '.75em')
+            .attr('x', -150)
+            .attr('transform', 'rotate(-90)')
+            .text(label)
+
+        const cp = svg.append('clipPath').attr('id', 'cp')
+        if (max.length > 1) {
+            cp.append('path')
                 .datum(max)
-                .attr("d", d3.area()
-                    .x(function (d: any): any { return x(d[0]) })
-                    .y0(function (d: any, i: any): any { const t = d[0]; return y(min[i][1]) })
-                    .y1(function (d: any): any { return y(d[1]) })
+                .attr('d', d3.area<[number, number]>()
+                    .x(d => x(d[0]))
+                    .y0((_, i) => y(min[i][1]))
+                    .y1(d => y(d[1]))
                 )
+        }
 
-        getGradients(svgDefs, dataMax ? dataMax : 12)
-        const dir = Math.abs(direction[0][1] - 270)
-        var state = dir > 40 ? 2 : (dir > 33 ? 1 : 0)
-        var cnt = 0;
-        var startOffset = 0
+        getGradients(svgDefs, dataMax)
+
+        // Paint gradient blocks between state transitions
+        let state = Math.abs(direction[0][1] - 270) > 40
+            ? 2 : Math.abs(direction[0][1] - 270) > 33
+                ? 1 : 0
+        let cnt = 0
+        let offset = 0
+
         max.forEach((v, i) => {
-            const dir = Math.abs(direction[i][1] - 270)
-            const nextState = dir > 40 ? 2 : (dir > 33 ? 1 : 0)
-            // more than 10 pixels and state changed
-            if (x(v[0] - max[i - cnt][0]) > 10 && nextState !== state) {
-                //draw rectangle from i-cnt to cnt filled with state shading
-                // debugger
-                const w = x(v[0]) - x(max[i - cnt][0]) - 5 < 0 ? 0 : x(v[0]) - x(max[i - cnt][0]) - 5
-                svg.append("rect")
-                    .attr("x", x(max[i - cnt][0]) + startOffset)
-                    .attr("width", w)
-                    .attr("y", 0)
-                    .attr("height", height)
-                    .attr("clip-path", "url(#cp)")
-                    .style("stroke-width", 2)
-                    .style("stroke", 'url(#mg' + state + ')')
-                    .style("fill", 'url(#mg' + state + ')')
+            const dirVal = Math.abs(direction[i][1] - 270)
+            const next = dirVal > 40 ? 2 : dirVal > 33 ? 1 : 0
 
-                var gradientSelect
-                if (state === 0) { gradientSelect = nextState === 1 ? 0 : 4 }
-                if (state === 1) { gradientSelect = nextState === 2 ? 1 : 3 }
-                if (state === 2) { gradientSelect = nextState === 1 ? 2 : 5 }
+            if (x(v[0] - max[i - cnt][0]) > 10 && next !== state) {
+                const w = Math.max(0, x(v[0]) - x(max[i - cnt][0]) - 5)
+                svg.append('rect')
+                    .attr('x', x(max[i - cnt][0]) + offset)
+                    .attr('width', w)
+                    .attr('height', height)
+                    .attr('clip-path', 'url(#cp)')
+                    .style('stroke-width', 2)
+                    .style('stroke', `url(#mg${state})`)
+                    .style('fill', `url(#mg${state})`)
+
+                let gradSelect: number
+                if (state === 0) gradSelect = next === 1 ? 0 : 4
+                else if (state === 1) gradSelect = next === 2 ? 1 : 3
+                else gradSelect = next === 1 ? 2 : 5
 
                 for (let tx = 0; tx < 5; tx++) {
-                    svg.append("rect")
-                        .attr("x", x(v[0]) + 2 * tx)
-                        .attr("y", 0)
-                        .attr("height", height)
-                        .attr("width", 2)
-                        .style("stroke-width", 1)
-                        .attr("clip-path", "url(#cp)")
-                        .style("stroke", 'url(#gd0-' + tx + ')')
-                        .style("fill", 'url(#gd' + gradientSelect + '-' + tx + ')')
+                    svg.append('rect')
+                        .attr('x', x(v[0]) + 2 * tx)
+                        .attr('width', 2)
+                        .attr('height', height)
+                        .attr('y', 0)
+                        .attr('clip-path', 'url(#cp)')
+                        .style('stroke-width', 1)
+                        .style('stroke', `url(#gd${gradSelect}-${tx})`)
+                        .style('fill', `url(#gd${gradSelect}-${tx})`)
                 }
-                // debugger
-                cnt = 0
-                startOffset = 5
-                state = nextState
+
+                cnt = 0; offset = 5; state = next
             } else {
                 cnt++
             }
         })
-        //add the last one (cnt wide)  
-        if (max.length > 1) {
-            if (max.length - cnt < 0) {
-                console.log("Debug: cnt > max.length line 193")
-                cnt = max.length
-            }
-            if (cnt === 0) {
-                cnt++
-            }
-            svg.append("rect")
-                .attr("x", x(max[max.length - cnt][0]))
-                .attr("width", x(max[max.length - 1][0]) - x(max[max.length - cnt][0]))
-                .attr("y", 0)
-                .attr("height", height)
-                .attr("clip-path", "url(#cp)")
-                .style("stroke-width", 2)
-                .style("stroke", 'url(#mg' + state + ')')
-                .style("fill", 'url(#mg' + state + ')')
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [min, max]) // Redraw readings if data changes
 
-    const toggleLegend = (e: MouseEvent) => {
-        e.preventDefault();
-        if (showLegend) {
-            setShowLegend(false)
-        } else {
-            setShowLegend(true)
+        // Final block
+        if (max.length > 1) {
+            if (cnt === 0) cnt = 1
+            const startIdx = max.length - cnt
+            svg.append('rect')
+                .attr('x', x(max[startIdx][0]))
+                .attr('width', x(max[max.length - 1][0]) - x(max[startIdx][0]))
+                .attr('height', height)
+                .attr('clip-path', 'url(#cp)')
+                .style('stroke-width', 2)
+                .style('stroke', `url(#mg${state})`)
+                .style('fill', `url(#mg${state})`)
         }
+
+    }, [min, max])
+
+    /**
+     * Toggle display of the color legend.
+     */
+    function toggleLegend(e: MouseEvent) {
+        e.preventDefault()
+        setShowLegend(prev => !prev)
     }
 
     return (
-        <Col xs={12} >
+        <Col xs={12}>
             <div ref={chartRef} />
-            <button className="btn btn-info dropdown-toggle btn-sm" onClick={toggleLegend}>Color Code Legend</button>
-            {showLegend ? (<Legend />) : (<></>)}
+            <button className="btn btn-info dropdown-toggle btn-sm" onClick={toggleLegend}>
+                Color Code Legend
+            </button>
+            {showLegend && <Legend />}
         </Col>
     )
 }
-
 
 export default WindChart

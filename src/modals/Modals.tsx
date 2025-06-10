@@ -5,6 +5,9 @@ import ForgotPasswordModal from './ForgotPasswordModal'
 import ChangeEmailModal from './ChangeEmailModal'
 import ChangePasswordModal from './ChangePasswordModal'
 
+/**
+ * Enum representing the different modal types available in the application.
+ */
 export enum ModalType {
     None = 'None',
     Login = 'Login',
@@ -14,17 +17,34 @@ export enum ModalType {
     ChangePassword = 'ChangePassword',
 }
 
+/**
+ * The context type for modal state and modal control functions.
+ */
 type ModalContextType = {
     modal: ModalType;
     openModal: (modalType: ModalType) => void;
     closeModal: () => void;
 };
 
+/**
+ * React Context for managing modal state.
+ */
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
-export const ModalProvider = ({ children }: { children: ReactNode }) => {
+/**
+ * ModalProvider component that wraps its children with modal state/context.
+ * @param children - The child components that will have access to the modal context.
+ */
+export function ModalProvider({ children }: { children: ReactNode }) {
     const [modal, setModal] = useState<ModalType>(ModalType.None);
+    /**
+     * Opens a modal of the specified type.
+     * @param modalType - The type of modal to open.
+     */
     const openModal = (modalType: ModalType) => setModal(modalType);
+    /**
+     * Closes any open modal.
+     */
     const closeModal = () => setModal(ModalType.None);
 
     return (
@@ -32,21 +52,31 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
             {children}
         </ModalContext.Provider>
     );
-};
+}
 
-export const useModal = () => {
+/**
+ * Custom hook to access the modal context.
+ * @throws Error if used outside of a ModalProvider.
+ * @returns The modal context value.
+ */
+export function useModal() {
     const context = useContext(ModalContext);
     if (context === undefined) {
         throw new Error('useModal must be used within a ModalProvider');
     }
     return context;
-};
+}
 
-
-
-export default function Modals() {
+/**
+ * Main component that renders the currently active modal.
+ * @returns {React.ReactElement} The modal component corresponding to the current modal state, or null if none is open.
+ */
+export function Modals(): React.ReactElement {
     const { modal } = useModal();
 
+    /**
+     * Renders the modal component based on the current modal type.
+     */
     const renderModal = () => {
         switch (modal) {
             case ModalType.Login:
@@ -65,5 +95,6 @@ export default function Modals() {
     };
 
     return <>{renderModal()}</>;
-
 }
+
+export default Modals;

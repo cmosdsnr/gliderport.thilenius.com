@@ -11,8 +11,16 @@ import { useModal, ModalType } from './Modals'
 
 import { useAuth } from '@/contexts/AuthContext'
 import * as yup from 'yup'
+import { R } from 'framer-motion/dist/types.d-B50aGbjN'
 
-export default function SignUpModal() {
+/**
+ * SignUpModal component renders a modal dialog for user registration.
+ * Handles form validation, sign up, login, and verification logic.
+ *
+ * @component
+ * @returns {React.ReactElement} The rendered modal for signing up.
+ */
+export function SignUpModal(): React.ReactElement {
 
     const { mutate: signUp, isLoading, isSuccess, isError, reset: signUpReset } = useSignUp()
     const { mutate: login, isSuccess: loginSuccess } = useLogin();
@@ -47,6 +55,10 @@ export default function SignUpModal() {
     }, [])
 
 
+    /**
+     * Handles the sign up form submission.
+     * @param data - The form data containing name, email, password, and password confirmation.
+     */
     async function onSignUpSubmit(data: any) {
         await signUp(data);
         if (isSuccess) {
@@ -109,3 +121,4 @@ export default function SignUpModal() {
         </Modal>
     )
 }
+export default SignUpModal;

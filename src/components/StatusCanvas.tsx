@@ -1,13 +1,25 @@
+/**
+ * @packageDocumentation
+ * StatusCanvas component for the Gliderport application.
+ * Renders a canvas showing the online/offline status history for a day.
+ */
 import React, { useRef, useEffect } from 'react'
 
+/**
+ * Props for the StatusCanvas component.
+ */
 interface CanvasProps {
     data: any
     width: number
     full: boolean
 }
 
-const StatusCanvas: React.FC<CanvasProps> = props => {
-
+/**
+ * StatusCanvas renders a canvas showing the online/offline status history for a day.
+ * @param props - The props for the StatusCanvas component.
+ * @returns {React.ReactElement} The rendered canvas.
+ */
+export function StatusCanvas(props: CanvasProps): React.ReactElement {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const RectWidthRef = useRef<number>(0)
     const RectStartRef = useRef<number>(0)

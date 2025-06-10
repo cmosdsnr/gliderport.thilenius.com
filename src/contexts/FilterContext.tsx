@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * FilterContext for the Gliderport application.
+ * Provides filtering, smoothing, and interpolation utilities for sensor data.
+ */
 import React, { useEffect, useContext, createContext } from 'react'
 import { Reading } from '@/contexts/DataContext'
 
@@ -22,8 +27,11 @@ export type FilterReturnDataType = {
     limits: null | Limits;
     filled: [number, number][];
 };
+
+/**
+ * The shape of the FilterContext, providing filter and fill functions.
+ */
 interface FilterContextInterface {
-    //functions 
     filterData: (rawData: Reading[], width: number) => FilterReturnDataType,
     fillForFilter: (data: Reading[], width: number, label: keyof Reading) => FffReturnDataType,
     fillData: (data: Reading[], width: number, label: keyof Reading) => FillReturnDataType,
@@ -31,11 +39,21 @@ interface FilterContextInterface {
 
 const FilterContext = createContext<FilterContextInterface>({} as FilterContextInterface);
 
-export function useFilter() {
+/**
+ * Custom hook to access the FilterContext.
+ * @returns {FilterContextInterface} The filter context.
+ */
+export function useFilter(): FilterContextInterface {
     return useContext(FilterContext)
 }
 
-export function FilterProvider({ children }: any) {
+/**
+ * FilterProvider component that wraps its children with filter context.
+ * Provides filtering, smoothing, and interpolation utilities for sensor data.
+ * @param props - The children to provide context to.
+ * @returns {React.ReactElement} The provider with filter context.
+ */
+export function FilterProvider({ children }: any): React.ReactElement {
 
     const [filter, setFilter] = React.useState<number[]>([])
 
@@ -56,6 +74,7 @@ export function FilterProvider({ children }: any) {
         0.00012325138554789477, -0.005925557649769567, -0.012670720599984047, -0.01876694130424985, -0.022558133515158917,
         -0.022343507349748735, -0.016711913441114334, -0.004872771829500347, 0.013080901585374222, 0.03604862554699859,
         0.061976496641276003, 0.08809722110860864, 0.11132638621159739, 0.12874367244612944, 0.13807457440106205];
+
 
 
 
@@ -99,8 +118,8 @@ export function FilterProvider({ children }: any) {
         let min = data[0][l], max = data[0][l]
 
         var filled: [number, number][][] = []
-        const tStart = data[0].time
-        const tStop = data[data.length - 1].time
+        const tStart = data[0].timestamp
+        const tStop = data[data.length - 1].timestamp
         const tDuration = tStop - tStart
         const stepSize = (tDuration) / width
 
@@ -112,31 +131,31 @@ export function FilterProvider({ children }: any) {
         let j = 1
         let k = 0
         let i = 0
-        let tk = data[k].time
-        let tj = data[j].time
+        let tk = data[k].timestamp
+        let tj = data[j].timestamp
         let dk = data[k][l]
         let dj = data[j][l]
         filled[i] = []
-        filled[i].push([data[0].time, data[0][l]])
+        filled[i].push([data[0].timestamp, data[0][l]])
 
         while (step <= tStop) {
             // find first data point after step  
             if ((j < data.length) && (step >= tj)) {
                 k = j
-                while ((j < data.length - 1) && (step >= data[j].time)) {
+                while ((j < data.length - 1) && (step >= data[j].timestamp)) {
                     j++
                 }
-                if (!('time' in data[k])) {
+                if (!('timestamp' in data[k])) {
                     tk = 0;
                     console.log("Error in FilterContext 1: no time key: k=" + k + " " + data[k])
-                } else tk = data[k].time
+                } else tk = data[k].timestamp
 
-                if (!('time' in data[j])) {
+                if (!('timestamp' in data[j])) {
                     tj = 0;
                     console.log("Error in FilterContext 2: no time key: j=" + j + " " + data[j])
-                } else tj = data[j].time
+                } else tj = data[j].timestamp
 
-                tj = data[j].time
+                tj = data[j].timestamp
                 dk = data[k][l]
                 dj = data[j][l]
             }
@@ -190,8 +209,8 @@ export function FilterProvider({ children }: any) {
         }
         const w = width > 5000 ? 5000 : width; // max width
 
-        const tStart = data[0].time;
-        const tStop = data[data.length - 1].time;
+        const tStart = data[0].timestamp;
+        const tStop = data[data.length - 1].timestamp;
         const step = (tStop - tStart) / (w - 1);
 
         let yMin = Infinity;
@@ -202,15 +221,15 @@ export function FilterProvider({ children }: any) {
             const t = tStart + step * i;
 
             // find the first data point with time > t
-            const idx = data.findIndex(d => d.time > t);
+            const idx = data.findIndex(d => d.timestamp > t);
             const b = idx > -1 ? data[idx] : data[data.length - 1];
             const a = idx > 0 ? data[idx - 1] : data[0];
 
             // linear interp, guard divide-by-zero
             const v =
-                a.time === b.time
+                a.timestamp === b.timestamp
                     ? a[label]
-                    : a[label] + (b[label] - a[label]) * ((t - a.time) / (b.time - a.time));
+                    : a[label] + (b[label] - a[label]) * ((t - a.timestamp) / (b.timestamp - a.timestamp));
 
             yMin = Math.min(yMin, v);
             yMax = Math.max(yMax, v);

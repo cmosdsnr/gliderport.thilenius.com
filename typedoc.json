@@ -1,0 +1,18 @@
+{
+    
+  "name": "Gliderport Server Frontend",
+  "entryPoints": ["src/**/*.tsx"],
+  "out": "docs",
+  "tsconfig": "tsconfig.json",  
+  "exclude": [
+    "**/__tests__/**",
+    "**/*.spec.ts",
+    "src/images/**",
+    "src/contexts/AuthContextFirebase.tsx"    // explicitly drop your unused file
+  ],
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "readme": "README.md",
+  "plugin": [],  
+  "sort": ["source-order"]
+} 

@@ -14,7 +14,12 @@ interface StatsPlotProps {
     data: [number, number][]; // [timestamp, value]
 }
 
-const StatsPlot: React.FC<StatsPlotProps> = ({ data }) => {
+/**
+ * StatsPlot renders a bar chart of site statistics using recharts.
+ * @param props - The chart data as an array of [timestamp, value].
+ * @returns {React.ReactElement} The rendered bar chart.
+ */
+export function StatsPlot({ data }: StatsPlotProps): React.ReactElement {
     // Memoize the transformed data so we only rebuild when `data` changes
     const chartData = useMemo(() => {
         console.log('StatsPlot → new chartData length:', data.length);
@@ -68,6 +73,6 @@ const StatsPlot: React.FC<StatsPlotProps> = ({ data }) => {
             </BarChart>
         </ResponsiveContainer>
     );
-};
+}
 
 export default StatsPlot;

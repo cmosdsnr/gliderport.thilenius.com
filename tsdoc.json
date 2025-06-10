@@ -1,0 +1,7 @@
+{
+  "tagDefinitions": [
+    { "tagName": "@file", "syntaxKind": "block" },
+    { "tagName": "@description", "syntaxKind": "block" },
+    { "tagName": "@component", "syntaxKind": "block" }
+  ]
+}

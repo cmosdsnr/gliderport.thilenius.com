@@ -1,8 +1,17 @@
+/**
+ * @packageDocumentation
+ * Diagnostics page for the Gliderport application.
+ * Displays client diagnostic information and logs client data from the DataContext.
+ */
 import React, { useEffect } from 'react';
 import { useData } from 'contexts/DataContext';
 
-const Diagnostics: React.FC = () => {
-
+/**
+ * Diagnostics component displays client diagnostic information.
+ * Fetches and logs client data from the DataContext.
+ * @returns {React.ReactElement} The rendered diagnostics component.
+ */
+export function Diagnostics(): React.ReactElement {
     const { loadData, clients } = useData();
 
     useEffect(() => {

@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 
-interface IUseInterval {
-    (callback: () => void, interval: number): void;
-}
-
-export const useInterval: IUseInterval = (callback, interval) => {
+/**
+ * Custom React hook that repeatedly calls a callback function at a specified interval.
+ * @param callback - The function to be called at each interval.
+ * @param interval - The delay in milliseconds for the interval. If <= 0, the interval is not set.
+ */
+export function useInterval(callback: () => void, interval: number): void {
     const savedCallback = useRef<(() => void) | null>(null);
     // After every render, save the latest callback into our ref.
     useEffect(() => {
@@ -24,5 +25,7 @@ export const useInterval: IUseInterval = (callback, interval) => {
             return () => { };
         }
     }, [interval]);
-};
+}
+
+export default useInterval;
 
