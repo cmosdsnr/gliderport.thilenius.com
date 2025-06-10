@@ -1,102 +1,80 @@
-/**
- * WindDial component renders a live wind visualization using D3.
- * It draws concentric rings, gradients, arrows for wind readings, and
- * displays latest speed and direction data. Supports zoom via wheel and
- * hover to disable page scroll.
- *
- * @packageDocumentation WindDial
- */
 import React, { useState, useRef, useEffect, useCallback, WheelEvent } from 'react'
 import * as d3 from 'd3'
-import 'css/windDial.css'
-import { useData } from '@/contexts/DataContext'
+import 'css/windDial.css';
 
-/**
- * Props for WindDial component.
- * @param passedSeconds - Seconds since last reading.
- * @param picRef - Reference to parent image container for centering.
- */
 interface WindDialProps {
     passedSeconds: number
     picRef: React.RefObject<HTMLDivElement | null>
+    data: Reading[]
 }
 
-/**
- * React component that draws a wind dial visualization.
- * @param props - Component props.
- * @returns {React.ReactElement} An empty div where D3 injects SVG elements.
- */
-export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactElement {
+const WindDial = ({ passedSeconds, picRef, data }: WindDialProps) => {
+
     const divRef = useRef<HTMLDivElement>(null)
-    const [lastSeen, setLastSeen] = useState<string>('')
-    const { readings } = useData()
+    const [lastSeen, setLastSeen] = useState<string>("")
 
     const svgWidth = useRef<number>(0)
     const sizeInPx = 400
     const ArrowColor = '#660000'
 
-    const [hovering, setHovering] = useState<boolean>(false)
-    const zoomFactor = useRef<number>(1)
+    const [hovering, setHovering] = useState<boolean>(false);
+    const zoomFactor = useRef<number>(1);
 
-    /**
-     * Handler for mouse enter: disables page scroll and marks hovering state.
-     */
     const handleMouseEnter = useCallback(() => {
         if (!hovering) {
             setHovering(true)
-            document.body.style.overflow = 'hidden'
+            document.body.style.overflow = "hidden"
         }
     }, [hovering])
 
-    /**
-     * Handler for mouse leave: re-enables page scroll and clears hovering state.
-     */
     const handleMouseLeave = useCallback(() => {
-        if (hovering) {
+        if (!!hovering) {
             setHovering(false)
-            document.body.style.overflow = 'scroll'
+            document.body.style.overflow = "scroll"
         }
     }, [hovering])
 
-    /**
-     * Zoom handler adjusts zoomFactor between 1x and 3x based on wheel events.
-     * @param {WheelEvent<HTMLDivElement>} e - Mouse wheel event.
-     */
-    const zoom = (e: WheelEvent<HTMLDivElement>): void => {
-        if (e.deltaY < 0 && zoomFactor.current < 3) zoomFactor.current += 0.1
-        if (e.deltaY > 0 && zoomFactor.current > 1) zoomFactor.current -= 0.1
+    const zoom = (e: WheelEvent<HTMLDivElement>) => {
+        if (zoomFactor.current < 3 && e.deltaY < 0) zoomFactor.current = zoomFactor.current + 0.1
+        if (zoomFactor.current > 1 && e.deltaY > 0) zoomFactor.current = zoomFactor.current - 0.1
     }
 
-    // Resize SVG container on mount and window resize
     useEffect(() => {
-        const resizeAndDraw = (): void => {
+
+        const resizeAndDraw = () => {
+            // const picContainer = picRef.current
             const divContainer = divRef.current
             if (!divContainer) {
-                console.log('WindDial: no container found')
+                console.log("no container")
                 return
             }
-            svgWidth.current = Math.min(divContainer.clientWidth, sizeInPx)
+            svgWidth.current = divContainer.clientWidth > sizeInPx ? sizeInPx : divContainer.clientWidth
         }
-
         resizeAndDraw()
-        window.addEventListener('resize', resizeAndDraw)
-        return () => window.removeEventListener('resize', resizeAndDraw)
+        window.addEventListener("resize", resizeAndDraw)
+        // window.addEventListener("wheel", zoom)
+        return () => {
+            window.removeEventListener("resize", resizeAndDraw)
+        }
     }, [])
 
-    // Update lastSeen label when passedSeconds changes
+
+
     useEffect(() => {
-        const hrs = Math.floor(passedSeconds / 3600)
-        if (hrs > 0) setLastSeen(`${hrs} hours ago`)
+        const hours = Math.floor(passedSeconds / 3600)
+        if (hours > 0) setLastSeen(hours + " hours ago")
         else {
-            const mins = Math.floor(passedSeconds / 60)
-            if (mins > 0) setLastSeen(`${mins} minute${mins > 1 ? 's' : ''} ago`)
-            else setLastSeen(`${passedSeconds} seconds ago`)
+            const minutes = Math.floor(passedSeconds / 60)
+            if (minutes > 0) setLastSeen(minutes + " minute ago")
+            else {
+                setLastSeen(passedSeconds + " seconds ago")
+            }
         }
+        // console.log(lastSeen)
     }, [passedSeconds])
 
-    // Main D3 drawing effect
     useEffect(() => {
-        if (!readings) return
+        if (!data) return
         //margin in px around circle plot
         const margin = 25
 
@@ -222,13 +200,13 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
                 .attr("clip-path", "url(#wdClip)")
         }
         // Draw the arrows
-        if (readings.length > 10) {
+        if (data.length > 10) {
             var lxMin = 1000, lyMin = 1000
             var lxMax = -1000, lyMax = -1000
             for (let i = 0; i < 10; i++) {
                 // debugger
-                var lx = 22.5 * readings[readings.length - 10 + i].speed * Math.cos((360 + 90 - readings[readings.length - 10 + i].direction) * Math.PI / 180)
-                var ly = 22.5 * readings[readings.length - 10 + i].speed * Math.sin((360 + 90 - readings[readings.length - 10 + i].direction) * Math.PI / 180)
+                var lx = 22.5 * data[data.length - 10 + i].speed * Math.cos((360 + 90 - data[data.length - 10 + i].direction) * Math.PI / 180)
+                var ly = 22.5 * data[data.length - 10 + i].speed * Math.sin((360 + 90 - data[data.length - 10 + i].direction) * Math.PI / 180)
 
                 //Draw X
                 svg.append('line')
@@ -265,8 +243,8 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
                 .attr('fill', 'none')
         }
         //used lower down too
-        const speed = readings.length > 0 ? readings[readings.length - 1].speed : 0
-        const direction = readings.length > 0 ? readings[readings.length - 1].direction : 0
+        const speed = data.length > 0 ? data[data.length - 1].speed : 0
+        const direction = data.length > 0 ? data[data.length - 1].direction : 0
 
         lx = 22.5 * speed * Math.cos((360 + 90 - direction) * Math.PI / 180)
         ly = 22.5 * speed * Math.sin((360 + 90 - direction) * Math.PI / 180)
@@ -355,26 +333,25 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
         const crossDir = Math.sin((direction - 265) * Math.PI / 180) > 0 ? 'S' : 'N'
         svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400) + 18).text("Cross wind: " + cross + " mph " + crossDir)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [readings, lastSeen])
+    }, [data, lastSeen])
 
     return (
         <div
-            ref={divRef}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             onWheel={zoom}
             style={{
                 marginTop:
-                    picRef.current && picRef.current.clientHeight > sizeInPx
-                        ? (picRef.current.clientHeight - sizeInPx) / 2
-                        : 0,
+                    picRef.current &&
+                        picRef.current.clientHeight > sizeInPx ? (picRef.current.clientHeight - sizeInPx) / 2 : 0,
                 marginLeft:
-                    divRef.current && divRef.current.clientWidth > sizeInPx
-                        ? (divRef.current.clientWidth - sizeInPx) / 2
-                        : 0,
+                    divRef.current &&
+                        divRef.current.clientHeight > sizeInPx ? (divRef.current.clientHeight - sizeInPx) / 2 : 0
             }}
+            ref={divRef}
         />
+
     )
 }
 
-export default WindDial;
+export default WindDial
