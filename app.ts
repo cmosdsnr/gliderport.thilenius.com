@@ -90,7 +90,7 @@ console.log(`Serving front end assets from ${__dirname}/gp_dist`);
 
 /** Serve static assets */
 app.use("/images", express.static(path.join(__dirname, "/gliderport/images")));
-// app.use("/stream", express.static(path.join(__dirname, "/gliderport/stream")));
+app.use("/stream", express.static(path.join(__dirname, "/gliderport/stream")));
 
 //back end docs (generated in gliderportFrontWEnd)
 app.use("/docs/frontend", express.static(path.join(__dirname, "/docs_frontend")));

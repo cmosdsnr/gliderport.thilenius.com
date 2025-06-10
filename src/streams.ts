@@ -149,9 +149,6 @@ export function streamRoutes(): Router {
     next();
   });
 
-  // Serve static `.ts` files from STREAM_DIR at STREAM_ROUTE
-  router.use(STREAM_ROUTE, express.static(STREAM_DIR));
-
   /**
    * GET /stats
    * Returns current in-memory streaming statistics.
