@@ -1,6 +1,6 @@
 {
     "entryPoints": [
-        "gpupdate.ts",
+        "app.ts",
         "src/*.ts",
         "index.d.ts"
       ],

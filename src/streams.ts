@@ -14,6 +14,7 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import fs from "fs";
 import path from "path";
+import { __dirname } from "miscellaneous";
 
 // --- Types for stats ---
 /**
@@ -48,18 +49,13 @@ type LastFiveMinutes = {
 const lastFiveMinutes: LastFiveMinutes = {};
 const stats: Stats = { totalHitsByHour: {}, hitsByIPByHour: {} };
 
-/**
- * Route prefix for streaming
- */
+//Route prefix for streaming
 const STREAM_ROUTE = "/stream";
-/**
- * Directory on disk containing `.ts` segments
- */
-const STREAM_DIR = "/app/gliderport/stream";
-/**
- * Path to access log file for stream requests
- */
-const LOG_FILE = "/app/gliderport/stream/stream_access.log";
+
+// Directory on disk containing `.ts` segments
+const STREAM_DIR = path.join(__dirname, "/gliderport/stream");
+// Path to access log file for stream requests
+const LOG_FILE = path.join(__dirname, "/gliderport/stream/stream_access.log");
 
 /**
  * Prune stats older than 24 hours so only the last day is kept.
@@ -154,7 +150,7 @@ export function streamRoutes(): Router {
   });
 
   // Serve static `.ts` files from STREAM_DIR at STREAM_ROUTE
-  //   router.use(STREAM_ROUTE, express.static(STREAM_DIR));
+  router.use(STREAM_ROUTE, express.static(STREAM_DIR));
 
   /**
    * GET /stats
