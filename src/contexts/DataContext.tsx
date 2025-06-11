@@ -13,13 +13,42 @@ import { StatusCollectionProvider } from './StatusCollection'
  * Represents a single sensor reading.
  */
 export type Reading = {
-    timestamp: number;
+    time: number;
     speed: number;
     direction: number;
     humidity: number;
     pressure: number;
     temperature: number;
 };
+
+// Fetch 24hrs data
+const fetchData = async (): Promise<Reading[]> => {
+    try {
+        const url = new URL("/api/getData", import.meta.env.VITE_SERVER_URL.toString());
+        url.searchParams.set("hours", "24");
+        console.log("fetching data from: ", url.toString());
+        const response = await fetch(url.toString());
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+            //rename timestamp to time
+            // add 101,325 to pressure
+            //divide speed and temperature by 10
+            data.forEach((d: any) => {
+                d.time = d.timestamp;
+                delete d.timestamp;
+                d.pressure = (d.pressure + 101325) / 100;
+                d.speed = d.speed / 10;
+                d.temperature = d.temperature / 10;
+            });
+            return data;
+        }
+        return [];
+    } catch (error: any) {
+        console.error("Error fetching data:", error.message);
+        return [];
+    }
+};
+
 
 /**
  * Represents a single camera image.
@@ -87,7 +116,7 @@ export function DataProvider({ children }: any): React.ReactElement {
     // State for sensor readings
     const [readings, setReadings] = useState<Reading[]>(
         [{
-            timestamp: 0,
+            time: 0,
             speed: 0,
             direction: 0,
             humidity: 0,
@@ -117,16 +146,13 @@ export function DataProvider({ children }: any): React.ReactElement {
     const { messageLogger } = useMessages();
 
     // Load 24hrs of readings on mount
+    const load = async () => {
+        const data = await fetchData();
+        setReadings(data);
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            const url = new URL('/api/getData', import.meta.env.VITE_SERVER_URL.toString());
-            url.searchParams.set('hours', '24');
-            const res = await fetch(url.toString());
-            if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-            const data: Reading[] = await res.json();
-            setReadings(data);
-        }
-        fetchData();
+        load();
     }, []);
 
     // Handle updates to current data

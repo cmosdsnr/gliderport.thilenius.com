@@ -61,12 +61,12 @@ export function CurrentTable({ ...rest }: CurrentTableProps): React.ReactElement
      * Initialized based on the current wall-clock time.
      */
     const [secondsPassed, setSecondsPassed] = useState(
-        Math.max(0, Math.floor(Date.now() / 1000) - latest.timestamp)
+        Math.max(0, Math.floor(Date.now() / 1000) - latest.time)
     );
 
     // Update `secondsPassed` every 5 seconds
     useInterval(() => {
-        setSecondsPassed(Math.max(0, Math.floor(Date.now() / 1000) - latest.timestamp));
+        setSecondsPassed(Math.max(0, Math.floor(Date.now() / 1000) - latest.time));
     }, 5000);
 
     /**
@@ -94,11 +94,11 @@ export function CurrentTable({ ...rest }: CurrentTableProps): React.ReactElement
 
     // Build the formatted “Latest Reading” label
     const lastSeen = (() => {
-        const dt = new Date(latest.timestamp * 1000);
+        const dt = new Date(latest.time * 1000);
         return `Latest Reading: ${dt.toLocaleString(undefined, {
             dateStyle: 'short',
             timeStyle: 'short',
-        })} (${timeAgo(latest.timestamp)})`;
+        })} (${timeAgo(latest.time)})`;
     })();
 
     // Format sunrise and sunset times, or show 'N/A'

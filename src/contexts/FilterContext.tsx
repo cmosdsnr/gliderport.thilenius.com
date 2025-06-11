@@ -118,8 +118,8 @@ export function FilterProvider({ children }: any): React.ReactElement {
         let min = data[0][l], max = data[0][l]
 
         var filled: [number, number][][] = []
-        const tStart = data[0].timestamp
-        const tStop = data[data.length - 1].timestamp
+        const tStart = data[0].time
+        const tStop = data[data.length - 1].time
         const tDuration = tStop - tStart
         const stepSize = (tDuration) / width
 
@@ -131,31 +131,22 @@ export function FilterProvider({ children }: any): React.ReactElement {
         let j = 1
         let k = 0
         let i = 0
-        let tk = data[k].timestamp
-        let tj = data[j].timestamp
+        let tk = data[k].time
+        let tj = data[j].time
         let dk = data[k][l]
         let dj = data[j][l]
         filled[i] = []
-        filled[i].push([data[0].timestamp, data[0][l]])
+        filled[i].push([data[0].time, data[0][l]])
 
         while (step <= tStop) {
             // find first data point after step  
             if ((j < data.length) && (step >= tj)) {
                 k = j
-                while ((j < data.length - 1) && (step >= data[j].timestamp)) {
+                while ((j < data.length - 1) && (step >= data[j].time)) {
                     j++
                 }
-                if (!('timestamp' in data[k])) {
-                    tk = 0;
-                    console.log("Error in FilterContext 1: no time key: k=" + k + " " + data[k])
-                } else tk = data[k].timestamp
-
-                if (!('timestamp' in data[j])) {
-                    tj = 0;
-                    console.log("Error in FilterContext 2: no time key: j=" + j + " " + data[j])
-                } else tj = data[j].timestamp
-
-                tj = data[j].timestamp
+                tk = data[k].time
+                tj = data[j].time
                 dk = data[k][l]
                 dj = data[j][l]
             }
@@ -173,7 +164,7 @@ export function FilterProvider({ children }: any): React.ReactElement {
                 } else {
                     // interpolate between k and j
                     const pt = dk + (dj - dk) * ((step - tk) / (tj - tk))
-                    filled[i].push([step, pt])
+                    filled[i].push([Math.floor(step), pt])
                     if (pt > max) max = pt
                     if (pt < min) min = pt
                 }
@@ -209,8 +200,8 @@ export function FilterProvider({ children }: any): React.ReactElement {
         }
         const w = width > 5000 ? 5000 : width; // max width
 
-        const tStart = data[0].timestamp;
-        const tStop = data[data.length - 1].timestamp;
+        const tStart = data[0].time;
+        const tStop = data[data.length - 1].time;
         const step = (tStop - tStart) / (w - 1);
 
         let yMin = Infinity;
@@ -221,15 +212,15 @@ export function FilterProvider({ children }: any): React.ReactElement {
             const t = tStart + step * i;
 
             // find the first data point with time > t
-            const idx = data.findIndex(d => d.timestamp > t);
+            const idx = data.findIndex(d => d.time > t);
             const b = idx > -1 ? data[idx] : data[data.length - 1];
             const a = idx > 0 ? data[idx - 1] : data[0];
 
             // linear interp, guard divide-by-zero
             const v =
-                a.timestamp === b.timestamp
+                a.time === b.time
                     ? a[label]
-                    : a[label] + (b[label] - a[label]) * ((t - a.timestamp) / (b.timestamp - a.timestamp));
+                    : a[label] + (b[label] - a[label]) * ((t - a.time) / (b.time - a.time));
 
             yMin = Math.min(yMin, v);
             yMax = Math.max(yMax, v);
