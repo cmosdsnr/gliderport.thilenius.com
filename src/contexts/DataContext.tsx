@@ -8,6 +8,7 @@ import useInterval from 'hooks/useInterval'
 import { formatter, b64toBlob } from 'components/Globals'
 import { useMessages } from 'components/Admin/MessageLogger'
 import { StatusCollectionProvider } from './StatusCollection'
+import { serverUrl, socketUrl } from "@/components/paths";
 
 /**
  * Represents a single sensor reading.
@@ -24,7 +25,7 @@ export type Reading = {
 // Fetch 24hrs data
 const fetchData = async (): Promise<Reading[]> => {
     try {
-        const url = new URL("/api/getData", import.meta.env.VITE_SERVER_URL.toString());
+        const url = new URL("/api/getData", serverUrl);
         url.searchParams.set("hours", "24");
         console.log("fetching data from: ", url.toString());
         const response = await fetch(url.toString());
@@ -189,7 +190,7 @@ export function DataProvider({ children }: any): React.ReactElement {
 
     // Start the websocket connection
     const startWebSocket = () => {
-        ws.current = new WebSocket(import.meta.env.VITE_SOCKET_SERVER_URL.toString())
+        ws.current = new WebSocket(socketUrl)
         ws.current.onopen = () => {
             console.log("ws opened");
             setLoading(false);
@@ -230,7 +231,7 @@ export function DataProvider({ children }: any): React.ReactElement {
     // Fetch last 10 images on startup
     const fetchImages = () => {
         if (!loading) return;
-        const url = new URL("/api/getLastFiveSmallImages", import.meta.env.VITE_SERVER_URL.toString());
+        const url = new URL("/api/getLastFiveSmallImages", serverUrl);
         fetch(url.toString())
             .then(res => res.json())
             .then(data => {

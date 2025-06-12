@@ -22,6 +22,7 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { useStatusCollection } from '@/contexts/StatusCollection';
 import useLocalStorageState from 'hooks/useLocalStorageState';
 import switch_camera from 'images/switch-camera.png';
+import { serverUrl } from "@/components/paths";
 
 /**
  * Props type for UpdatingImage (currently none).
@@ -132,7 +133,7 @@ export function UpdatingImage({ }: Props): React.ReactElement {
      */
     async function getLargeImage(): Promise<void> {
         try {
-            const url = new URL('/api/getLargeImage', import.meta.env.VITE_SERVER_URL.toString());
+            const url = new URL('/api/getLargeImage', serverUrl);
             url.searchParams.set('camera', camera.toString());
             const res = await fetch(url.toString());
             if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);

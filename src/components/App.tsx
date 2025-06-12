@@ -42,11 +42,12 @@ import Debug from 'components/Admin/Debug'
 import { MessageProvider, MessageLogger } from 'components/Admin/MessageLogger'
 
 import Logout from 'components/Navigation/Logout'
+import { pageName } from 'components/paths'
 import 'css/style.css'
 
 // Set the document title from environment variable
 // VITE_PAGE_NAME should be defined in .env
-document.title = import.meta.env.VITE_PAGE_NAME || 'Gliderport';
+document.title = pageName || 'Gliderport';
 
 /**
  * Top-level React component for the application.

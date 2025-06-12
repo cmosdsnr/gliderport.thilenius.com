@@ -1,5 +1,5 @@
 import PocketBase from "pocketbase";
+import { pbUrl } from "@/components/paths";
 
-const pbURL = import.meta.env.VITE_PB_URL.toString();
-console.log("connecting to: " + pbURL);
-export const pb = new PocketBase(pbURL);
+console.log("connecting to: " + pbUrl);
+export const pb = new PocketBase(pbUrl);

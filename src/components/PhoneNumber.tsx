@@ -5,6 +5,7 @@
  */
 import React, { useState, useEffect, ChangeEvent } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { serverUrl } from "@/components/paths";
 
 interface Provider {
     [key: string]: [string, string, string]
@@ -78,7 +79,7 @@ export function PhoneNumberInput(props: PhoneNumberInputProps): React.ReactEleme
         const numbersOnly = value.replace(/[^\d]/g, '')
         if (numbersOnly.length === 10) {
 
-            const url = new URL('/api/PhoneFinder', import.meta.env.VITE_SERVER_URL.toString());
+            const url = new URL('/api/PhoneFinder', serverUrl);
             url.searchParams.set('area', numbersOnly.slice(0, 3));
             url.searchParams.set('prefix', numbersOnly.slice(3, 6));
             url.searchParams.set('number', numbersOnly.slice(6, 10));

@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { DayOfCodes } from '../History/History';
 import { codes } from '../Globals';
+import { serverUrl } from "@/components/paths";
 
 /**
  * Displays today's wind forecast codes in a table.
@@ -35,7 +36,7 @@ export function Today(): React.ReactElement {
          */
         const fetchForecastCodes = async (): Promise<void> => {
             try {
-                const url = new URL("/api/getForecastCodes", import.meta.env.VITE_SERVER_URL.toString());
+                const url = new URL("/api/getForecastCodes", serverUrl);
                 const res = await fetch(url.toString());
                 if (!res.ok) {
                     throw new Error(`HTTP ${res.status} ${res.statusText}`);

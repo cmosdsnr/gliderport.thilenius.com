@@ -17,7 +17,7 @@ import KeyCanvas from './KeyCanvas';
 import LineCanvas from './LineCanvas';
 import CircleCanvas from './CircleCanvas';
 import { DateTime } from 'luxon';
-
+import { serverUrl } from "@/components/paths";
 /**
  * A single wind code entry: `[timestampSec, codeValue]`.
  */
@@ -82,7 +82,7 @@ export function History(): React.ReactElement {
 
             // 1) Fetch historical wind codes
             try {
-                const url = new URL('/api/getWindTableCodes', import.meta.env.VITE_SERVER_URL.toString());
+                const url = new URL('/api/getWindTableCodes', serverUrl);
                 const res = await fetch(url.toString());
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const j = await res.json();
@@ -101,7 +101,7 @@ export function History(): React.ReactElement {
 
             // 2) Fetch forecast codes and merge into history
             try {
-                const url = new URL('/api/getForecastCodes', import.meta.env.VITE_SERVER_URL.toString());
+                const url = new URL('/api/getForecastCodes', serverUrl);
                 const res = await fetch(url.toString());
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const forecastCodes: Codes = await res.json();

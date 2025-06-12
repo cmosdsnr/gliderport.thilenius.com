@@ -13,6 +13,7 @@
  * @component
  */
 import React, { useEffect, useState } from 'react';
+import { serverUrl } from "@/components/paths";
 
 /**
  * Gliderport info returned from the API.
@@ -146,7 +147,7 @@ export function InfoDisplay(): React.ReactElement {
      * Fetches InfoResponse from API on mount.
      */
     useEffect(() => {
-        const url = new URL('/api/info', import.meta.env.VITE_SERVER_URL.toString());
+        const url = new URL('/api/info', serverUrl);
         fetch(url.toString())
             .then(res => res.json())
             .then((data: InfoResponse) => {

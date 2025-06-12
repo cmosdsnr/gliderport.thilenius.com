@@ -9,6 +9,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Row, Col, Card, Table } from 'react-bootstrap';
+import { serverUrl } from "@/components/paths";
 
 /**
  * Represents a single API endpoint.
@@ -38,7 +39,7 @@ export function ListEndpoints(): React.ReactElement {
      * Fetches endpoints once on component mount.
      */
     useEffect(() => {
-        const url = new URL('/api/listEndpoints', import.meta.env.VITE_SERVER_URL.toString());
+        const url = new URL('/api/listEndpoints', serverUrl);
         fetch(url.toString())
             .then(res => res.json())
             .then((data: Endpoint[]) => setEndpoints(data))

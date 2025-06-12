@@ -31,6 +31,7 @@ import { useModal, ModalType } from 'modals/Modals';
 import paraglider from 'images/paraglider.png';
 import banner from 'images/banner.jpg';
 import { useWindow } from 'hooks/useWindow';
+import { serverUrl } from "@/components/paths";
 
 /**
  * Conditionally renders a FontAwesome icon based on window width.
@@ -156,21 +157,21 @@ export function GpNavbar(): React.ReactElement {
                                         <NavDropdown.Divider />
                                         <NavDropdown.Item as={Link} to="/admin/Messages">Messages</NavDropdown.Item>
                                         <NavDropdown.Item
-                                            href={import.meta.env.VITE_SERVER_URL.toString() + "/docs/backend"}
+                                            href={serverUrl + "/docs/backend"}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
                                             backend Documentation
                                         </NavDropdown.Item>
                                         <NavDropdown.Item
-                                            href={import.meta.env.VITE_SERVER_URL.toString() + "/docs/frontend"}
+                                            href={serverUrl + "/docs/frontend"}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
                                             backend Documentation
                                         </NavDropdown.Item>
                                         <NavDropdown.Item
-                                            href={import.meta.env.VITE_SERVER_URL.toString() + "/docs/gp_server"}
+                                            href={serverUrl + "/docs/gp_server"}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >

@@ -13,6 +13,7 @@ import { Row, Col } from 'react-bootstrap'
 import { useStatusCollection } from '@/contexts/StatusCollection'
 import switch_camera from 'images/switch-camera.png'
 import HLSPlayer from '../HlsPlayer'
+import { serverUrl } from '@/components/paths'
 
 /**
  * React component that displays live video from two camera streams.
@@ -93,9 +94,9 @@ export function UpdatingVideo(): React.ReactElement {
                 ) : (
                     <div style={{ position: 'relative' }}>
                         {camera === 1 ? (
-                            <HLSPlayer src="https://gliderport.thilenius.com/stream/camera1/index.m3u8" />
+                            <HLSPlayer src={serverUrl + "/stream/camera1/index.m3u8"} />
                         ) : (
-                            <HLSPlayer src="https://gliderport.thilenius.com/stream/camera2/index.m3u8" />
+                            <HLSPlayer src={serverUrl + "/stream/camera2/index.m3u8"} />
                         )}
                     </div>
                 )}

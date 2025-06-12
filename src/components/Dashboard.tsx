@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { PhoneNumberInput } from './PhoneNumber';
 import TextField from '@mui/material/TextField';
 import { ToggleSlider } from 'react-toggle-slider';
+import { serverUrl } from "@/components/paths";
 
 /**
  * Custom hook to handle clicks outside a specified element.
@@ -62,7 +63,7 @@ export function Dashboard(): React.ReactElement {
 
     const sendTestSms = () => {
         if (currentUser) {
-            const url = new URL('/api/sendTestSms', import.meta.env.VITE_SERVER_URL.toString());
+            const url = new URL('/api/sendTestSms', serverUrl);
             url.searchParams.set('name', currentUser.firstName || '');
             url.searchParams.set('to', currentUser.settings.address || '');
             // const url = `${import.meta.env.VITE_SERVER_URL}/api/sendTestSms?name=${currentUser.firstName}&to=${currentUser.settings.address}`;
