@@ -82,7 +82,7 @@ export function History(): React.ReactElement {
 
             // 1) Fetch historical wind codes
             try {
-                const url = new URL('/api/getWindTableCodes', serverUrl);
+                const url = new URL('/gpapi/getWindTableCodes', serverUrl);
                 const res = await fetch(url.toString());
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const j = await res.json();
@@ -101,7 +101,7 @@ export function History(): React.ReactElement {
 
             // 2) Fetch forecast codes and merge into history
             try {
-                const url = new URL('/api/getForecastCodes', serverUrl);
+                const url = new URL('/gpapi/getForecastCodes', serverUrl);
                 const res = await fetch(url.toString());
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const forecastCodes: Codes = await res.json();

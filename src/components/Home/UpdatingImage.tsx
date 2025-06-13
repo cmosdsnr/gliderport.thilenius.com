@@ -133,7 +133,7 @@ export function UpdatingImage({ }: Props): React.ReactElement {
      */
     async function getLargeImage(): Promise<void> {
         try {
-            const url = new URL('/api/getLargeImage', serverUrl);
+            const url = new URL('/gpapi/getLargeImage', serverUrl);
             url.searchParams.set('camera', camera.toString());
             const res = await fetch(url.toString());
             if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);

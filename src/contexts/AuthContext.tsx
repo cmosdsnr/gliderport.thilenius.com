@@ -119,7 +119,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
         //all-in-1 google login
         //explanation: https://pocketbase.io/docs/authentication
         //get key and secret from google developer console, and set them in pocketbase auth configuration 
-        //redirect set to https://pocketbase.thilenius.com/api/oauth2-redirect
+        //redirect set to https://pocketbase.thilenius.com/gpapi/oauth2-redirect
         try {
             const authData = await pb.collection('users').authWithOAuth2({ provider: 'google' });
             const meta = authData.meta;

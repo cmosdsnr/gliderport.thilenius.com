@@ -76,13 +76,13 @@ export function StatsImageComponent(): React.ReactElement {
         setFromHourOptions(fromOptions);
 
 
-        const url = new URL('/api/imageCount', serverUrl);
+        const url = new URL('/gpapi/imageCount', serverUrl);
         url.searchParams.set('date', imageDay!);
         url.searchParams.set('from', hourRange[0].toString());
         url.searchParams.set('to', hourRange[1].toString());
         url.searchParams.set('camera', camera == "CameraA" ? '1' : '2');
 
-        // fetch(import.meta.env.VITE_SERVER_URL + `/api/imageCount?date=${imageDay}&from=${hourRange[0]}&to=${hourRange[1]}&camera=${camera == "CameraA" ? 1 : 2}`)
+        // fetch(import.meta.env.VITE_SERVER_URL + `/gpapi/imageCount?date=${imageDay}&from=${hourRange[0]}&to=${hourRange[1]}&camera=${camera == "CameraA" ? 1 : 2}`)
         fetch(url.toString())
             .then((res) => res.json())
             .then((data) => {
@@ -101,7 +101,7 @@ export function StatsImageComponent(): React.ReactElement {
 
     // Fetch listing data for date selection when component mounts
     useEffect(() => {
-        const url = new URL('/api/listing', serverUrl);
+        const url = new URL('/gpapi/listing', serverUrl);
         fetch(url.toString())
             .then((response) => response.json())
             .then((data) => {
@@ -128,11 +128,11 @@ export function StatsImageComponent(): React.ReactElement {
         const month = (pickedDate.getMonth() + 1).toString().padStart(2, "0");
         const day = pickedDate.getDate().toString().padStart(2, "0");
         const key = `${year}-${month}-${day}`;
-        const url = new URL('/api/getImageData', serverUrl);
+        const url = new URL('/gpapi/getImageData', serverUrl);
         url.searchParams.set('year', year.toString());
         url.searchParams.set('month', month.toString());
 
-        // fetch(import.meta.env.VITE_SERVER_URL + `/api/getImageData?year=${year}&month=${month}`)
+        // fetch(import.meta.env.VITE_SERVER_URL + `/gpapi/getImageData?year=${year}&month=${month}`)
         fetch(url.toString())
             .then((response) => response.json())
             .then((data) => {

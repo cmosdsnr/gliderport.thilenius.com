@@ -23,7 +23,7 @@ export function Contribute(): React.ReactElement {
     const [donors, setDonors] = React.useState<Donor>([]);
 
     useEffect(() => {
-        const url = new URL("/api/getDonors", serverUrl);
+        const url = new URL("/gpapi/getDonors", serverUrl);
         fetch(url.toString()).then((res) => res.json())
             .then((data) => setDonors(data));
     }, []);

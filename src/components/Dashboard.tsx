@@ -63,10 +63,10 @@ export function Dashboard(): React.ReactElement {
 
     const sendTestSms = () => {
         if (currentUser) {
-            const url = new URL('/api/sendTestSms', serverUrl);
+            const url = new URL('/gpapi/sendTestSms', serverUrl);
             url.searchParams.set('name', currentUser.firstName || '');
             url.searchParams.set('to', currentUser.settings.address || '');
-            // const url = `${import.meta.env.VITE_SERVER_URL}/api/sendTestSms?name=${currentUser.firstName}&to=${currentUser.settings.address}`;
+            // const url = `${import.meta.env.VITE_SERVER_URL}/gpapi/sendTestSms?name=${currentUser.firstName}&to=${currentUser.settings.address}`;
             console.log(url);
             fetch(url.toString());
             alert("Please check your phone for the test SMS");

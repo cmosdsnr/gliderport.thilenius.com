@@ -36,7 +36,7 @@ export function Today(): React.ReactElement {
          */
         const fetchForecastCodes = async (): Promise<void> => {
             try {
-                const url = new URL("/api/getForecastCodes", serverUrl);
+                const url = new URL("/gpapi/getForecastCodes", serverUrl);
                 const res = await fetch(url.toString());
                 if (!res.ok) {
                     throw new Error(`HTTP ${res.status} ${res.statusText}`);

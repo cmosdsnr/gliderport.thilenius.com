@@ -3,7 +3,7 @@
  *
  * Fetches and displays a list of API endpoints grouped by HTTP method.
  * GET, POST, and other request types are shown in separate tables.
- * Data is retrieved from the `/api/listEndpoints` endpoint on mount.
+ * Data is retrieved from the `/gpapi/listEndpoints` endpoint on mount.
  *
  * @component
  */
@@ -25,7 +25,7 @@ interface Endpoint {
 /**
  * Displays the application's available API endpoints.
  *
- * - Retrieves endpoint data from `/api/listEndpoints`.
+ * - Retrieves endpoint data from `/gpapi/listEndpoints`.
  * - Separates endpoints into GET, POST, and Other categories.
  * - Renders each category in a Bootstrap Card with Tables.
  *
@@ -39,11 +39,11 @@ export function ListEndpoints(): React.ReactElement {
      * Fetches endpoints once on component mount.
      */
     useEffect(() => {
-        const url = new URL('/api/listEndpoints', serverUrl);
+        const url = new URL('/gpapi/listEndpoints', serverUrl);
         fetch(url.toString())
             .then(res => res.json())
             .then((data: Endpoint[]) => setEndpoints(data))
-            .catch(err => console.error('Failed to fetch /api/listEndpoints:', err));
+            .catch(err => console.error('Failed to fetch /gpapi/listEndpoints:', err));
     }, []);
 
     // Group by HTTP method

@@ -25,7 +25,7 @@ export type Reading = {
 // Fetch 24hrs data
 const fetchData = async (): Promise<Reading[]> => {
     try {
-        const url = new URL("/api/getData", serverUrl);
+        const url = new URL("/gpapi/getData", serverUrl);
         url.searchParams.set("hours", "24");
         console.log("fetching data from: ", url.toString());
         const response = await fetch(url.toString());
@@ -231,7 +231,7 @@ export function DataProvider({ children }: any): React.ReactElement {
     // Fetch last 10 images on startup
     const fetchImages = () => {
         if (!loading) return;
-        const url = new URL("/api/getLastFiveSmallImages", serverUrl);
+        const url = new URL("/gpapi/getLastFiveSmallImages", serverUrl);
         fetch(url.toString())
             .then(res => res.json())
             .then(data => {

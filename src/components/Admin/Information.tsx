@@ -8,7 +8,7 @@
  *  - Code history summaries and details
  *  - Add-data (ETL) process details
  *
- * Data is retrieved from the `/api/info` endpoint on mount.
+ * Data is retrieved from the `/gpapi/info` endpoint on mount.
  *
  * @component
  */
@@ -147,7 +147,7 @@ export function InfoDisplay(): React.ReactElement {
      * Fetches InfoResponse from API on mount.
      */
     useEffect(() => {
-        const url = new URL('/api/info', serverUrl);
+        const url = new URL('/gpapi/info', serverUrl);
         fetch(url.toString())
             .then(res => res.json())
             .then((data: InfoResponse) => {
@@ -157,7 +157,7 @@ export function InfoDisplay(): React.ReactElement {
                 setCodeHistory(data.codeHistory);
                 setAddData(data.addData);
             })
-            .catch(err => console.error('Failed to fetch /api/info:', err));
+            .catch(err => console.error('Failed to fetch /gpapi/info:', err));
     }, []);
 
     return (
