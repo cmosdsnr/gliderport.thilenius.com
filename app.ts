@@ -65,12 +65,12 @@ app.use(cors(corsOptions));
 /**
  * Diagnostic route: lists all registered endpoints under `/api/listEndpoints`.
  */
-app.use("/api", listEndpoints(app));
+app.use("/gpapi", listEndpoints(app));
 
 /**
  * Mounts the main API router under `/api`.
  */
-app.use("/api", createApiRouter());
+app.use("/gpapi", createApiRouter());
 
 // -----------------------------------------------------------------------------
 /**
