@@ -46,7 +46,6 @@ import { pageName } from 'components/paths'
 import 'css/style.css'
 
 // Set the document title from environment variable
-// VITE_PAGE_NAME should be defined in .env
 document.title = pageName || 'Gliderport';
 
 /**
