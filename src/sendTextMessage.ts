@@ -182,12 +182,14 @@ export const sendTextMessage = (
 };
 
 /**
- * Creates an Express Router exposing endpoints for testing the text alert system.
+ * Returns a new Express `Router` that exposes:
+ *   GET /PhoneFinder → looks up phone carrier info by query params.
+ *   GET /sendTestSms → sends a test SMS alert to the given `to` and `name`.
+ *   GET /testWindSpeeds → returns current wind average data.
  *
- * @returns An Express `Router` with:
- *  - GET `/PhoneFinder`     → Looks up phone carrier info by query params.
- *  - GET `/sendTestSms`     → Sends a test SMS alert to the given `to` and `name`.
- *  - GET `/testWindSpeeds`  → Returns current wind average data.
+ * Mount this on your app or a sub-route to provide text alert endpoints.
+ *
+ * @returns A `Router` with the routes `/PhoneFinder`, `/sendTestSms`, and `/testWindSpeeds`.
  */
 export const textRoutes = (): Router => {
   const router = Router();

@@ -94,12 +94,12 @@ updateSunData();
 cron.schedule("0 22 * * *", updateSunData, { timezone: "America/Los_Angeles" });
 
 /**
- * Provides Express routes to interact with sun data.
+ * Returns a new Express `Router` that exposes:
+ *   GET /UpdateSun → manually triggers updateSunData() and returns the latest sunData.
  *
- * Exposes:
- * - GET /UpdateSun: Manually triggers updateSunData() and returns the latest sunData.
+ * Mount this on your app or a sub-route to provide sun data endpoints.
  *
- * @returns Express Router configured with sun endpoints.
+ * @returns A `Router` with the route `/UpdateSun`.
  */
 export const sunRoutes = (): Router => {
   const router = Router();

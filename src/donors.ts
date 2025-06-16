@@ -27,12 +27,12 @@ const fetchDonors = async (): Promise<string[]> => {
 };
 
 /**
- * Creates and returns an Express router for donor-related endpoints.
+ * Returns a new Express `Router` that exposes:
+ *   GET /getDonors → retrieve all donor names from PocketBase.
  *
- * Exposes the following routes:
- * - GET /getDonors: Retrieve all donor names.
+ * Mount this on your app or a sub-route to provide donor endpoints.
  *
- * @returns {Router} An Express Router configured with donor routes.
+ * @returns A `Router` with the route `/getDonors`.
  */
 export const donorsRoutes = (): Router => {
   const router = Router();

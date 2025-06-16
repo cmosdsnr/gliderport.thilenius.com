@@ -11,7 +11,7 @@
  * const app = express();
  * // ... mount your routers
  * app.use('/api', listEndpoints(app));
- * // → GET  /api/listEndpoints
+ * // stEndpoints
  * ```
  *
  * @module listEndpoints

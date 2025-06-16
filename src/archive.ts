@@ -283,10 +283,12 @@ cron.schedule("0 0 2 * *", runScheduledArchive, { timezone: "America/Los_Angeles
 /**
  * Creates and returns an Express router for archive-related endpoints.
  *
- * ## Exposed Endpoints
- * - **GET /runScheduledArchive**: Manually triggers the archival process.
+ * @returns A new Express `Router` that exposes:
+ *   GET /runScheduledArchive → manually triggers the archival process.
  *
- * @returns An `Express.Router` with the defined archival endpoint.
+ * Mount this on your app or a sub-route to provide archive endpoints.
+ *
+ * @returns A `Router` with the route `/runScheduledArchive`.
  */
 export const archiveRoutes = (): Router => {
   const router = Router();

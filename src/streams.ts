@@ -72,13 +72,14 @@ function pruneOldStats(): void {
 }
 
 /**
- * Creates and returns an Express Router with streaming and stats endpoints.
+ * Returns a new Express `Router` that exposes:
+ *   Middleware on /stream to collect .ts file access statistics.
+ *   Serves static segment files from STREAM_DIR at /stream/*.
+ *   GET /stats → returns current streaming metrics.
  *
- * - Middleware on `/stream` to collect `.ts` file access statistics.
- * - Serves static segment files from STREAM_DIR at `/stream/*`.
- * - Exposes GET `/stats` to return current streaming metrics.
+ * Mount this on your app or a sub-route to provide streaming endpoints.
  *
- * @returns {Router} Configured Express router for streaming.
+ * @returns A `Router` with streaming and stats routes.
  */
 export function streamRoutes(): Router {
   const router = express.Router();

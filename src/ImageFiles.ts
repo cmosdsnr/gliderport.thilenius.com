@@ -532,24 +532,24 @@ cron.schedule("0 1 * * *", () => {
 });
 
 /**
- * Creates and returns an Express Router for Image Files Management.
+ * Returns a new Express `Router` that exposes:
+ *   GET /scanLatestDirectory → triggers a scan of the latest directory.
+ *   GET /scanEntireDirectory → scans the entire directory structure.
+ *   GET /createListingRecord → creates or updates the listing record in PocketBase.
+ *   GET /listing → retrieves the current listing record from PocketBase.
+ *   GET /imageCount → returns image count for a specified date and time range.
+ *   GET /getImageData → retrieves image data for a specific year and month from PocketBase.
+ *   GET /latestImages → returns the latest images for front-end display.
+ *   POST /updateImage → updates an image record with base64 data from the client.
+ *   GET /getLargeImage → returns the last big image for a specified camera.
+ *   GET /getLastFiveSmallImages → returns the last five small images for each camera.
+ *   POST /updateLog → (debug) receives log updates from the client.
+ *   GET /gotoSleep → sets the server’s state to “sleeping” in PocketBase.
+ *   GET /wakeUp → sets the server’s state to “awake” in PocketBase.
  *
- * ## Exposed Endpoints
- * - **GET /scanLatestDirectory**: Triggers a scan of the latest directory.
- * - **GET /scanEntireDirectory**: Scans the entire directory structure.
- * - **GET /createListingRecord**: Creates or updates the listing record in PocketBase.
- * - **GET /listing**: Retrieves the current listing record from PocketBase.
- * - **GET /imageCount**: Returns image count for a specified date and time range.
- * - **GET /getImageData**: Retrieves image data for a specific year and month from PocketBase.
- * - **GET /latestImages**: Returns the latest images for front-end display.
- * - **POST /updateImage**: Updates an image record with base64 data from the client.
- * - **GET /getLargeImage**: Returns the last big image for a specified camera.
- * - **GET /getLastFiveSmallImages**: Returns the last five small images for each camera.
- * - **POST /updateLog**: (Debug) Receives log updates from the client.
- * - **GET /gotoSleep**: Sets the server’s state to “sleeping” in PocketBase.
- * - **GET /wakeUp**: Sets the server’s state to “awake” in PocketBase.
+ * Mount this on your app or a sub-route to provide image file management endpoints.
  *
- * @returns The configured Express Router.
+ * @returns A `Router` with all image management routes.
  */
 export const ImageRoutes = (): Router => {
   const router = express.Router();

@@ -203,11 +203,13 @@ getForecast();
 setInterval(getForecast, 2 * 3600_000);
 
 /**
- * Creates and returns an Express router exposing forecast endpoints.
+ * Returns a new Express `Router` that exposes:
+ *   GET /getForecast → latest fetched weather forecast JSON
+ *   GET /getForecastCodes → computed wind condition codes for two days
  *
- * @returns An Express Router with:
- * - **GET /getForecast**: Returns the latest fetched weather forecast JSON.
- * - **GET /getForecastCodes**: Returns the computed wind condition codes for two days.
+ * Mount this on your app or a sub-route to provide forecast endpoints.
+ *
+ * @returns A `Router` with routes `/getForecast` and `/getForecastCodes`.
  */
 export const forecastRoutes = (): Router => {
   const router = Router();

@@ -477,11 +477,13 @@ const report = async (): Promise<any> => {
 /**
  * Creates an Express router for handling hit counter aggregation and reporting.
  *
- * Exposes the following endpoints:
- * - **GET /recreateSiteHits**: Rebuilds the `siteHits` record from all `"hitCounter"` records.
- * - **GET /hitsReport**: Returns the current aggregation summary (month/week/day counts and dates).
+ * @returns A new Express `Router` that exposes:
+ *   GET /recreateSiteHits → rebuilds the `siteHits` record from all "hitCounter" records.
+ *   GET /hitsReport → returns the current aggregation summary (month/week/day counts and dates).
  *
- * @returns An Express `Router` configured with hit counter endpoints.
+ * Mount this on your app or a sub-route to provide hit counter endpoints.
+ *
+ * @returns A `Router` with the routes `/recreateSiteHits` and `/hitsReport`.
  */
 export const hitRoutes = (): Router => {
   const router = express.Router();

@@ -220,13 +220,17 @@ const averages = (hours: number, duration: number): Array<[number, number, numbe
 };
 
 /**
- * Creates and returns an Express router exposing wind data endpoints:
- * - **GET /getData?hours=H**: Raw windTable records for last H hours.
- * - **GET /averages?hours=H&duration=D**: Fixed-interval aggregates.
- * - **GET /getLastEntry**: Timestamp of most recent record.
- * - **GET /fetchNewWind**: Triggers `UpdateWindTable`.
- * - **GET /addWindFromSQL**: (Admin) migrates SQL records into PB.
- * - **GET /fixSaveErrors**: Corrects mis-saved fields in PB.
+ * Returns a new Express `Router` that exposes:
+ *   GET /getData → raw windTable records for last H hours.
+ *   GET /averages → fixed-interval aggregates.
+ *   GET /getLastEntry → timestamp of most recent record.
+ *   GET /fetchNewWind → triggers UpdateWindTable.
+ *   GET /addWindFromSQL → (admin) migrates SQL records into PB.
+ *   GET /fixSaveErrors → corrects mis-saved fields in PB.
+ *
+ * Mount this on your app or a sub-route to provide wind data endpoints.
+ *
+ * @returns A `Router` with wind data routes.
  */
 export const windRoutes = (): Router => {
   const router = Router();

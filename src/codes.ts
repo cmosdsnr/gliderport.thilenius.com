@@ -279,12 +279,12 @@ async function getWindTableCodesHandler(req: Request, res: Response): Promise<vo
 }
 
 /**
- * Defines an Express router that exposes endpoints for managing and querying code history.
+ * Returns a new Express `Router` that exposes:
+ *   GET /getWindTableCodes → returns the entire `codes` array.
  *
- * Exposed Endpoints:
- * - **GET /getWindTableCodes**: Returns the entire `codes` array.
+ * Mount this on your app or a sub-route to provide code history endpoints.
  *
- * @returns An `Express.Router` configured with code-history endpoints.
+ * @returns A `Router` with the route `/getWindTableCodes`.
  */
 export const codeRoutes = (): Router => {
   const router = Router();

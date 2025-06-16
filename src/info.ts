@@ -508,11 +508,12 @@ export const info = async (connection: mysql.Connection): Promise<InfoResponse> 
 };
 
 /**
- * Creates and returns an Express router for the `/info` endpoint.
+ * Returns a new Express `Router` that exposes:
+ *   GET /info → retrieves and returns the assembled information from `info()`.
  *
- * - **GET /info**: Retrieves and returns the assembled information from `info()`.
+ * Mount this on your app or a sub-route to provide system and gliderport info endpoints.
  *
- * @returns An Express `Router` configured with the `/info` route.
+ * @returns A `Router` with the route `/info`.
  */
 export const infoRoutes = (): express.Router => {
   const router = express.Router();
