@@ -168,7 +168,7 @@ export function GpNavbar(): React.ReactElement {
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
-                                            backend Documentation
+                                            frontend Documentation
                                         </NavDropdown.Item>
                                         <NavDropdown.Item
                                             href={serverUrl + "/docs/gp_server"}

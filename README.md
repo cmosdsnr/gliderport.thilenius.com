@@ -1,4 +1,4 @@
-# Gliderport Frontend
+# Gliderport (frontend)
 
 ## Overview
 
