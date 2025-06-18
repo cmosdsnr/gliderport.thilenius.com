@@ -76,7 +76,7 @@ app.use("/gpapi", createApiRouter());
 /**
  * Verify required static directories exist; exit if missing.
  */
-["images", "docs", "gp_dist"].forEach((dir) => {
+["images", "gp_dist"].forEach((dir) => {
   const fullPath = path.join(__dirname, dir === "images" ? "/gliderport/images" : `/${dir}`);
   if (!fs.existsSync(fullPath)) {
     console.error(`Directory ${fullPath} does not exist.`);
@@ -91,7 +91,6 @@ console.log(`Serving front end assets from ${__dirname}/gp_dist`);
 /** Serve static assets */
 app.use("/images", express.static(path.join(__dirname, "/gliderport/images")));
 app.use("/stream", express.static(path.join(__dirname, "/gliderport/stream")));
-//docs (generated and copied from project directories)
 app.use("/docs", express.static(path.join(__dirname, "/gliderport/docs")));
 
 app.use("/", express.static(path.join(__dirname, "/gp_dist")));
