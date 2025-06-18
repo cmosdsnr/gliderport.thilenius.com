@@ -28,3 +28,4 @@ dist-ssr
 go*
 *lock.json
 /storage
+/docs

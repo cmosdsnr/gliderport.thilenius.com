@@ -171,7 +171,7 @@ export function GpNavbar(): React.ReactElement {
                                             frontend Documentation
                                         </NavDropdown.Item>
                                         <NavDropdown.Item
-                                            href={serverUrl + "/docs/gp_server"}
+                                            href={serverUrl + "/docs/pi3_server"}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >

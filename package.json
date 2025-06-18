@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "docs:generate": "typedoc",
+    "docs:generate": "typedoc && cp -r docs\\* \\\\192.168.0.5\\passport\\gliderport\\docs\\frontend",
     "docs:serve": "yarn docs:generate && http-server docs -o"
   },
   "dependencies": {

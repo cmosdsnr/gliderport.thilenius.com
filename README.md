@@ -1,10 +1,8 @@
-# Gliderport (frontend)
-
-## Overview
+# Overview
 
 This is the React-based frontend for the Torrey Pines Gliderport site. It provides a real-time dashboard for wind, weather, and camera data, as well as historical and forecast visualizations. The frontend is designed for both desktop and mobile users and integrates with a PocketBase backend and a Node.js/Express API server.
 
-### Key Features
+## Key Features
 
 - **Live Wind Visualization:**  
   Interactive wind dial and charts display current wind speed, direction, and recent history using D3 and Recharts.
@@ -41,7 +39,7 @@ This is the React-based frontend for the Torrey Pines Gliderport site. It provid
 - **Donation Integration:**  
   Ko-fi widget for supporting the site.
 
-### Main Components
+## Main Components
 
 - `Home`: Main landing page with wind dial, video, current readings, forecast, and tabbed charts/history/status.
 - `Charts`: Responsive D3/Recharts charts for wind, temperature, pressure, humidity.
@@ -53,7 +51,7 @@ This is the React-based frontend for the Torrey Pines Gliderport site. It provid
 - `WindDial`: D3-based wind visualization.
 - `KoFiWidget`: Floating donation button.
 
-### Architecture
+## Architecture
 
 - **Contexts:**  
   - `AuthContext`: User authentication and profile.
