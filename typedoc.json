@@ -1,12 +1,16 @@
 {
+  "name": "Gliderport Server Backend",
     "entryPoints": [
         "app.ts",
         "src/*.ts",
         "index.d.ts"
       ],
     "out": "docs",
-    "excludePrivate": true,
-    "readme": "Readme.md",
-    "includeVersion": true,
-    "useFirstParagraphOfCommentAsSummary": true
+  "tsconfig": "tsconfig.json",  
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "readme": "README.md",
+  "plugin": [],  
+  "sort": ["source-order"],
+  "useFirstParagraphOfCommentAsSummary": true
   }
