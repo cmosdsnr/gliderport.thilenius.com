@@ -1,6 +1,4 @@
-# Gliderport server (backend)
-
-## Overview
+# Overview
 
 The Gliderport server is a Node.js/Express application that manages real-time weather, wind, and image data for the Torrey Pines Gliderport. It integrates with a PocketBase backend for persistent storage and provides a comprehensive API for frontend and external tools. The system includes:
 
@@ -22,7 +20,7 @@ dokku storage:mount gliderport /media/cmosdsnr/passport/gliderport/video:/app/vi
 dokku storage:report gliderport  
 dokku ps:restart gliderport  
 
-## Routes
+# Routes
 
 | file            | type | URL                    | description                                                                |
 | --------------- | ---- | ---------------------- | -------------------------------------------------------------------------- |
@@ -62,7 +60,7 @@ dokku ps:restart gliderport
 | openWeather     | GET  | getForecastCodes       | Computed wind condition codes for two days                                 |
 | streams         | GET  | stats                  | Returns current streaming metrics.                                         |
 
-## Embedding PocketBase (`gpdata`) Under Gliderport
+# Embedding PocketBase (`gpdata`) Under Gliderport
 
 This server uses an embedded PocketBase database deployed to the gpdata app. It is also visible at gliderport.thilenius.com/_ and gliderport.thilenius.com/api
 
@@ -70,7 +68,7 @@ This document outlines the steps required to serve your PocketBase app (`gpdata`
 
 ---
 
-### 1. Bind PocketBase to localhost:5000
+## 1. Bind PocketBase to localhost:5000
 
 On your Dokku host, configure the `gpdata` app so that its Docker container publishes port 5000 to the host.
 
@@ -94,7 +92,7 @@ sudo ss -tln | grep :5000
 
 ---
 
-### 2. Create Nginx Snippet in the Gliderport App
+## 2. Create Nginx Snippet in the Gliderport App
 
 In the `gliderport` Dokku app, add an Nginx snippet to forward `/api/...` and `/_/...` paths to the local PocketBase instance.
 
@@ -119,7 +117,7 @@ EOF
 
 ---
 
-### 3. Rebuild and Restart the Gliderport App
+## 3. Rebuild and Restart the Gliderport App
 
 Regenerate the Nginx configuration and restart the `gliderport` container:
 
@@ -130,7 +128,7 @@ dokku ps:restart      gliderport
 
 ---
 
-### 4. Verify Functionality
+## 4. Verify Functionality
 
 * Visit **PocketBase Dashboard** via Gliderport:
 

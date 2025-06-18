@@ -23,6 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
+.gitignore
+
 # .env*
 .env.local
 .env.prod
@@ -30,3 +32,4 @@ go*
 *lock*
 /storage
 /bin
+/docs
