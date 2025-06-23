@@ -23,7 +23,7 @@ import { DayOfCodes } from './History';
 /**
  * Props for the CircleCanvas component.
  */
-interface CircleCanvasProps {
+export interface CircleCanvasProps {
     /** Array of tuples [absoluteTimestampSec, code] covering one day. */
     data: DayOfCodes;
     /** UNIX timestamp (seconds) for local midnight of this day. */

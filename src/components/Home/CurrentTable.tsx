@@ -15,7 +15,7 @@ import useInterval from 'hooks/useInterval';
  * Props for CurrentTable.
  * {React.CSSProperties} [rest] - Additional CSS style properties to merge into the table’s inline style.
  */
-interface CurrentTableProps {
+export interface CurrentTableProps {
     [key: string]: any;
 }
 

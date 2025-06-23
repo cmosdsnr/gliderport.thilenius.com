@@ -15,7 +15,7 @@ import { useModal, ModalType } from 'modals/Modals';
  *
  * children - The protected component(s) to render.
  */
-interface PrivateRouteProps {
+export interface PrivateRouteProps {
     children: React.ReactElement | React.ReactElement[];
 }
 

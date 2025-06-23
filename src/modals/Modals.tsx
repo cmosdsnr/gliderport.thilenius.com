@@ -20,7 +20,7 @@ export enum ModalType {
 /**
  * The context type for modal state and modal control functions.
  */
-type ModalContextType = {
+export type ModalContextType = {
     modal: ModalType;
     openModal: (modalType: ModalType) => void;
     closeModal: () => void;

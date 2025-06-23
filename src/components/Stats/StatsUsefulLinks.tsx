@@ -1,7 +1,7 @@
 import React from 'react'
 import { Row } from 'react-bootstrap';
 
-interface StatsUsefulLinksProps {
+export interface StatsUsefulLinksProps {
     // define your props here if you have any
 }
 

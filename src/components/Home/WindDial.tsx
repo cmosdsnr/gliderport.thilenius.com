@@ -16,7 +16,7 @@ import { useData } from '@/contexts/DataContext'
  * @param passedSeconds - Seconds since last reading.
  * @param picRef - Reference to parent image container for centering.
  */
-interface WindDialProps {
+export interface WindDialProps {
     passedSeconds: number
     picRef: React.RefObject<HTMLDivElement | null>
 }

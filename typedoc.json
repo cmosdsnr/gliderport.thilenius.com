@@ -1,18 +1,19 @@
 {
-    
   "name": "Gliderport Server Frontend",
-  "entryPoints": ["src/**/*.tsx"],
+  "includeVersion": true,
+  "entryPoints": ["src"],
+  "entryPointStrategy": "expand",
   "out": "docs",
-  "tsconfig": "tsconfig.json",  
+  "tsconfig": "tsconfig.json",
   "exclude": [
-    "**/__tests__/**",
-    "**/*.spec.ts",
     "src/images/**",
-    "src/contexts/AuthContextFirebase.tsx"    // explicitly drop your unused file
+    "src/contexts/AuthContextFirebase.tsx"
   ],
   "excludePrivate": true,
   "excludeProtected": true,
-  "readme": "README.md",
-  "plugin": [],  
-  "sort": ["source-order"]
-} 
+  "readme": "Readme.md",
+  "plugin": [],
+  "sort": ["source-order"],
+  "useFirstParagraphOfCommentAsSummary": true,
+  "theme": "default"
+}

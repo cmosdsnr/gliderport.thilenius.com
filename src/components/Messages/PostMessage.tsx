@@ -8,12 +8,12 @@ import { pb } from '@/contexts/pb';
 /**
  * Represents a message record. Currently unused; consider defining fields or removing.
  */
-interface Message { }
+export interface Message { }
 
 /**
  * Props for the PostMessage component. Currently no props are used.
  */
-interface PostMessageProps { }
+export interface PostMessageProps { }
 
 /**
  * PostMessage component renders a form for users to submit new messages.

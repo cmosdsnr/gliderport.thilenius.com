@@ -8,7 +8,7 @@ import React, { useRef, useEffect } from 'react'
 /**
  * Props for the StatusCanvas component.
  */
-interface CanvasProps {
+export interface CanvasProps {
     data: any
     width: number
     full: boolean

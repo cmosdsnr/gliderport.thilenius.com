@@ -9,7 +9,7 @@ import PocketBase from "pocketbase";
 import { pb } from '@/contexts/pb'
 
 
-interface AuthProviderProps {
+export interface AuthProviderProps {
     children: ReactNode;
 }
 

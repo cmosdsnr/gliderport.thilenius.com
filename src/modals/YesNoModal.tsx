@@ -4,7 +4,7 @@ import Modal from 'react-modal';
 /**
  * Props for the YesNoModal component.
  */
-interface YesNoModalProps {
+export interface YesNoModalProps {
     message: string;
     onYes: () => void;
     onNo: () => void;

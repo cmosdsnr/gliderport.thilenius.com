@@ -35,7 +35,7 @@ export interface MessageItem {
  * DisplayMessageProps
  * {MessageItem} msgItem - The message data to display.
  */
-interface DisplayMessageProps {
+export interface DisplayMessageProps {
     msgItem: MessageItem
 }
 

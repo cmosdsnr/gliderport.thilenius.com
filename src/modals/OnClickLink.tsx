@@ -3,7 +3,7 @@ import React from 'react'
 /**
  * Props for the OnClickLink component.
  */
-interface OnClickLinkProps {
+export interface OnClickLinkProps {
     fn: () => void;
     color?: string;
     children: React.ReactNode;

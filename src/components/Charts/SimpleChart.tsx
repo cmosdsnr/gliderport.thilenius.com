@@ -19,7 +19,7 @@ import { useData, Reading } from '@/contexts/DataContext';
  * clientWidth - The width of the container to size the chart.
  * label - The data field to chart (e.g., "Direction", "Pressure").
  */
-interface SimpleChartProps {
+export interface SimpleChartProps {
     clientWidth: number;
     label: string;
 }

@@ -27,7 +27,7 @@ import { serverUrl } from "@/components/paths";
 /**
  * Props type for UpdatingImage (currently none).
  */
-interface Props { }
+export interface Props { }
 
 /**
  * UpdatingImage

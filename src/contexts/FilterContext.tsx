@@ -31,7 +31,7 @@ export type FilterReturnDataType = {
 /**
  * The shape of the FilterContext, providing filter and fill functions.
  */
-interface FilterContextInterface {
+export interface FilterContextInterface {
     filterData: (rawData: Reading[], width: number) => FilterReturnDataType,
     fillForFilter: (data: Reading[], width: number, label: keyof Reading) => FffReturnDataType,
     fillData: (data: Reading[], width: number, label: keyof Reading) => FillReturnDataType,

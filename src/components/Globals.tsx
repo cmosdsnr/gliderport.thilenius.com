@@ -32,7 +32,7 @@ export const codeDef = {
 }
 
 
-type Code = {
+export type Code = {
     color: string,
     opacity: number,
     code: string,

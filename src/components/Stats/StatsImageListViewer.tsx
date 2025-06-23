@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Col, Modal, Button, Form, Row } from 'react-bootstrap';
 import './stats.css';
 
-interface ImageListViewerProps {
+export interface ImageListViewerProps {
     imageList: string[];
     url: string;
 }

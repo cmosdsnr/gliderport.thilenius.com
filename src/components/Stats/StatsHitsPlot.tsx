@@ -10,7 +10,7 @@ import {
     Tooltip,
 } from 'recharts';
 
-interface StatsPlotProps {
+export interface StatsPlotProps {
     data: [number, number][]; // [timestamp, value]
 }
 

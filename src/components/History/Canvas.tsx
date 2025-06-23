@@ -12,7 +12,7 @@ import { ResponsiveContainer } from 'recharts';
 /**
  * Props for the Canvas component.
  */
-interface CanvasProps {
+export interface CanvasProps {
     /**
      * Width of the container (CSS value or number). Defaults to '100%'.
      */

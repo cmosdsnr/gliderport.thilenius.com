@@ -20,7 +20,7 @@ export interface RemoteFrameHandle {
 /**
  * Props for the RemoteFrame component.
  */
-interface RemoteFrameProps {
+export interface RemoteFrameProps {
     /** URL or path of the page to embed in the iframe. */
     src: string;
     /**

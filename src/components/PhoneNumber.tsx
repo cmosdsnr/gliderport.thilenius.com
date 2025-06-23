@@ -7,7 +7,7 @@ import React, { useState, useEffect, ChangeEvent } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { serverUrl } from "@/components/paths";
 
-interface Provider {
+export interface Provider {
     [key: string]: [string, string, string]
 }
 
@@ -32,11 +32,11 @@ const provider: Provider = {
     'bellmobility': ['txt.bellmobility.ca', 'Bell Mobility Canada', 'Bell Mobility']
 }
 
-interface PhoneNumberInputProps {
+export interface PhoneNumberInputProps {
     [key: string]: any
 }
 
-interface User {
+export interface User {
     phone: string
 }
 

@@ -107,7 +107,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
 /**
  * Props for the DataCell component.
  */
-type DataCellProps = {
+export type DataCellProps = {
     fullData: string;
     maxLength?: number;
 };
@@ -211,7 +211,7 @@ export function MessageLogger(): React.ReactElement {
 /**
  * Props for ExpandableObjectCell component.
  */
-type ExpandableObjectCellProps = {
+export type ExpandableObjectCellProps = {
     obj: any;
 };
 

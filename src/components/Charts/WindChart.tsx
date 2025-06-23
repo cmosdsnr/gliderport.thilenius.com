@@ -21,7 +21,7 @@ import { useData, Reading } from '@/contexts/DataContext'
  * clientWidth - width of the drawing container in pixels
  * label - label for the Y axis
  */
-interface WindChartProps {
+export interface WindChartProps {
     clientWidth: number
     label: string
 }

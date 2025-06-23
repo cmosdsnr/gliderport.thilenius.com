@@ -7,7 +7,7 @@
 import React, { useEffect, useRef } from 'react';
 import Hls from 'hls.js';
 
-interface HLSPlayerProps {
+export interface HLSPlayerProps {
     /** URL to the HLS playlist (m3u8) */
     src: string;
     /** Width of the video player */

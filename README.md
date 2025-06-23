@@ -17,11 +17,11 @@ This is the React-based frontend for the Torrey Pines Gliderport site. It provid
   Responsive two-column layout showing:
 
   - **Site Hits:** Daily, weekly, monthly, and total visit counts (including unique IPs), with a toggleable bar chart (day/week/month, total/unique) using recharts.
-  - 
+  
   - **Image & Video Archive:** Date and camera picker, hour range selection, image/video details, and a modal image viewer with slider and navigation. Supports image download and video playback.
-  - 
+
   - **Change Log:** List of site changes and updates, with hover to view details for each date.
-  - 
+
   - **Useful Links:** Curated list of external weather, gliderport, and tide resources.
 
 - **User Authentication:**  
@@ -70,26 +70,29 @@ This is the React-based frontend for the Torrey Pines Gliderport site. It provid
 
 ---
 
-## served on 'gliderport' Dokku server (on Buddbliss)
+## Served on 'gliderport' Dokku server (on Buddbliss)
 
 - uses Vite frontend
 - uses pocketBase Authentication & database
 - webSocket to wss://gliderport.thilenius.com
 
-## deployment
+## Deployment
 
-yarn build will compile to dist (c:\Git\Web)
-dist has a 'junction' to:
+- yarn build will compile to dist (C:\Git\web\buddStServer\thilenius.com\gliderport\gliderportFrontEnd\dist)
+- the directory has a `junction` like so:
+  
+```bash
+# Junction for deployment 
 New-Item -ItemType Junction -Path "C:\Git\web\buddStServer\thilenius.com\gliderport\gliderportFrontEnd\dist" -Target "C:\Git\web\buddStServer\thilenius.com\gliderport\gliderport\gp_dist"
+```
 
-run yarn docs:generate too if needed
+## Documentation
 
-## documentation
-
-docs has a junction to:
-New-Item -ItemType Junction -Path "C:\Git\web\buddStServer\thilenius.com\gliderport\gliderportFrontEnd\docs" -Target "C:\Git\web\buddStServer\thilenius.com\gliderport\gliderport\docs_frontend"
-
-yarn docs:generate (or docs:serve to serve) will create teh docs, which will be deployed on the next gliderport push
+```bash
+# docs are generated and copied to the static folders on the server, buddbliss. (\\192.168.0.5\passport\gliderport\docs\backend)
+# yarn docs:serve will generate the docs, and serve them locally (less useful now)
+yarn docs:generate
+```
 
 ### Forwarded/Reverse proxy at cloudflare
 
@@ -98,4 +101,3 @@ worker on Cloudflare is a reverse proxy, exposing gliderport.thilenius.com on gl
 See [Cloudflare Dashboard](https://dash.cloudflare.com)
 login stephen@thilenius.com
 go to "workers & Pages"
-

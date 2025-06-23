@@ -34,7 +34,7 @@ import { DayOfCodes } from './History';
  * {number} width
  *   Pixel width of the chart container.
  */
-interface LineCanvasProps {
+export interface LineCanvasProps {
     /** Array of [absoluteTimestampSec, code] for one day */
     data: DayOfCodes;
     /** UNIX timestamp (sec) for local midnight of this day */

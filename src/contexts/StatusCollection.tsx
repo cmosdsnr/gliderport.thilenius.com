@@ -1,6 +1,17 @@
+/**
+ * @file StatusCollection context and provider for global site status, sun times, hits, and more.
+ * @description
+ *   Provides a React context for site-wide status, including sun times, sleep state, image status,
+ *   site messages, forecast, site hit statistics, and online status. Data is loaded from PocketBase
+ *   and updated in real time via subscription.
+ */
+
 import React, { createContext, useState, useEffect, useContext, useMemo } from 'react'
 import { pb } from '@/contexts/pb'
 
+/**
+ * Stats interface for site hit statistics.
+ */
 export interface Stats {
     timestamp: number;
     lastReset: number;
@@ -9,12 +20,17 @@ export interface Stats {
     days: { start: number, count: number[], unique: number[] };
 }
 
-
-type Online = {
+/**
+ * Online status interface.
+ */
+export type Online = {
     online: number;
     touched: string;
 }
 
+/**
+ * StatusCollectionInterface defines the shape of the global status context.
+ */
 export interface StatusCollectionInterface {
     sun: Sun;
     sleeping: boolean;
@@ -25,12 +41,25 @@ export interface StatusCollectionInterface {
     online: Online;
 }
 
+/**
+ * React context for the status collection.
+ */
 const StatusCollectionContext = createContext<StatusCollectionInterface>({} as StatusCollectionInterface);
 
+/**
+ * Custom hook to access the StatusCollection context.
+ * @returns The current StatusCollectionInterface value.
+ */
 export function useStatusCollection() {
     return useContext(StatusCollectionContext)
 }
 
+/**
+ * StatusCollectionProvider loads and subscribes to site-wide status from PocketBase,
+ * and provides it to all child components via React context.
+ * @param children - React children to wrap with the provider.
+ * @returns The provider component.
+ */
 export function StatusCollectionProvider({ children }: any) {
 
     const [sun, setSun] = useState<Sun>({ rise: 0, set: 0 });

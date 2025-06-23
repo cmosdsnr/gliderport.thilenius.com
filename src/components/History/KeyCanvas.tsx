@@ -16,7 +16,7 @@ import { codes } from '../Globals';
  * {number} [width] Optional width to constrain the legend container.
  *   (Note: currently not applied in the component.)
  */
-interface KeyCanvasProps {
+export interface KeyCanvasProps {
     width?: number;
 }
 
