@@ -138,6 +138,9 @@ export function DataProvider({ children }: any): React.ReactElement {
     const [lastCheck, setLastCheck] = useState<TimeStamp>(1658263194)
     // State for number of connections
     const [numberConnections, setNumberConnections] = useState(0)
+    // State for number of connections
+    const [lastPing, setLastPing] = useState<TimeStamp>(Date.now());
+
     // State for camera images
     const [cameraImages, setCameraImages] = useState<CameraImages>({
         camera1: [],
@@ -372,6 +375,11 @@ export function DataProvider({ children }: any): React.ReactElement {
                     case 'ping': {
                         console.log("ping received");
                         ws.current?.send(JSON.stringify({ command: "pong" }));
+                        if (Date.now() - lastPing > 1000 * 60 * 5) {
+                            // trigger reload
+                            console.error("LATE PING received, reloading data");
+                        }
+                        setLastPing(Date.now());
                         break;
                     }
                     default: {
