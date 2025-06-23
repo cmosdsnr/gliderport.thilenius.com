@@ -42,7 +42,11 @@ if (updateOldWay) {
   while (!lastEntryFound) {
     try {
       const response = await axios.get("https://gliderport.thilenius.com/api/getLastEntry");
-      lastEntry = response.data;
+      if (response.status !== 200) {
+        log("doOldUpdate", "Error fetching last entry: " + response.statusText);
+        break;
+      }
+      lastEntry = response.data.timestamp;
       if (lastEntry !== "Error") lastEntryFound = true;
       log("doOldUpdate", "Last Entry: " + lastEntry);
     } catch (error) {

@@ -1,4 +1,5 @@
 {
+    "name": "Gliderport Pi3 Server",
     "entryPoints": [
         "src/*.ts",
         "src/*/*.ts",
@@ -8,5 +9,6 @@
     "excludePrivate": true,
     "readme": "Readme.md",
     "includeVersion": true,
+    "highlightLanguages": ["ts", "tsx", "json", "bash", "powershell", "perl"],
     "useFirstParagraphOfCommentAsSummary": true
   }

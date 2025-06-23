@@ -1,7 +1,7 @@
 {
   "name": "pi3server",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "engines": {
     "node": "18.x || 22.x"
   },
@@ -10,7 +10,8 @@
     "dev": "tsup --format esm src/app.ts --watch --onSuccess \"node dist/app.js\"",
     "start": "node dist/app.js",
     "build": "tsup --format esm src/app.ts",
-    "docs": "typedoc",
+    "docs:generate": "typedoc && cp -r docs\\* \\\\192.168.0.5\\passport\\gliderport\\docs\\pi3_server",
+    "docs:serve": "yarn docs:generate && http-server docs -o",
     "serve": "npx serve docs"
   },
   "dependencies": {
