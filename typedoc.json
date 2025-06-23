@@ -12,5 +12,6 @@
   "readme": "README.md",
   "plugin": [],  
   "sort": ["source-order"],
+  "includeVersion": true,
   "useFirstParagraphOfCommentAsSummary": true
   }

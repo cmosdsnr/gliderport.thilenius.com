@@ -16,6 +16,34 @@ The Gliderport server is a Node.js/Express application that manages real-time we
 
 The server is designed for reliability, modularity, and ease of integration with both frontend and external systems.
 
+## Directory Overview
+
+- **src/**  
+  Main server source code (Node.js/Express, TypeScript).  
+  Contains modules for API routing, data ingestion, archiving, logging, PocketBase integration, and scheduled jobs.
+
+- **frontend/**  
+  React-based frontend application for live dashboard, statistics, image/video browsing, and user authentication.
+
+- **video/**  
+  Directory for archived and live video files (mounted via Dokku storage).
+
+- **images/**  
+  Directory for archived and live image files.
+
+- **docs/**  
+  Documentation and static assets served at `/docs`.
+
+- **bin/**  
+  Binary data files for monthly sensor data archives.
+
+- **PocketBase (`gpdata`)**  
+  Embedded PocketBase instance for persistent data storage, accessible via `/api` and `/_` routes.
+
+- **Other files:**  
+  - `Readme.md` (this file): Project documentation and deployment notes.
+  - Configuration files for Dokku, Nginx, and deployment scripts.
+
 dokku storage:mount gliderport /media/cmosdsnr/passport/gliderport/video:/app/video  
 dokku storage:report gliderport  
 dokku ps:restart gliderport  
@@ -148,7 +176,44 @@ Both requests should return the expected PocketBase UI and JSON responses, respe
 
 ## deployment
 
-This site can be deployed with the go.bat command. This will not regenerate teh front end, just deploy as is.
-This site can be deployed with the go.bat command in ../gliderportFrontEnd which will deploy both the front and back end
+- This site can be deployed with the go.bat command. This will not regenerate the front end, just deploy as is.
 
+```bash
+git add .
+git commit -m "wip"
+git push dokku master
+```
 
+- This site can be deployed with the go.bat command in ../gliderportFrontEnd which will deploy both the front and back end
+
+```bash
+@echo off
+REM assume this script lives in gliderportFrontEnd\
+
+REM 1) build the front-end
+call yarn build
+IF %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERROR] Front-end build failed. Aborting.
+    exit /b 1
+)
+
+REM 2) stage & commit
+git add .
+git commit -m "wip"
+
+REM 3) switch to the back-end folder and run its script
+cd ..\gliderport
+call go.bat
+
+REM 4) return to front-end (if you really need to)
+cd ..\gliderportFrontEnd
+```
+
+## Documentation
+
+```bash
+# docs are generated and copied to the static folders on the server, buddbliss. (\\192.168.0.5\passport\gliderport\docs\frontend)
+# yarn docs:serve will generate the docs, and serve them locally (less useful now)
+yarn docs:generate
+```
