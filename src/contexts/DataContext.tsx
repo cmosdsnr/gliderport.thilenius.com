@@ -383,10 +383,13 @@ export function DataProvider({ children }: any): React.ReactElement {
                                 "received, reloading data:",
                                 (now - lastPingRef.current) / 1000, "seconds ago"
                             );
-                            window.location.reload(); // ⬅️ Full page reload
-                            return;
+                            if (document.visibilityState === 'visible') {
+                                window.location.reload(); // ⬅️ Full page reload if window is active
+                                return;
+                            }
                         }
-                        lastPingRef.current = now;
+                        if (document.visibilityState === 'visible')
+                            lastPingRef.current = now;
                         break;
                     }
                     default: {
