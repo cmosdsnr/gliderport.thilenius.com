@@ -86,14 +86,13 @@ app.use("/gpapi", createApiRouter());
 
 console.log(`Serving images from ${__dirname}/gliderport/images`);
 console.log(`Serving documents from ${__dirname}/docs`);
-console.log(`Serving front end assets from ${__dirname}/gp_dist`);
+console.log(`Serving front end assets from ${__dirname}/gliderport/frontend`);
 
 /** Serve static assets */
 app.use("/images", express.static(path.join(__dirname, "/gliderport/images")));
 app.use("/stream", express.static(path.join(__dirname, "/gliderport/stream")));
 app.use("/docs", express.static(path.join(__dirname, "/gliderport/docs")));
-
-app.use("/", express.static(path.join(__dirname, "/gp_dist")));
+app.use("/", express.static(path.join(__dirname, "/gliderport/frontend")));
 
 // -----------------------------------------------------------------------------
 /**

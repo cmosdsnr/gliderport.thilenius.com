@@ -251,7 +251,12 @@ export const windRoutes = (): Router => {
   });
 
   router.get("/getLastEntry", (_req, res) => {
-    res.send(windTable.length ? windTable[windTable.length - 1].timestamp.toString() : "");
+    if (!windTable.length) {
+      return res.status(404).send("No wind data available");
+    }
+    const last = windTable[windTable.length - 1].timestamp;
+    const dt = DateTime.fromSeconds(last).toFormat("yyyy-MM-dd HH:mm:ss");
+    res.json({ timestamp: last, formatted: dt });
   });
 
   router.get("/fetchNewWind", (_req, res) => {
