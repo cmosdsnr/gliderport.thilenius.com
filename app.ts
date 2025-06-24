@@ -100,7 +100,7 @@ app.use("/", express.static(path.join(__dirname, "/gliderport/frontend")));
  * Redirects all unmatched routes to `index.html`.
  */
 app.get("*", (_req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, "/gp_dist/index.html"));
+  res.sendFile(path.join(__dirname, "/gliderport/frontend/index.html"));
 });
 
 // -----------------------------------------------------------------------------

@@ -151,7 +151,7 @@ Regenerate the Nginx configuration and restart the `gliderport` container:
 
 ```bash
 dokku nginx:build-config gliderport
-dokku ps:restart      gliderport
+dokku ps:restart gliderport
 ```
 
 ---
@@ -177,37 +177,20 @@ Both requests should return the expected PocketBase UI and JSON responses, respe
 ## deployment
 
 - This site can be deployed with the go.bat command. This will not regenerate the front end, just deploy as is.
-
-```bash
-git add .
-git commit -m "wip"
-git push dokku master
-```
-
-- This site can be deployed with the go.bat command in ../gliderportFrontEnd which will deploy both the front and back end
-
+- The front end is deployed directly to the directory /app/gliderport/frontend (see frontend Readme.md)
+  
 ```bash
 @echo off
-REM assume this script lives in gliderportFrontEnd\
+REM assume this script lives in gliderport
 
-REM 1) build the front-end
-call yarn build
-IF %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo [ERROR] Front-end build failed. Aborting.
-    exit /b 1
-)
+REM Set default commit message
+set COMMIT_MSG=wip
+IF NOT "%~1"=="" set COMMIT_MSG=%~1
 
-REM 2) stage & commit
+REM 1) stage & commit
 git add .
-git commit -m "wip"
-
-REM 3) switch to the back-end folder and run its script
-cd ..\gliderport
-call go.bat
-
-REM 4) return to front-end (if you really need to)
-cd ..\gliderportFrontEnd
+git commit -m "%COMMIT_MSG%"
+git push dokku master
 ```
 
 ## Documentation
