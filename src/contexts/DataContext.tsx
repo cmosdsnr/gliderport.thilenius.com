@@ -383,6 +383,8 @@ export function DataProvider({ children }: any): React.ReactElement {
                                 "received, reloading data:",
                                 (now - lastPingRef.current) / 1000, "seconds ago"
                             );
+                            window.location.reload(); // ⬅️ Full page reload
+                            return;
                         }
                         lastPingRef.current = now;
                         break;
