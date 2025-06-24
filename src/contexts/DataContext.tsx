@@ -9,6 +9,7 @@ import { formatter, b64toBlob } from 'components/Globals'
 import { useMessages } from 'components/Admin/MessageLogger'
 import { StatusCollectionProvider } from './StatusCollection'
 import { serverUrl, socketUrl } from "@/components/paths";
+import { DateTime } from 'luxon'
 
 /**
  * Represents a single sensor reading.
@@ -373,11 +374,14 @@ export function DataProvider({ children }: any): React.ReactElement {
                         break;
                     }
                     case 'ping': {
-                        console.log("ping received");
                         ws.current?.send(JSON.stringify({ command: "pong" }));
                         if (Date.now() - lastPing > 1000 * 60 * 5) {
                             // trigger reload
-                            console.error("LATE PING received, reloading data");
+                            console.error(
+                                "LATE PING at",
+                                DateTime.fromMillis(Date.now()).toLocaleString(DateTime.DATETIME_MED),
+                                "received, reloading data:",
+                                (Date.now() - lastPing) / 1000, "seconds ago");
                         }
                         setLastPing(Date.now());
                         break;
