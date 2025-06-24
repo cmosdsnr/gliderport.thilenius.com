@@ -79,11 +79,35 @@ This is the React-based frontend for the Torrey Pines Gliderport site. It provid
 ## Deployment
 
 - yarn build will compile to dist (C:\Git\web\buddStServer\thilenius.com\gliderport\gliderportFrontEnd\dist)
-- the directory has a `junction` like so:
+- the go.bat command will copy it to it's destination
   
 ```bash
-# Junction for deployment 
-New-Item -ItemType Junction -Path "C:\Git\web\buddStServer\thilenius.com\gliderport\gliderportFrontEnd\dist" -Target "C:\Git\web\buddStServer\thilenius.com\gliderport\gliderport\gp_dist"
+ @echo off
+REM assume this script lives in gliderportFrontEnd\
+
+REM Set default commit message
+set COMMIT_MSG=wip
+IF NOT "%~1"=="" set COMMIT_MSG=%~1
+
+REM 1) build the front-end
+call yarn build
+IF %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERROR] Front-end build failed. Aborting.
+    exit /b 1
+)
+
+REM 2) Copy built files to shared folder
+xcopy /E /I /Y dist\* \\buddbliss\passport\gliderport\frontend\
+IF %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERROR] Failed to copy files to \\buddbliss\passport\gliderport\frontend\
+    exit /b 1
+)
+
+REM 3) stage & commit
+git add .
+git commit -m "%COMMIT_MSG%"
 ```
 
 ## Documentation

@@ -139,14 +139,14 @@ export function DataProvider({ children }: any): React.ReactElement {
     const [lastCheck, setLastCheck] = useState<TimeStamp>(1658263194)
     // State for number of connections
     const [numberConnections, setNumberConnections] = useState(0)
-    // State for number of connections
-    const [lastPing, setLastPing] = useState<TimeStamp>(Date.now());
-
     // State for camera images
     const [cameraImages, setCameraImages] = useState<CameraImages>({
         camera1: [],
         camera2: [],
     });
+
+    const lastPingRef = useRef<number>(Date.now());
+
     // Message logger from admin
     const { messageLogger } = useMessages();
 
@@ -375,15 +375,16 @@ export function DataProvider({ children }: any): React.ReactElement {
                     }
                     case 'ping': {
                         ws.current?.send(JSON.stringify({ command: "pong" }));
-                        if (Date.now() - lastPing > 1000 * 60 * 5) {
-                            // trigger reload
+                        const now = Date.now();
+                        if (now - lastPingRef.current > 1000 * 60 * 5) {
                             console.error(
                                 "LATE PING at",
-                                DateTime.fromMillis(Date.now()).toLocaleString(DateTime.DATETIME_SHORT),
+                                DateTime.fromMillis(now).toLocaleString(DateTime.DATETIME_SHORT),
                                 "received, reloading data:",
-                                (Date.now() - lastPing) / 1000, "seconds ago");
+                                (now - lastPingRef.current) / 1000, "seconds ago"
+                            );
                         }
-                        setLastPing(Date.now());
+                        lastPingRef.current = now;
                         break;
                     }
                     default: {
