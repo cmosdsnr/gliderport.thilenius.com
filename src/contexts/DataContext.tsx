@@ -379,7 +379,7 @@ export function DataProvider({ children }: any): React.ReactElement {
                             // trigger reload
                             console.error(
                                 "LATE PING at",
-                                DateTime.fromMillis(Date.now()).toLocaleString(DateTime.DATETIME_MED),
+                                DateTime.fromMillis(Date.now()).toLocaleString(DateTime.DATETIME_SHORT),
                                 "received, reloading data:",
                                 (Date.now() - lastPing) / 1000, "seconds ago");
                         }
