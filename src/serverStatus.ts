@@ -14,7 +14,7 @@ import { ToId } from "miscellaneous.js";
 
 let online: boolean = false;
 let lastOnline: boolean = false;
-const url = "http://104.36.31.118:8080/";
+const url = "http://104.36.31.118:8082/"; //esp32 at gliderport externally exposed.
 let consecutiveFailures = 0;
 
 /**
@@ -70,6 +70,7 @@ async function checkServerStatus(): Promise<void> {
       if (!online) {
         console.log(`Server came online at ${url}`);
         online = true;
+        pb.collection("networkStatus").create({ id: ToId((Date.now() / 1000).toString()), online: true });
       }
     } else {
       throw new Error(`HTTP status ${response.status}`);
@@ -82,10 +83,10 @@ async function checkServerStatus(): Promise<void> {
     if (consecutiveFailures >= 5 && online) {
       console.log(`Server went offline at ${url}`);
       online = false;
+      pb.collection("networkStatus").create({ id: ToId((Date.now() / 1000).toString()), online: false });
     }
   }
-
-  await updatePocketbaseStatus();
+  updatePocketbaseStatus();
 }
 
 /**

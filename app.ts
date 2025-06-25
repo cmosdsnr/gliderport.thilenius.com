@@ -27,6 +27,8 @@ import { createApiRouter } from "apiRouter";
 import { listEndpoints } from "listEndpoints";
 import { __dirname } from "miscellaneous";
 
+import "./serverStatus";
+
 // Load environment variables and set timezone
 dotenv.config();
 process.env.TZ = "America/Los_Angeles";
