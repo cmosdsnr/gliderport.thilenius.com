@@ -51,6 +51,7 @@ import { connection } from "SqlConnect.js";
 import { ToId } from "miscellaneous.js";
 import { hit } from "hitCounter.js";
 import { transmitNewImage } from "./socket";
+import { DateTime } from "luxon";
 
 type ImageData = { image: string; date: number };
 type ImageList = ImageData[];
@@ -776,6 +777,7 @@ export const ImageRoutes = (): Router => {
           });
         });
       res.json({ status: "going to sleep" });
+      log("gotoSleep", "signal at", DateTime.now().toISO());
     } catch (err: any) {
       console.error("Error updating status:", err);
       res.status(500).json({ status: "error", message: err.message });
@@ -801,6 +803,7 @@ export const ImageRoutes = (): Router => {
           });
         });
       res.json({ status: "WAKING UP" });
+      log("wakeUp", "signal at", DateTime.now().toISO());
     } catch (err: any) {
       console.error("Error updating status:", err);
       res.status(500).json({ status: "error", message: err.message });
