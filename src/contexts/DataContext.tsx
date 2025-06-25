@@ -23,6 +23,7 @@ export type Reading = {
     temperature: number;
 };
 
+
 // Fetch 24hrs data
 const fetchData = async (): Promise<Reading[]> => {
     try {
@@ -31,11 +32,16 @@ const fetchData = async (): Promise<Reading[]> => {
         console.log("fetching data from: ", url.toString());
         const response = await fetch(url.toString());
         const data = await response.json();
+        let lastValidDir = 270;
         if (Array.isArray(data) && data.length > 0) {
             //rename timestamp to time
             // add 101,325 to pressure
             //divide speed and temperature by 10
             data.forEach((d: any) => {
+                if (d.speed !== 0) {
+                    lastValidDir = d.direction;
+                }
+                d.direction = lastValidDir;
                 d.time = d.timestamp;
                 delete d.timestamp;
                 d.pressure = (d.pressure + 101325) / 100;
@@ -310,7 +316,25 @@ export function DataProvider({ children }: any): React.ReactElement {
                 console.log("ws message received: ", messageBody.command);
                 switch (command) {
                     case 'newRecords': {
+                        if (!data || !data.records || data.records.length === 0) {
+                            console.warn("No records found in newRecords message");
+                            return;
+                        }
+
+                        // find last non-zero speed and use its direction
+                        let lastValidDir = 270; // Default direction if no valid speed found
+                        for (let i = readings.length - 1; i >= 0; i--) {
+                            if (readings[i].speed !== 0) {
+                                lastValidDir = readings[i].direction;
+                                break;
+                            }
+                        }
+
                         messageBody.records.forEach((d: any) => {
+                            if (d.speed !== 0) {
+                                lastValidDir = d.direction;
+                            }
+                            d.direction = lastValidDir;
                             d.time = d.timestamp;
                             delete d.timestamp;
                             d.pressure = (d.pressure + 101325) / 100;

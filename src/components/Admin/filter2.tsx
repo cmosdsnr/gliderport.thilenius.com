@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import {
     ResponsiveContainer,
@@ -19,31 +18,48 @@ interface FrequencyResponseData {
     magnitude: number;
 }
 
-interface DataPoint {
+interface SpeedDataPoint {
     time: string;
-
     original: number;
+    filtered: number;
     min: number;
     max: number;
-    direction: number;
-
-    filtered: number;
-    minFiltered: number;
-    maxFiltered: number;
-    directionFiltered: number;
 }
 
+interface DirectionDataPoint {
+    time: string;
+    original: number;
+    filtered: number;
+}
 
 /**
  * FilterFrequencyResponse renders multiple line charts including:
  * - Frequency response of the filter (magnitude in dB)
  * - Wind speed over time (original and filtered)
  * - Min/max wind speed envelope
- * - Wind direction over time (unfiltered)
+ * - Wind direction over time (filtered)
  */
 const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
     const { readings } = useData();
     const filter = getFilter();
+
+    /**
+     * Returns the direction values with speed==0 corrected to last valid direction.
+     * Leading zero-speed entries are set to 270 by default.
+     */
+    const correctedDirections = (): number[] => {
+        const result: number[] = [];
+        let lastValidDir = 270;
+        for (let i = 0; i < readings.length; i++) {
+            if (readings[i].speed !== 0) {
+                lastValidDir = readings[i].direction;
+            }
+            result.push(lastValidDir);
+        }
+        return result;
+    };
+
+    const directionsCorrected = correctedDirections();
 
     const frequencyResponse = useMemo<FrequencyResponseData[]>(() => {
         const Fs = 2000;
@@ -74,8 +90,8 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
 
     const xTicks = Array.from({ length: 11 }, (_, i) => i * 100);
 
-    const Data: DataPoint[] = useMemo(() => {
-        if (readings.length < 2) return { Data: [] as DataPoint[] };
+    const { speedData, directionData } = useMemo(() => {
+        if (readings.length < 2) return { speedData: [], directionData: [] };
 
         const N = 15;
         const windowRadiusSec = N * 60;
@@ -90,11 +106,12 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
 
         for (let i = 0; i < readings.length; i++) {
             const r = readings[i];
+            const dir = directionsCorrected[i];
 
             if (r.time < binEnd) {
                 accTime += r.time;
                 accSpeed += r.speed;
-                accDir += r.direction;
+                accDir += dir;
                 count++;
             } else {
                 if (count > 0) {
@@ -109,7 +126,7 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
                 binEnd = binStart + binSize;
                 accTime = r.time;
                 accSpeed = r.speed;
-                accDir = r.direction;
+                accDir = dir;
                 count = 1;
             }
         }
@@ -126,7 +143,8 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
         const end = Math.floor(averaged[averaged.length - 1].time / 60) * 60;
         const oneMinute = 60;
 
-        const interpolated: { time: number; speed: number, direction: number }[] = [];
+        const interpolatedSpeed: { time: number; speed: number }[] = [];
+        const interpolatedDirRaw: { time: string; direction: number }[] = [];
 
         let currentIndex = 0;
         for (let t = start; t <= end; t += oneMinute) {
@@ -139,14 +157,17 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
             if (!r1 || !r2 || r1.time === r2.time) continue;
 
             const ratio = (t - r1.time) / (r2.time - r1.time);
-            interpolated.push({
+            interpolatedSpeed.push({
                 time: t,
-                speed: r1.speed + ratio * (r2.speed - r1.speed),
+                speed: r1.speed + ratio * (r2.speed - r1.speed)
+            });
+            interpolatedDirRaw.push({
+                time: DateTime.fromSeconds(t).toFormat("MM/dd HH:mm"),
                 direction: r1.direction + ratio * (r2.direction - r1.direction)
             });
         }
 
-        const minMaxMap = interpolated.map(({ time }) => {
+        const minMaxMap = interpolatedSpeed.map(({ time }) => {
             const windowStart = time - windowRadiusSec;
             const windowEnd = time + windowRadiusSec;
             const inWindow = readings.filter(r => r.time >= windowStart && r.time <= windowEnd);
@@ -157,47 +178,48 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
             };
         });
 
-        const padded = [
-            ...Array(filter.length - 1).fill(interpolated[0].speed),
-            ...interpolated.map(d => d.speed)
+        const paddedSpeed = [
+            ...Array(filter.length - 1).fill(interpolatedSpeed[0].speed),
+            ...interpolatedSpeed.map(d => d.speed)
+        ];
+        const paddedDir = [
+            ...Array(filter.length - 1).fill(interpolatedDirRaw[0].direction),
+            ...interpolatedDirRaw.map(d => d.direction)
         ];
 
-        const filtered: { speed: number[], direction: number[], min: number[], max: number[] } = { speed: [], direction: [], min: [], max: [] };
+        const filteredSpeed: number[] = [];
+        const filteredDirection: number[] = [];
         const halfLen = Math.floor(filter.length / 2);
 
-        for (let i = 0; i < interpolated.length; i++) {
-            let acc = { speed: 0, direction: 0, min: 0, max: 0 };
-            const sample = { speed: 0, direction: 0, min: 0, max: 0 };
+        for (let i = 0; i < interpolatedSpeed.length; i++) {
+            let accSpeed = 0;
+            let accDir = 0;
             for (let j = 0; j < filter.length; j++) {
                 const index = i + j - halfLen;
-                sample.speed = interpolated[Math.max(0, Math.min(index, interpolated.length - 1))].speed;
-                acc.speed += filter[j] * sample.speed;
-                sample.direction = interpolated[Math.max(0, Math.min(index, interpolated.length - 1))].direction;
-                acc.direction += filter[j] * sample.direction;
-                sample.min = minMaxMap[Math.max(0, Math.min(index, interpolated.length - 1))].min;
-                acc.min += filter[j] * sample.min;
-                sample.max = minMaxMap[Math.max(0, Math.min(index, interpolated.length - 1))].max;
-                acc.max += filter[j] * sample.max;
+                const speedSample = paddedSpeed[Math.max(0, Math.min(index, paddedSpeed.length - 1))];
+                const dirSample = paddedDir[Math.max(0, Math.min(index, paddedDir.length - 1))];
+                accSpeed += filter[j] * speedSample;
+                accDir += filter[j] * dirSample;
             }
-            filtered.speed.push(acc.speed);
-            filtered.direction.push(acc.direction);
-            filtered.min.push(acc.min);
-            filtered.max.push(acc.max);
+            filteredSpeed.push(accSpeed);
+            filteredDirection.push(accDir);
         }
 
-        const Data = interpolated.map((point, i) => ({
+        const speedData = interpolatedSpeed.map((point, i) => ({
             time: DateTime.fromSeconds(point.time).toFormat("MM/dd HH:mm"),
             original: point.speed,
-            direction: point.direction,
+            filtered: filteredSpeed[i] ?? 0,
             min: minMaxMap[i]?.min ?? 0,
-            max: minMaxMap[i]?.max ?? 0,
-            filtered: filtered.speed[i] ?? 0,
-            minFiltered: filtered.min[i] ?? 0,
-            maxFiltered: filtered.max[i] ?? 0,
-            directionFiltered: filtered.direction[i] ?? 0
+            max: minMaxMap[i]?.max ?? 0
         }));
 
-        return Data as DataPoint[];
+        const directionData: DirectionDataPoint[] = interpolatedDirRaw.map((point, i) => ({
+            time: point.time,
+            original: point.direction ?? 0,
+            filtered: filteredDirection[i] ?? 0
+        }));
+
+        return { speedData, directionData };
     }, [readings, filter]);
 
     return (
@@ -215,7 +237,7 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
             </ResponsiveContainer>
 
             <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={Data} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
+                <LineChart data={speedData} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="time" minTickGap={50} interval="preserveStartEnd"
                         label={{ value: 'Time', position: 'insideBottom', dy: 30 }} />
@@ -223,13 +245,11 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
                     <Tooltip />
                     <Legend />
                     <Line type="monotone" dataKey="original" stroke="#8884d8" dot={false} name="Original" />
-                    <Line type="monotone" dataKey="min" stroke="#ff0000" dot={false} name="Min" />
-                    <Line type="monotone" dataKey="max" stroke="#00ff00" dot={false} name="Max" />
                 </LineChart>
             </ResponsiveContainer>
 
             <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={Data} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
+                <LineChart data={speedData} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="time" minTickGap={50} interval="preserveStartEnd"
                         label={{ value: 'Time', position: 'insideBottom', dy: 30 }} />
@@ -237,21 +257,21 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
                     <Tooltip />
                     <Legend />
                     <Line type="monotone" dataKey="filtered" stroke="#82ca9d" dot={false} name="Filtered" />
-                    <Line type="monotone" dataKey="maxFiltered" stroke="#82ca9d" dot={false} name="MaxFiltered" />
-                    <Line type="monotone" dataKey="minFiltered" stroke="#82ca9d" dot={false} name="MinFiltered" />
+                    <Line type="monotone" dataKey="min" stroke="#ff0000" dot={false} name="Min" />
+                    <Line type="monotone" dataKey="max" stroke="#00ff00" dot={false} name="Max" />
                 </LineChart>
             </ResponsiveContainer>
 
             <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={Data} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
+                <LineChart data={directionData} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="time" minTickGap={50} interval="preserveStartEnd"
                         label={{ value: 'Time', position: 'insideBottom', dy: 30 }} />
                     <YAxis label={{ value: 'Direction (°)', angle: -90, position: 'insideLeft', dx: -10 }} />
                     <Tooltip />
                     <Legend />
-                    {/* <Line type="monotone" dataKey="direction" stroke="#ff9900" dot={false} name="Direction" /> */}
-                    <Line type="monotone" dataKey="directionFiltered" stroke="#ff9900" dot={false} name="DirectionFiltered" />
+                    <Line type="monotone" dataKey="original" stroke="#ff9900" dot={false} name="Filtered Direction" />
+                    <Line type="monotone" dataKey="filtered" stroke="#ff9900" dot={false} name="Filtered Direction" />
                 </LineChart>
             </ResponsiveContainer>
         </>

@@ -40,6 +40,8 @@ import Host from 'components/Admin/Host'
 import InfoDisplay from 'components/Admin/Information'
 import Debug from 'components/Admin/Debug'
 import { MessageProvider, MessageLogger } from 'components/Admin/MessageLogger'
+import FilterFrequencyResponse from 'components/Admin/filter'
+
 
 import Logout from 'components/Navigation/Logout'
 import { pageName } from 'components/paths'
@@ -68,6 +70,10 @@ export function App(): React.ReactElement {
                             <GpNavbar />
                             <Container fluid>
                                 <Routes>
+
+                                    <Route path="/filter" element={<FilterFrequencyResponse />} />
+
+
                                     {/* Redirect root to /home */}
                                     <Route path="/" element={<Navigate to="/home" replace />} />
                                     <Route path="/home" element={<Home />} />
