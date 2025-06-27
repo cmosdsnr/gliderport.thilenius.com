@@ -314,6 +314,7 @@ export function DataProvider({ children }: any): React.ReactElement {
                 const { command, subCommand, data, error } = messageBody;
 
                 console.log("ws message received: ", messageBody.command);
+                messageLogger(0, command, "none", null);
                 switch (command) {
                     case 'newRecords': {
                         if (!data || !data.records || data.records.length === 0) {

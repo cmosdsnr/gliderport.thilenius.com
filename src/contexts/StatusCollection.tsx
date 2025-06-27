@@ -24,8 +24,8 @@ export interface Stats {
  * Online status interface.
  */
 export type Online = {
-    online: number;
-    touched: string;
+    online: boolean;
+    touched: number;
 }
 
 /**
@@ -68,7 +68,7 @@ export function StatusCollectionProvider({ children }: any) {
     const [forecast, setForecast] = useState<any>({});
     const [siteHits, setSiteHits] = useState<Stats>({ lastReset: 0, timestamp: 0, weeks: { start: 0, count: [], unique: [] }, months: { start: 0, count: [], unique: [] }, days: { start: 0, count: [], unique: [] } });
     const [lastImage, setLastImage] = useState<number>(0);
-    const [online, setOnline] = useState<Online>({ online: 0, touched: "" });          // hit stats
+    const [online, setOnline] = useState<Online>({ online: true, touched: 0 });          // hit stats
 
     async function loadInitial() {
         try {
@@ -118,6 +118,8 @@ export function StatusCollectionProvider({ children }: any) {
                 setForecast(e.record.record);
             } else if (e.record.name === 'siteHits') {
                 setSiteHits(e.record.record);
+            } else if (e.record.name === 'online') {
+                setOnline(e.record.record);
             }
         });
 
