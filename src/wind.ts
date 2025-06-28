@@ -115,6 +115,9 @@ loadWindTable();
  * Broadcasts them to WebSocket clients and prunes records older than 14 days.
  * @returns Promise that resolves after update and code recalculation.
  */
+let ts = Date.now();
+let newRec = 0;
+
 export const UpdateWindTable = async (): Promise<void> => {
   const log: string[] = [""];
 
@@ -143,7 +146,13 @@ export const UpdateWindTable = async (): Promise<void> => {
       windTable.shift();
     }
 
-    logStr(log, "UpdateWindTable", `Added ${newRecords.length} new records.`);
+    //logStr(log, "UpdateWindTable", `Added ${newRecords.length} new records.`);
+    newRec += newRecords.length;
+    if (Date.now() - ts > 3600 * 1000) {
+      logStr(log, "UpdateWindTable", `Added ${newRec} new records in the past hour.`);
+      ts = Date.now();
+      newRec = 0;
+    }
   } catch (error: any) {
     logStr(log, "UpdateWindTable", "Error:", error.message);
   }
