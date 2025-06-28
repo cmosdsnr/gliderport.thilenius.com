@@ -233,21 +233,21 @@ export const convertToCodes = (windTable: WindTable): void => {
   let day: CodeEntry[] = [];
 
   while (windTable.length > idx) {
-    while (windTable[idx].timestamp < sunriseTs) idx++;
-    if (windTable[idx].timestamp > sunsetTs) {
+    while (windTable[idx]?.timestamp < sunriseTs) idx++;
+    if (windTable[idx]?.timestamp > sunsetTs) {
       // No data points for this day
       day.push([sunriseTs, WindCode.NO_DATA]);
     } else {
       const code = getCode(windTable[idx].speed, windTable[idx].direction);
       day.push([sunriseTs, code]);
 
-      while (idx < windTable.length && windTable[idx].timestamp < day[day.length - 1][0] + 120) idx++;
-      while (idx < windTable.length && windTable[idx].timestamp < sunsetTs) {
+      while (idx < windTable.length && windTable[idx]?.timestamp < day[day.length - 1][0] + 120) idx++;
+      while (idx < windTable.length && windTable[idx]?.timestamp < sunsetTs) {
         const v = windTable[idx];
         const code = getCode(v.speed, v.direction);
         if (code !== day[day.length - 1][1]) {
           day.push([v.timestamp, code]);
-          while (idx < windTable.length && windTable[idx].timestamp < v.timestamp + 120) idx++;
+          while (idx < windTable.length && windTable[idx]?.timestamp < v.timestamp + 120) idx++;
         } else idx++;
       }
     }
