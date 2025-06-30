@@ -13,6 +13,7 @@
 
 import fs from "fs";
 import { __dirname } from "miscellaneous.js";
+import { DateTime } from "luxon";
 
 // Determine the log file path.
 let __logFile = `${__dirname}/gliderport/logs/gpUpdate.log`;
@@ -27,12 +28,9 @@ let __logFile = `${__dirname}/gliderport/logs/gpUpdate.log`;
  * @param args - The message components to log. The first element is used as a label.
  */
 export const log = (...args: any[]): void => {
-  const d = new Date();
-  const date = `${d.getMonth() + 1}-${d.getDate()}-${d.getFullYear()}`;
-  const time = `${d.getHours()}:${d.getMinutes().toString().padStart(2, "0")}:${d
-    .getSeconds()
-    .toString()
-    .padStart(2, "0")}`;
+  const date = DateTime.fromMillis(Date.now(), { zone: "America/Los_Angeles" })
+    .toFormat("MM-dd-yyyy HH:mm:ss")
+    .padEnd(20, " ");
 
   // Label formatting: append colon and pad to 17 characters.
   args[0] = args[0].toString() + ":";
@@ -42,7 +40,7 @@ export const log = (...args: any[]): void => {
   const message = args.join(" ");
 
   // Append to log file with newline.
-  fs.appendFileSync(__logFile, `${date} ${time} ${message}\n`);
+  fs.appendFileSync(__logFile, `${date} ${message}\n`);
 };
 
 /**
@@ -80,5 +78,6 @@ export const logStr = (logArray: string[], ...args: any[]): void => {
  * @param logArray - The array of log strings to write to the file.
  */
 export const writeLog = (logArray: string[]): void => {
+  if (!logArray || logArray.length === 0) return;
   fs.appendFileSync(__logFile, logArray.join("\n") + "\n");
 };
