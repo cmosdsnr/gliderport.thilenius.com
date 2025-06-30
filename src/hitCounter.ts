@@ -368,6 +368,9 @@ const recreateSiteHits = async (): Promise<any> => {
  * @param req - Express request (used to extract IP).
  * @returns A promise resolving to an object indicating success or duplicate.
  */
+let lastReport = Date.now();
+let recentHits = 0;
+
 export const hit = async (req: Request): Promise<{ message?: string; error?: string }> => {
   const log: string[] = [""];
   const forwarded = req.headers["x-forwarded-for"];
@@ -379,6 +382,11 @@ export const hit = async (req: Request): Promise<{ message?: string; error?: str
   const records = await pb.collection("hitCounter").getFullList({
     filter: `created >= "${tenMinutesAgo}" && ip = "${ip}"`,
   });
+
+  console.log(`created >= "${tenMinutesAgo}" && ip = "${ip}"`);
+  console.log(records);
+  console.table(records, ["id", "ip", "created"]);
+
   if (records.length > 0) {
     logStr(log, "hit", `Duplicate hit from IP ${ip} within last 10 minutes.`);
     writeLog(log);
@@ -392,8 +400,16 @@ export const hit = async (req: Request): Promise<{ message?: string; error?: str
     if (now > nextDay.toMillis()) await updateDay();
     if (now > nextWeek.toMillis()) await updateWeek();
     if (now > nextMonth.toMillis()) await updateMonth();
-    logStr(log, "hit", `Recorded hit from IP ${ip}`);
-    writeLog(log);
+    recentHits++;
+    if (Date.now() - lastReport > 15 * 60 * 1000) {
+      if (recentHits > 0) {
+        logStr(log, "hit", `Recorded ${recentHits} hits in the past 15 minutes.`);
+        writeLog(log);
+        recentHits = 0;
+      }
+      lastReport = Date.now();
+    }
+
     return { message: "Hit recorded" };
   } catch (error: any) {
     logStr(log, "hit", "Error creating hitCounter record:", error);
