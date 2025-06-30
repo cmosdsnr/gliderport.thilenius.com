@@ -380,7 +380,7 @@ export const hit = async (req: Request): Promise<{ message?: string; error?: str
 
   // Check for any recent hit from this IP in the last 10 minutes
   const records = await pb.collection("hitCounter").getFullList({
-    filter: `_created >= "${tenMinutesAgo}" && ip = "${ip}"`,
+    filter: `created >= "${tenMinutesAgo}" && ip = "${ip}"`,
   });
 
   console.log(`created >= "${tenMinutesAgo}" && ip = "${ip}"`);
