@@ -68,7 +68,7 @@ import express, { Request, Response, Router } from "express";
 import { pb } from "pb.js";
 import { ToId } from "miscellaneous.js";
 import { DateTime } from "luxon";
-import { logStr, writeLog } from "log.js";
+import { logStr, writeLog, log } from "log.js";
 
 //
 // Load and validate the existing siteHits status record from PocketBase.
@@ -372,7 +372,7 @@ let lastReport = Date.now();
 let recentHits = 0;
 
 export const hit = async (req: Request): Promise<{ message?: string; error?: string }> => {
-  const log: string[] = [""];
+  //   const log: string[] = [""];
   const forwarded = req.headers["x-forwarded-for"];
   const ip = (typeof forwarded === "string" ? forwarded.split(",")[0] : req.socket.remoteAddress) || "unknown";
   const now = Date.now();
@@ -388,8 +388,7 @@ export const hit = async (req: Request): Promise<{ message?: string; error?: str
   console.table(records, ["id", "ip", "created"]);
 
   if (records.length > 0) {
-    logStr(log, "hit", `Duplicate hit from IP ${ip} within last 10 minutes.`);
-    writeLog(log);
+    log("hit", `Duplicate hit from IP ${ip} within last 10 minutes.`);
     return { message: "Duplicate hit within 10 minutes" };
   }
 
@@ -403,8 +402,7 @@ export const hit = async (req: Request): Promise<{ message?: string; error?: str
     recentHits++;
     if (Date.now() - lastReport > 15 * 60 * 1000) {
       if (recentHits > 0) {
-        logStr(log, "hit", `Recorded ${recentHits} hits in the past 15 minutes.`);
-        writeLog(log);
+        log("hit", `Recorded ${recentHits} hits in the past 15 minutes.`);
         recentHits = 0;
       }
       lastReport = Date.now();
@@ -412,8 +410,7 @@ export const hit = async (req: Request): Promise<{ message?: string; error?: str
 
     return { message: "Hit recorded" };
   } catch (error: any) {
-    logStr(log, "hit", "Error creating hitCounter record:", error);
-    writeLog(log);
+    log("hit", "Error creating hitCounter record:", error);
     return { error: "Error recording hit" };
   }
 };

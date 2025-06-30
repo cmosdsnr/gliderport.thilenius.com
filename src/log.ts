@@ -80,5 +80,5 @@ export const logStr = (logArray: string[], ...args: any[]): void => {
  * @param logArray - The array of log strings to write to the file.
  */
 export const writeLog = (logArray: string[]): void => {
-  fs.appendFileSync(__logFile, logArray.join("\n"));
+  fs.appendFileSync(__logFile, logArray.join("\n") + "\n");
 };
