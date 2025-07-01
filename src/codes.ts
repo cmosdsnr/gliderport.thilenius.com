@@ -241,7 +241,7 @@ export const convertToCodes = (windTable: WindTable): void => {
       !("speed" in windTable[idx]) ||
       !("direction" in windTable[idx])
     ) {
-      console.warn(`Skipping invalid windTable entry at index ${idx}:`, windTable[idx]);
+      console.warn(`Skipping invalid windTable entry at index ${idx}:`, windTable[idx], " length:", windTable.length);
       idx++;
       continue;
     }
