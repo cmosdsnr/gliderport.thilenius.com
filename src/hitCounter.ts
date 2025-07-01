@@ -376,11 +376,15 @@ export const hit = async (req: Request): Promise<{ message?: string; error?: str
   const forwarded = req.headers["x-forwarded-for"];
   const ip = (typeof forwarded === "string" ? forwarded.split(",")[0] : req.socket.remoteAddress) || "unknown";
   const now = Date.now();
-  const tenMinutesAgo = new Date(now - 10 * 60000).toISOString();
+  //   const tenMinutesAgo = new Date(now - 10 * 60000).toISOString();
+  const tenMinutesAgo = Date.now() - 10 * 60000;
 
   // Check for any recent hit from this IP in the last 10 minutes
+  //   const records = await pb.collection("hitCounter").getFullList({
+  //     filter: `created >= "${tenMinutesAgo}" && ip = "${ip}"`,
+  //   });
   const records = await pb.collection("hitCounter").getFullList({
-    filter: `created >= "${tenMinutesAgo}" && ip = "${ip}"`,
+    filter: `id >= "${ToId(tenMinutesAgo.toString())}" && ip = "${ip}"`,
   });
 
   console.log(`created >= "${tenMinutesAgo}" && ip = "${ip}"`);
