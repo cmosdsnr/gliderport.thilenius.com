@@ -233,6 +233,17 @@ export const convertToCodes = (windTable: WindTable): void => {
   let day: CodeEntry[] = [];
 
   while (windTable.length > idx) {
+    // if windTable[idx] doesn't have keys timestamp, speed, direction, skip it
+    if (
+      !windTable[idx] ||
+      !("timestamp" in windTable[idx]) ||
+      !("speed" in windTable[idx]) ||
+      !("direction" in windTable[idx])
+    ) {
+      console.warn(`Skipping invalid windTable entry at index ${idx}:`, windTable[idx]);
+      idx++;
+      continue;
+    }
     while (windTable[idx]?.timestamp < sunriseTs) idx++;
     if (windTable[idx]?.timestamp > sunsetTs) {
       // No data points for this day
