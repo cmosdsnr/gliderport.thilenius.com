@@ -41,7 +41,8 @@ import fs from "fs/promises";
 import path from "path";
 import { pb } from "pb.js";
 import { logStr, writeLog } from "log.js";
-import { __dirname } from "miscellaneous.js";
+import { __dirname, ToId } from "miscellaneous.js";
+import { DateTime } from "luxon";
 
 /**
  * A wind data record consisting of:
@@ -165,39 +166,20 @@ async function archiveLastMonth(): Promise<void> {
     const recentYear = parseInt(recentYearStr, 10);
     const recentMonth = parseInt(recentMonthStrWithExt.substring(0, 2), 10);
 
-    // Determine next month/year to archive.
-    let nextMonth: number, nextYear: number;
-    if (recentMonth < 12) {
-      nextMonth = recentMonth + 1;
-      nextYear = recentYear;
-    } else {
-      nextMonth = 1;
-      nextYear = recentYear + 1;
-    }
+    // create DateTime object for the last month start
+    const MonthStart = DateTime.fromObject(
+      { year: recentYear, month: recentMonth, day: 1 },
+      { zone: "America/Los_Angeles" }
+    ).plus({ months: 1 });
 
-    // Step 3: Compute UNIX timestamps for nextMonthStart and followingMonthStart (LA local time).
-    const nextMonthStartStr = `${nextYear}-${nextMonth.toString().padStart(2, "0")}-01 00:00:00`;
-    const nextMonthStartUTC = fromZonedTime(nextMonthStartStr, "America/Los_Angeles");
-    const nextMonthStartTimestamp = Math.floor(nextMonthStartUTC.getTime() / 1000);
+    const MonthEnd = MonthStart.plus({ months: 1 });
 
-    let followingMonth: number, followingYear: number;
-    if (nextMonth < 12) {
-      followingMonth = nextMonth + 1;
-      followingYear = nextYear;
-    } else {
-      followingMonth = 1;
-      followingYear = nextYear + 1;
-    }
-    const followingMonthStartStr = `${followingYear}-${followingMonth.toString().padStart(2, "0")}-01 00:00:00`;
-    const followingMonthStartUTC = fromZonedTime(followingMonthStartStr, "America/Los_Angeles");
-    const followingMonthStartTimestamp = Math.floor(followingMonthStartUTC.getTime() / 1000);
-
-    logStr(log, "archiveLastMonth", `Next month to archive: ${nextYear}-${nextMonth.toString().padStart(2, "0")}`);
-    logStr(log, "archiveLastMonth", `Time span: ${nextMonthStartTimestamp} to ${followingMonthStartTimestamp}`);
+    logStr(log, "archiveLastMonth", `Next month to archive: ${MonthStart.toFormat("MM-YY")}`);
+    logStr(log, "archiveLastMonth", `Time span: ${MonthStart.toSeconds()} to ${MonthEnd.toSeconds()}`);
 
     // Step 4: Verify the target month is complete (look for any record in the following month).
-    const completeFilter = `id >= "${followingMonthStartTimestamp}"`;
-    const completeRecords = await pb.collection("wind").getFullList(1, { sort: "id", filter: completeFilter });
+    const completeFilter = `id >= "${ToId(MonthEnd.toSeconds().toString())}"`;
+    const completeRecords = await pb.collection("wind").getFullList(1, { filter: completeFilter });
     if (completeRecords.length === 0) {
       logStr(log, "archiveLastMonth", "Next month is not complete. Aborting archive.");
       writeLog(log);
@@ -205,12 +187,14 @@ async function archiveLastMonth(): Promise<void> {
     }
 
     // Step 5: Query PocketBase for all records in [nextMonthStart, followingMonthStart).
-    const filter = `id >= "${nextMonthStartTimestamp}" && id < "${followingMonthStartTimestamp}"`;
+    const filter = `id >= "${ToId(MonthStart.toSeconds().toString())}" && id <= "${ToId(
+      MonthEnd.toSeconds().toString()
+    )}"`;
     const pbRecords = await pb.collection("wind").getFullList(100000, { sort: "id", filter });
     logStr(
       log,
       "archiveLastMonth",
-      `Found ${pbRecords.length} records to archive for ${nextYear}-${nextMonth.toString().padStart(2, "0")}.`
+      `Found ${pbRecords.length} records to archive for ${MonthStart.toFormat("MM-YY")}.`
     );
     if (pbRecords.length === 0) {
       logStr(log, "archiveLastMonth", "No records found for the target month. Nothing to archive.");
@@ -232,12 +216,12 @@ async function archiveLastMonth(): Promise<void> {
     });
 
     // Step 6: Save packed records to binary file "YYYY-MM.bin".
-    const filename = `${nextYear}-${nextMonth.toString().padStart(2, "0")}.bin`;
+    const filename = `${MonthStart.toFormat("YYYY-MM")}.bin`;
     await saveRecordsToBinaryFile(recordsToArchive, filename);
     logStr(log, "archiveLastMonth", `Archived ${recordsToArchive.length} records to ${filename}.`);
 
     // Step 7: Delete any wind records older than nextMonthStartTimestamp.
-    const deleteFilter = `id < "${nextMonthStartTimestamp}"`;
+    const deleteFilter = `id < "${ToId(MonthEnd.toSeconds().toString())}"`;
     const recordsToDelete = await pb.collection("wind").getFullList(100000, { sort: "id", filter: deleteFilter });
     logStr(log, "archiveLastMonth", `Found ${recordsToDelete.length} records to delete (older than archive).`);
     for (const record of recordsToDelete) {
