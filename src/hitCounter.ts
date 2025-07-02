@@ -370,6 +370,7 @@ const recreateSiteHits = async (): Promise<any> => {
  */
 let lastReport = Date.now();
 let recentHits = 0;
+let duplicateHits = 0;
 
 export const hit = async (req: Request): Promise<{ message?: string; error?: string }> => {
   //   const log: string[] = [""];
@@ -383,7 +384,8 @@ export const hit = async (req: Request): Promise<{ message?: string; error?: str
   });
 
   if (records.length > 0) {
-    log("hit", `Duplicate hit from IP ${ip} within last 10 minutes.`);
+    // log("hit", `Duplicate hit from IP ${ip} within last 10 minutes.`);
+    duplicateHits++;
     return { message: "Duplicate hit within 10 minutes" };
   }
 
@@ -397,8 +399,9 @@ export const hit = async (req: Request): Promise<{ message?: string; error?: str
     recentHits++;
     if (Date.now() - lastReport > 15 * 60 * 1000) {
       if (recentHits > 0) {
-        log("hit", `Recorded ${recentHits} hits in the past 15 minutes.`);
+        log("hit", `Recorded ${recentHits} hits and ${recentHits} duplicate hits in the past 15 minutes.`);
         recentHits = 0;
+        duplicateHits = 0;
       }
       lastReport = Date.now();
     }

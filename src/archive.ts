@@ -249,8 +249,10 @@ async function archiveLastMonth(): Promise<void> {
       }
     }
     logStr(log, "archiveLastMonth", "Archiving complete. Old records have been deleted.");
+    writeLog(log);
   } catch (error) {
     logStr(log, "archiveLastMonth", "Error in archiveLastMonth:", error);
+    writeLog(log);
   }
 }
 
