@@ -54,12 +54,9 @@ export const log = (...args: any[]): void => {
  * @param args     - The message components to log. The first message component is treated as a label.
  */
 export const logStr = (logArray: string[], ...args: any[]): void => {
-  const d = new Date();
-  const date = `${d.getMonth() + 1}-${d.getDate()}-${d.getFullYear()}`;
-  const time = `${d.getHours()}:${d.getMinutes().toString().padStart(2, "0")}:${d
-    .getSeconds()
-    .toString()
-    .padStart(2, "0")}`;
+  const date = DateTime.fromMillis(Date.now(), { zone: "America/Los_Angeles" })
+    .toFormat("MM-dd-yyyy HH:mm:ss")
+    .padEnd(20, " ");
 
   // Label formatting: append colon and pad to 25 characters.
   args[0] = args[0].toString() + ":";
@@ -69,7 +66,7 @@ export const logStr = (logArray: string[], ...args: any[]): void => {
   const message = args.join(" ");
 
   // Append to the provided log array with timestamp.
-  logArray.push(`${date} ${time} ${message}`);
+  logArray.push(`${date} ${message}`);
 };
 
 /**

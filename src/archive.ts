@@ -104,7 +104,7 @@ async function saveRecordsToBinaryFile(records: RecordType[], filename: string):
   const log: string[] = [""];
   const buffers = records.map(packRecord);
   const outputBuffer = Buffer.concat(buffers);
-  const outputPath = path.join(__dirname, "/bin/", filename);
+  const outputPath = path.join(__dirname, "/gliderport/bin/", filename);
 
   await fs.writeFile(outputPath, outputBuffer);
   logStr(log, "saveRecordsToBinaryFile", `Saved ${records.length} records to ${filename}`);
@@ -121,7 +121,7 @@ async function saveRecordsToBinaryFile(records: RecordType[], filename: string):
 async function getMostRecentArchiveFile(): Promise<string | null> {
   const log: string[] = [""];
   try {
-    const files = await fs.readdir(path.join(__dirname, "/bin"));
+    const files = await fs.readdir(path.join(__dirname, "/gliderport/bin"));
     const binFiles = files.filter((f) => /^\d{4}-\d{2}\.bin$/.test(f));
     if (binFiles.length === 0) return null;
     binFiles.sort(); // "2025-01.bin" < "2025-02.bin" < ...
