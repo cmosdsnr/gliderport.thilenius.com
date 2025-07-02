@@ -78,7 +78,7 @@ export const logStr = (logArray: string[], ...args: any[]): void => {
  * @param logArray - The array of log strings to write to the file.
  */
 export const writeLog = (logArray: string[]): void => {
-  if (!logArray || logArray.length === 0 || logArray[0].length < 3) {
+  if (!Array.isArray(logArray) || logArray.length === 0 || logArray[0].length < 3) {
     console.log("Bad LogArray.", logArray, logArray.length);
     return;
   }
