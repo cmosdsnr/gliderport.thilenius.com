@@ -80,7 +80,7 @@ export const writeLog = (logArray: string[]): void => {
     return;
   }
   if (logArray.length === 1 && logArray[0] === "") {
-    console.log("Empty LogArray.", logArray, logArray.length);
+    // console.log("Empty LogArray.", logArray, logArray.length);
     return;
   }
   fs.appendFileSync(__logFile, logArray.join("\n") + "\n");

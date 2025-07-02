@@ -160,6 +160,7 @@ async function archiveLastMonth(): Promise<void> {
       return;
     }
     logStr(log, "archiveLastMonth", "Most recent archived file:", mostRecentFile);
+    console.log("archiveLastMonth", "Most recent archived file:", mostRecentFile);
 
     // Step 2: Parse year and month from "YYYY-MM.bin".
     const [recentYearStr, recentMonthStrWithExt] = mostRecentFile.split("-");
