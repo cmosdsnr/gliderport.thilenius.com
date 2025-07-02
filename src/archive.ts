@@ -43,6 +43,7 @@ import { pb } from "pb.js";
 import { logStr, writeLog } from "log.js";
 import { __dirname, ToId } from "miscellaneous.js";
 import { DateTime } from "luxon";
+import { write } from "fs";
 
 /**
  * A wind data record consisting of:
@@ -174,6 +175,7 @@ async function archiveLastMonth(): Promise<void> {
     ).plus({ months: 1 });
 
     const MonthEnd = MonthStart.plus({ months: 1 });
+    const filename = `${MonthStart.toFormat("YYYY-MM")}.bin`;
 
     logStr(log, "archiveLastMonth", `Next month to archive: ${MonthStart.toFormat("MM-YY")}`);
     logStr(log, "archiveLastMonth", `Time span: ${MonthStart.toSeconds()} to ${MonthEnd.toSeconds()}`);
@@ -186,53 +188,68 @@ async function archiveLastMonth(): Promise<void> {
       writeLog(log);
       return;
     }
+    writeLog(log);
+    log.length = 0; // Clear log for next steps
 
     // Step 5: Query PocketBase for all records in [nextMonthStart, followingMonthStart).
     const filter = `id >= "${ToId(MonthStart.toSeconds().toString())}" && id <= "${ToId(
       MonthEnd.toSeconds().toString()
     )}"`;
-    const pbRecords = await pb.collection("wind").getFullList(100000, { sort: "id", filter });
-    logStr(
-      log,
-      "archiveLastMonth",
-      `Found ${pbRecords.length} records to archive for ${MonthStart.toFormat("MM-YY")}.`
-    );
-    if (pbRecords.length === 0) {
+
+    const batchSize = 500;
+    let page = 1;
+    let allRecords: RecordType[] = [];
+    let totalCount = 0;
+    while (true) {
+      const response = await pb.collection("wind").getList(page, batchSize, {
+        filter: filter,
+        sort: "id", // optional
+      });
+
+      // Map PocketBase records into RecordType tuples.
+      const recordsToArchive: RecordType[] = response.items.map((record: any) => {
+        const timestamp = parseInt(record.id, 10);
+        return [
+          timestamp,
+          record.speed > 511 ? 511 : record.speed,
+          record.direction > 359 ? 359 : record.direction,
+          record.temperature > 1023 ? 1023 : record.temperature,
+          record.humidity,
+          record.pressure > 4090 ? 4090 : record.pressure < -4090 ? -4090 : record.pressure,
+        ] as RecordType;
+      });
+      for (const record of response.items) {
+        try {
+          await pb.collection("wind").delete(record.id);
+        } catch (err) {
+          logStr(log, "archiveLastMonth", `Error deleting record with id ${record.id}:`, err);
+        }
+      }
+
+      allRecords = allRecords.concat(recordsToArchive);
+      if (allRecords.length > 0 && (allRecords.length >= 2000 || response.items.length < batchSize)) {
+        await saveRecordsToBinaryFile(recordsToArchive, filename);
+        totalCount += recordsToArchive.length;
+        recordsToArchive.length = 0; // Clear for next batch
+        // logStr(log, "archiveLastMonth", `Saved ${totalCount} records to ${filename} so far.`);
+      }
+
+      if (response.items.length < batchSize) break;
+      page++;
+    }
+
+    console.log(`Total filtered records fetched: ${totalCount} for ${MonthStart.toFormat("MM-YY")}.`);
+    if (totalCount === 0) {
       logStr(log, "archiveLastMonth", "No records found for the target month. Nothing to archive.");
       writeLog(log);
       return;
-    }
+    } else
+      logStr(
+        log,
+        "archiveLastMonth",
+        `Total filtered records fetched: ${totalCount} for ${MonthStart.toFormat("MM-YY")}.`
+      );
 
-    // Map PocketBase records into RecordType tuples.
-    const recordsToArchive: RecordType[] = pbRecords.map((record: any) => {
-      const timestamp = parseInt(record.id, 10);
-      return [
-        timestamp,
-        record.speed > 511 ? 511 : record.speed,
-        record.direction > 359 ? 359 : record.direction,
-        record.temperature > 1023 ? 1023 : record.temperature,
-        record.humidity,
-        record.pressure > 4090 ? 4090 : record.pressure < -4090 ? -4090 : record.pressure,
-      ] as RecordType;
-    });
-
-    // Step 6: Save packed records to binary file "YYYY-MM.bin".
-    const filename = `${MonthStart.toFormat("YYYY-MM")}.bin`;
-    await saveRecordsToBinaryFile(recordsToArchive, filename);
-    logStr(log, "archiveLastMonth", `Archived ${recordsToArchive.length} records to ${filename}.`);
-
-    // Step 7: Delete any wind records older than nextMonthStartTimestamp.
-    const deleteFilter = `id < "${ToId(MonthEnd.toSeconds().toString())}"`;
-    const recordsToDelete = await pb.collection("wind").getFullList(100000, { sort: "id", filter: deleteFilter });
-    logStr(log, "archiveLastMonth", `Found ${recordsToDelete.length} records to delete (older than archive).`);
-    for (const record of recordsToDelete) {
-      try {
-        await pb.collection("wind").delete(record.id);
-        logStr(log, "archiveLastMonth", `Deleted record with id ${record.id}`);
-      } catch (err) {
-        logStr(log, "archiveLastMonth", `Error deleting record with id ${record.id}:`, err);
-      }
-    }
     logStr(log, "archiveLastMonth", "Archiving complete. Old records have been deleted.");
     writeLog(log);
   } catch (error) {
