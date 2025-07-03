@@ -109,7 +109,24 @@ async function saveRecordsToBinaryFile(records: RecordType[], filename: string):
   const outputPath = path.join(__dirname, "/gliderport/bin/", filename);
 
   await fs.writeFile(outputPath, outputBuffer);
-  logStr(log, "saveRecordsToBinaryFile", `Saved ${records.length} records to ${filename}`);
+  writeLog(log);
+}
+
+/**
+ * Append an array of wind data records to a binary file in the archive directory.
+ * Each record is packed via {@link packRecord} and concatenated into a single `Buffer`.
+ *
+ * @param records  - Array of wind data records to save.
+ * @param filename - Filename (in "YYYY-MM.bin" format) for the output binary.
+ * @returns Resolves when the file write completes.
+ */
+async function appendRecordsToBinaryFile(records: RecordType[], filename: string): Promise<void> {
+  const log: string[] = [""];
+  const buffers = records.map(packRecord);
+  const outputBuffer = Buffer.concat(buffers);
+  const outputPath = path.join(__dirname, "/gliderport/bin/", filename);
+
+  await fs.appendFile(outputPath, outputBuffer);
   writeLog(log);
 }
 
@@ -175,9 +192,9 @@ async function archiveLastMonth(): Promise<void> {
     ).plus({ months: 1 });
 
     const MonthEnd = MonthStart.plus({ months: 1 });
-    const filename = `${MonthStart.toFormat("YYYY-MM")}.bin`;
+    const filename = `${MonthStart.toFormat("yyyy-MM")}.bin`;
 
-    logStr(log, "archiveLastMonth", `Next month to archive: ${MonthStart.toFormat("MM-YY")}`);
+    logStr(log, "archiveLastMonth", `Next month to archive: ${MonthStart.toFormat("MM-yy")}`);
     logStr(log, "archiveLastMonth", `Time span: ${MonthStart.toSeconds()} to ${MonthEnd.toSeconds()}`);
 
     // Step 4: Verify the target month is complete (look for any record in the following month).
@@ -200,6 +217,7 @@ async function archiveLastMonth(): Promise<void> {
     let page = 1;
     let allRecords: RecordType[] = [];
     let totalCount = 0;
+    let deleteCount = 0;
     while (true) {
       const response = await pb.collection("wind").getList(page, batchSize, {
         filter: filter,
@@ -220,7 +238,8 @@ async function archiveLastMonth(): Promise<void> {
       });
       for (const record of response.items) {
         try {
-          await pb.collection("wind").delete(record.id);
+          // await pb.collection("wind").delete(record.id);
+          deleteCount++;
         } catch (err) {
           logStr(log, "archiveLastMonth", `Error deleting record with id ${record.id}:`, err);
         }
@@ -228,8 +247,11 @@ async function archiveLastMonth(): Promise<void> {
 
       allRecords = allRecords.concat(recordsToArchive);
       if (allRecords.length > 0 && (allRecords.length >= 2000 || response.items.length < batchSize)) {
-        await saveRecordsToBinaryFile(recordsToArchive, filename);
+        totalCount === 0
+          ? await saveRecordsToBinaryFile(recordsToArchive, filename)
+          : await appendRecordsToBinaryFile(recordsToArchive, filename);
         totalCount += recordsToArchive.length;
+        logStr(log, "saveRecordsToBinaryFile", `Saved ${recordsToArchive.length} records to ${filename}`);
         recordsToArchive.length = 0; // Clear for next batch
         // logStr(log, "archiveLastMonth", `Saved ${totalCount} records to ${filename} so far.`);
       }
@@ -250,6 +272,7 @@ async function archiveLastMonth(): Promise<void> {
         `Total filtered records fetched: ${totalCount} for ${MonthStart.toFormat("MM-YY")}.`
       );
 
+    logStr(log, "archiveLastMonth", `Deleted ${deleteCount} Old records.`);
     logStr(log, "archiveLastMonth", "Archiving complete. Old records have been deleted.");
     writeLog(log);
   } catch (error) {
