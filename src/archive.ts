@@ -249,14 +249,13 @@ async function archiveLastMonth(): Promise<void> {
       }
 
       allRecords = allRecords.concat(recordsToArchive);
-      if (allRecords.length > 0 && (allRecords.length >= 2000 || response.items.length < batchSize)) {
+      if (allRecords.length > 0 && (allRecords.length >= 5000 || response.items.length < batchSize)) {
         totalCount === 0
           ? await saveRecordsToBinaryFile(recordsToArchive, filename)
           : await appendRecordsToBinaryFile(recordsToArchive, filename);
         totalCount += recordsToArchive.length;
         logStr(log, "saveRecordsToBinaryFile", `Saved ${allRecords.length} records to ${filename}`);
-        recordsToArchive.length = 0; // Clear for next batch
-        // logStr(log, "archiveLastMonth", `Saved ${totalCount} records to ${filename} so far.`);
+        allRecords.length = 0; // Clear for next batch
       }
 
       if (response.items.length < batchSize) break;
