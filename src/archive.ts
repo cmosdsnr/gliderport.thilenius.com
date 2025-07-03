@@ -251,7 +251,7 @@ async function archiveLastMonth(): Promise<void> {
       });
       for (const record of response.items) {
         try {
-          // await pb.collection("wind").delete(record.id);
+          await pb.collection("wind").delete(record.id);
           deleteCount++;
         } catch (err) {
           logStr(log, "archiveLastMonth", `Error deleting record with id ${record.id}:`, err);
