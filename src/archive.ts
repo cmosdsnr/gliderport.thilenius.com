@@ -231,6 +231,8 @@ async function archiveLastMonth(): Promise<void> {
     let allRecords: RecordType[] = [];
     let totalCount = 0;
     let deleteCount = 0;
+    let idsToDelete: string[][] = [];
+
     while (true) {
       const response = await pb.collection("wind").getList(page, batchSize, {
         filter: filter,
@@ -249,24 +251,7 @@ async function archiveLastMonth(): Promise<void> {
           record.pressure > 4090 ? 4090 : record.pressure < -4090 ? -4090 : record.pressure,
         ] as RecordType;
       });
-      const idsToDelete = response.items.map((r: any) => r.id);
-      const batch = pb.createBatch();
-      idsToDelete.forEach((id: string) => batch.collection("wind").delete(id));
-      if (idsToDelete.length > 0)
-        await batch.send().catch((err: any) => {
-          logStr(log, "archiveLastMonth", "Error deleting records in batch:", err);
-        });
-      deleteCount += idsToDelete.length;
-
-      //   for (const record of response.items) {
-      //     try {
-      //       await pb.collection("wind").delete(record.id);
-      //       deleteCount++;
-      //     } catch (err) {
-      //       logStr(log, "archiveLastMonth", `Error deleting record with id ${record.id}:`, err);
-      //     }
-      //   }
-
+      idsToDelete.push(response.items.map((r: any) => r.id));
       allRecords = allRecords.concat(recordsToArchive);
       if (allRecords.length > 0 && (allRecords.length >= 5000 || response.items.length < batchSize)) {
         totalCount === 0
@@ -276,9 +261,18 @@ async function archiveLastMonth(): Promise<void> {
         logStr(log, "saveRecordsToBinaryFile", `Saved ${allRecords.length} records to ${filename}`);
         allRecords.length = 0; // Clear for next batch
       }
-
       if (response.items.length < batchSize) break;
       page++;
+    }
+
+    for (const ids of idsToDelete) {
+      const batch = pb.createBatch();
+      ids.forEach((id: string) => batch.collection("wind").delete(id));
+      //   if (idsToDelete.length > 0)
+      //     await batch.send().catch((err: any) => {
+      //       logStr(log, "archiveLastMonth", "Error deleting records in batch:", err);
+      //     });
+      deleteCount += ids.length;
     }
 
     console.log(`Total filtered records fetched: ${totalCount} for ${MonthStart.toFormat("yyyy-MM")}.`);
