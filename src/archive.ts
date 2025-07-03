@@ -199,7 +199,10 @@ async function archiveLastMonth(): Promise<void> {
 
     // Step 4: Verify the target month is complete (look for any record in the following month).
     const completeFilter = `id >= "${ToId(MonthEnd.toSeconds().toString())}"`;
-    const firstItem = await pb.collection("wind").getFirstListItem(completeFilter).catch(() => null);
+    const firstItem = await pb
+      .collection("wind")
+      .getFirstListItem(completeFilter)
+      .catch(() => null);
     if (!firstItem) {
       logStr(log, "archiveLastMonth", "Next month is not complete. Aborting archive.");
       writeLog(log);
@@ -336,5 +339,4 @@ export const archiveRoutes = (): Router => {
   });
 
   return router;
-};
 };
