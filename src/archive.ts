@@ -254,7 +254,7 @@ async function archiveLastMonth(): Promise<void> {
           ? await saveRecordsToBinaryFile(recordsToArchive, filename)
           : await appendRecordsToBinaryFile(recordsToArchive, filename);
         totalCount += recordsToArchive.length;
-        logStr(log, "saveRecordsToBinaryFile", `Saved ${recordsToArchive.length} records to ${filename}`);
+        logStr(log, "saveRecordsToBinaryFile", `Saved ${allRecords.length} records to ${filename}`);
         recordsToArchive.length = 0; // Clear for next batch
         // logStr(log, "archiveLastMonth", `Saved ${totalCount} records to ${filename} so far.`);
       }
@@ -263,7 +263,7 @@ async function archiveLastMonth(): Promise<void> {
       page++;
     }
 
-    console.log(`Total filtered records fetched: ${totalCount} for ${MonthStart.toFormat("MM-YY")}.`);
+    console.log(`Total filtered records fetched: ${totalCount} for ${MonthStart.toFormat("yyyy-MM")}.`);
     if (totalCount === 0) {
       logStr(log, "archiveLastMonth", "No records found for the target month. Nothing to archive.");
       writeLog(log);
@@ -272,7 +272,7 @@ async function archiveLastMonth(): Promise<void> {
       logStr(
         log,
         "archiveLastMonth",
-        `Total filtered records fetched: ${totalCount} for ${MonthStart.toFormat("MM-YY")}.`
+        `Total filtered records fetched: ${totalCount} for ${MonthStart.toFormat("yyyy-MM")}.`
       );
 
     logStr(log, "archiveLastMonth", `Deleted ${deleteCount} Old records.`);
