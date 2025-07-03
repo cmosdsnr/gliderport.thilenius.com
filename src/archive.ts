@@ -249,14 +249,23 @@ async function archiveLastMonth(): Promise<void> {
           record.pressure > 4090 ? 4090 : record.pressure < -4090 ? -4090 : record.pressure,
         ] as RecordType;
       });
-      for (const record of response.items) {
-        try {
-          await pb.collection("wind").delete(record.id);
-          deleteCount++;
-        } catch (err) {
-          logStr(log, "archiveLastMonth", `Error deleting record with id ${record.id}:`, err);
-        }
-      }
+      const idsToDelete = response.items.map((r: any) => r.id);
+      await pb
+        .collection("wind")
+        .deleteBulk(idsToDelete)
+        .catch((err: any) => {
+          logStr(log, "archiveLastMonth", "Error deleting records in bulk:", err);
+        });
+      deleteCount += idsToDelete.length;
+
+      //   for (const record of response.items) {
+      //     try {
+      //       await pb.collection("wind").delete(record.id);
+      //       deleteCount++;
+      //     } catch (err) {
+      //       logStr(log, "archiveLastMonth", `Error deleting record with id ${record.id}:`, err);
+      //     }
+      //   }
 
       allRecords = allRecords.concat(recordsToArchive);
       if (allRecords.length > 0 && (allRecords.length >= 5000 || response.items.length < batchSize)) {
