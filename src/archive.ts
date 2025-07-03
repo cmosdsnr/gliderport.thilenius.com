@@ -178,7 +178,6 @@ async function archiveLastMonth(): Promise<void> {
       return;
     }
     logStr(log, "archiveLastMonth", "Most recent archived file:", mostRecentFile);
-    console.log("archiveLastMonth", "Most recent archived file:", mostRecentFile);
 
     // Step 2: Parse year and month from "YYYY-MM.bin".
     const [recentYearStr, recentMonthStrWithExt] = mostRecentFile.split("-");
@@ -192,6 +191,17 @@ async function archiveLastMonth(): Promise<void> {
     ).plus({ months: 1 });
 
     const MonthEnd = MonthStart.plus({ months: 1 });
+
+    if (MonthEnd.plus({ months: 1 }).toSeconds() > DateTime.now().toSeconds()) {
+      logStr(
+        log,
+        "archiveLastMonth",
+        "Month to archive is not old enough. Need more than 1 mo. buffer. Aborting archive."
+      );
+      writeLog(log);
+      return;
+    }
+
     const filename = `${MonthStart.toFormat("yyyy-MM")}.bin`;
 
     logStr(log, "archiveLastMonth", `Next month to archive: ${MonthStart.toFormat("MM-yy")}`);
