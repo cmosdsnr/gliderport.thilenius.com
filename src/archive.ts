@@ -268,10 +268,10 @@ async function archiveLastMonth(): Promise<void> {
     for (const ids of idsToDelete) {
       const batch = pb.createBatch();
       ids.forEach((id: string) => batch.collection("wind").delete(id));
-      //   if (idsToDelete.length > 0)
-      //     await batch.send().catch((err: any) => {
-      //       logStr(log, "archiveLastMonth", "Error deleting records in batch:", err);
-      //     });
+      if (ids.length > 0)
+        await batch.send().catch((err: any) => {
+          logStr(log, "archiveLastMonth", "Error deleting records in batch:", err);
+        });
       deleteCount += ids.length;
     }
 
