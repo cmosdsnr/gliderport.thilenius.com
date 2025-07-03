@@ -250,12 +250,11 @@ async function archiveLastMonth(): Promise<void> {
         ] as RecordType;
       });
       const idsToDelete = response.items.map((r: any) => r.id);
-      await pb
-        .collection("wind")
-        .deleteBulk(idsToDelete)
-        .catch((err: any) => {
-          logStr(log, "archiveLastMonth", "Error deleting records in bulk:", err);
-        });
+      const batch = pb.createBatch();
+      idsToDelete.forEach((id: string) => batch.collection("wind").delete(id));
+      await batch.send().catch((err: any) => {
+        logStr(log, "archiveLastMonth", "Error deleting records in batch:", err);
+      });
       deleteCount += idsToDelete.length;
 
       //   for (const record of response.items) {
