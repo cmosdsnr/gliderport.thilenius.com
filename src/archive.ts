@@ -488,7 +488,7 @@ export const archiveRoutes = (): Router => {
       res.status(200).json({ filename, stats });
       return;
     } catch (error: any) {
-      res.status(500).json({ x: 2, filename, error: "Error statsOfRecords. " + error.message });
+      res.status(500).json({ filename, error: "Error statsOfRecords. " + error.message });
       return;
     }
   });
