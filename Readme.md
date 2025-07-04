@@ -44,11 +44,12 @@ The server is designed for reliability, modularity, and ease of integration with
   - `Readme.md` (this file): Project documentation and deployment notes.
   - Configuration files for Dokku, Nginx, and deployment scripts.
 
-dokku storage:mount gliderport /media/cmosdsnr/passport/gliderport/video:/app/video  
+dokku storage:mount gliderport /media/cmosdsnr/passport/gliderport/:/app/gliderport/
+dokku storage:mount gliderport /media/cmosdsnr/passport/gliderport/dest:/app/dest/
 dokku storage:report gliderport  
 dokku ps:restart gliderport  
 
-# Routes
+## Routes
 
 | file            | type | URL                    | description                                                                |
 | --------------- | ---- | ---------------------- | -------------------------------------------------------------------------- |
@@ -88,7 +89,7 @@ dokku ps:restart gliderport
 | openWeather     | GET  | getForecastCodes       | Computed wind condition codes for two days                                 |
 | streams         | GET  | stats                  | Returns current streaming metrics.                                         |
 
-# Embedding PocketBase (`gpdata`) Under Gliderport
+## Embedding PocketBase (`gpdata`) Under Gliderport
 
 This server uses an embedded PocketBase database deployed to the gpdata app. It is also visible at gliderport.thilenius.com/_ and gliderport.thilenius.com/api
 
