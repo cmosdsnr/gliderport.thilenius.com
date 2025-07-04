@@ -448,14 +448,20 @@ export const archiveRoutes = (): Router => {
       return res.status(400).send("Year out of range.");
     }
     const filename = `${req.query.year}-${month.toString().padStart(2, "0")}.bin`;
+    let r: any = {};
 
     try {
-      const r = await unpackRecords(filename);
+      r = await unpackRecords(filename);
       if (r.error) return res.status(404).send({ filename, error: r.error });
+    } catch (error: any) {
+      res.status(500).json({ filename, error: "Error unpackRecords. " + error.message });
+    }
+
+    try {
       const stats = statsOfRecords(r.records!);
       res.status(200).json({ filename, stats });
     } catch (error: any) {
-      res.status(500).json({ filename, error: "Error starting archive job. " + error.message });
+      res.status(500).json({ filename, error: "Error statsOfRecords. " + error.message });
     }
   });
 
