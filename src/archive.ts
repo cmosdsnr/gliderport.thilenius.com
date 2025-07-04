@@ -95,6 +95,59 @@ function packRecord(record: RecordType): Buffer {
 }
 
 /**
+ * Reads a binary archive file and unpacks all records into RecordType[].
+ * @param filename - The archive filename (e.g., "2025-01.bin")
+ * @returns Promise<RecordType[]> - Array of unpacked records
+ */
+export async function unpackRecords(filename: string): Promise<{ error?: string; records?: RecordType[] }> {
+  const filePath = path.join(__dirname, "/gliderport/bin/", filename);
+  //check file exists
+  try {
+    await fs.access(filePath);
+  } catch (error) {
+    return { error: `Archive file ${filename} does not exist.` };
+  }
+  const buffer = await fs.readFile(filePath);
+  const recordSize = 10; // Each packed record is 10 bytes
+  const count = Math.floor(buffer.length / recordSize);
+  const records: RecordType[] = [];
+  for (let i = 0; i < count; i++) {
+    const offset = i * recordSize;
+    const recBuf = buffer.subarray(offset, offset + recordSize);
+
+    // Unpack the record
+    const timestamp = recBuf.readUInt32LE(0);
+
+    // Read the packed 6 bytes as a BigInt
+    let packed = BigInt(0);
+    for (let j = 0; j < 6; j++) {
+      packed = (packed << 8n) | BigInt(recBuf[4 + j]);
+    }
+
+    // Helper to extract bits from packed value
+    const extract = (bits: number): number => {
+      const mask = (1n << BigInt(bits)) - 1n;
+      const value = Number(packed & mask);
+      packed >>= BigInt(bits);
+      return value;
+    };
+
+    // Extract in reverse order of packing
+    const pressure = extract(13);
+    const humidity = extract(7);
+    const temperature = extract(10);
+    const direction = extract(9);
+    const speed = extract(9);
+
+    // Map pressure back to signed value
+    const signedPressure = pressure > 4095 ? pressure - 8192 : pressure;
+
+    records.push([timestamp, speed, direction, temperature, humidity, signedPressure]);
+  }
+  return { records };
+}
+
+/**
  * Saves an array of wind data records to a binary file in the archive directory.
  * Each record is packed via {@link packRecord} and concatenated into a single `Buffer`.
  *
@@ -345,6 +398,21 @@ export const archiveRoutes = (): Router => {
     try {
       runScheduledArchive();
       res.status(200).send("Archive job started.");
+    } catch (error) {
+      res.status(500).send("Error starting archive job.");
+    }
+  });
+
+  router.get("/unpackArchive", async (req: Request, res: Response) => {
+    if (!req.query.month || !req.query.year) {
+      return res.status(400).send("Missing month or year query parameters.");
+    }
+    const filename = `${req.query.year}-${req.query.month.toString().padStart(2)}.bin`;
+
+    try {
+      const r = await unpackRecords(filename);
+      if (r.error) return res.status(404).send(r.error);
+      res.status(200).json(r.records);
     } catch (error) {
       res.status(500).send("Error starting archive job.");
     }
