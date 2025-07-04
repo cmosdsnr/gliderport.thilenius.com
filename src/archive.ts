@@ -148,33 +148,55 @@ export async function unpackRecords(filename: string): Promise<{ error?: string;
 }
 
 export function statsOfRecords(records: RecordType[]): any {
-  const stats: any = {};
   if (!records || records.length === 0) {
-    stats.error = "No records given to statsOfRecords.";
-    return stats;
+    return { error: "No records given to statsOfRecords." };
   }
 
-  stats.count = records.length;
+  const stats: any = { count: records.length };
 
-  stats.minTimestamp = Math.min(...records.map((r) => r[0]));
-  stats.maxTimestamp = Math.max(...records.map((r) => r[0]));
-  stats.minSpeed = Math.min(...records.map((r) => r[1]));
-  stats.maxSpeed = Math.max(...records.map((r) => r[1]));
-  stats.minDirection = Math.min(...records.map((r) => r[2]));
-  stats.maxDirection = Math.max(...records.map((r) => r[2]));
-  stats.minTemperature = Math.min(...records.map((r) => r[3]));
-  stats.maxTemperature = Math.max(...records.map((r) => r[3]));
-  stats.minHumidity = Math.min(...records.map((r) => r[4]));
-  stats.maxHumidity = Math.max(...records.map((r) => r[4]));
-  stats.minPressure = Math.min(...records.map((r) => r[5]));
-  stats.maxPressure = Math.max(...records.map((r) => r[5]));
+  // Initialize mins/maxs from the first record
+  let [minTs, maxTs] = [records[0][0], records[0][0]];
+  let [minSpeed, maxSpeed] = [records[0][1], records[0][1]];
+  let [minDir, maxDir] = [records[0][2], records[0][2]];
+  let [minTemp, maxTemp] = [records[0][3], records[0][3]];
+  let [minHum, maxHum] = [records[0][4], records[0][4]];
+  let [minPres, maxPres] = [records[0][5], records[0][5]];
 
-  stats.startTime = DateTime.fromSeconds(stats.minTimestamp, { zone: "America/Los_Angeles" }).toFormat(
-    "yyyy-MM-dd HH:mm:ss"
-  );
-  stats.endTime = DateTime.fromSeconds(stats.maxTimestamp, { zone: "America/Los_Angeles" }).toFormat(
-    "yyyy-MM-dd HH:mm:ss"
-  );
+  for (const [ts, sp, dir, tmp, hum, prs] of records) {
+    if (ts < minTs) minTs = ts;
+    if (ts > maxTs) maxTs = ts;
+
+    if (sp < minSpeed) minSpeed = sp;
+    if (sp > maxSpeed) maxSpeed = sp;
+
+    if (dir < minDir) minDir = dir;
+    if (dir > maxDir) maxDir = dir;
+
+    if (tmp < minTemp) minTemp = tmp;
+    if (tmp > maxTemp) maxTemp = tmp;
+
+    if (hum < minHum) minHum = hum;
+    if (hum > maxHum) maxHum = hum;
+
+    if (prs < minPres) minPres = prs;
+    if (prs > maxPres) maxPres = prs;
+  }
+
+  stats.minTimestamp = minTs;
+  stats.maxTimestamp = maxTs;
+  stats.minSpeed = minSpeed;
+  stats.maxSpeed = maxSpeed;
+  stats.minDirection = minDir;
+  stats.maxDirection = maxDir;
+  stats.minTemperature = minTemp;
+  stats.maxTemperature = maxTemp;
+  stats.minHumidity = minHum;
+  stats.maxHumidity = maxHum;
+  stats.minPressure = minPres;
+  stats.maxPressure = maxPres;
+
+  stats.startTime = DateTime.fromSeconds(minTs, { zone: "America/Los_Angeles" }).toFormat("yyyy-MM-dd HH:mm:ss");
+  stats.endTime = DateTime.fromSeconds(maxTs, { zone: "America/Los_Angeles" }).toFormat("yyyy-MM-dd HH:mm:ss");
 
   return stats;
 }
