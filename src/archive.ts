@@ -147,6 +147,37 @@ export async function unpackRecords(filename: string): Promise<{ error?: string;
   return { records };
 }
 
+export function statsOfRecords(records: RecordType[]): any {
+  const stats: any = {};
+  if (records.length === 0) {
+    return stats;
+  }
+
+  stats.count = records.length;
+
+  stats.minTimestamp = Math.min(...records.map((r) => r[0]));
+  stats.maxTimestamp = Math.max(...records.map((r) => r[0]));
+  stats.minSpeed = Math.min(...records.map((r) => r[1]));
+  stats.maxSpeed = Math.max(...records.map((r) => r[1]));
+  stats.minDirection = Math.min(...records.map((r) => r[2]));
+  stats.maxDirection = Math.max(...records.map((r) => r[2]));
+  stats.minTemperature = Math.min(...records.map((r) => r[3]));
+  stats.maxTemperature = Math.max(...records.map((r) => r[3]));
+  stats.minHumidity = Math.min(...records.map((r) => r[4]));
+  stats.maxHumidity = Math.max(...records.map((r) => r[4]));
+  stats.minPressure = Math.min(...records.map((r) => r[5]));
+  stats.maxPressure = Math.max(...records.map((r) => r[5]));
+
+  stats.startTime = DateTime.fromSeconds(stats.minTimestamp, { zone: "America/Los_Angeles" }).toFormat(
+    "yyyy-MM-dd HH:mm:ss"
+  );
+  stats.endTime = DateTime.fromSeconds(stats.maxTimestamp, { zone: "America/Los_Angeles" }).toFormat(
+    "yyyy-MM-dd HH:mm:ss"
+  );
+
+  return stats;
+}
+
 /**
  * Saves an array of wind data records to a binary file in the archive directory.
  * Each record is packed via {@link packRecord} and concatenated into a single `Buffer`.
@@ -407,12 +438,21 @@ export const archiveRoutes = (): Router => {
     if (!req.query.month || !req.query.year) {
       return res.status(400).send("Missing month or year query parameters.");
     }
-    const filename = `${req.query.year}-${req.query.month.toString().padStart(2)}.bin`;
+    const month = parseInt(req.query.month as string, 10);
+    const year = parseInt(req.query.year as string, 10);
+    if (isNaN(month) || isNaN(year) || month < 1 || month > 12) {
+      return res.status(400).send("Invalid month or year query parameters.");
+    }
+    if (year < 2015 || year > new Date().getFullYear()) {
+      return res.status(400).send("Year out of range.");
+    }
+    const filename = `${req.query.year}-${month.toString().padStart(2)}.bin`;
 
     try {
       const r = await unpackRecords(filename);
-      if (r.error) return res.status(404).send(r.error);
-      res.status(200).json(r.records);
+      if (r.error) return res.status(404).send({ filename, error: r.error });
+      const stats = statsOfRecords(r.records as RecordType[]);
+      res.status(200).json({ filename, stats });
     } catch (error) {
       res.status(500).send("Error starting archive job.");
     }
