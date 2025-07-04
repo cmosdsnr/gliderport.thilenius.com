@@ -452,10 +452,10 @@ export const archiveRoutes = (): Router => {
     try {
       const r = await unpackRecords(filename);
       if (r.error) return res.status(404).send({ filename, error: r.error });
-      const stats = statsOfRecords(r.records as RecordType[]);
+      const stats = statsOfRecords(r.records!);
       res.status(200).json({ filename, stats });
-    } catch (error) {
-      res.status(500).send("Error starting archive job.");
+    } catch (error: any) {
+      res.status(500).json({ filename, error: "Error starting archive job. " + error.message });
     }
   });
 
