@@ -21,6 +21,13 @@ IF %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
+ssh dokku@buddbliss.com ps:restart gliderport
+IF %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [ERROR] Failed to restart the Dokku app.
+    exit /b 1
+)
+
 REM 3) stage & commit
 git add .
 git commit -m "%COMMIT_MSG%"
