@@ -149,7 +149,8 @@ export async function unpackRecords(filename: string): Promise<{ error?: string;
 
 export function statsOfRecords(records: RecordType[]): any {
   const stats: any = {};
-  if (records.length === 0) {
+  if (!records || records.length === 0) {
+    stats.error = "No records given to statsOfRecords.";
     return stats;
   }
 
