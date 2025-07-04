@@ -446,7 +446,7 @@ export const archiveRoutes = (): Router => {
     if (year < 2015 || year > new Date().getFullYear()) {
       return res.status(400).send("Year out of range.");
     }
-    const filename = `${req.query.year}-${month.toString().padStart(2)}.bin`;
+    const filename = `${req.query.year}-${month.toString().padStart(2, "0")}.bin`;
 
     try {
       const r = await unpackRecords(filename);
