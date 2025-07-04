@@ -452,16 +452,22 @@ export const archiveRoutes = (): Router => {
 
     try {
       r = await unpackRecords(filename);
-      if (r.error) return res.status(404).send({ filename, error: r.error });
+      if (r.error) {
+        res.status(404).send({ filename, error: r.error });
+        return;
+      }
     } catch (error: any) {
       res.status(500).json({ filename, error: "Error unpackRecords. " + error.message });
+      return;
     }
 
     try {
       const stats = statsOfRecords(r.records!);
       res.status(200).json({ filename, stats });
+      return;
     } catch (error: any) {
       res.status(500).json({ filename, error: "Error statsOfRecords. " + error.message });
+      return;
     }
   });
 
