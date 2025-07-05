@@ -318,7 +318,7 @@ export function DataProvider({ children }: any): React.ReactElement {
                 switch (command) {
                     case 'newRecords': {
                         if (!data || !data.records || data.records.length === 0) {
-                            console.warn("No records found in newRecords message:", data);
+                            console.warn("No records found in newRecords message:", messageBody);
                             return;
                         }
 
