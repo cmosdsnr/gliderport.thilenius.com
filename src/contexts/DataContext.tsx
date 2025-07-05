@@ -317,11 +317,10 @@ export function DataProvider({ children }: any): React.ReactElement {
                 messageLogger(0, command, "none", null);
                 switch (command) {
                     case 'newRecords': {
-                        if (!data || !data.records || data.records.length === 0) {
-                            console.warn("No records found in newRecords message:", messageBody);
+                        if (messageBody.records.length === 0) {
+                            console.warn("No records found in newRecords message:", messageBody.records);
                             return;
                         }
-
                         // find last non-zero speed and use its direction
                         let lastValidDir = 270; // Default direction if no valid speed found
                         for (let i = readings.length - 1; i >= 0; i--) {
