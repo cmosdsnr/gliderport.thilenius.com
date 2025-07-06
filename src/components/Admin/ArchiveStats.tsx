@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Table } from 'react-bootstrap';
+import { DateTime } from 'luxon';
 
 interface Stats {
     count: number;
@@ -99,8 +100,14 @@ const ArchiveStats: React.FC = () => {
                         </tr>
                         <tr>
                             <td>Time Range</td>
-                            <td >{data.stats.startTime}</td>
-                            <td >{data.stats.endTime}</td>
+                            <td>
+                                {DateTime.fromSeconds(data.stats.minTimestamp)
+                                    .toFormat("LLL'.' dd, yyyy HH:mm:ss")}
+                            </td>
+                            <td>
+                                {DateTime.fromSeconds(data.stats.maxTimestamp)
+                                    .toFormat("LLL'.' dd, yyyy HH:mm:ss")}
+                            </td>
                         </tr>
                         <tr>
                             <td>Speed</td>
