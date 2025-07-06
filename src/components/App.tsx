@@ -41,6 +41,7 @@ import InfoDisplay from 'components/Admin/Information'
 import Debug from 'components/Admin/Debug'
 import { MessageProvider, MessageLogger } from 'components/Admin/MessageLogger'
 import FilterFrequencyResponse from 'components/Admin/filter'
+import ArchiveStats from 'components/Admin/ArchiveStats'
 
 
 import Logout from 'components/Navigation/Logout'
@@ -83,6 +84,7 @@ export function App(): React.ReactElement {
                                     <Route path="/admin/host" element={<PrivateRoute><Host /></PrivateRoute>} />
                                     <Route path="/admin/information" element={<PrivateRoute><InfoDisplay /></PrivateRoute>} />
                                     <Route path="/admin/debug" element={<Debug />} />
+                                    <Route path="/admin/archive" element={<ArchiveStats />} />
                                     <Route path="/admin/messages" element={<PrivateRoute><MessageLogger /></PrivateRoute>} />
 
                                     {/* Statistics Routes */}
