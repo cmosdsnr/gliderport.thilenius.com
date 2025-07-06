@@ -104,8 +104,8 @@ const ArchiveStats: React.FC = () => {
                         </tr>
                         <tr>
                             <td>Speed</td>
-                            <td>{data.stats.minSpeed}</td>
-                            <td>{data.stats.maxSpeed}</td>
+                            <td>{data.stats.minSpeed / 10} mph</td>
+                            <td>{data.stats.maxSpeed / 10} mph</td>
                         </tr>
                         <tr>
                             <td>Direction</td>
@@ -114,8 +114,8 @@ const ArchiveStats: React.FC = () => {
                         </tr>
                         <tr>
                             <td>Temperature</td>
-                            <td>{data.stats.minTemperature}°C</td>
-                            <td>{data.stats.maxTemperature}°C</td>
+                            <td>{data.stats.minTemperature / 10}°F</td>
+                            <td>{data.stats.maxTemperature / 10}°F</td>
                         </tr>
                         <tr>
                             <td>Humidity</td>
