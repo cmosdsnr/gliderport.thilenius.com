@@ -318,7 +318,7 @@ export function DataProvider({ children }: any): React.ReactElement {
                 switch (command) {
                     case 'newRecords': {
                         if (messageBody.records.length === 0) {
-                            console.warn("No records found in newRecords message:", messageBody.records);
+                            console.warn("No records found in newRecords message:", messageBody);
                             return;
                         }
                         // find last non-zero speed and use its direction

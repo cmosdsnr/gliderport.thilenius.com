@@ -73,7 +73,8 @@ export function HLSPlayer({
             // If Hls.js emits an error like network unavailable, try to recover
             hls.on(Hls.Events.ERROR, (eventName, data) => {
                 console.error('Hls.js error:', data);
-                window.location.reload(); // ⬅️ Full page reload
+                setTimeout(() => window.location.reload() // ⬅️ Full page reload
+                    , 5000); // Wait 5 seconds before reloading
 
                 // If it's a network disruption or manifest load error, try restart
                 if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
