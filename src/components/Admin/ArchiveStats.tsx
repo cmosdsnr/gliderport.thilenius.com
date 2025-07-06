@@ -80,7 +80,7 @@ const ArchiveStats: React.FC = () => {
             {error && <div className="text-danger">Error: {error}</div>}
 
             {data && (
-                <Table striped bordered hover responsive>
+                <Table striped bordered hover responsive style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <thead>
                         <tr>
                             <th>Name</th>
