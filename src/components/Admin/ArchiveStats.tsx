@@ -98,9 +98,9 @@ const ArchiveStats: React.FC = () => {
                             <td>{data.filename}</td>
                             <td>{data.stats.count}</td>
                             <td>{data.stats.startTime} – {data.stats.endTime}</td>
-                            <td>{data.stats.minSpeed} / {data.stats.maxSpeed}</td>
+                            <td>{data.stats.minSpeed / 10} / {data.stats.maxSpeed / 10}</td>
                             <td>{data.stats.minDirection}° / {data.stats.maxDirection}°</td>
-                            <td>{data.stats.minTemperature}°C / {data.stats.maxTemperature}°C</td>
+                            <td>{data.stats.minTemperature / 10}°F / {data.stats.maxTemperature / 10}°F</td>
                             <td>{data.stats.minHumidity}% / {data.stats.maxHumidity}%</td>
                             <td>{data.stats.minPressure} / {data.stats.maxPressure}</td>
                         </tr>
