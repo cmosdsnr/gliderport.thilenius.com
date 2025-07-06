@@ -83,26 +83,49 @@ const ArchiveStats: React.FC = () => {
                 <Table striped bordered hover responsive>
                     <thead>
                         <tr>
-                            <th>Filename</th>
-                            <th>Count</th>
-                            <th>Time Range</th>
-                            <th>Speed (min/max)</th>
-                            <th>Direction (min/max)</th>
-                            <th>Temperature (min/max)</th>
-                            <th>Humidity (min/max)</th>
-                            <th>Pressure (min/max)</th>
+                            <th>Name</th>
+                            <th>Min</th>
+                            <th>Max</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>{data.filename}</td>
-                            <td>{data.stats.count}</td>
-                            <td>{data.stats.startTime} – {data.stats.endTime}</td>
-                            <td>{data.stats.minSpeed / 10} / {data.stats.maxSpeed / 10}</td>
-                            <td>{data.stats.minDirection}° / {data.stats.maxDirection}°</td>
-                            <td>{data.stats.minTemperature / 10}°F / {data.stats.maxTemperature / 10}°F</td>
-                            <td>{data.stats.minHumidity}% / {data.stats.maxHumidity}%</td>
-                            <td>{data.stats.minPressure} / {data.stats.maxPressure}</td>
+                            <td>Filename</td>
+                            <td colSpan={2}>{data.filename}</td>
+                        </tr>
+                        <tr>
+                            <td>Count</td>
+                            <td colSpan={2}>{data.stats.count}</td>
+                        </tr>
+                        <tr>
+                            <td>Time Range</td>
+                            <td >{data.stats.startTime}</td>
+                            <td >{data.stats.endTime}</td>
+                        </tr>
+                        <tr>
+                            <td>Speed</td>
+                            <td>{data.stats.minSpeed}</td>
+                            <td>{data.stats.maxSpeed}</td>
+                        </tr>
+                        <tr>
+                            <td>Direction</td>
+                            <td>{data.stats.minDirection}°</td>
+                            <td>{data.stats.maxDirection}°</td>
+                        </tr>
+                        <tr>
+                            <td>Temperature</td>
+                            <td>{data.stats.minTemperature}°C</td>
+                            <td>{data.stats.maxTemperature}°C</td>
+                        </tr>
+                        <tr>
+                            <td>Humidity</td>
+                            <td>{data.stats.minHumidity}%</td>
+                            <td>{data.stats.maxHumidity}%</td>
+                        </tr>
+                        <tr>
+                            <td>Pressure</td>
+                            <td>{data.stats.minPressure}</td>
+                            <td>{data.stats.maxPressure}</td>
                         </tr>
                     </tbody>
                 </Table>
@@ -110,5 +133,4 @@ const ArchiveStats: React.FC = () => {
         </div>
     );
 };
-
 export default ArchiveStats;
