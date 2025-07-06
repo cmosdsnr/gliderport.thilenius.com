@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Table } from 'react-bootstrap';
-import { DateTime } from 'luxon';
 
 interface Stats {
     count: number;
@@ -16,6 +15,8 @@ interface Stats {
     maxHumidity: number;
     minPressure: number;
     maxPressure: number;
+    startTime: string;
+    endTime: string;
 }
 
 const ArchiveStats: React.FC = () => {
@@ -27,9 +28,8 @@ const ArchiveStats: React.FC = () => {
         years.push(y);
     }
     const [year, setYear] = useState(end.getFullYear());
-    const months = Array.from({ length: 12 }, (_, i) => i + 1).filter(
-        m => (year === end.getFullYear() ? m <= end.getMonth() : true)
-    );
+    const months = Array.from({ length: 12 }, (_, i) => i + 1)
+        .filter(m => (year === end.getFullYear() ? m <= end.getMonth() : true));
     const [month, setMonth] = useState(end.getMonth());
 
     const [data, setData] = useState<{ filename: string; stats: Stats } | null>(null);
@@ -39,9 +39,7 @@ const ArchiveStats: React.FC = () => {
     useEffect(() => {
         setLoading(true);
         setError(null);
-        fetch(
-            `https://gliderport.thilenius.com/gpapi/unpackArchive?year=${year}&month=${month}`
-        )
+        fetch(`https://gliderport.thilenius.com/gpapi/unpackArchive?year=${year}&month=${month}`)
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return res.json();
@@ -82,7 +80,7 @@ const ArchiveStats: React.FC = () => {
             {error && <div className="text-danger">Error: {error}</div>}
 
             {data && (
-                <Table striped bordered hover responsive>
+                <Table striped bordered hover responsive style={{ maxWidth: '800px', margin: '0 auto' }}>
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -101,19 +99,13 @@ const ArchiveStats: React.FC = () => {
                         </tr>
                         <tr>
                             <td>Time Range</td>
-                            <td>
-                                {DateTime.fromSeconds(data.stats.minTimestamp)
-                                    .toFormat("LLL'.' dd, yyyy HH:mm:ss")}
-                            </td>
-                            <td>
-                                {DateTime.fromSeconds(data.stats.maxTimestamp)
-                                    .toFormat("LLL'.' dd, yyyy HH:mm:ss")}
-                            </td>
+                            <td >{data.stats.startTime}</td>
+                            <td >{data.stats.endTime}</td>
                         </tr>
                         <tr>
                             <td>Speed</td>
-                            <td>{data.stats.minSpeed}</td>
-                            <td>{data.stats.maxSpeed}</td>
+                            <td>{data.stats.minSpeed / 10} mph</td>
+                            <td>{data.stats.maxSpeed / 10} mph</td>
                         </tr>
                         <tr>
                             <td>Direction</td>
@@ -122,8 +114,8 @@ const ArchiveStats: React.FC = () => {
                         </tr>
                         <tr>
                             <td>Temperature</td>
-                            <td>{data.stats.minTemperature}°C</td>
-                            <td>{data.stats.maxTemperature}°C</td>
+                            <td>{data.stats.minTemperature / 10}°F</td>
+                            <td>{data.stats.maxTemperature / 10}°F</td>
                         </tr>
                         <tr>
                             <td>Humidity</td>
@@ -141,5 +133,4 @@ const ArchiveStats: React.FC = () => {
         </div>
     );
 };
-
 export default ArchiveStats;
