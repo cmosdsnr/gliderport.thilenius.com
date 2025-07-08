@@ -178,6 +178,7 @@ export function GpNavbar(): React.ReactElement {
                                             gp_pi3_server Documentation
                                         </NavDropdown.Item>
                                         <NavDropdown.Item as={Link} to="/admin/Debug">Debug</NavDropdown.Item>
+                                        <NavDropdown.Item as={Link} to="/admin/archive">DB Archive</NavDropdown.Item>
                                     </NavDropdown>
                                 );
                             }
