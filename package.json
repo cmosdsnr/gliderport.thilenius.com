@@ -9,8 +9,9 @@
   "scripts": {
     "dev:debug": "ts-node-dev --transpile-only --respawn --inspect=4321 --project tsconfig.dev.json app.ts",
     "dev3": "tsup app.ts --watch --onSuccess \"node dist/app.cjs\"",
-    "dev": "tsup --format esm app.ts --watch gp_dist/**/* --onSuccess \"node dist/app.js\"",
+    "dev1": "tsup --format esm app.ts --watch gp_dist/**/* --onSuccess \"node dist/app.js\"",
     "dev2": "tsx watch app.ts NODE_OPTIONS=--trace-warnings",
+    "dev": "tsup app.ts --format esm --watch --onSuccess copy-dist.cmd",
     "start": "nodemon --watch dist/app.js --ext js --exec \"node dist/app.js\"",
     "build": "tsup --format esm app.ts",
     "docs:generate": "typedoc && cp -r docs\\* \\\\192.168.0.5\\passport\\gliderport\\docs\\backend",

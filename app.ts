@@ -94,6 +94,7 @@ console.log(`Serving front end assets from ${__dirname}/gliderport/frontend`);
 app.use("/images", express.static(path.join(__dirname, "/gliderport/images")));
 app.use("/stream", express.static(path.join(__dirname, "/gliderport/stream")));
 app.use("/docs", express.static(path.join(__dirname, "/gliderport/docs")));
+app.use("/bin", express.static(path.join(__dirname, "/gliderport/bin")));
 app.use("/", express.static(path.join(__dirname, "/gliderport/frontend")));
 
 // -----------------------------------------------------------------------------

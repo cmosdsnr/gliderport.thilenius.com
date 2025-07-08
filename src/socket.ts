@@ -103,7 +103,7 @@ export function socketServer(server: http.Server): void {
     ws.on("message", (msgString: string) => {
       const message = JSON.parse(msgString);
       const meta = clients.get(ws)!;
-      if (message.command === "pong") {
+      if (meta && message.command === "pong") {
         meta.lastMessage = Date.now();
         console.log("pong from:", meta.id);
       } else if (message.command === "fetchData") {
