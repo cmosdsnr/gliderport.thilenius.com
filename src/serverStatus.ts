@@ -14,7 +14,7 @@ import { ToId } from "miscellaneous.js";
 
 let online: boolean = false;
 let lastOnline: boolean = false;
-const url = "http://104.36.31.118:8082/"; //esp32 at gliderport externally exposed.
+const url = "http://104.36.31.118:8082/name"; //esp32 at gliderport externally exposed.
 let consecutiveFailures = 0;
 
 /**
@@ -77,6 +77,7 @@ async function checkServerStatus(): Promise<void> {
     }
   } catch (error: any) {
     clearTimeout(timeoutId);
+    console.error("checkServerStatus error:", error);
     consecutiveFailures++;
     console.log("Failure count:", consecutiveFailures);
 
