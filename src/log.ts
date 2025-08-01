@@ -15,6 +15,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { DateTime } from "luxon";
+import cron from "node-cron";
 
 /**
  * The directory name of the parent folder containing this module.
@@ -92,3 +93,44 @@ export const writeLog = (__logFile: string, logArray: string[]): void => {
   }
   fs.appendFileSync(__logFile, logArray.join("\n") + "\n");
 };
+
+const max = 5000;
+const __LogFile = path.join(__logDir, "cron.log");
+
+/**
+ * Truncates the log file to the most recent N lines (default: 5000).
+ * Prevents excessive file size buildup.
+ */
+const limitLogLineNumbers = () => {
+  if (!fs.existsSync(__logDir)) {
+    console.log("Log directory does not exist:", __logDir);
+    return;
+  }
+  //scan __logDir for log files
+  const logFiles = fs.readdirSync(__logDir).filter((file) => file.endsWith(".log"));
+  if (logFiles.length === 0) {
+    log(__LogFile, "No log files found in directory:", __logDir);
+    return;
+  }
+  // Process each log file
+  logFiles.forEach((file) => {
+    const filePath = path.join(__logDir, file);
+    const data = fs.readFileSync(filePath, "utf8");
+    const lines = data.split("\n");
+    if (lines.length > max) {
+      const newLines = lines.slice(lines.length - max).join("\n");
+      fs.writeFileSync(filePath, newLines);
+      log(__LogFile, "Cron", `Log file ${file} trimmed to ${max} lines.`);
+    } else {
+      log(__LogFile, "Cron", `Log file ${file} has ${lines.length} lines, no truncation needed.`);
+    }
+  });
+};
+
+limitLogLineNumbers(); // Initial call to trim log file
+/**
+ * Cron job: Trims the log file twice every day at 2:00 AM/PM LA time.
+ */
+cron.schedule("0 2 * * *", limitLogLineNumbers, {
+  timezone: "America/Los_Angeles",
+});

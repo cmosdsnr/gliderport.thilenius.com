@@ -11,10 +11,10 @@
 
 import WebSocket, { WebSocketServer } from "ws";
 import http from "http";
-import { WindTableRecord } from "./wind";
+import { WindTableRecord } from "wind";
 import fs from "fs";
 import path from "path";
-import { __logDir, log } from "./log";
+import { __logDir, log } from "log";
 import { DateTime } from "luxon";
 
 // Determine the log file path.

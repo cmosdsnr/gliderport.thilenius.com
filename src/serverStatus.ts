@@ -16,6 +16,7 @@ let online: boolean = false;
 let lastOnline: boolean = false;
 const url = "http://104.36.31.118:8082/name"; //esp32 at gliderport externally exposed.
 let consecutiveFailures = 0;
+let statusCount = 0;
 
 /**
  * Initializes the online status by fetching the "online" status record from PocketBase.
@@ -65,7 +66,8 @@ async function checkServerStatus(): Promise<void> {
     clearTimeout(timeoutId);
 
     if (response.ok) {
-      console.log("server status: OK");
+      if (statusCount % 60 === 0) console.log("server status: OK");
+      statusCount++;
       consecutiveFailures = 0;
       if (!online) {
         console.log(`Server came online at ${url}`);
@@ -76,6 +78,7 @@ async function checkServerStatus(): Promise<void> {
       throw new Error(`HTTP status ${response.status}`);
     }
   } catch (error: any) {
+    statusCount = 0;
     clearTimeout(timeoutId);
     console.error("server status error:", error);
     consecutiveFailures++;
