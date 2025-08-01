@@ -22,11 +22,14 @@
  */
 
 import { Request, Response, Router } from "express";
-import { pb } from "./pb";
-import { transporter } from "./sendMeEmail";
+import { pb } from "pb";
+import { transporter } from "sendMeEmail";
 import cron from "node-cron";
-import { getWindAverage } from "./wind";
-import { logStr, writeLog } from "log.js";
+import { getWindAverage } from "wind";
+import { __logDir, logStr, writeLog } from "log";
+import path from "path";
+
+const __LogFile = path.join(__logDir, "gliderport.log");
 
 type MailOptions = {
   from: string;
@@ -136,7 +139,7 @@ export const checkAndSendTexts = (): void => {
   });
 
   if (anySent) {
-    writeLog(log);
+    writeLog(__LogFile, log);
   }
 };
 

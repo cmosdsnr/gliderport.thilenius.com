@@ -12,6 +12,13 @@
 import WebSocket, { WebSocketServer } from "ws";
 import http from "http";
 import { WindTableRecord } from "./wind";
+import fs from "fs";
+import path from "path";
+import { __logDir, log } from "./log";
+import { DateTime } from "luxon";
+
+// Determine the log file path.
+const __LogFile = path.join(__logDir, "pings.log");
 
 /**
  * Metadata stored for each connected WebSocket client.
@@ -33,7 +40,7 @@ const clients = new Map<WebSocket, ClientMetadata>();
  */
 function updateClients(): void {
   const count = clients.size;
-  console.log("Number of clients:", count);
+  log(__LogFile, "ping", "Number of clients:", count);
 }
 
 /**
@@ -105,7 +112,7 @@ export function socketServer(server: http.Server): void {
       const meta = clients.get(ws)!;
       if (meta && message.command === "pong") {
         meta.lastMessage = Date.now();
-        console.log("pong from:", meta.id);
+        log(__LogFile, "ping", "pong from:", meta.id);
       } else if (message.command === "fetchData") {
         // Placeholder for handling various fetchData sub-commands
         // e.g. Status, Forecast, Image1, etc.
@@ -118,14 +125,14 @@ export function socketServer(server: http.Server): void {
     const now = Date.now();
     for (const [client, meta] of clients.entries()) {
       if (now - meta.lastMessage > 45_000) {
-        console.log("Client timed out:", meta.id);
+        log(__LogFile, "ping", "Client timed out:", meta.id);
         client.close();
         clients.delete(client);
       } else {
         client.send(JSON.stringify({ command: "ping" }));
       }
     }
-    console.log("Pinging clients");
+    log(__LogFile, "ping", "Pinging clients");
   }, 45_000);
 
   console.log("WebSocket server is up");

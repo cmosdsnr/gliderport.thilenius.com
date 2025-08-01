@@ -44,14 +44,16 @@
 import express, { Request, Response, Router } from "express";
 import fs from "fs";
 import cron from "node-cron";
-import { isDirectory } from "@/miscellaneous.js";
-import { log } from "log.js";
-import { pb } from "pb.js";
-import { connection } from "SqlConnect.js";
-import { ToId } from "miscellaneous.js";
-import { hit } from "hitCounter.js";
-import { transmitNewImage } from "./socket";
+import { isDirectory, ToId } from "miscellaneous";
+import { pb } from "pb";
+import { hit } from "hitCounter";
+import { transmitNewImage } from "socket";
+import { __logDir, log } from "log";
 import { DateTime } from "luxon";
+import path from "path";
+
+// Determine the log file path.
+const __LogFile = path.join(__logDir, "gliderport.log");
 
 type ImageData = { image: string; date: number };
 type ImageList = ImageData[];
@@ -150,7 +152,7 @@ function getImageStats(directoryPath: string): ImageStats {
   try {
     const files = fs.readdirSync(directoryPath);
     if (!files || files.length === 0) {
-      log("getImageStats", "No files in", directoryPath);
+      log(__LogFile, "getImageStats", "No files in", directoryPath);
       return results;
     }
 
@@ -219,6 +221,7 @@ function getImageStats(directoryPath: string): ImageStats {
       results.CameraA.largestIndex - results.CameraA.smallestIndex + 1 !== results.CameraA.numFiles
     ) {
       log(
+        __LogFile,
         "getImageStats",
         "CameraA:",
         results.CameraA.largestIndex,
@@ -241,6 +244,7 @@ function getImageStats(directoryPath: string): ImageStats {
         results.CameraB.largestIndex - results.CameraB.smallestIndex + 1 !== results.CameraB.numFiles
       ) {
         log(
+          __LogFile,
           "getImageStats",
           "CameraB:",
           results.CameraB.largestIndex,
@@ -252,7 +256,7 @@ function getImageStats(directoryPath: string): ImageStats {
 
     return results;
   } catch (err: any) {
-    log("getImageStats", directoryPath, err.message);
+    log(__LogFile, "getImageStats", directoryPath, err.message);
     results.error = err.message;
     return results;
   }
@@ -330,21 +334,21 @@ const scanEntireDirectory = async (): Promise<void> => {
 
   // Scan each year folder under IMAGE_PATH
   files = fs.readdirSync(IMAGE_PATH);
-  log("scanEntireDirectory", "files:", files.length);
+  log(__LogFile, "scanEntireDirectory", "files:", files.length);
 
   for (const year of files) {
     if (year === "video") continue;
     if (/^\d{4}$/.test(year) && isDirectory(`${IMAGE_PATH}/${year}`)) {
       const images: Record<string, Record<string, ImageStats>> = {};
       const months = fs.readdirSync(`${IMAGE_PATH}/${year}`);
-      log("scanEntireDirectory", months.length, "months to do this year");
+      log(__LogFile, "scanEntireDirectory", months.length, "months to do this year");
 
       for (const month of months) {
-        log("scanEntireDirectory", "date:", `${year}/${month}`);
+        log(__LogFile, "scanEntireDirectory", "date:", `${year}/${month}`);
         if (/^\d{2}$/.test(month) && isDirectory(`${IMAGE_PATH}/${year}/${month}`)) {
           images[month] = {};
           const dates = fs.readdirSync(`${IMAGE_PATH}/${year}/${month}`);
-          log("scanEntireDirectory", dates.length, "dates to do this month");
+          log(__LogFile, "scanEntireDirectory", dates.length, "dates to do this month");
 
           for (const date of dates) {
             images[month][date] = getImageStats(`${IMAGE_PATH}/${year}/${month}/${date}`);
@@ -359,7 +363,7 @@ const scanEntireDirectory = async (): Promise<void> => {
           }
 
           const id = ToId(year + month);
-          log("scanEntireDirectory", "id:", id);
+          log(__LogFile, "scanEntireDirectory", "id:", id);
           await pb
             .collection("imageFiles")
             .update(id, { data: images[month] })
@@ -461,7 +465,7 @@ export const scanLatestDirectory = async (): Promise<void> => {
 
     const months = Object.keys(listingData[year]).map((m) => parseInt(m, 10));
     let month = Math.max(...months);
-    log("rescan", `start searching ${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}`);
+    log(__LogFile, "rescan", `start searching ${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}`);
 
     // Iterate while the month directory exists
     while (isDirectory(`${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}`)) {
@@ -470,7 +474,7 @@ export const scanLatestDirectory = async (): Promise<void> => {
 
       // If no record exists, create it
       if (mostRecent.items.length === 0) {
-        log("rescan", "creating new record for", id);
+        log(__LogFile, "rescan", "creating new record for", id);
         await pb
           .collection("imageFiles")
           .create({ id, data: {} })
@@ -512,7 +516,7 @@ export const scanLatestDirectory = async (): Promise<void> => {
       }
 
       if (isDirectory(`${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}`)) {
-        log("rescan", `next search ${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}`);
+        log(__LogFile, "rescan", `next search ${IMAGE_PATH}/${year}/${month.toString().padStart(2, "0")}`);
       }
     }
 
@@ -522,7 +526,7 @@ export const scanLatestDirectory = async (): Promise<void> => {
       .update(listingRes.id, { data: listingData })
       .catch((err: any) => console.error(err.message));
   } catch (err: any) {
-    log("rescan", `error in scanLatestDirectory: ${err.message}`);
+    log(__LogFile, "rescan", `error in scanLatestDirectory: ${err.message}`);
     console.error(err);
   }
 };
@@ -777,7 +781,7 @@ export const ImageRoutes = (): Router => {
           });
         });
       res.json({ status: "going to sleep" });
-      log("gotoSleep", "signal at", DateTime.now().toISO());
+      log(__LogFile, "gotoSleep", "signal at", DateTime.now().toISO());
     } catch (err: any) {
       console.error("Error updating status:", err);
       res.status(500).json({ status: "error", message: err.message });
@@ -803,7 +807,7 @@ export const ImageRoutes = (): Router => {
           });
         });
       res.json({ status: "WAKING UP" });
-      log("wakeUp", "signal at", DateTime.now().toISO());
+      log(__LogFile, "wakeUp", "signal at", DateTime.now().toISO());
     } catch (err: any) {
       console.error("Error updating status:", err);
       res.status(500).json({ status: "error", message: err.message });

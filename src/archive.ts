@@ -35,16 +35,17 @@
 
 import { Request, Response, Router } from "express";
 import { fromZonedTime } from "date-fns-tz";
-import { sendMeEmail } from "./sendMeEmail";
+import { sendMeEmail } from "sendMeEmail";
 import cron from "node-cron";
 import fs from "fs/promises";
 import path from "path";
-import { pb } from "pb.js";
-import { logStr, writeLog } from "log.js";
-import { __dirname, ToId } from "miscellaneous.js";
+import { pb } from "pb";
+import { logStr, writeLog, __logDir, __dirname } from "log";
+import { ToId } from "miscellaneous";
 import { DateTime } from "luxon";
-import { write } from "fs";
 
+// Determine the log file path.
+const __LogFile = path.join(__logDir, "gliderport.log");
 /**
  * A wind data record consisting of:
  * 1. **timestamp**   – UNIX timestamp (seconds since epoch)
@@ -216,7 +217,7 @@ async function saveRecordsToBinaryFile(records: RecordType[], filename: string):
   const outputPath = path.join(__dirname, "/gliderport/bin/", filename);
 
   await fs.writeFile(outputPath, outputBuffer);
-  writeLog(log);
+  writeLog(__LogFile, log);
 }
 
 /**
@@ -234,7 +235,7 @@ async function appendRecordsToBinaryFile(records: RecordType[], filename: string
   const outputPath = path.join(__dirname, "/gliderport/bin/", filename);
 
   await fs.appendFile(outputPath, outputBuffer);
-  writeLog(log);
+  writeLog(__LogFile, log);
 }
 
 /**
@@ -254,7 +255,7 @@ async function getMostRecentArchiveFile(): Promise<string | null> {
     return binFiles[binFiles.length - 1];
   } catch (error) {
     logStr(log, "getMostRecentArchiveFile", "Error reading bin directory:", error);
-    writeLog(log);
+    writeLog(__LogFile, log);
     return null;
   }
 }
@@ -281,7 +282,7 @@ async function archiveLastMonth(): Promise<void> {
     const mostRecentFile = await getMostRecentArchiveFile();
     if (!mostRecentFile) {
       logStr(log, "archiveLastMonth", "No archived files found in the bin directory. Aborting archive.");
-      writeLog(log);
+      writeLog(__LogFile, log);
       return;
     }
     logStr(log, "archiveLastMonth", "Most recent archived file:", mostRecentFile);
@@ -305,7 +306,7 @@ async function archiveLastMonth(): Promise<void> {
         "archiveLastMonth",
         "Month to archive is not old enough. Need more than 1 mo. buffer. Aborting archive."
       );
-      writeLog(log);
+      writeLog(__LogFile, log);
       return;
     }
 
@@ -322,10 +323,10 @@ async function archiveLastMonth(): Promise<void> {
       .catch(() => null);
     if (!firstItem) {
       logStr(log, "archiveLastMonth", "Next month is not complete. Aborting archive.");
-      writeLog(log);
+      writeLog(__LogFile, log);
       return;
     }
-    writeLog(log);
+    writeLog(__LogFile, log);
     log.length = 0; // Clear log for next steps
 
     // Step 5: Query PocketBase for all records in [nextMonthStart, followingMonthStart).
@@ -385,7 +386,7 @@ async function archiveLastMonth(): Promise<void> {
     console.log(`Total filtered records fetched: ${totalCount} for ${MonthStart.toFormat("yyyy-MM")}.`);
     if (totalCount === 0) {
       logStr(log, "archiveLastMonth", "No records found for the target month. Nothing to archive.");
-      writeLog(log);
+      writeLog(__LogFile, log);
       return;
     } else
       logStr(
@@ -396,10 +397,10 @@ async function archiveLastMonth(): Promise<void> {
 
     logStr(log, "archiveLastMonth", `Deleted ${deleteCount} Old records.`);
     logStr(log, "archiveLastMonth", "Archiving complete. Old records have been deleted.");
-    writeLog(log);
+    writeLog(__LogFile, log);
   } catch (error) {
     logStr(log, "archiveLastMonth", "Error in archiveLastMonth:", error);
-    writeLog(log);
+    writeLog(__LogFile, log);
   }
 }
 
@@ -423,7 +424,7 @@ export const runScheduledArchive = async (): Promise<void> => {
     logStr(log, "archive cron", "Error in monthly archive job:", error.message);
     sendMeEmail("Monthly archive job failed.", log);
   }
-  writeLog(log);
+  writeLog(__LogFile, log);
 };
 
 // Schedule the archival job to run at 00:00 on the 2nd day of every month in Los Angeles time.

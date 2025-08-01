@@ -23,11 +23,14 @@
  */
 
 import { Request, Response, Router } from "express";
-import { pb } from "pb.js";
+import { pb } from "pb";
 import cron from "node-cron";
 import SunCalc from "suncalc";
-import { ToId } from "miscellaneous.js";
-import { logStr, writeLog } from "log.js";
+import { ToId } from "miscellaneous";
+import { logStr, writeLog, __logDir } from "log";
+import path from "path";
+
+const __LogFile = path.join(__logDir, "gliderport.log");
 
 /**
  * Holds the most recently computed sun times after calling updateSunData().
@@ -75,7 +78,7 @@ export const updateSunData = (): void => {
     "Sunset:",
     sunData.sunset.toLocaleString()
   );
-  writeLog(log);
+  writeLog(__LogFile, log);
 
   // Convert to UNIX seconds and prepare record
   const record: Record<string, number> = {};

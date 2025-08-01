@@ -1,18 +1,18 @@
 // apiRouter.ts
 import express, { Request, Response, Router } from "express";
-import { ImageRoutes } from "ImageFiles.js";
-import { textRoutes } from "sendTextMessage.js";
-import { infoRoutes } from "info.js";
-import { archiveRoutes } from "archive.js";
-import { sunRoutes } from "sun.js";
-import { hitRoutes } from "hitCounter.js";
-import { windRoutes } from "wind.js";
-import { codeRoutes } from "codes.js";
-import { forecastRoutes } from "openWeather.js";
-import { donorsRoutes } from "donors.js";
-import { streamRoutes } from "./streams.js";
-import { ToId } from "miscellaneous.js"; // Utility function to convert names to IDs
-import { pb } from "pb.js"; // PocketBase client for database operations
+import { ImageRoutes } from "ImageFiles";
+import { textRoutes } from "sendTextMessage";
+import { infoRoutes } from "info";
+import { archiveRoutes } from "archive";
+import { sunRoutes } from "sun";
+import { hitRoutes } from "hitCounter";
+import { windRoutes } from "wind";
+import { codeRoutes } from "codes";
+import { forecastRoutes } from "openWeather";
+import { donorsRoutes } from "donors";
+import { streamRoutes } from "streams";
+import { ToId } from "miscellaneous"; // Utility function to convert names to IDs
+import { pb } from "pb"; // PocketBase client for database operations
 
 /**
  * Creates and configures the main API router by mounting various sub-routers

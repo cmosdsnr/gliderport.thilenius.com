@@ -14,7 +14,7 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import fs from "fs";
 import path from "path";
-import { __dirname } from "miscellaneous";
+import { __dirname } from "log";
 
 // --- Types for stats ---
 /**

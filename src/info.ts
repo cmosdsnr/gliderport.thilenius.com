@@ -51,9 +51,9 @@
 
 import express, { Request, Response } from "express";
 import mysql from "mysql2";
-import globals from "globals.js";
-import { pb } from "pb.js";
-import { connection } from "./SqlConnect";
+import globals from "globals";
+import { pb } from "pb";
+import { connection } from "SqlConnect";
 import { DateTime, Duration } from "luxon";
 
 export interface GliderportInfo {

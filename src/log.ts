@@ -12,11 +12,18 @@
  */
 
 import fs from "fs";
-import { __dirname } from "miscellaneous.js";
+import path from "path";
+import { fileURLToPath } from "url";
 import { DateTime } from "luxon";
 
-// Determine the log file path.
-let __logFile = `${__dirname}/gliderport/logs/gpUpdate.log`;
+/**
+ * The directory name of the parent folder containing this module.
+ *
+ * Calculates `__dirname` based on the `import.meta.url` to support ES modules.
+ */
+const __filename = fileURLToPath(import.meta.url);
+export const __dirname = path.dirname(path.dirname(__filename));
+export const __logDir = path.join(__dirname, "/gliderport/logs/");
 
 /**
  * Appends a formatted log entry to the log file.
@@ -27,7 +34,7 @@ let __logFile = `${__dirname}/gliderport/logs/gpUpdate.log`;
  *
  * @param args - The message components to log. The first element is used as a label.
  */
-export const log = (...args: any[]): void => {
+export const log = (__logFile: string, ...args: any[]): void => {
   const date = DateTime.fromMillis(Date.now(), { zone: "America/Los_Angeles" })
     .toFormat("MM-dd-yyyy HH:mm:ss")
     .padEnd(20, " ");
@@ -74,7 +81,7 @@ export const logStr = (logArray: string[], ...args: any[]): void => {
  *
  * @param logArray - The array of log strings to write to the file.
  */
-export const writeLog = (logArray: string[]): void => {
+export const writeLog = (__logFile: string, logArray: string[]): void => {
   if (!Array.isArray(logArray) || logArray.length === 0) {
     console.log("Bad LogArray.", logArray, logArray.length);
     return;

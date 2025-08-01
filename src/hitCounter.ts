@@ -65,11 +65,14 @@
  */
 
 import express, { Request, Response, Router } from "express";
-import { pb } from "pb.js";
-import { ToId } from "miscellaneous.js";
+import { pb } from "pb";
+import { ToId } from "miscellaneous";
+import { __logDir, logStr, writeLog, log } from "log";
 import { DateTime } from "luxon";
-import { logStr, writeLog, log } from "log.js";
+import path from "path";
 
+// Determine the log file path.
+const __LogFile = path.join(__logDir, "gliderport.log");
 //
 // Load and validate the existing siteHits status record from PocketBase.
 //
@@ -399,7 +402,7 @@ export const hit = async (req: Request): Promise<{ message?: string; error?: str
     recentHits++;
     if (Date.now() - lastReport > 15 * 60 * 1000) {
       if (recentHits > 0) {
-        log("hit", `Recorded ${recentHits} hits and ${recentHits} duplicate hits in the past 15 minutes.`);
+        log(__LogFile, `Recorded ${recentHits} hits and ${recentHits} duplicate hits in the past 15 minutes.`);
         recentHits = 0;
         duplicateHits = 0;
       }
@@ -408,7 +411,7 @@ export const hit = async (req: Request): Promise<{ message?: string; error?: str
 
     return { message: "Hit recorded" };
   } catch (error: any) {
-    log("hit", "Error creating hitCounter record:", error);
+    log(__LogFile, "Error creating hitCounter record:", error);
     return { error: "Error recording hit" };
   }
 };
@@ -479,7 +482,7 @@ const report = async (): Promise<any> => {
       day: "2-digit",
     })}`
   );
-  writeLog(log);
+  writeLog(__LogFile, log);
 
   res.log = log;
   return res;

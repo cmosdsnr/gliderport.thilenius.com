@@ -9,8 +9,6 @@
  */
 
 import fs from "fs"; // Synchronous file system methods
-import path from "path";
-import { fileURLToPath } from "url";
 
 /**
  * Checks whether the specified file system path is a directory.
@@ -50,11 +48,3 @@ export const ToId = (x: string): string => {
   const truncated = x.slice(0, 15).toLowerCase();
   return "0".repeat(15 - truncated.length) + truncated;
 };
-
-/**
- * The directory name of the parent folder containing this module.
- *
- * Calculates `__dirname` based on the `import.meta.url` to support ES modules.
- */
-const __filename = fileURLToPath(import.meta.url);
-export const __dirname = path.dirname(path.dirname(__filename));

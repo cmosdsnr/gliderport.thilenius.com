@@ -37,17 +37,15 @@
  */
 
 import { Request, Response, Router } from "express";
-import { connection } from "SqlConnect.js";
-import { pb } from "./pb.js";
+import { pb } from "pb";
 import { DateTime } from "luxon";
-import { ToId } from "miscellaneous.js";
-import { sunData } from "sun.js";
-import { checkAndSendTexts } from "sendTextMessage.js";
-import { logStr, writeLog } from "log.js";
-import { codes, updateCodes, convertToCodes } from "codes.js";
-import { transmitNewRecords } from "socket.js";
-import { getCode } from "codes.js";
+import { ToId } from "miscellaneous";
+import { updateCodes, convertToCodes } from "codes";
+import { transmitNewRecords } from "socket";
+import { logStr, writeLog, __logDir } from "log";
+import path from "path";
 
+const __LogFile = path.join(__logDir, "gliderport.log");
 /**
  * A single wind data record.
  */
@@ -105,7 +103,7 @@ export const loadWindTable = async (): Promise<void> => {
   }
 
   convertToCodes(windTable);
-  writeLog(log);
+  writeLog(__LogFile, log);
 };
 // Initialize on startup
 loadWindTable();
@@ -158,7 +156,7 @@ export const UpdateWindTable = async (): Promise<void> => {
   }
 
   updateCodes(windTable);
-  writeLog(log);
+  writeLog(__LogFile, log);
 };
 
 /**

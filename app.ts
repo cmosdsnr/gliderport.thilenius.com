@@ -25,7 +25,7 @@ import path from "path";
 import { socketServer } from "socket";
 import { createApiRouter } from "apiRouter";
 import { listEndpoints } from "listEndpoints";
-import { __dirname } from "miscellaneous";
+import { __dirname } from "log";
 
 import "serverStatus";
 
