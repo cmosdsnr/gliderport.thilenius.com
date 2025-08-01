@@ -61,11 +61,11 @@ async function checkServerStatus(): Promise<void> {
   const timeoutId = setTimeout(() => controller.abort(), 4000);
 
   try {
-    console.log("Checking server status...");
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timeoutId);
 
     if (response.ok) {
+      console.log("server status: OK");
       consecutiveFailures = 0;
       if (!online) {
         console.log(`Server came online at ${url}`);
@@ -77,7 +77,7 @@ async function checkServerStatus(): Promise<void> {
     }
   } catch (error: any) {
     clearTimeout(timeoutId);
-    console.error("checkServerStatus error:", error);
+    console.error("server status error:", error);
     consecutiveFailures++;
     console.log("Failure count:", consecutiveFailures);
 
