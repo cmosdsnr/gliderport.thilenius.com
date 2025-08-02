@@ -72,7 +72,7 @@ import { DateTime } from "luxon";
 import path from "path";
 
 // Determine the log file path.
-const __LogFile = path.join(__logDir, "gliderport.log");
+const __LogFile = path.join(__logDir, "hits.log");
 //
 // Load and validate the existing siteHits status record from PocketBase.
 //

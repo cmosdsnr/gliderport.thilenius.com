@@ -51,7 +51,7 @@ export const transporter: nodemailer.Transporter = nodemailer.createTransport({
  */
 export const sendMeEmail = (subject: string, text: string[]): void => {
   const mailOptions: nodemailer.SendMailOptions = {
-    from: '"gpUpdate" <gpupdate@thilenius.com>', // Sender address
+    from: '"gliderport" <gliderport@thilenius.com>', // Sender address
     to: "stephen@thilenius.com", // Recipient address
     subject, // Subject line
     text: text.join("\n"), // Plain-text body
