@@ -224,6 +224,10 @@ export const updateCodes = (windTable: WindTable): void => {
  * @param windTable - Sorted array of `{ timestamp: number; speed: number; direction: number; }`.
  */
 export const convertToCodes = (windTable: WindTable): void => {
+  if (windTable.length === 0) {
+    console.warn("convertToCodes called with empty windTable");
+    return;
+  }
   dayTs = getLastMidnightLA(windTable[0].timestamp);
   let sunData = getSun(DateTime.fromSeconds(dayTs).toJSDate());
   sunriseTs = Math.floor(sunData.sunrise.getTime() / 1000);
