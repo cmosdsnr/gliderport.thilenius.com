@@ -60,10 +60,12 @@ export function gpIPRoutes(): Router {
 
       // Update the record with ID "000gliderportip" in the "status" collection.
       await pb.collection("status").update("000gliderportip", {
-        ip: ip,
-        timestamp: new Date().toISOString(),
+        record: {
+          ip: ip,
+          timestamp: new Date().toISOString(),
+        },
       });
-      res.json({ success: true, ip });
+      res.json({ ip, timestamp: new Date().toISOString() });
     } catch (error) {
       console.error("Error setting GPIp:", error);
       res.status(500).json({ error: String(error) });
