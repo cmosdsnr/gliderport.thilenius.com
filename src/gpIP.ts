@@ -12,14 +12,10 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 import { pb } from "./pb";
 
-//Route prefix for streaming
-const GPIP_ROUTE = "/gpip";
-
 /**
  * Returns a new Express `Router` that exposes endpoints for IP management.
  *
  * Routes:
- * - Middleware on `/gpip` (currently a pass-through).
  * - `GET /setGPIP`: Detects caller IP, validates availability on port 8081, and updates DB.
  *
  * @returns An Express `Router` instance.
@@ -34,7 +30,7 @@ export function gpIPRoutes(): Router {
    * 2. Performs a health check (HTTP GET) on the IP at port 8081.
    * 3. If successful, updates the `000gliderportip` record in the `miscellaneous` collection.
    */
-  router.get("/setGPIP", async (req: Request, res: Response) => {
+  router.get("/setIP", async (req: Request, res: Response) => {
     try {
       let ip = (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || "";
       if (ip.includes(",")) {
