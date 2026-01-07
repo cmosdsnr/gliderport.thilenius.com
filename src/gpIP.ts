@@ -58,8 +58,8 @@ export function gpIPRoutes(): Router {
         return;
       }
 
-      // Update the record with ID "000gliderportip" in the "miscellaneous" collection.
-      await pb.collection("miscellaneous").update("000gliderportip", {
+      // Update the record with ID "000gliderportip" in the "status" collection.
+      await pb.collection("status").update("000gliderportip", {
         ip: ip,
         timestamp: new Date().toISOString(),
       });
