@@ -11,6 +11,7 @@ import { codeRoutes } from "codes";
 import { forecastRoutes } from "openWeather";
 import { donorsRoutes } from "donors";
 import { streamRoutes } from "streams";
+import { gpIPRoutes } from "gpIP";
 import { ToId } from "miscellaneous"; // Utility function to convert names to IDs
 import { pb } from "pb"; // PocketBase client for database operations
 
@@ -35,6 +36,7 @@ export function createApiRouter(): Router {
   router.use(forecastRoutes());
   router.use(donorsRoutes());
   router.use(streamRoutes());
+  router.use(gpIPRoutes());
 
   /**
    * Debug endpoint that retrieves various status records from PocketBase.
