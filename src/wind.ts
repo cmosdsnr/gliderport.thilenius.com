@@ -93,7 +93,7 @@ export const loadWindTable = async (): Promise<void> => {
       direction: r.windAngle,
       humidity: r.dhtHumidity,
       pressure: r.bmpPressure,
-      temperature: r.bmpTemp,
+      temperature: r.bmpTemp == 0 ? r.dhtTemp : r.bmpTemp,
     }));
 
     logStr(log, "loadWindTable", `Loaded ${windTable.length} records.`);
@@ -132,7 +132,7 @@ export const UpdateWindTable = async (): Promise<void> => {
       direction: r.windAngle,
       humidity: r.dhtHumidity,
       pressure: r.bmpPressure,
-      temperature: r.bmpTemp,
+      temperature: r.bmpTemp == 0 ? r.dhtTemp : r.bmpTemp,
     }));
 
     windTable.push(...newRecords);

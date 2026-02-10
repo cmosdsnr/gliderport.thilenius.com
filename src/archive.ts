@@ -354,7 +354,7 @@ async function archiveLastMonth(): Promise<void> {
           timestamp,
           record.windSpeed,
           record.windAngle,
-          record.bmpTemp,
+          record.bmpTemp == 0 ? record.dhtTemp : record.bmpTemp, // Use bmpTemp if available, otherwise fallback to dhtTemp
           record.dhtHumidity,
           record.bmpPressure,
         ] as RecordType;
