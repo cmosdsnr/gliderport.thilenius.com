@@ -353,7 +353,7 @@ async function archiveLastMonth(): Promise<void> {
         return [
           timestamp,
           record.windSpeed,
-          record.windDirection,
+          record.windAngle,
           record.bmpTemp,
           record.dhtHumidity,
           record.bmpPressure,
