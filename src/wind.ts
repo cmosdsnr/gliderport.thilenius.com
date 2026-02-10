@@ -89,11 +89,11 @@ export const loadWindTable = async (): Promise<void> => {
 
     windTable = result.map((r: any) => ({
       timestamp: parseInt(r.id, 10),
-      speed: r.speed,
-      direction: r.direction,
-      humidity: r.humidity,
-      pressure: r.pressure,
-      temperature: r.temperature,
+      speed: r.windSpeed,
+      direction: r.windDirection,
+      humidity: r.dhtHumidity,
+      pressure: r.bmpPressure,
+      temperature: r.bmpTemp,
     }));
 
     logStr(log, "loadWindTable", `Loaded ${windTable.length} records.`);
@@ -128,11 +128,11 @@ export const UpdateWindTable = async (): Promise<void> => {
 
     const newRecords = result.map((r: any) => ({
       timestamp: parseInt(r.id, 10),
-      speed: r.speed,
-      direction: r.direction,
-      humidity: r.humidity,
-      pressure: r.pressure,
-      temperature: r.temperature,
+      speed: r.windSpeed,
+      direction: r.windDirection,
+      humidity: r.dhtHumidity,
+      pressure: r.bmpPressure,
+      temperature: r.bmpTemp,
     }));
 
     windTable.push(...newRecords);

@@ -80,7 +80,6 @@ dokku ps:restart gliderport
 | wind            | GET  | getLastEntry           | Timestamp of most recent record.                                           |
 | wind            | GET  | fetchNewWind           | Triggers UpdateWindTable.                                                  |
 | wind            | GET  | addWindFromSQL         | (admin) migrates SQL records into PB.                                      |
-| wind            | GET  | fixSaveErrors          | Corrects mis-saved fields in PB.                                           |
 | wind            | POST | updateImage            | Updates an image record with base64 data from the client.                  |
 | wind            | POST | updateLog              | (Debug) Receives log updates from the client.                              |
 | info            | GET  | info                   | Retrieves and returns the assembled information from `info()`.             |
