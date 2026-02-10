@@ -295,7 +295,7 @@ async function archiveLastMonth(): Promise<void> {
     // create DateTime object for the last month start
     const MonthStart = DateTime.fromObject(
       { year: recentYear, month: recentMonth, day: 1 },
-      { zone: "America/Los_Angeles" }
+      { zone: "America/Los_Angeles" },
     ).plus({ months: 1 });
 
     const MonthEnd = MonthStart.plus({ months: 1 });
@@ -304,7 +304,7 @@ async function archiveLastMonth(): Promise<void> {
       logStr(
         log,
         "archiveLastMonth",
-        "Month to archive is not old enough. Need more than 1 mo. buffer. Aborting archive."
+        "Month to archive is not old enough. Need more than 1 mo. buffer. Aborting archive.",
       );
       writeLog(__LogFile, log);
       return;
@@ -331,7 +331,7 @@ async function archiveLastMonth(): Promise<void> {
 
     // Step 5: Query PocketBase for all records in [nextMonthStart, followingMonthStart).
     const filter = `id >= "${ToId(MonthStart.toSeconds().toString())}" && id <= "${ToId(
-      MonthEnd.toSeconds().toString()
+      MonthEnd.toSeconds().toString(),
     )}"`;
 
     const batchSize = 500;
@@ -352,11 +352,11 @@ async function archiveLastMonth(): Promise<void> {
         const timestamp = parseInt(record.id, 10);
         return [
           timestamp,
-          record.speed > 511 ? 511 : record.speed,
-          record.direction > 359 ? 359 : record.direction,
-          record.temperature > 1023 ? 1023 : record.temperature,
-          record.humidity,
-          record.pressure > 4090 ? 4090 : record.pressure < -4090 ? -4090 : record.pressure,
+          record.windSpeed,
+          record.windDirection,
+          record.bmpTemp,
+          record.dhtHumidity,
+          record.bmpPressure,
         ] as RecordType;
       });
       idsToDelete.push(response.items.map((r: any) => r.id));
@@ -392,7 +392,7 @@ async function archiveLastMonth(): Promise<void> {
       logStr(
         log,
         "archiveLastMonth",
-        `Total filtered records fetched: ${totalCount} for ${MonthStart.toFormat("yyyy-MM")}.`
+        `Total filtered records fetched: ${totalCount} for ${MonthStart.toFormat("yyyy-MM")}.`,
       );
 
     logStr(log, "archiveLastMonth", `Deleted ${deleteCount} Old records.`);

@@ -233,7 +233,6 @@ const averages = (hours: number, duration: number): Array<[number, number, numbe
  *   GET /getLastEntry → timestamp of most recent record.
  *   GET /fetchNewWind → triggers UpdateWindTable.
  *   GET /addWindFromSQL → (admin) migrates SQL records into PB.
- *   GET /fixSaveErrors → corrects mis-saved fields in PB.
  *
  * Mount this on your app or a sub-route to provide wind data endpoints.
  *
@@ -274,15 +273,6 @@ export const windRoutes = (): Router => {
   router.get("/addWindFromSQL", async (_req, res) => {
     // processNewWindRecords();
     res.json({ status: "migrate SQL to PB (not implemented)" });
-  });
-
-  router.get("/fixSaveErrors", async (_req, res) => {
-    const result = await pb.collection("wind").getFullList(10000, { filter: `temperature < 0` });
-    for (const r of result) {
-      const { id, temperature, pressure, humidity } = r;
-      await pb.collection("wind").update(id, { temperature: humidity, pressure: temperature, humidity: pressure });
-    }
-    res.sendStatus(200);
   });
 
   return router;
