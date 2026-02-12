@@ -57,8 +57,31 @@ export const SimpleChart: React.FC<SimpleChartProps> = ({ clientWidth, label }) 
         if (width > 0 && readings?.length > 1) {
             const key = label.toLowerCase() as keyof Reading;
             const result: FillReturnDataType = fillData(readings, width, key);
+
+            let newLimits = result.limits || { tsStart: 0, tsStop: 0, yMin: 0, yMax: 0 };
+
+            if (label === 'Humidity' && result.filled && result.filled.length > 0) {
+                let minVal = Infinity;
+                let maxVal = -Infinity;
+                result.filled.forEach(segment => {
+                    segment.forEach(pt => {
+                        const val = pt[1];
+                        if (val < minVal) minVal = val;
+                        if (val > maxVal) maxVal = val;
+                    });
+                });
+
+                if (minVal !== Infinity) {
+                    newLimits = {
+                        ...newLimits,
+                        yMin: Math.max(0, minVal - 5),
+                        yMax: Math.min(100, maxVal + 5)
+                    };
+                }
+            }
+
             setFilled(result.filled || []);
-            setLimits(result.limits || { tsStart: 0, tsStop: 0, yMin: 0, yMax: 0 });
+            setLimits(newLimits);
         }
     }, [readings, width, label, fillData]);
 
