@@ -25,7 +25,7 @@ dist-ssr
 
 
 .env*
-go*
+go_github*
 *lock.json
 /storage
 /docs

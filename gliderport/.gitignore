@@ -26,7 +26,7 @@ dist-ssr
 # .env*
 .env.local
 .env.prod
-go*
+go_github*
 *lock*
 /storage
 /bin
