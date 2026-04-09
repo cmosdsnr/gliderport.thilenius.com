@@ -5,7 +5,7 @@
  * @packageDocumentation UpdatingVideo
  */
 import React, { useState, useEffect } from 'react'
-import { useData } from 'contexts/DataContext'
+import { useSocialData } from '@/contexts/SocialDataContext'
 import OutOfOrder from 'images/OutOfOrder.jpg'
 import OffTime from 'images/OffTime.jpg'
 import useInterval from 'hooks/useInterval'
@@ -25,7 +25,7 @@ import { serverUrl } from '@/components/paths'
 export function UpdatingVideo(): React.ReactElement {
     const [camera, setCamera] = useState<number>(1)
     const [timeToSunrise, setTimeToSunrise] = useState<string>('')
-    const { offline } = useData()
+    const { offline } = useSocialData()
     const { sun, sleeping } = useStatusCollection()
 
     // Update sunrise countdown when sleeping state changes

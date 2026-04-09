@@ -4,7 +4,7 @@
  * Displays client diagnostic information and logs client data from the DataContext.
  */
 import React, { useEffect } from 'react';
-import { useData } from 'contexts/DataContext';
+import { useSocialData } from '@/contexts/SocialDataContext';
 
 /**
  * Diagnostics component displays client diagnostic information.
@@ -12,7 +12,7 @@ import { useData } from 'contexts/DataContext';
  * @returns {React.ReactElement} The rendered diagnostics component.
  */
 export function Diagnostics(): React.ReactElement {
-    const { loadData, clients } = useData();
+    const { loadData, clients } = useSocialData();
 
     useEffect(() => {
         loadData("Clients");

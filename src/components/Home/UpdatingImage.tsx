@@ -9,7 +9,8 @@
  *   to fetch and zoom into a high-resolution image in a viewer overlay.
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { useData } from 'contexts/DataContext';
+import { useCamera } from '@/contexts/CameraContext';
+import { useSocialData } from '@/contexts/SocialDataContext';
 import Viewer from 'react-viewer';
 import OutOfOrder from 'images/OutOfOrder.jpg';
 import OffTime from 'images/OffTime.jpg';
@@ -57,7 +58,8 @@ export function UpdatingImage({ }: Props): React.ReactElement {
     const [imgSrcLarge, setImgSrcLarge] = useState<string>('');
 
     // Data context: cameraImages and offline flag
-    const { cameraImages, offline } = useData();
+    const { cameraImages } = useCamera();
+    const { offline } = useSocialData();
     // Ref for image container sizing (passed to WindDial elsewhere)
     const imgRef = useRef<HTMLDivElement | null>(null);
     // Status context: sunrise time and sleeping flag

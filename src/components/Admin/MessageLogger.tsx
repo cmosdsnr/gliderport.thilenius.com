@@ -9,7 +9,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Table, Container, Button } from 'react-bootstrap';
-import { useData } from 'contexts/DataContext';
+import { useWebSocket } from '@/contexts/WebSocketContext';
+import { useCamera } from '@/contexts/CameraContext';
+import { useSocialData } from '@/contexts/SocialDataContext';
 import './admin.css';
 
 /**
@@ -275,6 +277,8 @@ const renderValue = (value: any): React.ReactElement => {
  * @returns {React.ReactElement}
  */
 const DataSummaryComponent: React.FC = () => {
+    const { passedSeconds } = useWebSocket();
+    const { cameraImages } = useCamera();
     const {
         clients,
         donors,
@@ -282,12 +286,10 @@ const DataSummaryComponent: React.FC = () => {
         history,
         status,
         lastCheck,
-        passedSeconds,
         offline,
-        cameraImages,
         lastForecast,
         numberConnections,
-    } = useData();
+    } = useSocialData();
     const { messages } = useMessages();
 
     const dataSummary: any[] = [

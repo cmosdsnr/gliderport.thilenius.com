@@ -9,7 +9,7 @@
 import React, { useState, useRef, useEffect, useCallback, WheelEvent } from 'react'
 import * as d3 from 'd3'
 import 'css/windDial.css'
-import { useData } from '@/contexts/DataContext'
+import { useSensorData } from '@/contexts/SensorDataContext'
 
 /**
  * Props for WindDial component.
@@ -29,7 +29,7 @@ export interface WindDialProps {
 export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactElement {
     const divRef = useRef<HTMLDivElement>(null)
     const [lastSeen, setLastSeen] = useState<string>('')
-    const { readings } = useData()
+    const { readings } = useSensorData()
 
     const svgWidth = useRef<number>(0)
     const sizeInPx = 400

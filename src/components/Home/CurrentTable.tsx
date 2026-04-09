@@ -7,7 +7,7 @@
  */
 
 import React, { useState } from 'react';
-import { useData } from 'contexts/DataContext';
+import { useSensorData } from '@/contexts/SensorDataContext';
 import { useStatusCollection } from '@/contexts/StatusCollection';
 import useInterval from 'hooks/useInterval';
 
@@ -34,7 +34,7 @@ export interface CurrentTableProps {
  */
 export function CurrentTable({ ...rest }: CurrentTableProps): React.ReactElement {
     // Pull in the array of readings from context
-    const { readings } = useData();
+    const { readings } = useSensorData();
     // Pull in sunrise/sunset info from context
     const { sun } = useStatusCollection();
 

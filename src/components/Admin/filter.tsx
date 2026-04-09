@@ -23,7 +23,8 @@ import {
     Legend
 } from 'recharts';
 import { getFilter } from '@/contexts/filters';
-import { useData, Reading } from '@/contexts/DataContext';
+import { useSensorData } from '@/contexts/SensorDataContext';
+import type { Reading } from '@/contexts/SensorDataContext';
 import { DateTime } from 'luxon';
 
 /**
@@ -76,7 +77,7 @@ interface RawReading {
  */
 const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
     const [hiddenLines, setHiddenLines] = useState<Record<string, boolean>>({});
-    const { readings } = useData();
+    const { readings } = useSensorData();
     const filter = getFilter();
 
     /**

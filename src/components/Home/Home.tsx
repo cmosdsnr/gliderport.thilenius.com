@@ -13,7 +13,8 @@ import { Row, Col } from 'react-bootstrap';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 
-import { useData } from 'contexts/DataContext';
+import { useWebSocket } from '@/contexts/WebSocketContext';
+import { useSocialData } from '@/contexts/SocialDataContext';
 import History from '../History/History';
 import CurrentTable from './CurrentTable';
 import Today from './Today';
@@ -77,7 +78,8 @@ export function Home(): React.ReactElement {
     const width = useWindow();
 
     // Data context: seconds since last reading, offline status, and loader
-    const { passedSeconds, offline, loadData } = useData();
+    const { passedSeconds } = useWebSocket();
+    const { offline, loadData } = useSocialData();
 
     // Development toggle to display current grid size
     const showGridSize: boolean = false;

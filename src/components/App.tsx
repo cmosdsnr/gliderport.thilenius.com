@@ -12,7 +12,11 @@ import { Container } from 'react-bootstrap'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
 
 import { AuthProvider } from '@/contexts/AuthContext'
-import { DataProvider } from '@/contexts/DataContext'
+import { WebSocketProvider } from '@/contexts/WebSocketContext'
+import { SensorDataProvider } from '@/contexts/SensorDataContext'
+import { CameraProvider } from '@/contexts/CameraContext'
+import { SocialDataProvider } from '@/contexts/SocialDataContext'
+import { StatusCollectionProvider } from '@/contexts/StatusCollection'
 
 import Modals, { ModalProvider } from 'modals/Modals'
 
@@ -61,13 +65,14 @@ export function App(): React.ReactElement {
     return (
         <AuthProvider>
             <MessageProvider>
-                {/* WebSocket message logger context */}
-                <DataProvider>
+                <WebSocketProvider>
+                    <SensorDataProvider>
+                        <CameraProvider>
+                            <SocialDataProvider>
+                                <StatusCollectionProvider>
                     <Router>
                         <ModalProvider>
-                            {/* Global modal container */}
                             <Modals />
-                            {/* Main navigation bar */}
                             <GpNavbar />
                             <Container fluid>
                                 <Routes>
@@ -108,7 +113,11 @@ export function App(): React.ReactElement {
                             </Container>
                         </ModalProvider>
                     </Router>
-                </DataProvider>
+                                </StatusCollectionProvider>
+                            </SocialDataProvider>
+                        </CameraProvider>
+                    </SensorDataProvider>
+                </WebSocketProvider>
             </MessageProvider>
         </AuthProvider>
     )

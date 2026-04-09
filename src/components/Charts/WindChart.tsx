@@ -14,7 +14,8 @@ import { Col } from 'react-bootstrap'
 import { useFilter, FilterReturnDataType, Limits } from 'contexts/FilterContext'
 import { getGradients } from './ColorGradients'
 import Legend from './Legend'
-import { useData, Reading } from '@/contexts/DataContext'
+import { useSensorData } from '@/contexts/SensorDataContext'
+import type { Reading } from '@/contexts/SensorDataContext'
 
 /**
  * Props for WindChart.
@@ -54,7 +55,7 @@ export function WindChart({ clientWidth, label }: WindChartProps): React.ReactEl
     const [max, setMax] = useState<[number, number][]>([[0, 0]])
     const [scaled, setScaled] = useState<[number, number][]>([])
 
-    const { readings } = useData()
+    const { readings } = useSensorData()
     const { filterData, fillForFilter } = useFilter()
 
     const margin = { top: 10, right: 60, bottom: 30, left: 30 }

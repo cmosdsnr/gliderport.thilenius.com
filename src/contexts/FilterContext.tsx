@@ -4,7 +4,7 @@
  * Provides filtering, smoothing, and interpolation utilities for sensor data.
  */
 import React, { useEffect, useContext, createContext } from 'react'
-import { Reading } from '@/contexts/DataContext'
+import type { Reading } from '@/contexts/SensorDataContext'
 
 export type Limits = {
     tsStart: number;

@@ -11,7 +11,6 @@ import { useModal, ModalType } from './Modals'
 
 import { useAuth } from '@/contexts/AuthContext'
 import * as yup from 'yup'
-import { R } from 'framer-motion/dist/types.d-B50aGbjN'
 
 /**
  * SignUpModal component renders a modal dialog for user registration.

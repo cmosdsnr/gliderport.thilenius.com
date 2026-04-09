@@ -12,7 +12,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { Col } from 'react-bootstrap';
 import { useFilter, FillReturnDataType, Limits } from 'contexts/FilterContext';
-import { useData, Reading } from '@/contexts/DataContext';
+import { useSensorData } from '@/contexts/SensorDataContext';
+import type { Reading } from '@/contexts/SensorDataContext';
 
 /**
  * Props for the SimpleChart component.
@@ -41,7 +42,7 @@ export const SimpleChart: React.FC<SimpleChartProps> = ({ clientWidth, label }) 
 
     // Hook to compute filtered/filled data based on readings
     const { fillData } = useFilter();
-    const { readings } = useData();
+    const { readings } = useSensorData();
 
     // Chart margins
     const margin = { top: 10, right: 60, bottom: 30, left: 50 };

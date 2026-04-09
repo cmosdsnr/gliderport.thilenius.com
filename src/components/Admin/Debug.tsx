@@ -9,7 +9,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Spinner } from 'react-bootstrap';
-import { useData } from 'contexts/DataContext';
+import { useCamera } from '@/contexts/CameraContext';
 import { pb } from '@/contexts/pb';
 import HLSPlayer from '../HlsPlayer';
 
@@ -20,7 +20,7 @@ import HLSPlayer from '../HlsPlayer';
  */
 export function Debug(): React.ReactElement {
     // Access camera image URLs from shared data context
-    const { cameraImages } = useData();
+    const { cameraImages } = useCamera();
 
     // Current index for each camera feed (not used in this component)
     const [currentIndex1, setCurrentIndex1] = useState<number>(0);
