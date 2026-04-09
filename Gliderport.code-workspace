@@ -1,0 +1,28 @@
+{
+  "folders": [                                                                                                                            
+    { "path": ".", "name": "____ 🗂 Root" }, 
+    { "path": "gliderportFrontEnd", "name": "____ 🖥 Frontend" },
+    { "path": "gliderport", "name": "____ ⚙️ Backend" },
+    { "path": "C:\\Git\\web\\buddStServer\\thilenius.com\\Stephen\\4inDisplay_S3", "name": "____ 🔧 ESP32 Firmware (PlatformIO)" },
+    { "path": "gp_pi3_server", "name": "____ 📡 PI3 Server (JS)" },
+    { "path": "C:\\Git\\web\\buddStServer\\thilenius.com\\Stephen\\espserver", "name": "____ 📡 ESP32 Server (JS)" }
+  ],
+ "settings": {
+    "files.exclude": {   
+        "gliderportFrontEnd/**": true,
+        "gliderport/**": true,
+        "gp_pi3_server/**": true,
+        ".vscode/**": true   
+ },   
+  "editor.formatOnSave": true,
+    "workbench.tree.renderIndentGuides": "always",
+    "workbench.tree.enableStickyScroll": true
+ },
+  "extensions": {
+    "recommendations": [
+      "platformio.platformio-ide",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint"
+    ]
+  }
+}
