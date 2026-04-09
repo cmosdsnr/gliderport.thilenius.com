@@ -6,9 +6,9 @@ This directory contains the backend Node.js server for the Torrey Pines Gliderpo
 
 ### Externally Exposed Ports
 
-- Camera 1 (right) : [http:/104.36.31.118:8080](http:/104.36.31.118:8080)
-- Camera 2 (Left)  : [http:/104.36.31.118:8081](http:/104.36.31.118:8081)
-- Esp32            : [http:/104.36.31.118:8082](http:/104.36.31.118:8082)
+- Esp32            : Needs To be done   [http:/104.36.31.118:8080](http:/104.36.31.118:8080)
+- Camera 1 (right) : [http:/104.36.31.118:8081](http:/104.36.31.118:8081)
+- Camera 2 (Left)  : [http:/104.36.31.118:8082](http:/104.36.31.118:8082)
 - Camera 1 Stream  : [http:/104.36.31.118:554](http:/104.36.31.118:554)
 - Camera 2 Stream  : [http:/104.36.31.118:555](http:/104.36.31.118:555)
 
@@ -54,7 +54,7 @@ u:admin pw:gliderport  (both cameras)
 - Provides HTTP endpoints for device management, system status, and data retrieval.
 - Logs all activity to a rotating log file.
 
-## API Endpoints ([http://localhost:8085](http://localhost:8085)) 
+## API Endpoints ([http://localhost:8085](http://localhost:8085))
 
 - `/espIP`: Update the ESP32 device IP address.
 - `/stats`: Get system status and debug info.
@@ -69,7 +69,7 @@ To deploy or update on the Raspberry Pi at the gliderport:
 2. SSH to the Pi.
 3. `cd gliderport/gp_pi3_server`
 4. Run: `git pull origin main; yarn build;`
-5. Or from `~/gliderport`: 
+5. Or from `~/gliderport`:
 
 ```bash
     mv gp_pi3_server/bin .
@@ -83,8 +83,8 @@ To deploy or update on the Raspberry Pi at the gliderport:
 ### CRON jobs
 
 - crontab -e has
-    - @reboot /home/pi/cron/reboot
-    - 0 0 * * * /home/pi/gliderport/archive.sh       (midnight)
+  - @reboot /home/pi/cron/reboot
+  - 0 0 \* \* \* /home/pi/gliderport/archive.sh       (midnight)
 
 #### reboot
 

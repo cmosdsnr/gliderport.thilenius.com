@@ -47,7 +47,7 @@ if (updateOldWay) {
         break;
       }
       lastEntry = response.data.timestamp;
-      if (lastEntry !== "Error") lastEntryFound = true;
+      lastEntryFound = true;
       log("doOldUpdate", "Last Entry: " + lastEntry);
     } catch (error) {
       log("doOldUpdate", "GP servers not visible at the moment");

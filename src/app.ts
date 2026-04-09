@@ -24,5 +24,5 @@ import "./records/records";
  */
 setInterval(async () => {
   await runSyncCycle();
-  await doOldUpdate();
+  //   await doOldUpdate();
 }, 15000);

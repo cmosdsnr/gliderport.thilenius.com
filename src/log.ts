@@ -78,9 +78,6 @@ limitLogLineNumbers(); // Initial call to trim log file
 cron.schedule("0 2 * * *", limitLogLineNumbers, {
   timezone: "America/Los_Angeles",
 });
-cron.schedule("0 14 * * *", limitLogLineNumbers, {
-  timezone: "America/Los_Angeles",
-});
 
 // Trigger a dummy log line to validate setup
 log("", "");
