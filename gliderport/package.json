@@ -1,0 +1,62 @@
+{
+  "name": "gliderport",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": "22.x"
+  },
+  "type": "module",
+  "scripts": {
+    "dev:debug": "ts-node-dev --transpile-only --respawn --inspect=4321 --project tsconfig.dev.json app.ts",
+    "dev3": "tsup app.ts --watch --onSuccess \"node dist/app.cjs\"",
+    "dev1": "tsup --format esm app.ts --watch gp_dist/**/* --onSuccess \"node dist/app.js\"",
+    "dev2": "tsx watch app.ts NODE_OPTIONS=--trace-warnings",
+    "dev": "tsup app.ts --format esm --watch --onSuccess copy-dist.cmd",
+    "dev4": "nodemon --watch dist/app.js --ext js --exec \"node dist/app.js\"",
+    "start": "node dist/app.js",
+    "build": "tsup --format esm app.ts",
+    "docs:generate": "typedoc && cp -r docs\\* \\\\192.168.0.5\\passport\\gliderport\\docs\\backend",
+    "docs:serve": "yarn docs:generate && http-server docs -o"
+  },
+  "dependencies": {
+    "@types/luxon": "^3.4.2",
+    "@types/node-cron": "^3.0.11",
+    "base64url": "^3.0.1",
+    "body-parser": "^1.20.1",
+    "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+    "dotenv": "^16.0.2",
+    "eventsource": "^3.0.5",
+    "express": "^4.18.1",
+    "express-fileupload": "^1.4.0",
+    "firebase": "^9.15.0",
+    "firebase-admin": "^13.2.0",
+    "fs": "^0.0.1-security",
+    "http": "0.0.1-security",
+    "luxon": "^3.5.0",
+    "mysql2": "^2.3.3",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.0",
+    "pocketbase": "^0.25.2",
+    "react-hook-form": "^7.54.2",
+    "request": "^2.88.2",
+    "suncalc": "^1.9.0",
+    "typedoc": "^0.28.1",
+    "typescript": "^5.8.2",
+    "vite": "^3.0.9",
+    "ws": "^8.18.1",
+    "nodemon": "^2.0.20"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.14",
+    "@types/express-fileupload": "^1.4.1",
+    "@types/node": "^18.8.5",
+    "@types/nodemailer": "^6.4.7",
+    "@types/suncalc": "^1.9.0",
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.9.1",
+    "tsup": "^6.6.0"
+  }
+}

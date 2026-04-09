@@ -1,0 +1,58 @@
+# ── Node / Yarn ──────────────────────────────────────────────────────────────
+node_modules/
+**/node_modules/
+*lock.json
+*lock.yaml
+yarn.lock
+
+# ── Build output ─────────────────────────────────────────────────────────────
+dist/
+**/dist/
+
+# ── Generated docs ───────────────────────────────────────────────────────────
+docs/
+**/docs/
+
+# ── Environment / secrets ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Git bare-repo metadata (in gliderport/ and gliderportFrontEnd/) ──────────
+# These directories have Dokku / legacy git bare-repo files sitting directly
+# in the working tree alongside application source files.
+gliderport/HEAD
+gliderport/ORIG_HEAD
+gliderport/FETCH_HEAD
+gliderport/COMMIT_EDITMSG
+gliderport/MERGE_HEAD
+gliderport/config
+gliderport/description
+gliderport/hooks/
+gliderport/info/
+gliderport/objects/
+gliderport/refs/
+gliderport/packed-refs
+
+gliderportFrontEnd/HEAD
+gliderportFrontEnd/ORIG_HEAD
+gliderportFrontEnd/FETCH_HEAD
+gliderportFrontEnd/COMMIT_EDITMSG
+gliderportFrontEnd/MERGE_HEAD
+gliderportFrontEnd/config
+gliderportFrontEnd/description
+gliderportFrontEnd/hooks/
+gliderportFrontEnd/info/
+gliderportFrontEnd/objects/
+gliderportFrontEnd/refs/
+gliderportFrontEnd/packed-refs
+
+# ── OS / Editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+search-results.txt
+*.local

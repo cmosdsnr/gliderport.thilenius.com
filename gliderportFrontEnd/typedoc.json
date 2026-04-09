@@ -1,0 +1,19 @@
+{
+  "name": "Gliderport Server Frontend",
+  "includeVersion": true,
+  "entryPoints": ["src"],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "tsconfig": "tsconfig.json",
+  "exclude": [
+    "src/images/**",
+    "src/contexts/AuthContextFirebase.tsx"
+  ],
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "readme": "Readme.md",
+  "plugin": [],
+  "sort": ["source-order"],
+  "useFirstParagraphOfCommentAsSummary": true,
+  "theme": "default"
+}

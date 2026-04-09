@@ -1,0 +1,33 @@
+alias dpbg="dokku ps:rebuild gliderport"
+alias dprg="dokku ps:restart gliderport"
+alias deg="dokku enter gliderport"
+alias dlg="dokku logs gliderport"
+alias dpbs="dokku ps:rebuild gliderportsocketserver"
+alias dprs="dokku ps:restart gliderportsocketserver"
+alias des="dokku enter gliderportsocketserver"
+alias dls="dokku logs gliderportsocketserver"
+alias dpbu="dokku ps:rebuild gliderportupdateserver"
+alias dpru="dokku ps:restart gliderportupdateserver"
+alias dpru=""
+alias deu="dokku enter gliderportupdateserver"
+alias dlu="dokku logs gliderportupdateserver"
+
+
+
+alias dpsg="dokku ps:stop gliderport"
+alias dpsu="dokku ps:stop gliderportupdateserver"
+alias dpss="dokku ps:stop gliderportsocketserver"
+dsu gliderportupdateserver /media/cmosdsnr/passport/gliderport:/app/storage
+
+
+dsu gliderportupdateserver /media/cmosdsnr/passport/gliderport:/public/storage
+dsm gliderportupdateserver /media/cmosdsnr/passport/gliderport/video:/app/storage
+dsr gliderportupdateserver 
+
+dpru &
+dsr gliderportupdateserver 
+dsr serverb
+deu 
+
+
+

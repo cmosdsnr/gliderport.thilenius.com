@@ -1,0 +1,29 @@
+/* ForecastChart.css (flattened from your SCSS) */
+
+.form-check-input {
+  /* bigger click-target */
+  width: 1.15rem;
+  height: 1.15rem;
+
+  /* darker outline so the empty box is obvious */
+  border: 2px solid #6c757d;
+
+  /* subtle hover / focus cue */
+  transition: box-shadow .15s, background-color .15s;
+}
+
+.form-check-input:hover,
+.form-check-input:focus-visible {
+  box-shadow: 0 0 0 0.15rem rgba(13,110,253, .25);
+}
+
+/* optional: light-grey fill when not checked */
+.form-check-input:not(:checked) {
+  background-color: #f1f3f5; /* makes the ✓ disappear completely */
+}
+
+/* keep Bootstrap blue when checked */
+.form-check-input:checked {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}

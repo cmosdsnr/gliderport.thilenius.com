@@ -1,0 +1,182 @@
+.home .post a {
+    text-decoration: none;
+    font-size: 40px;
+}
+
+.create-post {
+    text-align: center;
+}
+
+.create-post .form-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+.create-post .form-field label {
+ margin-bottom: 9px;
+}
+
+.create-post .form-field input {
+    height: 37px;
+    border: 1px solid #e1e1e1;
+    margin-top: 9px;
+    border-radius: 3px;
+    font-size: 18px;
+    padding-left: 10px;
+}
+
+.create-post .form-field textarea {
+    border: 1px solid #e1e1e1;
+    height: 400px;
+    font-size: 18px;
+    padding-left: 10px;
+    border-radius: 3px;
+    padding-top: 5px;
+}
+.login-modal {
+    width: 400px;
+    position: absolute;
+    float: left;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    /* transition: all 0.3s ease-in-out;
+    transform: translateY(-200px); */
+}
+
+.stop-left {
+    stop-color: rgba(10, 2255, 10, 0.7);
+}
+
+.stop-right {
+    stop-color: rgba(31,190,214, 0);
+}
+
+.filled {
+    fill: url(#mainGradient);
+}
+
+.axis-grid line {
+    stroke: #f8b4b4;
+  }
+
+.bb {
+      border: 1px solid black
+}
+
+.ooo {
+    font-family: "Times New Roman", Times, serif;
+    position: relative;
+    top: -26vw;
+    left: -290px;
+    opacity: 0.5;
+    color: red;
+    font-size: 2.8vw;
+    font-weight: bold;
+    transform: rotate(-35deg);
+    -ms-transform: rotate(-35deg); /* IE 9 */
+    -webkit-transform: rotate(-35deg); /* Opera, Chrome, and Safari */
+    z-index: 1000;
+  }
+
+/****************************/
+/* for writing on the image */
+  .container {
+    position: relative;
+    text-align: center;
+  }
+  
+  /* Bottom left text */
+  .bottom-left {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 1.8vw;
+    font-weight: bold;
+    position: absolute;
+    bottom: 120px;
+    left: 50px;
+  }
+
+  
+  /* Top left text */
+  .top-left {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 2.8vw;
+    font-weight: bold;
+    position: absolute;
+    top: 120px;
+    left: 50px;
+  }
+
+
+/****************************/
+/* Forecast Table */
+.forecast-table {
+    margin-bottom: 10px;
+}
+
+.forecast-table td {
+    font-size: 15px;
+}
+
+.forecast-table th {
+      font-size: 20px;
+}
+.forecast-time {
+    width: 60px;
+    text-align: left;
+}
+
+.forecast-wind {
+    text-align: left;
+}
+
+/****************************/
+
+
+.tab {
+    background-color: rgb(210, 236, 255);
+    border: 1px solid black;
+    border-radius: 10px 10px 0px 0px;
+    margin-top: 20px;
+}
+
+.selected-tab  {
+    background-color: rgb(133, 133, 255);
+    border: 1px solid black;
+    border-bottom: none;
+    
+}
+
+input.short {
+    width: 31px;
+    float: left;
+    margin: 0 5px 5px 0;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.textbox {
+    border: 1px solid #333;
+    background-color: #fff;
+    padding: 4px 7px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+
+input {
+    font-family: 'Open Sans',sans-serif;
+    font-size: 14px;
+    color: #333;
+}
+
+@keyframes flash {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+  }
+  
+  .flash {
+    animation: flash 1s infinite;
+  }

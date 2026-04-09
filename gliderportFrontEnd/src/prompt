@@ -1,0 +1,1 @@
+add jsDoc comments to this file and tell me if you see anything wrong or missing in the code. Do not remove anything for brevity. Make sure to put top level comments in the file. Use React.ReactElementrather than JSX.Element where needed. Use only Microsoft’s TSDoc standard tags.

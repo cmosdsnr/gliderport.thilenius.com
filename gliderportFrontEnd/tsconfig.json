@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "baseUrl": "src",
+        "paths": {
+            "@/*": ["*"]
+        },
+        "lib": ["DOM", "DOM.Iterable", "ESNext"],
+        "allowJs": false,
+        "esModuleInterop": false,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "module": "ESNext",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "target": "ESNext",
+        "jsx": "react-jsx",            // or "react-jsxdev" for dev mode
+        "moduleResolution": "Node",    // so imports like 'react-router/dom' resolve
+        "skipLibCheck": true,          // skip type-checking node_modules
+        "types": [
+            "vite/client",
+            "react",
+            "react-dom"
+        ]
+    },
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "include": ["src/**/*"]
+  } 

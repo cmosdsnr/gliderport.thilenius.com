@@ -1,0 +1,40 @@
+{
+  "name": "pi3server",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": "18.x || 22.x"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "tsup --format esm src/app.ts --watch --onSuccess \"node dist/app.js\"",
+    "start": "node dist/app.js",
+    "build": "tsup --format esm src/app.ts",
+    "docs:generate": "typedoc && cp -r docs\\* \\\\192.168.0.5\\passport\\gliderport\\docs\\pi3_server",
+    "docs:serve": "yarn docs:generate && http-server docs -o",
+    "serve": "npx serve docs"
+  },
+  "dependencies": {
+    "axios": "^1.6.5",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.2",
+    "express": "^4.18.1",
+    "fs": "^0.0.1-security",
+    "luxon": "^3.6.0",
+    "mysql2": "^2.3.3",
+    "node-cron": "^3.0.3",
+    "pocketbase": "^0.25.2",
+    "typedoc": "^0.28.1",
+    "typescript": "^5.8.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.14",
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^18.8.5",
+    "@types/node-cron": "^3.0.11",
+    "nodemon": "^2.0.20",
+    "ts-node": "^10.9.1",
+    "tsup": "^6.6.0"
+  }
+}

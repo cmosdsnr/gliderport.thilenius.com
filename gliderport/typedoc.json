@@ -1,0 +1,17 @@
+{
+  "name": "Gliderport Server Backend",
+    "entryPoints": [
+        "app.ts",
+        "src/*.ts",
+        "index.d.ts"
+      ],
+    "out": "docs",
+  "tsconfig": "tsconfig.json",  
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "readme": "README.md",
+  "plugin": [],  
+  "sort": ["source-order"],
+  "includeVersion": true,
+  "useFirstParagraphOfCommentAsSummary": true
+  }

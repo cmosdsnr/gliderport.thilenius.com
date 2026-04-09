@@ -1,0 +1,19 @@
+
+
+.contact-list {
+    list-style-type: none;
+    padding-left: 0;
+  }
+  
+  .contact-list li {
+    margin-bottom: 10px;
+  }
+  
+  .contact-link {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .contact-link:hover {
+    text-decoration: underline;
+  }
