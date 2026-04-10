@@ -3,8 +3,13 @@
  *
  * Displays all registered backend API endpoints in the same style as the
  * TypeDoc center-column parameter list. Endpoints are fetched live from
- * `/gpapi/listEndpoints`, enriched with descriptions from a local metadata
- * map, and grouped by feature area.
+ * `/gpapi/listEndpoints`, enriched with metadata from a local map, and
+ * grouped by feature area.
+ *
+ * Each entry shows:
+ * - Function signature (name + typed params, matching `api.ts` where applicable)
+ * - One-sentence description from the TypeDoc comment
+ * - Full HTTP method + path with `<param>` placeholders
  */
 import React, { useEffect, useState } from 'react';
 import { API } from '@/api';
@@ -21,79 +26,270 @@ interface Endpoint {
 
 /** Static metadata attached to each known endpoint. */
 interface EndpointMeta {
-    /** One-sentence description shown below the endpoint name. */
-    description: string;
-    /** Feature-area group heading this endpoint belongs to. */
+    /** Feature-area group heading. */
     group: string;
+    /**
+     * TypeScript-style call signature shown as the heading, mirroring `api.ts`
+     * for frontend-used endpoints (e.g. `"getData: (hours: number) => string"`).
+     */
+    signature: string;
+    /** One-sentence description taken directly from the TypeDoc comment. */
+    description: string;
+    /**
+     * Full HTTP method + path with `<param>` placeholders shown in a code block
+     * (e.g. `"GET /gpapi/sendTestSms?name=<name>&to=<to>"`).
+     */
+    pathTemplate: string;
 }
 
 // ─── Metadata map ─────────────────────────────────────────────────────────────
 
 /**
- * Maps every known backend path to its human-readable description and
- * feature group. Endpoints fetched from the server but absent from this map
- * are shown without a description under "Other".
+ * Maps every known backend path to its display metadata.
+ * Descriptions are taken directly from TypeDoc comments in the source files.
+ * Signatures mirror `api.ts` for frontend-used endpoints.
  */
 const META: Record<string, EndpointMeta> = {
-    // Wind data
-    '/gpapi/getData':           { group: 'Wind Data',         description: 'Returns wind and sensor readings for the given number of hours of history.' },
-    '/gpapi/averages':          { group: 'Wind Data',         description: 'Returns averaged wind speed and direction over a recent time window.' },
-    '/gpapi/getLastEntry':      { group: 'Wind Data',         description: 'Returns the single most recent wind sensor record.' },
-    '/gpapi/fetchNewWind':      { group: 'Wind Data',         description: 'Triggers an immediate poll of the ESP32 for new wind data.' },
-    '/gpapi/addWindFromSQL':    { group: 'Wind Data',         description: 'Backfills wind records from the MySQL database into PocketBase.' },
-    '/gpapi/getWindTableCodes': { group: 'Wind Data',         description: 'Returns the wind-code table for the last 8 days, used to render the historical wind-condition grid.' },
 
-    // Forecast
-    '/gpapi/getForecastCodes':  { group: 'Forecast',          description: "Returns today's wind forecast codes used to populate the forecast panel." },
-    '/gpapi/getForecast':       { group: 'Forecast',          description: 'Returns the raw OpenWeatherMap forecast payload (5-day, 3-hour intervals).' },
+    // ── Wind Data ─────────────────────────────────────────────────────────────
+    '/gpapi/getData': {
+        group: 'Wind Data',
+        signature: 'getData: (hours: number) => string',
+        description: 'Returns wind and sensor readings for the given number of hours of history.',
+        pathTemplate: 'GET /gpapi/getData?hours=<hours>',
+    },
+    '/gpapi/averages': {
+        group: 'Wind Data',
+        signature: 'averages: (hours: number, duration: 5 | 15 | 30 | 60) => string',
+        description: 'Returns averaged wind speed and direction over a specified window.',
+        pathTemplate: 'GET /gpapi/averages?hours=<hours>&duration=<5|15|30|60>',
+    },
+    '/gpapi/getLastEntry': {
+        group: 'Wind Data',
+        signature: 'getLastEntry: () => string',
+        description: 'Returns the timestamp and formatted date-time of the most recent wind sensor record.',
+        pathTemplate: 'GET /gpapi/getLastEntry',
+    },
+    '/gpapi/fetchNewWind': {
+        group: 'Wind Data',
+        signature: 'fetchNewWind: () => string',
+        description: 'Triggers UpdateWindTable() to immediately poll the ESP32 for new wind data.',
+        pathTemplate: 'GET /gpapi/fetchNewWind',
+    },
+    '/gpapi/addWindFromSQL': {
+        group: 'Wind Data',
+        signature: 'addWindFromSQL: () => string',
+        description: 'Backfills wind records from the MySQL database into PocketBase (currently returns a not-implemented status).',
+        pathTemplate: 'GET /gpapi/addWindFromSQL',
+    },
+    '/gpapi/getWindTableCodes': {
+        group: 'Wind Data',
+        signature: 'getWindTableCodes: () => string',
+        description: 'Returns the wind-code table for the last 8 days, used to render the historical wind-condition grid.',
+        pathTemplate: 'GET /gpapi/getWindTableCodes',
+    },
 
-    // Sun
-    '/gpapi/UpdateSun':         { group: 'Sun',               description: "Triggers a recalculation and PocketBase update of today's sunrise/sunset times." },
+    // ── Forecast ──────────────────────────────────────────────────────────────
+    '/gpapi/getForecastCodes': {
+        group: 'Forecast',
+        signature: 'getForecastCodes: () => string',
+        description: "Returns today's wind forecast codes used to populate the forecast panel.",
+        pathTemplate: 'GET /gpapi/getForecastCodes',
+    },
+    '/gpapi/getForecast': {
+        group: 'Forecast',
+        signature: 'getForecast: () => string',
+        description: 'Returns the latest fetched weather forecast JSON object.',
+        pathTemplate: 'GET /gpapi/getForecast',
+    },
 
-    // Images — public
-    '/gpapi/listing':             { group: 'Images',          description: 'Returns a directory listing of dates for which archived images exist.' },
-    '/gpapi/imageCount':          { group: 'Images',          description: 'Returns the image count for a specific date, hour range, and camera.' },
-    '/gpapi/getImageData':        { group: 'Images',          description: 'Returns image metadata (counts, thumbnails) for a given year and month.' },
-    '/gpapi/getLargeImage':       { group: 'Images',          description: 'Returns the most recent full-resolution image for the specified camera.' },
-    '/gpapi/getLastFiveSmallImages': { group: 'Images',       description: 'Returns the last five small (thumbnail) camera images across both cameras.' },
-    '/gpapi/latestImages':        { group: 'Images',          description: 'Returns the latest image metadata for both cameras.' },
+    // ── Sun ───────────────────────────────────────────────────────────────────
+    '/gpapi/UpdateSun': {
+        group: 'Sun',
+        signature: 'UpdateSun: () => string',
+        description: 'Triggers a sun data recalculation and returns the current sunData JSON.',
+        pathTemplate: 'GET /gpapi/UpdateSun',
+    },
 
-    // Images — admin/internal
-    '/gpapi/scanLatestDirectory': { group: 'Images (Admin)',  description: 'Scans the latest image directory and updates PocketBase metadata.' },
-    '/gpapi/scanEntireDirectory': { group: 'Images (Admin)',  description: 'Scans all image directories and rebuilds PocketBase metadata from scratch.' },
-    '/gpapi/createListingRecord': { group: 'Images (Admin)',  description: 'Creates or refreshes the listing record in PocketBase.' },
-    '/gpapi/updateImage':         { group: 'Images (Admin)',  description: 'Receives a new camera image upload and updates the latest-image state.' },
-    '/gpapi/updateLog':           { group: 'Images (Admin)',  description: 'Appends a log entry from the Pi 3 camera system.' },
-    '/gpapi/gotoSleep':           { group: 'Images (Admin)',  description: 'Signals the camera system to enter low-power sleep mode.' },
-    '/gpapi/wakeUp':              { group: 'Images (Admin)',  description: 'Signals the camera system to wake from sleep mode.' },
+    // ── Images ────────────────────────────────────────────────────────────────
+    '/gpapi/listing': {
+        group: 'Images',
+        signature: 'listing: () => string',
+        description: 'Returns a directory listing of dates for which archived images exist.',
+        pathTemplate: 'GET /gpapi/listing',
+    },
+    '/gpapi/imageCount': {
+        group: 'Images',
+        signature: 'imageCount: (date: string, from: number, to: number, camera: number) => string',
+        description: 'Returns the image count for a specific date range and camera.',
+        pathTemplate: 'GET /gpapi/imageCount?date=<date>&from=<from>&to=<to>&camera=<camera>',
+    },
+    '/gpapi/getImageData': {
+        group: 'Images',
+        signature: 'getImageData: (year: number, month: string) => string',
+        description: 'Returns image metadata (counts, thumbnails) for a given year and month.',
+        pathTemplate: 'GET /gpapi/getImageData?year=<year>&month=<month>',
+    },
+    '/gpapi/getLargeImage': {
+        group: 'Images',
+        signature: 'getLargeImage: (camera: number) => string',
+        description: 'Returns the last big image for the specified camera.',
+        pathTemplate: 'GET /gpapi/getLargeImage?camera=<camera>',
+    },
+    '/gpapi/getLastFiveSmallImages': {
+        group: 'Images',
+        signature: 'getLastFiveSmallImages: () => string',
+        description: 'Returns the last five small (thumbnail) camera images across both cameras.',
+        pathTemplate: 'GET /gpapi/getLastFiveSmallImages',
+    },
+    '/gpapi/latestImages': {
+        group: 'Images',
+        signature: 'latestImages: () => string',
+        description: 'Called by the front end on initial load. Returns an empty array (hit counter side-effect only).',
+        pathTemplate: 'GET /gpapi/latestImages',
+    },
 
-    // Archive
-    '/gpapi/unpackArchive':       { group: 'Archive',         description: 'Unpacks a compressed monthly image archive, making those images available for browsing.' },
-    '/gpapi/runScheduledArchive': { group: 'Archive',         description: 'Manually triggers the scheduled monthly archival job.' },
+    // ── Images (Admin) ────────────────────────────────────────────────────────
+    '/gpapi/scanLatestDirectory': {
+        group: 'Images (Admin)',
+        signature: 'scanLatestDirectory: () => string',
+        description: 'Scans the latest image directory and updates PocketBase metadata.',
+        pathTemplate: 'GET /gpapi/scanLatestDirectory',
+    },
+    '/gpapi/scanEntireDirectory': {
+        group: 'Images (Admin)',
+        signature: 'scanEntireDirectory: () => string',
+        description: 'Scans all image directories and rebuilds PocketBase metadata from scratch.',
+        pathTemplate: 'GET /gpapi/scanEntireDirectory',
+    },
+    '/gpapi/createListingRecord': {
+        group: 'Images (Admin)',
+        signature: 'createListingRecord: () => string',
+        description: 'Creates or refreshes the listing record in PocketBase.',
+        pathTemplate: 'GET /gpapi/createListingRecord',
+    },
+    '/gpapi/updateImage': {
+        group: 'Images (Admin)',
+        signature: 'updateImage: (A: string, size: 1 | 2, camera: 1 | 2) => string',
+        description: 'Updates an image record for the given camera and size. Body: { A: base64, size: 1|2, camera: 1|2 }.',
+        pathTemplate: 'POST /gpapi/updateImage',
+    },
+    '/gpapi/updateLog': {
+        group: 'Images (Admin)',
+        signature: 'updateLog: (body: object) => string',
+        description: 'Receives a log entry from the Pi 3 camera system and echoes it back.',
+        pathTemplate: 'POST /gpapi/updateLog',
+    },
+    '/gpapi/gotoSleep': {
+        group: 'Images (Admin)',
+        signature: 'gotoSleep: () => string',
+        description: 'Sets the server state to "sleeping" in PocketBase under the images status record.',
+        pathTemplate: 'GET /gpapi/gotoSleep',
+    },
+    '/gpapi/wakeUp': {
+        group: 'Images (Admin)',
+        signature: 'wakeUp: () => string',
+        description: 'Sets the server state to "awake" in PocketBase under the images status record.',
+        pathTemplate: 'GET /gpapi/wakeUp',
+    },
 
-    // Diagnostics
-    '/gpapi/info':              { group: 'Diagnostics',        description: 'Returns a system info snapshot: record counts, hours table, sun position, wind code history, and add-data log.' },
-    '/gpapi/listEndpoints':     { group: 'Diagnostics',        description: 'Returns a JSON array of all registered API endpoints (method + path).' },
-    '/gpapi/debug':             { group: 'Diagnostics',        description: 'Returns a snapshot of all key PocketBase status records for debugging.' },
-    '/gpapi/test':              { group: 'Diagnostics',        description: 'Health-check endpoint — confirms the Express server is running and reachable.' },
+    // ── Archive ───────────────────────────────────────────────────────────────
+    '/gpapi/unpackArchive': {
+        group: 'Archive',
+        signature: 'unpackArchive: (year: number, month: number) => string',
+        description: 'Triggers server-side unpacking of a compressed image archive for the given year and month, making those images available for browsing.',
+        pathTemplate: 'GET /gpapi/unpackArchive?year=<year>&month=<month>',
+    },
+    '/gpapi/runScheduledArchive': {
+        group: 'Archive',
+        signature: 'runScheduledArchive: () => string',
+        description: 'Manually triggers the monthly archival process.',
+        pathTemplate: 'GET /gpapi/runScheduledArchive',
+    },
 
-    // Streaming
-    '/gpapi/stats':             { group: 'Streaming',          description: 'Returns HLS streaming statistics: segment file counts, bitrate, and last-access times.' },
+    // ── Diagnostics ───────────────────────────────────────────────────────────
+    '/gpapi/info': {
+        group: 'Diagnostics',
+        signature: 'info: () => string',
+        description: 'Returns a system info snapshot: record counts, hours table, sun position, wind code history, and the add-data log.',
+        pathTemplate: 'GET /gpapi/info',
+    },
+    '/gpapi/listEndpoints': {
+        group: 'Diagnostics',
+        signature: 'listEndpoints: () => string',
+        description: 'Returns a list of all registered API endpoints on the backend server.',
+        pathTemplate: 'GET /gpapi/listEndpoints',
+    },
+    '/gpapi/debug': {
+        group: 'Diagnostics',
+        signature: 'debug: () => string',
+        description: 'Fetches a snapshot of all key status records from PocketBase (siteMessage, siteHits, fullForecast, debug, images, online, forecast, sun, lastWind).',
+        pathTemplate: 'GET /gpapi/debug',
+    },
+    '/gpapi/test': {
+        group: 'Diagnostics',
+        signature: 'test: () => string',
+        description: 'Health-check endpoint. Returns a plain-text greeting that confirms the Express + TypeScript server is running and reachable.',
+        pathTemplate: 'GET /gpapi/test',
+    },
 
-    // Notifications
-    '/gpapi/sendTestSms':       { group: 'Notifications',      description: 'Sends a test SMS/email alert to the specified recipient address.' },
-    '/gpapi/testWindSpeeds':    { group: 'Notifications',      description: 'Sends a test alert with current wind speed data to all SMS subscribers.' },
-    '/gpapi/PhoneFinder':       { group: 'Notifications',      description: 'Looks up the mobile carrier gateway address for a US phone number.' },
+    // ── Streaming ─────────────────────────────────────────────────────────────
+    '/gpapi/stats': {
+        group: 'Streaming',
+        signature: 'stats: () => string',
+        description: 'Returns current in-memory streaming statistics.',
+        pathTemplate: 'GET /gpapi/stats',
+    },
 
-    // Analytics
-    '/gpapi/recreateSiteHits':  { group: 'Analytics',          description: 'Rebuilds the site-hits aggregation record in PocketBase from raw log data.' },
-    '/gpapi/hitsReport':        { group: 'Analytics',          description: 'Returns the current site-hits report (daily, weekly, and monthly counts).' },
+    // ── Notifications ─────────────────────────────────────────────────────────
+    '/gpapi/sendTestSms': {
+        group: 'Notifications',
+        signature: 'sendTestSms: (name: string, to: string) => string',
+        description: 'Sends a test SMS message to the given recipient address.',
+        pathTemplate: 'GET /gpapi/sendTestSms?name=<name>&to=<to>',
+    },
+    '/gpapi/testWindSpeeds': {
+        group: 'Notifications',
+        signature: 'testWindSpeeds: () => string',
+        description: 'Returns the current wind averages for durations [0, 5, 15] minutes.',
+        pathTemplate: 'GET /gpapi/testWindSpeeds',
+    },
+    '/gpapi/PhoneFinder': {
+        group: 'Notifications',
+        signature: 'phoneFinder: (area: string, prefix: string, number: string) => string',
+        description: 'Looks up the mobile carrier for a US phone number split into its parts.',
+        pathTemplate: 'GET /gpapi/PhoneFinder?area=<area>&prefix=<prefix>&number=<number>',
+    },
 
-    // General
-    '/gpapi/getDonors':         { group: 'General',            description: 'Returns the list of site donors from PocketBase.' },
+    // ── Analytics ─────────────────────────────────────────────────────────────
+    '/gpapi/recreateSiteHits': {
+        group: 'Analytics',
+        signature: 'recreateSiteHits: () => string',
+        description: 'Manually triggers recreateSiteHits() to rebuild the entire siteHits record in PocketBase.',
+        pathTemplate: 'GET /gpapi/recreateSiteHits',
+    },
+    '/gpapi/hitsReport': {
+        group: 'Analytics',
+        signature: 'hitsReport: () => string',
+        description: 'Returns a summary of the current hit aggregates (monthly, weekly, daily) along with the associated logs.',
+        pathTemplate: 'GET /gpapi/hitsReport',
+    },
 
-    // Hardware
-    '/gpapi/setIP':             { group: 'Hardware',           description: "Receives the ESP32's current local IP address on boot and stores it in PocketBase." },
+    // ── General ───────────────────────────────────────────────────────────────
+    '/gpapi/getDonors': {
+        group: 'General',
+        signature: 'getDonors: () => string',
+        description: 'Returns the list of site donors.',
+        pathTemplate: 'GET /gpapi/getDonors',
+    },
+
+    // ── Hardware ──────────────────────────────────────────────────────────────
+    '/gpapi/setIP': {
+        group: 'Hardware',
+        signature: 'setIP: () => string',
+        description: 'Receives and validates the caller IP from the ESP32, health-checks port 8081, and stores the IP in PocketBase.',
+        pathTemplate: 'GET /gpapi/setIP',
+    },
 };
 
 // ─── Method badge ─────────────────────────────────────────────────────────────
@@ -132,27 +328,33 @@ function MethodBadge({ method }: { method: string }) {
 /** Renders one endpoint entry in TypeDoc parameter-list style. */
 function EndpointRow({ endpoint }: { endpoint: Endpoint }) {
     const meta = META[endpoint.path];
-    // Derive a short display name from the last path segment
     const name = endpoint.path.split('/').filter(Boolean).pop() ?? endpoint.path;
 
     return (
         <li style={{
-            padding: '10px 0',
+            padding: '12px 0',
             borderTop: '1px solid var(--bs-border-color, #dee2e6)',
             listStyle: 'none',
         }}>
-            <h5 style={{ marginBottom: 4, fontFamily: 'monospace', fontSize: '0.95rem', fontWeight: 600 }}>
-                <MethodBadge method={endpoint.method} />
-                {name}
+            {/* Signature heading */}
+            <h5 style={{ marginBottom: 4, fontFamily: 'monospace', fontSize: '0.9rem', fontWeight: 600 }}>
+                {meta ? meta.signature : (
+                    <><MethodBadge method={endpoint.method} />{name}</>
+                )}
             </h5>
+
+            {/* Description */}
             {meta?.description && (
-                <p style={{ marginBottom: 4, fontSize: '0.875rem', color: 'var(--bs-secondary-color, #6c757d)' }}>
+                <p style={{ marginBottom: 6, fontSize: '0.875rem', color: 'var(--bs-body-color, #212529)' }}>
                     {meta.description}
                 </p>
             )}
+
+            {/* Method + path template */}
             <p style={{ marginBottom: 0 }}>
+                <MethodBadge method={endpoint.method} />
                 <code style={{ fontSize: '0.8rem' }}>
-                    {endpoint.method.toUpperCase()} {endpoint.path}
+                    {meta ? meta.pathTemplate.replace(/^(GET|POST|PUT|PATCH|DELETE) /, '') : endpoint.path}
                 </code>
             </p>
         </li>
@@ -164,7 +366,7 @@ function EndpointRow({ endpoint }: { endpoint: Endpoint }) {
 /** Renders a labelled group of endpoints. */
 function EndpointGroup({ name, endpoints }: { name: string; endpoints: Endpoint[] }) {
     return (
-        <div style={{ marginBottom: 32 }}>
+        <div style={{ marginBottom: 36 }}>
             <h4 style={{
                 fontSize: '1rem',
                 fontWeight: 700,
@@ -191,14 +393,11 @@ function EndpointGroup({ name, endpoints }: { name: string; endpoints: Endpoint[
 /**
  * Fetches all registered backend endpoints and renders them in TypeDoc
  * center-column style — grouped by feature area, each entry showing the
- * HTTP method badge, endpoint name, description, and full path.
- *
- * Endpoints not present in the local metadata map are collected under "Other".
+ * function signature, description, and full HTTP method + path with placeholders.
  *
  * @returns A full-width endpoint reference panel.
  */
 export function ListEndpoints(): React.ReactElement {
-    /** All endpoints fetched from `/gpapi/listEndpoints`. */
     const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
     const [error, setError] = useState<string | null>(null);
 
@@ -209,11 +408,7 @@ export function ListEndpoints(): React.ReactElement {
             .catch(() => setError('Failed to fetch endpoints from /gpapi/listEndpoints'));
     }, []);
 
-    // Determine the ordered group list from META, preserving insertion order,
-    // then append "Other" for any unmapped endpoints.
-    const groupOrder = Array.from(
-        new Set(Object.values(META).map(m => m.group))
-    );
+    const groupOrder = Array.from(new Set(Object.values(META).map(m => m.group)));
 
     const grouped = new Map<string, Endpoint[]>();
     for (const ep of endpoints) {
@@ -222,7 +417,6 @@ export function ListEndpoints(): React.ReactElement {
         grouped.get(group)!.push(ep);
     }
 
-    // Render groups in META order, then "Other" last.
     const orderedGroups = [
         ...groupOrder.filter(g => grouped.has(g)),
         ...(grouped.has('Other') ? ['Other'] : []),
@@ -230,7 +424,7 @@ export function ListEndpoints(): React.ReactElement {
 
     return (
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px' }}>
-            <div style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 28 }}>
                 <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 4 }}>
                     Backend API Endpoints
                 </h1>
@@ -241,20 +435,11 @@ export function ListEndpoints(): React.ReactElement {
                 </p>
             </div>
 
-            {error && (
-                <div className="alert alert-danger">{error}</div>
-            )}
-
-            {endpoints.length === 0 && !error && (
-                <p className="text-muted">Loading…</p>
-            )}
+            {error && <div className="alert alert-danger">{error}</div>}
+            {endpoints.length === 0 && !error && <p className="text-muted">Loading…</p>}
 
             {orderedGroups.map(group => (
-                <EndpointGroup
-                    key={group}
-                    name={group}
-                    endpoints={grouped.get(group)!}
-                />
+                <EndpointGroup key={group} name={group} endpoints={grouped.get(group)!} />
             ))}
         </div>
     );
