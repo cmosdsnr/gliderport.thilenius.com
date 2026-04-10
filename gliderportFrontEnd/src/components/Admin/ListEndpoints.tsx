@@ -9,7 +9,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Row, Col, Card, Table } from 'react-bootstrap';
-import { serverUrl } from "@/components/paths";
+import { API } from '@/api';
 
 /**
  * Represents a single API endpoint.
@@ -39,8 +39,7 @@ export function ListEndpoints(): React.ReactElement {
      * Fetches endpoints once on component mount.
      */
     useEffect(() => {
-        const url = new URL('/gpapi/listEndpoints', serverUrl);
-        fetch(url.toString())
+        fetch(API.listEndpoints())
             .then(res => res.json())
             .then((data: Endpoint[]) => setEndpoints(data))
             .catch(err => console.error('Failed to fetch /gpapi/listEndpoints:', err));

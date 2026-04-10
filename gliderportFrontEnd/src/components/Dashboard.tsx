@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { PhoneNumberInput } from './PhoneNumber';
 import TextField from '@mui/material/TextField';
 import { ToggleSlider } from 'react-toggle-slider';
-import { serverUrl } from "@/components/paths";
+import { API } from '@/api';
 
 /**
  * Custom hook to handle clicks outside a specified element.
@@ -63,12 +63,7 @@ export function Dashboard(): React.ReactElement {
 
     const sendTestSms = () => {
         if (currentUser) {
-            const url = new URL('/gpapi/sendTestSms', serverUrl);
-            url.searchParams.set('name', currentUser.firstName || '');
-            url.searchParams.set('to', currentUser.settings.address || '');
-            // const url = `${import.meta.env.VITE_SERVER_URL}/gpapi/sendTestSms?name=${currentUser.firstName}&to=${currentUser.settings.address}`;
-            console.log(url);
-            fetch(url.toString());
+            fetch(API.sendTestSms(currentUser.firstName || '', currentUser.settings.address || ''));
             alert("Please check your phone for the test SMS");
         }
     }

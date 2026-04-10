@@ -10,12 +10,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useWebSocket } from './WebSocketContext';
 import { useMessages } from 'components/Admin/MessageLogger';
+import type { Codes } from '@/components/History/History';
 
 interface SocialDataContextInterface {
     posts: Post[];
     donors: Donor[];
     clients: Client[];
-    history: any[];
+    history: Codes;
     status: number[];
     offline: boolean;
     lastCheck: TimeStamp;
@@ -37,7 +38,7 @@ export function SocialDataProvider({ children }: { children: React.ReactNode }):
     const [posts, setPosts] = useState<Post[]>([]);
     const [donors, setDonors] = useState<Donor[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
-    const [history, setHistory] = useState<any[]>([]);
+    const [history, setHistory] = useState<Codes>([]);
     const [status, setStatus] = useState<number[]>([]);
     const [offline, setOffline] = useState(false);
     const [lastCheck, setLastCheck] = useState<TimeStamp>(1658263194);

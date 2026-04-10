@@ -31,7 +31,7 @@ import { useModal, ModalType } from 'modals/Modals';
 import paraglider from 'images/paraglider.png';
 import banner from 'images/banner.jpg';
 import { useWindow } from 'hooks/useWindow';
-import { serverUrl } from "@/components/paths";
+import { API } from '@/api';
 
 /**
  * Conditionally renders a FontAwesome icon based on window width.
@@ -157,21 +157,21 @@ export function GpNavbar(): React.ReactElement {
                                         <NavDropdown.Divider />
                                         <NavDropdown.Item as={Link} to="/admin/Messages">Messages</NavDropdown.Item>
                                         <NavDropdown.Item
-                                            href={serverUrl + "/docs/backend"}
+                                            href={API.docs.backend()}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
                                             backend Documentation
                                         </NavDropdown.Item>
                                         <NavDropdown.Item
-                                            href={serverUrl + "/docs/frontend"}
+                                            href={API.docs.frontend()}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
                                             frontend Documentation
                                         </NavDropdown.Item>
                                         <NavDropdown.Item
-                                            href={serverUrl + "/docs/pi3_server"}
+                                            href={API.docs.pi3Server()}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >

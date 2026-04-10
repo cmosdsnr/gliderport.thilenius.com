@@ -3,7 +3,7 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { Row, Col, Button, Form, Table, Card, Modal } from 'react-bootstrap';
 import StatsImageListViewer from './StatsImageListViewer';
-import { serverUrl } from "@/components/paths";
+import { API } from '@/api';
 
 const abbrMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -76,14 +76,7 @@ export function StatsImageComponent(): React.ReactElement {
         setFromHourOptions(fromOptions);
 
 
-        const url = new URL('/gpapi/imageCount', serverUrl);
-        url.searchParams.set('date', imageDay!);
-        url.searchParams.set('from', hourRange[0].toString());
-        url.searchParams.set('to', hourRange[1].toString());
-        url.searchParams.set('camera', camera == "CameraA" ? '1' : '2');
-
-        // fetch(import.meta.env.VITE_SERVER_URL + `/gpapi/imageCount?date=${imageDay}&from=${hourRange[0]}&to=${hourRange[1]}&camera=${camera == "CameraA" ? 1 : 2}`)
-        fetch(url.toString())
+        fetch(API.imageCount(imageDay!, hourRange[0], hourRange[1], camera === 'CameraA' ? 1 : 2))
             .then((res) => res.json())
             .then((data) => {
                 if (data.error) {
@@ -101,8 +94,7 @@ export function StatsImageComponent(): React.ReactElement {
 
     // Fetch listing data for date selection when component mounts
     useEffect(() => {
-        const url = new URL('/gpapi/listing', serverUrl);
-        fetch(url.toString())
+        fetch(API.listing())
             .then((response) => response.json())
             .then((data) => {
                 setListing(data);
@@ -128,12 +120,7 @@ export function StatsImageComponent(): React.ReactElement {
         const month = (pickedDate.getMonth() + 1).toString().padStart(2, "0");
         const day = pickedDate.getDate().toString().padStart(2, "0");
         const key = `${year}-${month}-${day}`;
-        const url = new URL('/gpapi/getImageData', serverUrl);
-        url.searchParams.set('year', year.toString());
-        url.searchParams.set('month', month.toString());
-
-        // fetch(import.meta.env.VITE_SERVER_URL + `/gpapi/getImageData?year=${year}&month=${month}`)
-        fetch(url.toString())
+        fetch(API.getImageData(year, month))
             .then((response) => response.json())
             .then((data) => {
                 if (data.hasOwnProperty(key)) {

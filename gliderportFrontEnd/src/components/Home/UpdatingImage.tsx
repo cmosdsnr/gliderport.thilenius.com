@@ -23,7 +23,7 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { useStatusCollection } from '@/contexts/StatusCollection';
 import useLocalStorageState from 'hooks/useLocalStorageState';
 import switch_camera from 'images/switch-camera.png';
-import { serverUrl } from "@/components/paths";
+import { API } from '@/api';
 
 /**
  * Props type for UpdatingImage (currently none).
@@ -135,9 +135,7 @@ export function UpdatingImage({ }: Props): React.ReactElement {
      */
     async function getLargeImage(): Promise<void> {
         try {
-            const url = new URL('/gpapi/getLargeImage', serverUrl);
-            url.searchParams.set('camera', camera.toString());
-            const res = await fetch(url.toString());
+            const res = await fetch(API.getLargeImage(camera));
             if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
             const data: { image: string; date: number } = await res.json();
             const blob = b64toBlob(data.image, 'image/jpeg');

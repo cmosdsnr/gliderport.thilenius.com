@@ -7,7 +7,7 @@
  */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useWebSocket } from './WebSocketContext';
-import { serverUrl } from '@/components/paths';
+import { API } from '@/api';
 import { formatter, b64toBlob } from 'components/Globals';
 
 export interface CameraImage {
@@ -46,8 +46,7 @@ export function CameraProvider({ children }: { children: React.ReactNode }): Rea
 
     // Initial image fetch on mount
     useEffect(() => {
-        const url = new URL('/gpapi/getLastFiveSmallImages', serverUrl);
-        fetch(url.toString())
+        fetch(API.getLastFiveSmallImages())
             .then(res => res.json())
             .then(data => {
                 setCameraImages({

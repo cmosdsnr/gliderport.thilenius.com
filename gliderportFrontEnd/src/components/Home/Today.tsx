@@ -8,7 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { DayOfCodes } from '../History/History';
 import { codes } from '../Globals';
-import { serverUrl } from "@/components/paths";
+import { API } from '@/api';
 
 /**
  * Displays today's wind forecast codes in a table.
@@ -36,12 +36,11 @@ export function Today(): React.ReactElement {
          */
         const fetchForecastCodes = async (): Promise<void> => {
             try {
-                const url = new URL("/gpapi/getForecastCodes", serverUrl);
-                const res = await fetch(url.toString());
+                const res = await fetch(API.getForecastCodes());
                 if (!res.ok) {
                     throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 }
-                const forecastCodes: any = await res.json();
+                const forecastCodes: unknown[][] = await res.json();
 
                 // Remove the final "dark" entry if present
                 if (Array.isArray(forecastCodes[0])) {

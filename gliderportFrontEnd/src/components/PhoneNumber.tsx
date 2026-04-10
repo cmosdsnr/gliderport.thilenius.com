@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect, ChangeEvent } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { serverUrl } from "@/components/paths";
+import { API } from '@/api';
 
 export interface Provider {
     [key: string]: [string, string, string]
@@ -79,13 +79,7 @@ export function PhoneNumberInput(props: PhoneNumberInputProps): React.ReactEleme
         const numbersOnly = value.replace(/[^\d]/g, '')
         if (numbersOnly.length === 10) {
 
-            const url = new URL('/gpapi/PhoneFinder', serverUrl);
-            url.searchParams.set('area', numbersOnly.slice(0, 3));
-            url.searchParams.set('prefix', numbersOnly.slice(3, 6));
-            url.searchParams.set('number', numbersOnly.slice(6, 10));
-
-            // const url = `${import.meta.env.VITE_SERVER_URL}/gpapi/PhoneFinder?area=${numbersOnly.slice(0, 3)}&prefix=${numbersOnly.slice(3, 6)}&number=${numbersOnly.slice(6, 10)}`
-            fetch(url.toString())
+            fetch(API.phoneFinder(numbersOnly.slice(0, 3), numbersOnly.slice(3, 6), numbersOnly.slice(6, 10)))
                 .then(response => response.text())
                 .then(carrier => {
                     if (carrier.length > 0 && provider[carrier] !== undefined) {

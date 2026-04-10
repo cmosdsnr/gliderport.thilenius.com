@@ -53,7 +53,7 @@ export function useFilter(): FilterContextInterface {
  * @param props - The children to provide context to.
  * @returns {React.ReactElement} The provider with filter context.
  */
-export function FilterProvider({ children }: any): React.ReactElement {
+export function FilterProvider({ children }: { children: React.ReactNode }): React.ReactElement {
 
     const [filter, setFilter] = React.useState<number[]>([])
 

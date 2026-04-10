@@ -15,9 +15,7 @@ import useInterval from 'hooks/useInterval';
  * Props for CurrentTable.
  * {React.CSSProperties} [rest] - Additional CSS style properties to merge into the table’s inline style.
  */
-export interface CurrentTableProps {
-    [key: string]: any;
-}
+export type CurrentTableProps = React.CSSProperties;
 
 /**
  * Displays the latest sensor readings in a tabular layout, including:

@@ -159,7 +159,7 @@ const tickFormatter = (idx: number, startHour: number) => {
 // --------------------------------------------------------------------
 
 interface ChartProps {
-    data: any,
+    data: ReturnType<typeof buildChartData>,
     bands: { x1: number; x2: number; fill: string; label: string }[],
     ticks: number[],
     startHour: number,

@@ -6,13 +6,24 @@
  */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useWebSocket } from './WebSocketContext';
-import { serverUrl } from '@/components/paths';
+import { API } from '@/api';
 
 /**
  * A single sensor reading from the weather station.
  */
 export type Reading = {
     time: number;
+    speed: number;
+    direction: number;
+    humidity: number;
+    pressure: number;
+    temperature: number;
+};
+
+/** Raw record shape as received from the server. */
+type RawRecord = {
+    timestamp?: number;
+    time?: number;
     speed: number;
     direction: number;
     humidity: number;
@@ -27,12 +38,12 @@ export type Reading = {
  * - Converts pressure from Pa offset to mBar
  * - Carries the last non-zero direction forward over calm readings
  */
-const normalizeRecords = (raw: any[], initialDir: number): { readings: Reading[]; lastDir: number } => {
+const normalizeRecords = (raw: RawRecord[], initialDir: number): { readings: Reading[]; lastDir: number } => {
     let lastDir = initialDir;
-    const readings = raw.map((d: any) => {
+    const readings = raw.map((d: RawRecord) => {
         if (d.speed !== 0) lastDir = d.direction;
         return {
-            time: d.timestamp ?? d.time,
+            time: d.timestamp ?? d.time ?? 0,
             speed: d.speed / 10,
             direction: lastDir,
             humidity: d.humidity,
@@ -63,16 +74,14 @@ export function SensorDataProvider({ children }: { children: React.ReactNode }):
     useEffect(() => {
         const fetchInitial = async () => {
             try {
-                const url = new URL('/gpapi/getData', serverUrl);
-                url.searchParams.set('hours', '24');
-                const res = await fetch(url.toString());
+                const res = await fetch(API.getData(24));
                 const data = await res.json();
                 if (Array.isArray(data) && data.length > 0) {
                     const { readings: normalized } = normalizeRecords(data, 270);
                     setReadings(normalized);
                 }
-            } catch (err: any) {
-                console.error('Error fetching sensor data:', err.message);
+            } catch (err: unknown) {
+                console.error('Error fetching sensor data:', err instanceof Error ? err.message : err);
             }
         };
         fetchInitial();
@@ -88,7 +97,7 @@ export function SensorDataProvider({ children }: { children: React.ReactNode }):
             for (let i = prev.length - 1; i >= 0; i--) {
                 if (prev[i].speed !== 0) { lastDir = prev[i].direction; break; }
             }
-            const { readings: normalized } = normalizeRecords(lastMessage.records!, lastDir);
+            const { readings: normalized } = normalizeRecords(lastMessage.records! as RawRecord[], lastDir);
             return [...prev, ...normalized].slice(-9000);
         });
     }, [lastMessage]);

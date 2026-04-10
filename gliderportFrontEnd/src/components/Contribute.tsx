@@ -7,7 +7,7 @@
 import React, { useEffect } from 'react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import { serverUrl } from "@/components/paths";
+import { API } from '@/api';
 
 type Donor = string[];
 
@@ -23,8 +23,7 @@ export function Contribute(): React.ReactElement {
     const [donors, setDonors] = React.useState<Donor>([]);
 
     useEffect(() => {
-        const url = new URL("/gpapi/getDonors", serverUrl);
-        fetch(url.toString()).then((res) => res.json())
+        fetch(API.getDonors()).then((res) => res.json())
             .then((data) => setDonors(data));
     }, []);
 

@@ -13,17 +13,17 @@
  * @component
  */
 import React, { useEffect, useState } from 'react';
-import { serverUrl } from "@/components/paths";
+import { API } from '@/api';
 
 /**
  * Gliderport info returned from the API.
  */
 interface GliderportInfo {
-    lastRecord: any;
-    firstRecord: any;
+    lastRecord: TimeStamp | null;
+    firstRecord: TimeStamp | null;
     tdLast?: string | null;
-    numberRecords?: any;
-    latestHours: any;
+    numberRecords?: number;
+    latestHours: number;
     latestHoursString?: string | null;
 }
 
@@ -32,7 +32,7 @@ interface GliderportInfo {
  */
 interface ServerSentData {
     now: number;
-    record: any;
+    record: Record<string, unknown>;
     sun?: { [key: string]: string };
     computed?: { [key: string]: { original: number; display: string; delta: string } };
 }
@@ -46,7 +46,7 @@ interface AddDataInfo {
     numberRecordsReceived: number;
     lastEntryInHours: number;
     lastEntryInHoursString: string;
-    hoursInfo: any[];
+    hoursInfo: { resultsFound: number; ts: number; tsString?: string }[];
     forecast: {
         nextUpdate: number;
         nextUpdateString: string;
@@ -56,7 +56,7 @@ interface AddDataInfo {
         forecastStart: number;
         forecastEnd: number;
     };
-    codeHistoryUpdate: any;
+    codeHistoryUpdate: Record<string, unknown>;
 }
 
 /**
@@ -112,7 +112,7 @@ export function InfoDisplay(): React.ReactElement {
         lastRecord: null,
         firstRecord: null,
         tdLast: null,
-        numberRecords: null,
+        numberRecords: undefined,
         latestHours: 0,
         latestHoursString: null,
     });
@@ -147,8 +147,7 @@ export function InfoDisplay(): React.ReactElement {
      * Fetches InfoResponse from API on mount.
      */
     useEffect(() => {
-        const url = new URL('/gpapi/info', serverUrl);
-        fetch(url.toString())
+        fetch(API.info())
             .then(res => res.json())
             .then((data: InfoResponse) => {
                 setServerSent(data.serverSent);

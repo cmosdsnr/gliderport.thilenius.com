@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API } from '@/api';
 import { Form, Table } from 'react-bootstrap';
 import { DateTime } from 'luxon';
 
@@ -40,7 +41,7 @@ const ArchiveStats: React.FC = () => {
     useEffect(() => {
         setLoading(true);
         setError(null);
-        fetch(`https://gliderport.thilenius.com/gpapi/unpackArchive?year=${year}&month=${month}`)
+        fetch(API.unpackArchive(year, month))
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return res.json();
