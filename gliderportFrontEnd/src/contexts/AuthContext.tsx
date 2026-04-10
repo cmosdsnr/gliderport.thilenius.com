@@ -116,50 +116,44 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
 
     // Log in with Google OAuth
     const googleLogin = async () => {
-        //all-in-1 google login
-        //explanation: https://pocketbase.io/docs/authentication
-        //get key and secret from google developer console, and set them in pocketbase auth configuration 
-        //redirect set to https://pocketbase.thilenius.com/gpapi/oauth2-redirect
         try {
             const authData = await pb.collection('users').authWithOAuth2({ provider: 'google' });
             const meta = authData.meta;
             const record = authData.record;
+
             if (meta && record) {
-                if ((meta.name.length > 0) &&
-                    (meta.name !== record.name) &&
-                    pb.authStore.record
-                ) {
+                // Sync name from Google if it differs
+                if (meta.name?.length > 0 && meta.name !== record.name && pb.authStore.record) {
                     const n = meta.name.split(" ");
-                    const res: any = {};
+                    const res: Record<string, string> = {};
                     if (n.length > 0) res.firstName = n[0];
                     if (n.length > 1) res.lastName = n[n.length - 1];
-                    pb.collection('users').update(pb.authStore.record.id, res);
+                    await pb.collection('users').update(pb.authStore.record.id, res);
                 }
 
+                // Populate avatar + name for brand-new Google users
                 if (meta.isNew) {
                     const formData = new FormData();
                     const response = await fetch(meta.avatarUrl);
-                    if (response.ok) {
-                        const file = await response.blob();
-                        formData.append('avatar', file);
-                    }
+                    if (response.ok) formData.append('avatar', await response.blob());
                     formData.append('name', meta.name);
                     const n = meta.name.split(" ");
                     if (n.length > 0) formData.append('firstName', n[0]);
                     if (n.length > 1) formData.append('lastName', n[n.length - 1]);
-
                     formData.append('role', "Member");
                     await pb.collection('users').update(authData.record.id, formData);
                     await pb.collection("users").authRefresh();
                 }
-                // setIsLoggedIn(true);
-                console.log(pb.authStore.isValid);
-                // debugger;
+            }
+
+            // Update React state so the rest of the app sees the logged-in user
+            if (pb.authStore.record) {
+                handleCurrentUser(pb.authStore.record as unknown as User);
             }
         } catch (error) {
-            console.log("Failed to exchange code.\n" + error)
+            console.log("Failed to exchange code.\n" + error);
+            throw error;
         }
-        // setIsLoggedIn(true);
     }
 
     // Log out the current user
