@@ -327,8 +327,10 @@ function MethodBadge({ method }: { method: string }) {
 
 /** Renders one endpoint entry in TypeDoc parameter-list style. */
 function EndpointRow({ endpoint }: { endpoint: Endpoint }) {
-    const meta = META[endpoint.path];
-    const name = endpoint.path.split('/').filter(Boolean).pop() ?? endpoint.path;
+    // Strip stray leading ^ that Express regex parsing leaves on mount paths
+    const normalizedPath = endpoint.path.replace(/^\^/, '');
+    const meta = META[normalizedPath];
+    const name = normalizedPath.split('/').filter(Boolean).pop() ?? normalizedPath;
 
     return (
         <li style={{
@@ -339,7 +341,7 @@ function EndpointRow({ endpoint }: { endpoint: Endpoint }) {
             {/* Signature heading */}
             <h5 style={{ marginBottom: 4, fontFamily: 'monospace', fontSize: '0.9rem', fontWeight: 600 }}>
                 {meta ? meta.signature : (
-                    <><MethodBadge method={endpoint.method} />{name}</>
+                    <><MethodBadge method={endpoint.method} /> {name}</>
                 )}
             </h5>
 
@@ -354,7 +356,7 @@ function EndpointRow({ endpoint }: { endpoint: Endpoint }) {
             <p style={{ marginBottom: 0 }}>
                 <MethodBadge method={endpoint.method} />
                 <code style={{ fontSize: '0.8rem' }}>
-                    {meta ? meta.pathTemplate.replace(/^(GET|POST|PUT|PATCH|DELETE) /, '') : endpoint.path}
+                    {meta ? meta.pathTemplate.replace(/^(GET|POST|PUT|PATCH|DELETE) /, '') : normalizedPath}
                 </code>
             </p>
         </li>
@@ -412,7 +414,8 @@ export function ListEndpoints(): React.ReactElement {
 
     const grouped = new Map<string, Endpoint[]>();
     for (const ep of endpoints) {
-        const group = META[ep.path]?.group ?? 'Other';
+        const normalizedPath = ep.path.replace(/^\^/, '');
+        const group = META[normalizedPath]?.group ?? 'Other';
         if (!grouped.has(group)) grouped.set(group, []);
         grouped.get(group)!.push(ep);
     }
