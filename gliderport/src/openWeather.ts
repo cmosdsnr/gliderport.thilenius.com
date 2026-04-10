@@ -9,6 +9,7 @@
  */
 
 import { Request, Response, Router } from "express";
+import { registerEndpoint } from "endpointRegistry";
 import { getSun } from "sun.js";
 import { getCode, getLastMidnightLA, WindCode } from "codes.js";
 import { DateTime } from "luxon";
@@ -100,7 +101,13 @@ export interface Forecast {
   city: City;
 }
 
-// In-memory storage of computed codes for two days: [day1Codes, day2Codes]
+/**
+ * In-memory cache of computed wind condition codes for the next two forecast days.
+ *
+ * Each element is a run-length-encoded sequence of `[timestamp, WindCode]` pairs
+ * (same structure as {@link DayOfCodes}) covering the daylight hours of that day.
+ * Refreshed every time {@link fetchOpenWeather} succeeds.
+ */
 let codes: [Array<[number, WindCode]>, Array<[number, WindCode]>] = [[], []];
 
 /**
@@ -114,7 +121,7 @@ let codes: [Array<[number, WindCode]>, Array<[number, WindCode]>] = [[], []];
 const fetchOpenWeather = async (): Promise<Forecast> => {
   try {
     const response = await fetch(
-      "https://api.openweathermap.org/data/2.5/forecast?lat=32.889956&lon=-117.251632&units=imperial&appid=483c6b4301f7069cbf4e266bffa6d5ff"
+      "https://api.openweathermap.org/data/2.5/forecast?lat=32.889956&lon=-117.251632&units=imperial&appid=483c6b4301f7069cbf4e266bffa6d5ff",
     );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -175,14 +182,25 @@ const fetchOpenWeather = async (): Promise<Forecast> => {
   }
 };
 
-// In-memory storage of the latest forecast payload
+/**
+ * In-memory cache of the most recently fetched {@link Forecast} payload from OpenWeatherMap.
+ * Each {@link ForecastEntry} in `forecast.list` has its `code` field populated by
+ * {@link getCode} after the fetch. Updated every 2 hours by `getForecast`.
+ */
 export let forecast: Forecast;
 
 /**
- * Retrieves the forecast via `fetchOpenWeather`, computes wind codes for each entry,
- * and updates the PocketBase "forecast" status record with the full payload.
+ * Fetches the latest forecast, annotates every {@link ForecastEntry} with a {@link WindCode},
+ * stores the result in the module-level {@link forecast} cache, and persists it to the
+ * PocketBase `status` collection under ID `"forecast"`.
  *
- * Any errors during update are logged to console but not thrown.
+ * Wind speed from OpenWeatherMap is in mph; it is multiplied by 10 before passing to
+ * {@link getCode} to match the raw sensor scale used elsewhere.
+ *
+ * Called immediately on module load and then every 2 hours via `setInterval`.
+ * Errors are logged to console but not rethrown.
+ *
+ * @returns A promise that resolves when the fetch and PocketBase update complete (or fail silently).
  */
 const getForecast = async (): Promise<void> => {
   try {
@@ -221,6 +239,15 @@ export const forecastRoutes = (): Router => {
    *
    * @returns 200 with the `forecast` payload.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/getForecast",
+    group: "Forecasts",
+    signature: "getForecast: () => Forecast",
+    description:
+      "Returns the latest 5-day weather forecast from OpenWeatherMap, with each entry annotated with a wind condition code.",
+    pathTemplate: "GET /gpapi/getForecast",
+  });
   router.get("/getForecast", (_req: Request, res: Response) => {
     res.status(200).json(forecast);
   });
@@ -232,6 +259,15 @@ export const forecastRoutes = (): Router => {
    *
    * @returns 200 with the `codes` array: `[day1Codes, day2Codes]`.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/getForecastCodes",
+    group: "Forecasts",
+    signature: "getForecastCodes: () => [DayOfCodes, DayOfCodes]",
+    description:
+      "Returns computed wind condition codes for the next two forecast days as run-length-encoded day sequences.",
+    pathTemplate: "GET /gpapi/getForecastCodes",
+  });
   router.get("/getForecastCodes", (_req: Request, res: Response) => {
     res.status(200).json(codes);
   });

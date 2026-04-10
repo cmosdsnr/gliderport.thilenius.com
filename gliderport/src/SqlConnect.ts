@@ -24,21 +24,39 @@ dotenv.config();
 
 /**
  * The active MySQL connection instance.
- * Will be `null` if connection could not be established.
+ *
+ * Set to a `mysql2.Connection` object by {@link SqlConnect} upon a successful
+ * `createConnection` call.  Remains `null` if `DATABASE_URL` is missing or
+ * `createConnection` throws before the connection attempt.
+ *
+ * @example
+ * ```ts
+ * import { connection } from "SqlConnect";
+ * connection?.query("SELECT 1", (err, rows) => { ... });
+ * ```
  */
 export let connection: mysql.Connection | null = null;
 
 /**
- * Initializes and establishes a connection to the MySQL database.
+ * Initializes and opens a MySQL database connection.
  *
- * - Reads the `DATABASE_URL` environment variable.
- * - Creates a MySQL connection using `mysql2.createConnection`.
- * - Attempts to connect and logs the outcome.
+ * Steps performed:
+ * 1. Reads the `DATABASE_URL` environment variable (a mysql2-compatible
+ *    connection string, e.g. `mysql://user:pass@host:3306/dbname`).
+ * 2. Calls `mysql2.createConnection(dbUrl)` to create a connection object.
+ * 3. Calls `connection.connect()` to open the socket to MySQL.
+ * 4. Logs success or error to `console`.
  *
- * If the `DATABASE_URL` is not defined or the connection fails, errors are logged,
- * and `connection` remains `null`.
+ * Error states:
+ * - `DATABASE_URL` is undefined or empty → logs error, returns early, `connection` stays `null`.
+ * - `mysql2.createConnection` returns falsy → logs error, returns early.
+ * - `connection.connect` callback receives an error → logs the MySQL error message.
  *
- * @returns `void`
+ * Called automatically when this module is first imported.
+ *
+ * @returns `void` — connection result is communicated via the {@link connection} export.
+ *
+ * @throws Never throws; all errors are caught and logged internally.
  */
 export const SqlConnect = (): void => {
   const dbUrl = process.env.DATABASE_URL;
@@ -65,5 +83,9 @@ export const SqlConnect = (): void => {
   });
 };
 
-// Immediately attempt to establish the connection when this module is imported
+/**
+ * Module initializer — invokes {@link SqlConnect} at import time so that
+ * the {@link connection} export is ready for use by the time any importer
+ * receives the module.
+ */
 SqlConnect();

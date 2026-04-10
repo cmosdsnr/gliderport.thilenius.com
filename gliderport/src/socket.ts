@@ -17,7 +17,7 @@ import path from "path";
 import { __logDir, log } from "log";
 import { DateTime } from "luxon";
 
-// Determine the log file path.
+/** Absolute path to the WebSocket ping/pong log file. */
 const __LogFile = path.join(__logDir, "pings.log");
 
 /**
@@ -120,7 +120,11 @@ export function socketServer(server: http.Server): void {
     });
   });
 
-  // Periodically ping clients and remove those that fail to respond
+  /**
+   * Keep-alive interval: fires every 45 seconds.
+   * Sends a `{ command: "ping" }` message to each client and removes any client
+   * whose last pong was received more than 45 seconds ago.
+   */
   setInterval(() => {
     const now = Date.now();
     for (const [client, meta] of clients.entries()) {

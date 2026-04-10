@@ -12,16 +12,35 @@
 import { pb } from "pb.js";
 import { ToId } from "miscellaneous.js";
 
+/** Current online state of the monitored server. `true` once a successful HTTP response is received. */
 let online: boolean = false;
+
+/** Snapshot of {@link online} from the previous {@link updatePocketbaseStatus} call, used to detect transitions. */
 let lastOnline: boolean = false;
-const url = "http://104.36.31.118:8082/name"; //esp32 at gliderport externally exposed.
+
+/** URL of the ESP32 device at Gliderport, externally exposed. Polled every 60 seconds. */
+const url = "http://104.36.31.118:8082/name";
+
+/**
+ * Number of consecutive failed HTTP requests to {@link url}.
+ * The server is declared offline once this reaches 5.
+ */
 let consecutiveFailures = 0;
+
+/**
+ * Running count of successful status checks since the last failure.
+ * A periodic log entry is written every 60 successful checks (i.e., every ~60 minutes).
+ */
 let statusCount = 0;
 
 /**
- * Initializes the online status by fetching the "online" status record from PocketBase.
- * If no record exists, creates one with the default offline state. Then starts the periodic
- * check of server status every minute.
+ * Module initializer: fetches (or creates) the `"online"` status record from PocketBase,
+ * seeds {@link online} from the stored value, then starts the 60-second polling interval
+ * that calls {@link checkServerStatus}.
+ *
+ * @remarks
+ * If the PocketBase fetch fails the interval is still started so monitoring begins
+ * even when the database is temporarily unavailable at startup.
  */
 pb.collection("status")
   .getOne(ToId("online"))
@@ -94,11 +113,16 @@ async function checkServerStatus(): Promise<void> {
 }
 
 /**
- * Updates the PocketBase `status` record for "online" with the current online state and timestamp.
- * If no status record exists, creates one. Also logs a new record in the `isOnline` collection whenever
- * the online status changes.
+ * Persists the current {@link online} state to PocketBase.
  *
- * @returns A Promise that resolves once PocketBase has been updated.
+ * - Updates the `status` record with id `"online"` (creates it if missing).
+ * - Appends a timestamped entry to the `isOnline` collection whenever the online
+ *   state has changed since the last call (transition detection via {@link lastOnline}).
+ *
+ * @remarks
+ * Called at the end of every {@link checkServerStatus} invocation.
+ *
+ * @returns A Promise that resolves once all PocketBase writes have completed.
  */
 async function updatePocketbaseStatus(): Promise<void> {
   const timestamp = Math.floor(Date.now() / 1000);

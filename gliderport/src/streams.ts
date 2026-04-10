@@ -12,6 +12,7 @@
  * @module streamRouter
  */
 import express, { Request, Response, NextFunction, Router } from "express";
+import { registerEndpoint } from "endpointRegistry";
 import fs from "fs";
 import path from "path";
 import { __dirname } from "log";
@@ -46,15 +47,19 @@ type LastFiveMinutes = {
   };
 };
 
+/** In-memory record of the most recent `.ts` segment request per path, used to compute the rolling 5-minute bitrate. */
 const lastFiveMinutes: LastFiveMinutes = {};
+
+/** In-memory streaming statistics, reset only when the server restarts (hourly buckets older than 24 h are pruned). */
 const stats: Stats = { totalHitsByHour: {}, hitsByIPByHour: {} };
 
-//Route prefix for streaming
+/** URL prefix under which all stream segment files are served. */
 const STREAM_ROUTE = "/stream";
 
-// Directory on disk containing `.ts` segments
+/** Absolute path to the directory on disk containing `.ts` HLS segment files. */
 const STREAM_DIR = path.join(__dirname, "/gliderport/stream");
-// Path to access log file for stream requests
+
+/** Absolute path to the append-only access log file for stream requests. */
 const LOG_FILE = path.join(__dirname, "/gliderport/stream/stream_access.log");
 
 /**
@@ -154,6 +159,14 @@ export function streamRoutes(): Router {
    * GET /stats
    * Returns current in-memory streaming statistics.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/stats",
+    group: "System",
+    signature: "stats: () => Stats",
+    description: "Returns current HLS streaming metrics — per-hour hit counts by IP and 5-minute rolling bitrate.",
+    pathTemplate: "GET /gpapi/stats",
+  });
   router.get("/stats", (_req: Request, res: Response) => {
     res.json(stats);
   });

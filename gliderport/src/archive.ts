@@ -34,6 +34,7 @@
  */
 
 import { Request, Response, Router } from "express";
+import { registerEndpoint } from "endpointRegistry";
 import { fromZonedTime } from "date-fns-tz";
 import { sendMeEmail } from "sendMeEmail";
 import cron from "node-cron";
@@ -44,7 +45,7 @@ import { logStr, writeLog, __logDir, __dirname } from "log";
 import { ToId } from "miscellaneous";
 import { DateTime } from "luxon";
 
-// Determine the log file path.
+/** Absolute path to the shared application log file. */
 const __LogFile = path.join(__logDir, "gliderport.log");
 /**
  * A wind data record consisting of:
@@ -96,9 +97,23 @@ function packRecord(record: RecordType): Buffer {
 }
 
 /**
- * Reads a binary archive file and unpacks all records into RecordType[].
- * @param filename - The archive filename (e.g., "2025-01.bin")
- * @returns Promise<RecordType[]> - Array of unpacked records
+ * Reads a binary archive file and unpacks all 10-byte records into {@link RecordType} tuples.
+ *
+ * Each record is decoded by reversing the {@link packRecord} bit-packing:
+ * - Bytes 0–3: little-endian UInt32 → `timestamp`
+ * - Bytes 4–9: 48-bit little-endian packed field → `speed` (9 bits), `direction` (9 bits),
+ *   `temperature` (10 bits), `humidity` (7 bits), `pressure` (13 bits, sign-extended)
+ *
+ * The file is looked up under `<__dirname>/gliderport/bin/<filename>`.
+ *
+ * @param filename - Archive filename in `"YYYY-MM.bin"` format (e.g., `"2025-01.bin"`).
+ * @returns A promise resolving to `{ records }` on success, or `{ error }` if the file is
+ *   missing or cannot be read.
+ *
+ * @example
+ * const result = await unpackRecords("2025-03.bin");
+ * if (result.error) console.error(result.error);
+ * else console.log(result.records!.length, "records read");
  */
 export async function unpackRecords(filename: string): Promise<{ error?: string; records?: RecordType[] }> {
   const filePath = path.join(__dirname, "/gliderport/bin/", filename);
@@ -148,6 +163,25 @@ export async function unpackRecords(filename: string): Promise<{ error?: string;
   return { records };
 }
 
+/**
+ * Computes summary statistics over an array of wind data records.
+ *
+ * @param records - Array of {@link RecordType} tuples to analyse.
+ * @returns An object containing:
+ *   - `count` – total number of records
+ *   - `minTimestamp` / `maxTimestamp` – UNIX timestamp range
+ *   - `minSpeed` / `maxSpeed` – wind speed range
+ *   - `minDirection` / `maxDirection` – wind direction range (degrees)
+ *   - `minTemperature` / `maxTemperature` – temperature range
+ *   - `minHumidity` / `maxHumidity` – humidity range
+ *   - `minPressure` / `maxPressure` – pressure range (signed)
+ *   - `startTime` / `endTime` – human-readable timestamps in America/Los_Angeles
+ * @returns `{ error }` if `records` is empty or falsy.
+ *
+ * @example
+ * const result = await unpackRecords("2025-03.bin");
+ * if (result.records) console.log(statsOfRecords(result.records));
+ */
 export function statsOfRecords(records: RecordType[]): any {
   if (!records || records.length === 0) {
     return { error: "No records given to statsOfRecords." };
@@ -449,6 +483,15 @@ export const archiveRoutes = (): Router => {
    * @route GET /runScheduledArchive
    * @returns A 200 response if the job starts successfully, or a 500 status if an error occurs.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/runScheduledArchive",
+    group: "System",
+    signature: "runScheduledArchive: () => string",
+    description:
+      "Manually triggers the monthly wind data archival job — packs records to a binary file and deletes them from PocketBase.",
+    pathTemplate: "GET /gpapi/runScheduledArchive",
+  });
   router.get("/runScheduledArchive", async (req: Request, res: Response) => {
     try {
       runScheduledArchive();
@@ -458,6 +501,26 @@ export const archiveRoutes = (): Router => {
     }
   });
 
+  /**
+   * Unpacks a monthly archive file and returns summary statistics.
+   *
+   * @route GET /unpackArchive
+   * @param month - Query param: month number (1–12).
+   * @param year  - Query param: four-digit year (2015–current).
+   * @returns 200 with `{ filename, stats }` on success.
+   * @returns 400 if `month` or `year` is missing or out of range.
+   * @returns 404 if the archive file does not exist.
+   * @returns 500 on an internal error during unpacking or stats calculation.
+   */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/unpackArchive",
+    group: "System",
+    signature: "unpackArchive: (month: number, year: number) => { filename: string; stats: ArchiveStats }",
+    description:
+      "Unpacks a monthly wind data archive file and returns summary statistics (speed, direction, temperature, pressure, humidity ranges).",
+    pathTemplate: "GET /gpapi/unpackArchive?month=<month>&year=<year>",
+  });
   router.get("/unpackArchive", async (req: Request, res: Response) => {
     if (!req.query.month || !req.query.year) {
       return res.status(400).send("Missing month or year query parameters.");

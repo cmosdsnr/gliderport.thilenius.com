@@ -24,6 +24,7 @@
 
 import { Request, Response, Router } from "express";
 import { pb } from "pb";
+import { registerEndpoint } from "endpointRegistry";
 import cron from "node-cron";
 import SunCalc from "suncalc";
 import { ToId } from "miscellaneous";
@@ -33,9 +34,16 @@ import path from "path";
 const __LogFile = path.join(__logDir, "gliderport.log");
 
 /**
- * Holds the most recently computed sun times after calling updateSunData().
+ * The most recently computed sun-event times for La Jolla, CA.
+ *
+ * Populated on module load by the first call to {@link updateSunData} and refreshed
+ * nightly at 22:00 America/Los_Angeles. Includes events such as `sunrise`, `sunset`,
+ * `solarNoon`, `goldenHour`, etc., as defined by the SunCalc library.
  */
 export let sunData: SunCalc.GetTimesResult;
+
+/** `true` after the first call to {@link updateSunData}; controls whether the calculation
+ *  targets today or the next day. */
 let initialized = false;
 
 /**
@@ -76,7 +84,7 @@ export const updateSunData = (): void => {
     "Sunrise:",
     sunData.sunrise.toLocaleString(),
     "Sunset:",
-    sunData.sunset.toLocaleString()
+    sunData.sunset.toLocaleString(),
   );
   writeLog(__LogFile, log);
 
@@ -111,6 +119,15 @@ export const sunRoutes = (): Router => {
    * GET /UpdateSun
    * Triggers a sun data recalculation and returns the current sunData JSON.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/UpdateSun",
+    group: "Forecasts",
+    signature: "UpdateSun: () => SunCalc.GetTimesResult",
+    description:
+      "Manually triggers a sun data recalculation for La Jolla, CA and returns the current sunrise/sunset times.",
+    pathTemplate: "GET /gpapi/UpdateSun",
+  });
   router.get("/UpdateSun", (_req: Request, res: Response) => {
     updateSunData();
     res.json(sunData);

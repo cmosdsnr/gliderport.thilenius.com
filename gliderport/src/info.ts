@@ -50,6 +50,7 @@
  */
 
 import express, { Request, Response } from "express";
+import { registerEndpoint } from "endpointRegistry";
 import mysql from "mysql2";
 import globals from "globals";
 import { pb } from "pb";
@@ -527,6 +528,15 @@ export const infoRoutes = (): express.Router => {
    * @param res  - The Express response object.
    * @returns    JSON containing the assembled `InfoResponse`, or an error message if no DB connection.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/info",
+    group: "Site Info",
+    signature: "info: () => InfoResponse",
+    description:
+      "Returns comprehensive system information including gliderport stats, hourly counts, sun data, code history, and forecast metadata.",
+    pathTemplate: "GET /gpapi/info",
+  });
   router.get("/info", async (req: Request, res: Response) => {
     if (connection) {
       const response = await info(connection);

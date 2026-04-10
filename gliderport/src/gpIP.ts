@@ -11,25 +11,59 @@
  */
 import express, { Request, Response, NextFunction, Router } from "express";
 import { pb } from "./pb";
+import { registerEndpoint } from "./endpointRegistry";
 
 /**
- * Returns a new Express `Router` that exposes endpoints for IP management.
+ * Creates and returns an Express `Router` that exposes Gliderport IP management endpoints.
  *
- * Routes:
- * - `GET /setGPIP`: Detects caller IP, validates availability on port 8081, and updates DB.
+ * | Method | Path    | Description                                                                    |
+ * |--------|---------|--------------------------------------------------------------------------------|
+ * | GET    | /setIP  | Reads the caller's public IP, verifies port 8081 is reachable, updates the    |
+ * |        |         | `"000gliderportip"` record in the PocketBase `status` collection.              |
  *
- * @returns An Express `Router` instance.
+ * @remarks
+ * The IP is extracted from the `x-forwarded-for` header when the server sits behind a proxy,
+ * falling back to `req.socket.remoteAddress`. IPv4-mapped IPv6 addresses (`::ffff:…`) are
+ * normalised to plain IPv4 form before the health check.
+ *
+ * @returns A configured Express `Router` instance.
+ *
+ * @example
+ * ```ts
+ * import express from "express";
+ * import { gpIPRoutes } from "./gpIP";
+ *
+ * const app = express();
+ * app.use("/gp", gpIPRoutes());
+ * // → GET /gp/setIP
+ * ```
  */
 export function gpIPRoutes(): Router {
   const router = express.Router();
 
   /**
-   * GET /setGPIP
+   * GET /setIP
    *
-   * 1. Determines the caller's public IP.
-   * 2. Performs a health check (HTTP GET) on the IP at port 8081.
-   * 3. If successful, updates the `000gliderportip` record in the `miscellaneous` collection.
+   * 1. Determines the caller's public IP (supports proxies via `x-forwarded-for`).
+   * 2. Performs an HTTP health check against `http://<ip>:8081` with a 5-second timeout.
+   * 3. On success, writes `{ ip, timestamp }` to the `"000gliderportip"` record in the
+   *    PocketBase `status` collection and returns the same payload as JSON.
+   *
+   * @returns
+   * - `200 { ip, timestamp }` — IP recorded successfully.
+   * - `400 { error }` — caller IP could not be determined.
+   * - `502 { error }` — health check on port 8081 failed.
+   * - `500 { error }` — unexpected server error.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/setIP",
+    group: "System",
+    signature: "setIP: () => { ip: string; timestamp: string }",
+    description:
+      "Reads the caller's public IP, verifies port 8081 is reachable, and updates the Gliderport IP record in PocketBase.",
+    pathTemplate: "GET /gpapi/setIP",
+  });
   router.get("/setIP", async (req: Request, res: Response) => {
     try {
       let ip = (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || "";

@@ -42,6 +42,7 @@
  */
 
 import express, { Request, Response, Router } from "express";
+import { registerEndpoint } from "endpointRegistry";
 import fs from "fs";
 import cron from "node-cron";
 import { isDirectory, ToId } from "miscellaneous";
@@ -52,45 +53,88 @@ import { __logDir, log } from "log";
 import { DateTime } from "luxon";
 import path from "path";
 
-// Determine the log file path.
+/** Absolute path to the shared application log file. */
 const __LogFile = path.join(__logDir, "gliderport.log");
 
+/** A single image record: base64-encoded image data and the capture timestamp (ms). */
 type ImageData = { image: string; date: number };
+
+/** An ordered list of {@link ImageData} records for one camera. */
 type ImageList = ImageData[];
+
+/** Live image lists for both cameras, used when returning the latest small images. */
 type BothCameraData = { camera1: ImageList; camera2: ImageList };
 
+/**
+ * Aggregated statistics for a single camera's images within one day directory.
+ *
+ * @remarks
+ * Populated by {@link getImageStats}. The `starting`/`ending` fields hold the file
+ * name and modification timestamp (ms) of the first and last images found.
+ * Indices are 0-based offsets derived from the numeric part of each filename.
+ */
 type CameraData = {
+  /** Earliest image in the directory (file name + modification time in ms). */
   starting: {
     file: string;
     time: number;
   };
+  /** Latest image in the directory (file name + modification time in ms). */
   ending: {
     file: string;
     time: number;
   };
+  /** Lowest 0-based image index found in the directory. */
   smallestIndex: number;
+  /** Highest 0-based image index found in the directory. */
   largestIndex: number;
+  /** Total number of image files found. */
   numFiles: number;
+  /** Count of index slots between `smallestIndex` and `largestIndex` with no matching file. */
   numMissing: number;
+  /** `true` when no gaps exist between `smallestIndex` and `largestIndex`. */
   isContinuous: boolean;
+  /** `true` when a corresponding MP4 video file was found for this camera/day. */
   video: boolean;
 };
 
+/**
+ * Result of scanning a single day directory with {@link getImageStats}.
+ *
+ * @remarks
+ * `CameraB` is only present when `formatType === 2` (dual-camera filenames
+ * matching `image-1-NNNNN.jpg` / `image-2-NNNNN.jpg`).
+ */
 interface ImageStats {
-  formatType: number; // 0: image1000.jpg, 1: image10000.jpg, 2: image-1/2-10000.jpg
+  /**
+   * Detected filename format used in the directory:
+   * - `0` — `image1000.jpg` (4-digit index, base 1000)
+   * - `1` — `image10000.jpg` (5-digit index, base 10000)
+   * - `2` — `image-1-10000.jpg` / `image-2-10000.jpg` (dual-camera, 5-digit)
+   */
+  formatType: number;
+  /** Set to the error message string if directory reading throws. */
   error?: string;
-  CameraA: CameraData; // Original camera pointing right
-  CameraB?: CameraData; // Second camera pointing left (if formatType 2)
+  /** Statistics for the original (right-facing) camera. Always present. */
+  CameraA: CameraData;
+  /** Statistics for the second (left-facing) camera. Only present when `formatType === 2`. */
+  CameraB?: CameraData;
 }
 
-// Global arrays to store last five small images for each camera.
+/** Rolling buffer of the last five small images received from camera 1 (right-facing). */
 const lastFiveSmallImagesCamera1: ImageList = [];
+/** Rolling buffer of the last five small images received from camera 2 (left-facing). */
 const lastFiveSmallImagesCamera2: ImageList = [];
+/** Most recent large image for each camera: index 0 = camera 1, index 1 = camera 2. */
 const lastBigImagesCamera: ImageList = [];
 
-// Hold the current 4 images (big/small left/right).
+/**
+ * Holds the four most recently received live images in the order:
+ * `[smallCam1, bigCam1, smallCam2, bigCam2]` (base64-encoded strings).
+ */
 const currentImages: string[] = [];
 
+/** Absolute path to the root directory containing year/month/date image subdirectories. */
 const IMAGE_PATH = "/app/gliderport/images";
 
 /**
@@ -109,7 +153,14 @@ function getFileDate(filePath: string): number | null {
   }
 }
 
-// Default configuration object for a camera.
+/**
+ * Prototype {@link CameraData} object used as the deep-clone source when initialising
+ * per-camera statistics inside {@link getImageStats}.
+ *
+ * `starting.time` is set to `9999999999999` (always greater than any real mtime) so that
+ * the first real file always wins the "min" comparison; `ending.time` is `-Infinity` for
+ * the symmetric "max" comparison.
+ */
 const cameraDefault: CameraData = {
   starting: {
     file: "",
@@ -226,7 +277,7 @@ function getImageStats(directoryPath: string): ImageStats {
         "CameraA:",
         results.CameraA.largestIndex,
         results.CameraA.smallestIndex,
-        results.CameraA.numFiles
+        results.CameraA.numFiles,
       );
     }
 
@@ -249,7 +300,7 @@ function getImageStats(directoryPath: string): ImageStats {
           "CameraB:",
           results.CameraB.largestIndex,
           results.CameraB.smallestIndex,
-          results.CameraB.numFiles
+          results.CameraB.numFiles,
         );
       }
     }
@@ -280,7 +331,7 @@ const imageCount = (
   date: string,
   from: number,
   to: number,
-  camera: number
+  camera: number,
 ): { files: string[] } | { error: string } => {
   // Validate the date format
   const [year, month, day] = date.split("-");
@@ -559,26 +610,66 @@ cron.schedule("0 1 * * *", () => {
 export const ImageRoutes = (): Router => {
   const router = express.Router();
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/scanLatestDirectory",
+    group: "Images",
+    signature: "scanLatestDirectory: () => { status: string }",
+    description: "Scans the latest image directory for new data and updates PocketBase imageFiles records.",
+    pathTemplate: "GET /gpapi/scanLatestDirectory",
+  });
   router.get("/scanLatestDirectory", async (_req: Request, res: Response) => {
     await scanLatestDirectory();
     res.json({ status: "ok" });
   });
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/scanEntireDirectory",
+    group: "Images",
+    signature: "scanEntireDirectory: () => { status: string }",
+    description: "Scans the entire image directory tree and rebuilds all PocketBase imageFiles records.",
+    pathTemplate: "GET /gpapi/scanEntireDirectory",
+  });
   router.get("/scanEntireDirectory", async (_req: Request, res: Response) => {
     await scanEntireDirectory();
     res.json({ status: "ok" });
   });
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/createListingRecord",
+    group: "Images",
+    signature: "createListingRecord: () => { status: string }",
+    description: "Aggregates all imageFiles records into the listing record used by the gallery browser.",
+    pathTemplate: "GET /gpapi/createListingRecord",
+  });
   router.get("/createListingRecord", async (_req: Request, res: Response) => {
     await createListingRecord();
     res.json({ status: "ok" });
   });
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/listing",
+    group: "Images",
+    signature: "listing: () => Record<year, Record<month, day[]>>",
+    description: "Returns the gallery listing record — a nested object of year → month → available days.",
+    pathTemplate: "GET /gpapi/listing",
+  });
   router.get("/listing", async (_req: Request, res: Response) => {
     const data = await getListingRecord();
     res.json(data);
   });
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/imageCount",
+    group: "Images",
+    signature: "imageCount: (date: string, from: number, to: number, camera: 1|2) => { files: string[] }",
+    description: "Returns the list of image filenames for a given date, hour range, and camera number.",
+    pathTemplate: "GET /gpapi/imageCount?date=<yyyy-mm-dd>&from=<hour>&to=<hour>&camera=<1|2>",
+  });
   router.get("/imageCount", (req: Request, res: Response) => {
     if (req.query.date === undefined) {
       return res.status(400).json({
@@ -616,6 +707,14 @@ export const ImageRoutes = (): Router => {
     res.json(result);
   });
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/getImageData",
+    group: "Images",
+    signature: "getImageData: (year: number, month: number) => Record<date, ImageStats>",
+    description: "Returns image statistics for every day in a given year and month from PocketBase.",
+    pathTemplate: "GET /gpapi/getImageData?year=<year>&month=<month>",
+  });
   router.get("/getImageData", async (req: Request, res: Response) => {
     if (req.query.year === undefined) {
       return res.status(400).json({
@@ -637,6 +736,15 @@ export const ImageRoutes = (): Router => {
     res.json(data);
   });
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/latestImages",
+    group: "Images",
+    signature: "latestImages: () => []",
+    description:
+      "Called by the frontend on load; records a site hit and returns an empty array (live images arrive via WebSocket).",
+    pathTemplate: "GET /gpapi/latestImages",
+  });
   // Called by the front end when it loads initial images
   router.get("/latestImages", (req: Request, res: Response) => {
     res.json([]);
@@ -656,6 +764,16 @@ export const ImageRoutes = (): Router => {
    * @param res  - The HTTP response.
    * @returns     A JSON object with `{ status, camera, size, index }` or an error.
    */
+  registerEndpoint({
+    method: "POST",
+    path: "/gpapi/updateImage",
+    group: "Images",
+    signature:
+      "updateImage: (A: string, size: 1|2, camera: 1|2) => { status: string; camera: number; size: number; index: number }",
+    description:
+      "Receives a base64-encoded image from the Pi camera, stores it in memory, and broadcasts it to WebSocket clients.",
+    pathTemplate: "POST /gpapi/updateImage",
+  });
   router.post("/updateImage", (req: Request, res: Response) => {
     const { A, size, camera } = req.body;
     if (
@@ -718,6 +836,14 @@ export const ImageRoutes = (): Router => {
    * @param res - HTTP response.
    * @returns   JSON of the last big image object or a 400 error if missing.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/getLargeImage",
+    group: "Images",
+    signature: "getLargeImage: (camera: 1|2) => ImageData",
+    description: "Returns the most recently received large image for the specified camera.",
+    pathTemplate: "GET /gpapi/getLargeImage?camera=<1|2>",
+  });
   router.get("/getLargeImage", (req: Request, res: Response) => {
     if (req.query.camera === undefined) {
       return res.status(400).json({
@@ -741,6 +867,14 @@ export const ImageRoutes = (): Router => {
    * @param res - HTTP response.
    * @returns   JSON with `{ camera1, camera2 }` arrays.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/getLastFiveSmallImages",
+    group: "Images",
+    signature: "getLastFiveSmallImages: () => { camera1: ImageList; camera2: ImageList }",
+    description: "Returns the last five small images for each camera, used to populate the live view strip.",
+    pathTemplate: "GET /gpapi/getLastFiveSmallImages",
+  });
   router.get("/getLastFiveSmallImages", (req: Request, res: Response) => {
     res.json({
       camera1: lastFiveSmallImagesCamera1,
@@ -758,6 +892,14 @@ export const ImageRoutes = (): Router => {
    * @param res - HTTP response.
    * @returns   JSON `{ status: "ok", sent: <req.body> }`.
    */
+  registerEndpoint({
+    method: "POST",
+    path: "/gpapi/updateLog",
+    group: "Images",
+    signature: "updateLog: (body: any) => { status: string; sent: any }",
+    description: "(Debug) Receives client-side log data from the Pi camera and echoes it back.",
+    pathTemplate: "POST /gpapi/updateLog",
+  });
   router.post("/updateLog", (req: Request, res: Response) => {
     res.json({ status: "ok", sent: req.body });
   });
@@ -771,6 +913,14 @@ export const ImageRoutes = (): Router => {
    * @param res - HTTP response.
    * @returns   JSON `{ status: "going to sleep" }` or a 500 error on failure.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/gotoSleep",
+    group: "Images",
+    signature: "gotoSleep: () => { status: string }",
+    description: "Sets the camera server state to sleeping in PocketBase, stopping new image saves.",
+    pathTemplate: "GET /gpapi/gotoSleep",
+  });
   router.get("/gotoSleep", (_req: Request, res: Response) => {
     try {
       pb.collection("status")
@@ -797,6 +947,14 @@ export const ImageRoutes = (): Router => {
    * @param res - HTTP response.
    * @returns   JSON `{ status: "WAKING UP" }` or a 500 error on failure.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/wakeUp",
+    group: "Images",
+    signature: "wakeUp: () => { status: string }",
+    description: "Sets the camera server state to awake in PocketBase, resuming image saves.",
+    pathTemplate: "GET /gpapi/wakeUp",
+  });
   router.get("/wakeUp", (_req: Request, res: Response) => {
     try {
       pb.collection("status")

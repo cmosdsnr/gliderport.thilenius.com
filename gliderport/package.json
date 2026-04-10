@@ -15,7 +15,7 @@
     "dev4": "nodemon --watch dist/app.js --ext js --exec \"node dist/app.js\"",
     "start": "node dist/app.js",
     "build": "tsup --format esm app.ts",
-    "docs:generate": "typedoc && cp -r docs\\* \\\\192.168.0.5\\passport\\gliderport\\docs\\backend",
+    "docs:generate": "typedoc --skipErrorChecking && copy-docs.bat",
     "docs:serve": "yarn docs:generate && http-server docs -o"
   },
   "dependencies": {
@@ -58,5 +58,6 @@
     "@types/ws": "^8.18.1",
     "ts-node": "^10.9.1",
     "tsup": "^6.6.0"
-  }
+  },
+  "packageManager": "yarn@4.13.0+sha512.5c20ba010c99815433e5c8453112165e673f1c7948d8d2b267f4b5e52097538658388ebc9f9580656d9b75c5cc996f990f611f99304a2197d4c56d21eea370e7"
 }

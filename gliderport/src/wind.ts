@@ -38,6 +38,7 @@
 
 import { Request, Response, Router } from "express";
 import { pb } from "pb";
+import { registerEndpoint } from "endpointRegistry";
 import { DateTime } from "luxon";
 import { ToId } from "miscellaneous";
 import { updateCodes, convertToCodes } from "codes";
@@ -241,12 +242,28 @@ const averages = (hours: number, duration: number): Array<[number, number, numbe
 export const windRoutes = (): Router => {
   const router = Router();
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/getData",
+    group: "Wind Data",
+    signature: "getData: (hours: number) => WindTableRecord[]",
+    description: "Returns raw wind table records for the last N hours.",
+    pathTemplate: "GET /gpapi/getData?hours=<hours>",
+  });
   router.get("/getData", (req: Request, res: Response) => {
     const hours = parseInt(req.query.hours as string) || 0;
     const cutoff = DateTime.now().toSeconds() - hours * 3600;
     res.json(windTable.filter((r) => r.timestamp > cutoff));
   });
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/averages",
+    group: "Wind Data",
+    signature: "averages: (hours: number, duration: 5|15|30|60) => AverageRecord[]",
+    description: "Returns fixed-interval aggregates for the last N hours in chunks of the given duration (minutes).",
+    pathTemplate: "GET /gpapi/averages?hours=<hours>&duration=<duration>",
+  });
   router.get("/averages", (req: Request, res: Response) => {
     const hours = parseInt(req.query.hours as string);
     const duration = parseInt(req.query.duration as string);
@@ -256,6 +273,14 @@ export const windRoutes = (): Router => {
     res.json(averages(hours, duration));
   });
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/getLastEntry",
+    group: "Wind Data",
+    signature: "getLastEntry: () => { timestamp: number; formatted: string }",
+    description: "Returns the timestamp of the most recent wind record in the in-memory table.",
+    pathTemplate: "GET /gpapi/getLastEntry",
+  });
   router.get("/getLastEntry", (_req, res) => {
     if (!windTable.length) {
       return res.status(404).send("No wind data available");
@@ -265,11 +290,27 @@ export const windRoutes = (): Router => {
     res.json({ timestamp: last, formatted: dt });
   });
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/fetchNewWind",
+    group: "Wind Data",
+    signature: "fetchNewWind: () => string",
+    description: "Triggers UpdateWindTable to pull new records from PocketBase into the in-memory wind table.",
+    pathTemplate: "GET /gpapi/fetchNewWind",
+  });
   router.get("/fetchNewWind", (_req, res) => {
     UpdateWindTable();
     res.send("ok");
   });
 
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/addWindFromSQL",
+    group: "Wind Data",
+    signature: "addWindFromSQL: () => { status: string }",
+    description: "(Admin) Migrates new SQL-recorded wind data into PocketBase.",
+    pathTemplate: "GET /gpapi/addWindFromSQL",
+  });
   router.get("/addWindFromSQL", async (_req, res) => {
     // processNewWindRecords();
     res.json({ status: "migrate SQL to PB (not implemented)" });

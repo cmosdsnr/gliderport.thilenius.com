@@ -27,17 +27,36 @@ import { EventSource } from "eventsource";
 import PocketBase from "pocketbase";
 import dotenv from "dotenv";
 
-export let pb: any = null; // Global PocketBase client instance
-export let authData: any = null; // Authentication data after a successful login
+/**
+ * The global PocketBase client instance.
+ *
+ * Starts as `null` and is assigned a live {@link PocketBase} instance by
+ * {@link pbInit} once a successful connection is established.
+ * All API modules should import and use this reference rather than
+ * creating their own PocketBase instances.
+ */
+export let pb: any = null;
+
+/**
+ * Authentication token payload returned after a successful admin login.
+ *
+ * Populated by {@link pbInit} after `pb.admins.authWithPassword` succeeds.
+ * Remains `null` until authentication completes.
+ */
+export let authData: any = null;
 
 // Load environment variables from .env file
 dotenv.config();
 
 /**
  * Returns a Promise that resolves after a specified delay.
+ * Used internally by {@link pbInit} to implement retry back-off.
  *
- * @param ms - The number of milliseconds to delay.
- * @returns A Promise that resolves after `ms` milliseconds.
+ * @param ms - Duration to wait in milliseconds.
+ * @returns  A Promise that resolves (with no value) after `ms` milliseconds.
+ *
+ * @example
+ * await delay(15000); // pause for 15 seconds
  */
 const delay = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -46,8 +65,13 @@ const delay = (ms: number): Promise<void> => {
 /**
  * Tests the connection to the current PocketBase instance by calling its health endpoint.
  *
- * @param firstPass - Indicates if this is the first connection attempt (controls logging verbosity).
- * @returns A Promise that resolves to `true` if the health check succeeds; otherwise, `false`.
+ * Calls `pb.health.check()`. On success logs the health payload; on failure
+ * logs an error message (suppressed on the very first attempt to avoid noisy
+ * startup output).
+ *
+ * @param firstPass - `true` on the very first connection attempt; suppresses
+ *   error logging so that the initial silent retry does not produce spurious output.
+ * @returns A Promise that resolves to `true` if the health check succeeds; `false` otherwise.
  */
 async function testConnection(firstPass: boolean): Promise<boolean> {
   try {
@@ -61,15 +85,26 @@ async function testConnection(firstPass: boolean): Promise<boolean> {
 }
 
 /**
- * Initializes the PocketBase connection and logs in as an admin.
+ * Initializes the PocketBase connection and authenticates as an admin.
  *
- * This function continuously attempts to:
- *  - Connect to the primary URL (`"http://gpdata.web:5000"`). If that fails,
- *    switch to a fallback URL (`"https://gpdata.thilenius.com"`).
- *  - Once connected, attempt to authenticate with admin credentials.
- *  - Use a 15-second delay between connection retries, and a 5-second delay between login retries.
+ * Connection strategy (retried indefinitely until success):
+ * 1. Attempt primary URL `http://gpdata.web:5000` (internal LAN hostname).
+ * 2. If that fails, attempt fallback URL `https://gpdata.thilenius.com`.
+ * 3. Wait **15 seconds** between full retry cycles if both URLs fail.
  *
- * @returns A Promise that resolves once a successful connection and login have been established.
+ * Authentication strategy (retried indefinitely until success):
+ * - Calls `pb.admins.authWithPassword` with preset credentials.
+ * - Waits **5 seconds** between login retries.
+ *
+ * Upon success, {@link pb} holds the active `PocketBase` client and
+ * {@link authData} holds the admin auth token payload.
+ *
+ * This function is called automatically at module load time (top-level `await`).
+ *
+ * @returns A Promise that resolves (with no value) once connection and login
+ *   are both established.
+ *
+ * @throws Never rejects — all errors are caught internally and retried.
  */
 export const pbInit = (): Promise<void> => {
   return new Promise<void>(async (resolve, reject) => {
@@ -121,5 +156,9 @@ export const pbInit = (): Promise<void> => {
   });
 };
 
-// Immediately initialize the PocketBase connection and login
+/**
+ * Module initializer — establishes the PocketBase connection and admin session
+ * at import time via a top-level `await`.
+ * Importing modules will block until {@link pbInit} resolves.
+ */
 await pbInit();

@@ -65,20 +65,19 @@
  */
 
 import express, { Request, Response, Router } from "express";
+import { registerEndpoint } from "endpointRegistry";
 import { pb } from "pb";
 import { ToId } from "miscellaneous";
 import { __logDir, logStr, writeLog, log } from "log";
 import { DateTime } from "luxon";
 import path from "path";
 
-// Determine the log file path.
+/** Absolute path to the hit-counter log file. */
 const __LogFile = path.join(__logDir, "hits.log");
-//
-// Load and validate the existing siteHits status record from PocketBase.
-//
 
 /**
- * Represents the PocketBase record for site-wide hit aggregates.
+ * PocketBase record for site-wide hit aggregates (`status` collection, id `"sitehits"`).
+ * Throws at module load time if the record or its required aggregate arrays are missing.
  */
 const siteHitsRecord = await pb.collection("status").getOne(ToId("sitehits"));
 
@@ -371,8 +370,13 @@ const recreateSiteHits = async (): Promise<any> => {
  * @param req - Express request (used to extract IP).
  * @returns A promise resolving to an object indicating success or duplicate.
  */
+/** Timestamp (ms) when the last 15-minute hit summary was written to the log. */
 let lastReport = Date.now();
+
+/** Count of unique (non-duplicate) hits recorded since the last log flush. */
 let recentHits = 0;
+
+/** Count of duplicate hits (same IP within 10 minutes) observed since the last log flush. */
 let duplicateHits = 0;
 
 export const hit = async (req: Request): Promise<{ message?: string; error?: string }> => {
@@ -471,7 +475,7 @@ const report = async (): Promise<any> => {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-    })}`
+    })}`,
   );
   logStr(
     log,
@@ -480,7 +484,7 @@ const report = async (): Promise<any> => {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-    })}`
+    })}`,
   );
   writeLog(__LogFile, log);
 
@@ -491,13 +495,11 @@ const report = async (): Promise<any> => {
 /**
  * Creates an Express router for handling hit counter aggregation and reporting.
  *
- * @returns A new Express `Router` that exposes:
- *   GET /recreateSiteHits → rebuilds the `siteHits` record from all "hitCounter" records.
- *   GET /hitsReport → returns the current aggregation summary (month/week/day counts and dates).
- *
  * Mount this on your app or a sub-route to provide hit counter endpoints.
  *
- * @returns A `Router` with the routes `/recreateSiteHits` and `/hitsReport`.
+ * @returns A new Express `Router` that exposes:
+ *   - `GET /recreateSiteHits` — rebuilds the `siteHits` record from all "hitCounter" records.
+ *   - `GET /hitsReport` — returns the current aggregation summary (month/week/day counts and dates).
  */
 export const hitRoutes = (): Router => {
   const router = express.Router();
@@ -510,6 +512,14 @@ export const hitRoutes = (): Router => {
    * @route GET /recreateSiteHits
    * @returns {Promise<void>} JSON of the new `siteHits` record or error status 500.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/recreateSiteHits",
+    group: "System",
+    signature: "recreateSiteHits: () => SiteHits",
+    description: "Rebuilds the entire siteHits aggregation record from all hitCounter records in PocketBase.",
+    pathTemplate: "GET /gpapi/recreateSiteHits",
+  });
   router.get("/recreateSiteHits", async (_req: Request, res: Response) => {
     try {
       const newSiteHits = await recreateSiteHits();
@@ -529,6 +539,15 @@ export const hitRoutes = (): Router => {
    * @route GET /hitsReport
    * @returns {Promise<void>} JSON containing counts, first/last dates, and logs.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/hitsReport",
+    group: "System",
+    signature: "hitsReport: () => { months: Report; weeks: Report; days: Report; log: string[] }",
+    description:
+      "Returns a summary of the current hit aggregates — monthly, weekly, and daily counts with first/last dates.",
+    pathTemplate: "GET /gpapi/hitsReport",
+  });
   router.get("/hitsReport", async (_req: Request, res: Response) => {
     try {
       const reportData = await report();

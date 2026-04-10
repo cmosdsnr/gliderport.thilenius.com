@@ -14,6 +14,7 @@
 
 import { Request, Response, Router } from "express";
 import { getSun } from "sun.js";
+import { registerEndpoint } from "endpointRegistry";
 import { DateTime } from "luxon";
 import { WindTable } from "wind.js";
 
@@ -38,25 +39,42 @@ export type DayOfCodes = CodeEntry[];
  */
 export let codes: DayOfCodes[] = [];
 
-// Internal state tracking current processing day boundaries:
-let dayTs = 0; // Local midnight (UNIX seconds).
-let sunriseTs = 0; // Sunrise time (UNIX seconds).
-let sunsetTs = 0; // Sunset time (UNIX seconds).
+/** Local midnight of the day currently being processed (UNIX seconds). */
+let dayTs = 0;
+/** Sunrise time for the day currently being processed (UNIX seconds). */
+let sunriseTs = 0;
+/** Sunset time for the day currently being processed (UNIX seconds). */
+let sunsetTs = 0;
 
 /**
- * Discrete wind condition codes.
+ * Discrete wind condition codes assigned to each time-stamped entry in the code history.
+ *
+ * @remarks
+ * Numeric values are stable — they are persisted in {@link DayOfCodes} arrays and sent
+ * to the frontend, so do **not** reorder or remove existing members.
  */
 export enum WindCode {
+  /** Sun is below the horizon; no flying is possible. */
   IT_IS_DARK = 0,
+  /** Wind speed is low (< 60) but direction is outside the ideal band (> 310° or < 230°). */
   SLED_RIDE_BAD_ANGLE,
+  /** Wind speed is low (< 60) and direction is marginally off (> 302° or < 236°). */
   SLED_RIDE_POOR_ANGLE,
+  /** Wind speed is low (< 60) and direction is in the ideal band — sled-ride conditions. */
   SLED_RIDE,
+  /** Wind speed is moderate (60–209) but direction is outside the ideal band (> 310° or < 230°). */
   BAD_ANGLE,
+  /** Wind speed is moderate (60–209) and direction is marginally off (> 302° or < 236°). */
   POOR_ANGLE,
+  /** Moderate speed (60–110) with ideal direction — good flying conditions. */
   GOOD,
+  /** Speed 111–149 with ideal direction — excellent flying conditions. */
   EXCELLENT,
+  /** Speed 150–209 with ideal direction — speed-bar territory. */
   SPEED_BAR,
+  /** Wind speed is too high (≥ 210) for safe flight. */
   TOO_WINDY,
+  /** No sensor data was available for this time slot. */
   NO_DATA,
 }
 
@@ -310,6 +328,15 @@ export const codeRoutes = (): Router => {
    * @route GET /getWindTableCodes
    * @returns JSON object with the `codes` array.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/getWindTableCodes",
+    group: "Wind Data",
+    signature: "getWindTableCodes: () => { codes: DayOfCodes[] }",
+    description:
+      "Returns the full wind condition code history — run-length-encoded daily sequences used to render the timeline.",
+    pathTemplate: "GET /gpapi/getWindTableCodes",
+  });
   router.get("/getWindTableCodes", getWindTableCodesHandler);
 
   return router;

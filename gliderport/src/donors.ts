@@ -1,14 +1,30 @@
+/**
+ * @packageDocumentation
+ *
+ * **Donor management module.**
+ *
+ * Provides a private helper to retrieve donor names from PocketBase and an Express router
+ * that exposes the `GET /getDonors` endpoint consumed by the Gliderport frontend.
+ *
+ * @module donors
+ */
+
 import { Request, Response, Router } from "express";
 import { pb } from "pb.js";
+import { registerEndpoint } from "endpointRegistry";
 
 /**
- * Fetches donor names from the PocketBase “donors” collection.
+ * Fetches donor names from the PocketBase `donors` collection.
  *
- * Queries PocketBase for up to 200 donor records, sorted by creation date
- * in descending order, and returns an array of donor names.
+ * Queries up to 200 records sorted by creation date descending and maps each
+ * record to its `name` field.
  *
- * @throws {Error} If the PocketBase query fails.
- * @returns {Promise<string[]>} A promise that resolves to an array of donor names.
+ * @remarks
+ * Errors from PocketBase are caught internally: the function logs them to `console.error`
+ * and returns an empty array rather than propagating the exception. The `GET /getDonors`
+ * route handles the empty-array case transparently.
+ *
+ * @returns A promise that resolves to an array of donor name strings (may be empty on error).
  */
 const fetchDonors = async (): Promise<string[]> => {
   try {
@@ -27,12 +43,23 @@ const fetchDonors = async (): Promise<string[]> => {
 };
 
 /**
- * Returns a new Express `Router` that exposes:
- *   GET /getDonors → retrieve all donor names from PocketBase.
+ * Creates and returns an Express `Router` exposing the donor data endpoints.
  *
- * Mount this on your app or a sub-route to provide donor endpoints.
+ * | Method | Path        | Description                              |
+ * |--------|-------------|------------------------------------------|
+ * | GET    | /getDonors  | Returns a JSON array of donor name strings. |
  *
- * @returns A `Router` with the route `/getDonors`.
+ * @returns A configured Express `Router` instance.
+ *
+ * @example
+ * ```ts
+ * import express from "express";
+ * import { donorsRoutes } from "./donors";
+ *
+ * const app = express();
+ * app.use("/api", donorsRoutes());
+ * // → GET /api/getDonors
+ * ```
  */
 export const donorsRoutes = (): Router => {
   const router = Router();
@@ -48,6 +75,14 @@ export const donorsRoutes = (): Router => {
    *   - 200: JSON array of donor names.
    *   - 500: JSON error if retrieval fails.
    */
+  registerEndpoint({
+    method: "GET",
+    path: "/gpapi/getDonors",
+    group: "Site Info",
+    signature: "getDonors: () => string[]",
+    description: "Returns an array of donor names from PocketBase, sorted by most recently created.",
+    pathTemplate: "GET /gpapi/getDonors",
+  });
   router.get("/getDonors", async (req: Request, res: Response) => {
     try {
       const donors = await fetchDonors();

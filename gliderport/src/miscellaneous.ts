@@ -17,8 +17,15 @@ import fs from "fs"; // Synchronous file system methods
  * @returns `true` if the path exists and is a directory; otherwise, `false`.
  *
  * @remarks
- * Uses synchronous `fs.statSync` to check. If any error occurs (e.g., path does not exist),
- * the function catches it and returns `false`.
+ * Uses synchronous `fs.statSync`. Any error (e.g., path does not exist, permission denied)
+ * is silently caught and results in `false`.
+ *
+ * @example
+ * ```ts
+ * isDirectory("/var/log");        // true
+ * isDirectory("/var/log/syslog"); // false (regular file)
+ * isDirectory("/does/not/exist"); // false
+ * ```
  */
 export function isDirectory(pathToCheck: string): boolean {
   try {
@@ -29,19 +36,19 @@ export function isDirectory(pathToCheck: string): boolean {
 }
 
 /**
- * Converts a given string into a fixed-length ID by prepending leading zeros.
+ * Converts a string into a fixed-length 15-character PocketBase-compatible ID.
  *
- * The resulting string will be exactly 15 characters long. If the input string exceeds 15
- * characters, it is truncated to the first 15. If shorter, it is left-padded with zeros.
- * All characters are converted to lowercase.
+ * The input is lower-cased and truncated to 15 characters; if shorter than 15 characters
+ * it is left-padded with `'0'` so the result is always exactly 15 characters long.
  *
- * @param x - The input string to convert.
- * @returns A 15-character lowercase string with leading zeros if necessary.
+ * @param x - The input string to convert into an ID.
+ * @returns A 15-character lowercase string, zero-padded on the left as needed.
  *
  * @example
  * ```ts
- * ToId("Hello")       // "000000000000hello"
- * ToId("abcdefghijklmnopqrstuvwxyz") // "000000000abcdefghijkl"
+ * ToId("hello")    // "0000000000hello"  (10 zeros + 5 chars = 15)
+ * ToId("online")   // "000000000online"  (9 zeros + 6 chars = 15)
+ * ToId("abcdefghijklmnopqrstuvwxyz") // "abcdefghijklmno"  (truncated to first 15, lowercased)
  * ```
  */
 export const ToId = (x: string): string => {

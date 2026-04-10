@@ -18,9 +18,11 @@ import nodemailer from "nodemailer";
  * - **Host:** smtp.gmail.com
  * - **Port:** 587 (STARTTLS)
  * - **Secure:** `false` (uses STARTTLS instead of SSL/TLS)
- * - **Auth:** Gmail account credentials
+ * - **Auth:** Gmail account credentials sourced from the application config
  *
- * @type {nodemailer.Transporter}
+ * @remarks
+ * Shared by both `sendMeEmail` and `sendTextMessage` modules so that all outbound
+ * mail uses the same authenticated SMTP connection.
  */
 export const transporter: nodemailer.Transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -33,10 +35,16 @@ export const transporter: nodemailer.Transporter = nodemailer.createTransport({
 });
 
 /**
- * Sends an email with the specified subject and body text.
+ * Sends an email to the site administrator with the specified subject and body text.
+ *
+ * The `text` array items are joined with newline characters to form the plain-text body,
+ * making it easy to pass pre-formatted log lines directly.
  *
  * @param subject - The subject line of the email.
- * @param text    - An array of strings that will be joined with newline characters to form the email body.
+ * @param text    - One or more lines of text that form the email body (joined with `\n`).
+ * @returns `void` — delivery is asynchronous; errors are logged to `console.error`.
+ *
+ * @throws Will not throw — transport errors are caught internally and written to stderr.
  *
  * @example
  * ```ts
@@ -44,7 +52,7 @@ export const transporter: nodemailer.Transporter = nodemailer.createTransport({
  *   "Monthly archive job completed",
  *   [
  *     "2025-06-02 00:00:00 archiveLastMonth: Archived 123 records to 2025-05.bin",
- *     "2025-06-02 00:00:10 archive cron: Monthly archive job completed."
+ *     "2025-06-02 00:00:10 archive cron: Monthly archive job completed.",
  *   ]
  * );
  * ```

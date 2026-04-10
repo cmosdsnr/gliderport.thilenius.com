@@ -196,7 +196,7 @@ git push dokku master
 ## Documentation
 
 ```bash
-# docs are generated and copied to the static folders on the server, buddbliss. (\\192.168.0.5\passport\gliderport\docs\frontend)
+# docs are generated and copied to the static folders on the server, buddbliss. (\\buddbliss\passport\gliderport\docs\frontend)
 # yarn docs:serve will generate the docs, and serve them locally (less useful now)
 yarn docs:generate
 ```
