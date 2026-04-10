@@ -77,12 +77,14 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     const [avatar, setAvatar] = useState<string>(defaultAvatar);
     const [settings, setSettings] = useState<any>({});
     const [currentUser, setCurrentUser] = useState<User | null>(null)
+    const [initializing, setInitializing] = useState<boolean>(true);
 
     useEffect(() => {
-        // Check if there is a valid auth token in localStorage
-        // debugger;
+        // Restore session from localStorage token before rendering protected routes
         if (pb.authStore.isValid) {
-            reloadUserInfo();
+            reloadUserInfo().finally(() => setInitializing(false));
+        } else {
+            setInitializing(false);
         }
     }, []);
 
@@ -278,10 +280,11 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
         reloadUserInfo,
     }
 
+    if (initializing) return null;
+
     return (
         <AuthContext.Provider value={value}>
             {children}
-            {/* {!loading && children} */}
         </AuthContext.Provider>
     )
 }

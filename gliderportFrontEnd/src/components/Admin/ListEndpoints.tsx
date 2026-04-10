@@ -415,6 +415,7 @@ export function ListEndpoints(): React.ReactElement {
     const grouped = new Map<string, Endpoint[]>();
     for (const ep of endpoints) {
         const normalizedPath = ep.path.replace(/^\^/, '');
+        if (normalizedPath === '*') continue; // SPA catch-all, not a real API endpoint
         const group = META[normalizedPath]?.group ?? 'Other';
         if (!grouped.has(group)) grouped.set(group, []);
         grouped.get(group)!.push(ep);
