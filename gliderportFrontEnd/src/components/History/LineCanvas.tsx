@@ -1,10 +1,19 @@
 /**
- * 
  * @packageDocumentation
- *   Renders a horizontal time-series view of wind “codes” for a single day.
- *   Each colored segment represents an interval during which a particular code applied,
- *   overlaid on a lightweight line chart (with a transparent dummy line).
- *   Includes custom hour ticks, background slices, and tooltips showing the code label.
+ *
+ * Renders a compact horizontal timeline of wind codes for a single calendar day.
+ *
+ * Each contiguous interval during which a particular code was active is drawn as a
+ * coloured {@link ReferenceArea} band inside a Recharts {@link ComposedChart}.
+ * A transparent dummy {@link Line} is included solely to give Recharts enough shape
+ * information to infer the chart domain without rendering a visible line.
+ *
+ * Features:
+ * - Hour tick marks along the X axis, labelled as local hour numbers.
+ * - A floating date label overlay (“Today”, “Tomorrow”, or abbreviated weekday + date).
+ * - A hover tooltip that displays the code name for the segment under the cursor.
+ * - All rendering is driven by `useMemo` so expensive segment calculations are
+ *   only recomputed when `data`, `dayStart`, or `limits` change.
  */
 
 import React, { useMemo } from 'react';
@@ -22,38 +31,56 @@ import { codes, codeDef } from '../Globals';
 import { DayOfCodes } from './History';
 
 /**
- * Props for the LineCanvas component.
- *
- * LineCanvasProps
- * {DayOfCodes} data
- *   Array of [absoluteTimestampSec, code] entries for one day.
- * {number} dayStart
- *   UNIX timestamp (seconds) for local midnight of this day.
- * {[number, number]} limits
- *   Tuple [startHourLocal, endHourLocal] in 24h (e.g. [6, 20]).
- * {number} width
- *   Pixel width of the chart container.
+ * Props accepted by the {@link LineCanvas} component.
  */
 export interface LineCanvasProps {
-    /** Array of [absoluteTimestampSec, code] for one day */
+    /**
+     * Ordered array of `[absoluteTimestampSec, codeIndex]` tuples covering one day.
+     * Timestamps are Unix seconds (UTC); `codeIndex` indexes into the global `codes` map.
+     */
     data: DayOfCodes;
-    /** UNIX timestamp (sec) for local midnight of this day */
+    /**
+     * Unix timestamp (seconds) for 00:00:00 local time on this particular day.
+     * Used to compute the absolute timestamp range of the chart domain and to derive
+     * human-readable hour labels on the X axis.
+     */
     dayStart: number;
-    /** [startHourLocal, endHourLocal] in 24h hours (e.g. [6, 20]) */
+    /**
+     * `[startHourLocal, endHourLocal]` in 24-hour format defining the visible time window.
+     * @example [6, 20] // show 6 AM to 8 PM
+     */
     limits: [number, number];
-    /** pixel width of the chart container */
+    /**
+     * Pixel width of the outer container.  The chart fills 100 % of this width
+     * and renders at a fixed height of 60 px.
+     */
     width: number;
 }
 
 /**
- * LineCanvas
+ * Renders a compact horizontal timeline of wind code intervals for one calendar day.
  *
- * Displays a compact horizontal chart of wind code intervals between `limits[0]` and `limits[1]` hours.
- * Uses colored ReferenceArea slices for each code segment, hour ticks at the bottom,
- * and a tooltip that shows the code name on hover.
+ * The chart is 60 px tall and fills the provided `width`.  Coloured
+ * {@link ReferenceArea} bands occupy the full Y range so the visual result looks
+ * like a segmented colour bar rather than a traditional line chart.  A transparent
+ * dummy {@link Line} is required by Recharts to establish chart shape and domain.
  *
- * @param props - LineCanvasProps
- * @returns {React.ReactElement}
+ * @param props - See {@link LineCanvasProps}.
+ * @returns A `div` containing a Recharts {@link ResponsiveContainer} with the
+ *   coloured timeline and a floating date label overlay.
+ *
+ * @remarks
+ * The component is exported both as a named export and as a `React.memo`-wrapped
+ * default export.  Prefer the default export in parent components to avoid
+ * unnecessary re-renders when sibling state changes.
+ *
+ * @example
+ * <LineCanvas
+ *   data={dayOfCodes}
+ *   dayStart={midnight}
+ *   limits={[6, 20]}
+ *   width={containerWidth}
+ * />
  */
 export function LineCanvas({ data, dayStart, limits, width }: LineCanvasProps): React.ReactElement {
     const [startHour, endHour] = limits;
@@ -61,7 +88,10 @@ export function LineCanvas({ data, dayStart, limits, width }: LineCanvasProps): 
     const endTs = dayStart + 3600 * endHour;
     const totalHours = endHour - startHour;
 
-    // Build ticks: one timestamp per whole hour
+    /**
+     * One Unix-second timestamp per whole hour across the visible window,
+     * used as explicit tick positions on the X axis.
+     */
     const ticks = useMemo(
         () =>
             Array.from(
@@ -71,7 +101,12 @@ export function LineCanvas({ data, dayStart, limits, width }: LineCanvasProps): 
         [startTs, totalHours]
     );
 
-    // Compute date label: “Today”, “Tomorrow”, or abbreviated weekday + M/d
+    /**
+     * Human-readable label for the day: `”Today”`, `”Tomorrow”`, or an
+     * abbreviated weekday + date string (e.g. `”Mon 4/7”`).
+     * Computed by comparing `dayStart` (shifted to noon to avoid DST edge cases)
+     * against the current and next calendar day.
+     */
     const dateLabel = useMemo(() => {
         const dtNow = new Date();
         const dtStart = new Date(dayStart * 1000 + 12 * 3600 * 1000);
@@ -82,13 +117,22 @@ export function LineCanvas({ data, dayStart, limits, width }: LineCanvasProps): 
         return format(dtStart, 'EEE M/d');
     }, [dayStart]);
 
-    // Chart data: include a dummy value (0) so the chart has points for domain inference
+    /**
+     * Chart-ready data points, each carrying the original `ts` (X value),
+     * `code` index, and a constant `dummy` value of `0` for the transparent line.
+     */
     const chartData = useMemo(
         () => data.map(([ts, code]) => ({ ts, code, dummy: 0 })),
         [data]
     );
 
-    // Compute colored background segments between code changes
+    /**
+     * Ordered list of coloured segments between consecutive code changes.
+     * Each segment covers the half-open interval `[x1, x2)` on the X axis
+     * and is filled with the colour associated with the code that was active
+     * during that interval.  The final segment always uses the `IT_IS_DARK`
+     * colour to fill from the last code change to `endTs`.
+     */
     const segments = useMemo(() => {
         const segs: { x1: number; x2: number; color: string }[] = [];
         let prevCode = codeDef.IT_IS_DARK;
@@ -99,7 +143,6 @@ export function LineCanvas({ data, dayStart, limits, width }: LineCanvasProps): 
             prevCode = nextCode;
             prevTs = ts;
         });
-        // final slice to endHour
         segs.push({ x1: prevTs, x2: endTs, color: codes[codeDef.IT_IS_DARK].color });
         return segs;
     }, [data, startTs, endTs]);
@@ -143,7 +186,7 @@ export function LineCanvas({ data, dayStart, limits, width }: LineCanvasProps): 
                         interval={0}
                     />
                     <YAxis type="number" domain={[0, 1]} hide />
-                    {/* transparent dummy line to establish shape */}
+                    {/* Transparent dummy line — required by Recharts to infer chart domain */}
                     <Line
                         type="monotone"
                         dataKey="dummy"
@@ -155,7 +198,7 @@ export function LineCanvas({ data, dayStart, limits, width }: LineCanvasProps): 
                         <ReferenceArea key={i} x1={s.x1} x2={s.x2} y1={0} y2={1} fill={s.color} />
                     ))}
 
-                    {/* custom tooltip showing code label */}
+                    {/* Tooltip renders the human-readable code name for the hovered segment */}
                     <Tooltip
                         cursor={false}
                         content={({ active, payload, label }) => {

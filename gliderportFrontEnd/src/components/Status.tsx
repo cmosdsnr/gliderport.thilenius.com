@@ -25,6 +25,12 @@ export function Status(): React.ReactElement {
     const { online } = useStatusCollection()  // latest status
 
 
+    /**
+     * Fetches the 14-day internet status history from PocketBase (`networkStatus`
+     * collection) and transforms raw records into per-day arrays of
+     * `[fractionOfDay, onlineStatus]` tuples suitable for {@link StatusCanvas}.
+     * Populates `days` and `dayLabels` state when complete.
+     */
     const loadData = async () => {
         const status = [];
         let day = [];
@@ -69,6 +75,11 @@ export function Status(): React.ReactElement {
         setDayLabels(dayLbl);
     }
 
+    /**
+     * Whenever the live `online.touched` timestamp changes, appends or updates the
+     * trailing "current time" marker (status `2` = light-grey future region) on
+     * today's canvas row and refreshes the human-readable last-checked string.
+     */
     useEffect(() => {
         if (!online?.touched || days.length === 0) return;
 
@@ -79,7 +90,6 @@ export function Status(): React.ReactElement {
         const s = d.hour * 3600 + d.minute * 60 + d.second;
         const lastIndex = lastDay.length - 1;
 
-        // Replace the last entry if its 's' is the previous 'online.touched' % 86400 or status is 2
         if (lastDay[lastIndex].status === 2 || lastDay[lastIndex].s === s) {
             lastDay[lastIndex] = [s / 86400, 2];
         } else {
@@ -92,6 +102,11 @@ export function Status(): React.ReactElement {
         setLastStatus(dt.toLocaleString(DateTime.DATETIME_MED));
     }, [online.touched]);
 
+    /**
+     * Runs once on mount: fetches initial history data and registers a window
+     * resize listener that keeps `width.current` in sync so canvas rows always
+     * fill the available container width.
+     */
     useEffect(() => {
         loadData();
         const resizeAndDraw = () => {

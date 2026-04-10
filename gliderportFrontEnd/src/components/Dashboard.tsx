@@ -51,6 +51,10 @@ export function Dashboard(): React.ReactElement {
     const { currentUser, logout, updateUser, updateUserSettings, resetPassword } = useAuth();
     const navigate = useNavigate();
 
+    /**
+     * Logs the current user out and redirects to the Login page.
+     * Sets an error message if the logout attempt fails.
+     */
     async function handleLogout() {
         setError('');
         try {
@@ -61,6 +65,10 @@ export function Dashboard(): React.ReactElement {
         }
     }
 
+    /**
+     * Fires a test SMS to the current user's configured SMS gateway address.
+     * Alerts the user to check their phone after the request is sent.
+     */
     const sendTestSms = () => {
         if (currentUser) {
             fetch(API.sendTestSms(currentUser.firstName || '', currentUser.settings.address || ''));
@@ -142,9 +150,7 @@ export function Dashboard(): React.ReactElement {
                                                 </Col>
                                                 <Col xs={4} className="text-end">
                                                     <Button variant="primary" onClick={(e) => {
-                                                        // Prevent triggering the row's click (if any)
                                                         e.stopPropagation();
-                                                        // Call your change password handler
                                                         resetPassword(currentUser.email);
 
                                                     }}>

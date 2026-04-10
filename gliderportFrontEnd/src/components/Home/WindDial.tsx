@@ -1,10 +1,30 @@
 /**
- * WindDial component renders a live wind visualization using D3.
- * It draws concentric rings, gradients, arrows for wind readings, and
- * displays latest speed and direction data. Supports zoom via wheel and
- * hover to disable page scroll.
+ * @packageDocumentation
  *
- * @packageDocumentation WindDial
+ * D3-powered wind direction and speed dial for the Gliderport home page.
+ *
+ * Exports the {@link WindDial} component, which reads live sensor readings
+ * from {@link useSensorData} and redraws itself whenever the data or zoom
+ * level changes.
+ *
+ * ### Visual layout
+ * The SVG fills up to 400 × 400 px and contains:
+ * - A radial colour gradient background (grey → green → cyan → blue → pink)
+ *   representing wind speed zones.
+ * - Two translucent arc overlays computed from the site geometry, indicating
+ *   the usable soaring window above the cliff edge (rotated ~5 ° NW).
+ * - Five dashed concentric rings at 4 mph intervals (4, 8, 12, 16, 20 mph).
+ * - Cardinal direction labels (N, S, E, W) and mph ring labels.
+ * - A primary arrow from the origin to the current wind vector.
+ * - Up to 10 historical sample markers (drawn as × crosses) enclosed in a
+ *   bounding ellipse to show recent spread.
+ * - A text readout of the latest speed, direction, cliff-perpendicular
+ *   component, and cross-wind component.
+ *
+ * ### Zoom
+ * Hovering the component locks page scroll; the mouse wheel adjusts
+ * `zoomFactor` between 1× and 3×, which narrows the D3 scale domain and
+ * magnifies the centre of the dial.
  */
 import React, { useState, useRef, useEffect, useCallback, WheelEvent } from 'react'
 import * as d3 from 'd3'
@@ -12,19 +32,38 @@ import 'css/windDial.css'
 import { useSensorData } from '@/contexts/SensorDataContext'
 
 /**
- * Props for WindDial component.
- * @param passedSeconds - Seconds since last reading.
- * @param picRef - Reference to parent image container for centering.
+ * Props for the {@link WindDial} component.
  */
 export interface WindDialProps {
-    passedSeconds: number
-    picRef: React.RefObject<HTMLDivElement | null>
+    /**
+     * Elapsed seconds since the most recent sensor reading was received.
+     * Used to build the human-readable "X minutes ago" / "X hours ago" label
+     * displayed inside the dial.
+     */
+    passedSeconds: number;
+    /**
+     * Ref to the sibling camera-image container.  The dial uses its
+     * `clientHeight` to vertically centre itself alongside the image when
+     * the image is taller than the dial's maximum size of 400 px.
+     */
+    picRef: React.RefObject<HTMLDivElement | null>;
 }
 
 /**
- * React component that draws a wind dial visualization.
- * @param props - Component props.
- * @returns {React.ReactElement} An empty div where D3 injects SVG elements.
+ * D3 wind direction and speed dial.
+ *
+ * Renders a `<div>` that D3 uses as its mount point, injecting and replacing
+ * an `<svg>` element on every redraw.  The component redraws whenever new
+ * sensor readings arrive or the `lastSeen` label changes.
+ *
+ * @param passedSeconds - Seconds since the last sensor reading.
+ * @param picRef - Ref to the adjacent camera container used for vertical alignment.
+ * @returns A `<div>` containing the D3-managed SVG wind dial.
+ *
+ * @example
+ * ```tsx
+ * <WindDial passedSeconds={elapsed} picRef={cameraContainerRef} />
+ * ```
  */
 export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactElement {
     const divRef = useRef<HTMLDivElement>(null)
@@ -67,7 +106,11 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
         if (e.deltaY > 0 && zoomFactor.current > 1) zoomFactor.current -= 0.1
     }
 
-    // Resize SVG container on mount and window resize
+    /**
+     * Measures the container width on mount and on every subsequent window
+     * resize, capping `svgWidth` at `sizeInPx` (400 px).  The listener is
+     * removed when the component unmounts.
+     */
     useEffect(() => {
         const resizeAndDraw = (): void => {
             const divContainer = divRef.current
@@ -83,7 +126,10 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
         return () => window.removeEventListener('resize', resizeAndDraw)
     }, [])
 
-    // Update lastSeen label when passedSeconds changes
+    /**
+     * Derives a human-readable "last seen" label from `passedSeconds` and
+     * stores it in `lastSeen`.  Prioritises hours, then minutes, then seconds.
+     */
     useEffect(() => {
         const hrs = Math.floor(passedSeconds / 3600)
         if (hrs > 0) setLastSeen(`${hrs} hours ago`)
@@ -94,10 +140,25 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
         }
     }, [passedSeconds])
 
-    // Main D3 drawing effect
+    /**
+     * Main D3 drawing effect.  Runs whenever `readings` or `lastSeen` changes.
+     *
+     * Clears and fully redraws the SVG each time, including:
+     * 1. Linear scales for the x/y coordinate system and radius mapping.
+     * 2. A radial gradient `<defs>` element and a circular clip path.
+     * 3. Gradient-filled background circle.
+     * 4. Two sets of 40 progressively shrinking translucent circles
+     *    representing the soaring-window arc geometry above the cliff edge.
+     * 5. Five dashed concentric speed rings (at 90-unit intervals).
+     * 6. Historical sample markers (× crosses) and their bounding ellipse
+     *    (drawn only when more than 10 readings are available).
+     * 7. Primary wind-vector arrow from the origin to the latest reading.
+     * 8. Cardinal direction labels and mph ring labels.
+     * 9. Latest speed, direction, cliff-perpendicular, and cross-wind text.
+     */
     useEffect(() => {
         if (!readings) return
-        //margin in px around circle plot
+        /** Margin in pixels around the circular plot area. */
         const margin = 25
 
         var x = d3.scaleLinear()
@@ -161,7 +222,7 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
 
 
 
-        // circle from 2 points and radius
+        /** Compute the arc geometry for the soaring-window overlay from two unit-circle points and a curvature radius. */
         const y1 = 0
         const x1 = 0
         const y2 = -Math.sin(Math.PI / 4)
@@ -176,7 +237,7 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
         let cx = x3 + Math.sqrt(cr ** 2 - (q / 2) ** 2) * (y1 - y2) / q
         let cy = y3 + Math.sqrt(cr ** 2 - (q / 2) ** 2) * (x2 - x1) / q
 
-        // lets rotate by theta degrees counter-clockwise
+        /** Rotate the arc centres by theta degrees counter-clockwise to align with the cliff-edge direction (~5 ° NW). */
         const theta = 5 // Cliff edge is about 5deg nw
         const cosTheta = Math.cos(Math.PI * theta / 180)
         const sinTheta = Math.sin(Math.PI * theta / 180)
@@ -209,7 +270,7 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
                 .style("opacity", opacity)
                 .attr("clip-path", "url(#wdClip)")
         }
-        // draw 5 dashed rings
+        /** Draw 5 dashed concentric speed rings at 90-unit (4 mph) intervals. */
         for (var i = 5; i > 0; i--) {
             svg.append("circle")
                 .attr("cx", x(0))
@@ -221,7 +282,7 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
                 .style("stroke-dasharray", ("3, 3"))
                 .attr("clip-path", "url(#wdClip)")
         }
-        // Draw the arrows
+        /** Plot the last 10 wind readings as × markers and surround them with a bounding ellipse to visualise spread. */
         if (readings.length > 10) {
             var lxMin = 1000, lyMin = 1000
             var lxMax = -1000, lyMax = -1000
@@ -264,7 +325,7 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
                 .attr('stroke', ArrowColor)
                 .attr('fill', 'none')
         }
-        //used lower down too
+        /** Latest reading values — also referenced by the text labels rendered below. */
         const speed = readings.length > 0 ? readings[readings.length - 1].speed : 0
         const direction = readings.length > 0 ? readings[readings.length - 1].direction : 0
 
@@ -278,7 +339,7 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
             arrowPoints: [number, number][] = [[0, 0], [0, 10], [10, 5]]
 
         // if (data.direction.length > 2) debugger
-        // draw line and arrow
+        /** Define an SVG arrowhead marker and draw the primary wind-vector line from the origin to the current reading. */
         svgDefs.append('marker')
             .attr('id', 'arrow')
             .attr('viewBox', [0, 0, markerBoxWidth, markerBoxHeight])
@@ -300,7 +361,7 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
             .attr('marker-end', 'url(#arrow)')
             .attr('fill', 'none')
 
-        // X-Axis
+        /** Draw the vertical N–S axis line. */
         svg.append("line")
             .attr("x1", x(0))
             .attr("y1", y(-500))
@@ -310,7 +371,7 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
             .style("stroke", 'black')
             .attr("clip-path", "url(#wdClip)")
 
-        // Y-Axis
+        /** Draw the horizontal E–W axis line. */
         svg.append("line")
             .attr("x1", x(500))
             .attr("y1", y(0))
@@ -320,7 +381,7 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
             .style("stroke", 'black')
             .attr("clip-path", "url(#wdClip)")
 
-        // Label Directions
+        /** Append cardinal direction labels (E, W, N, S) at the rim of the dial. */
         var fontSize = 20
         svg.style("font", fontSize + "px times")
         svg.append("text").attr("x", xa(500) - fontSize).attr("y", ya(0) + fontSize / 3).text("E")

@@ -1,10 +1,24 @@
 /**
- * @packageDocumentation GpNavbar
+ * @packageDocumentation
  *
- * Main navigation bar component for the Gliderport application.
- * Renders brand logo, responsive menu toggler, and navigation links.
- * Handles user authentication state to display appropriate menu items,
- * including admin and stats dropdowns, and login/sign-up modals.
+ * Main navigation bar for the Gliderport application.
+ *
+ * Exports {@link GpNavbar} as the primary component together with the
+ * helper {@link MyFontAwesomeIcon} sub-component and the {@link Page}
+ * configuration interface.
+ *
+ * Navigation structure:
+ * - **Public links** — Home, Forecast, Contact (always visible).
+ * - **Auth-gated links** — Equipment, Contribute, Dashboard, Blog
+ *   (visible only when a user is signed in).
+ * - **Stats dropdown** — Images, Hits, Changes, Links
+ *   (signed-in users only).
+ * - **Admin dropdown** — Endpoints, Server Info, Messages, Debug,
+ *   DB Archive, and TypeDoc links for all three server projects
+ *   (visible only to users whose role is `"Administrator"`).
+ * - **Login / Sign-up** — Opens the respective modal when no user
+ *   session is active.
+ * - **Logout** — Navigates to `/logout` when a session is active.
  */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -88,13 +102,30 @@ interface Page {
 }
 
 /**
- * Main Navbar component.
+ * Main application navigation bar.
  *
- * Renders brand logo, responsive menu toggler, and navigation links.
- * Handles user authentication state to display appropriate menu items,
- * including admin and stats dropdowns, and login/sign-up modals.
+ * Renders a Bootstrap `Navbar` containing the paraglider brand logo, a
+ * responsive hamburger toggler, and the full set of navigation links.
+ * Authentication state (from {@link useAuth}) determines which items are
+ * shown:
  *
- * @returns {React.ReactElement} The rendered Navbar.
+ * - Unauthenticated visitors see public links plus Login / Sign-up buttons.
+ * - Authenticated users additionally see auth-gated page links and the
+ *   Stats dropdown.
+ * - Users with the `"Administrator"` role also see the Admin dropdown,
+ *   which includes links to the TypeDoc documentation for all three
+ *   server projects (backend, frontend, gp_pi3_server).
+ *
+ * The navbar background image animates by shifting its `background-position`
+ * on a 100 ms interval, cycling through a 500 px offset range.
+ *
+ * @returns The rendered Bootstrap Navbar element.
+ *
+ * @example
+ * ```tsx
+ * // Rendered once at the application root, above all routes.
+ * <GpNavbar />
+ * ```
  */
 export function GpNavbar(): React.ReactElement {
     const [bannerStyle, setBannerStyle] = useState<string>('-500px 500px');
@@ -102,7 +133,7 @@ export function GpNavbar(): React.ReactElement {
     const { openModal } = useModal();
     const { currentUser } = useAuth();
 
-    // Debug currentUser
+    /** Logs the current authenticated user to the console whenever it changes. */
     useEffect(() => {
         console.log('currentUser:', currentUser);
     }, [currentUser]);
@@ -119,7 +150,11 @@ export function GpNavbar(): React.ReactElement {
         { icon: faTty, name: 'Admin', admin: true }
     ];
 
-    // Animate rotating banner background
+    /**
+     * Animates the navbar banner background by shifting its `background-position`
+     * on a 100 ms interval, cycling from `-500px 500px` back to `0px 0px`.
+     * Clears the interval when the component unmounts.
+     */
     useEffect(() => {
         if (!bannerTimer) {
             let pos = 500;

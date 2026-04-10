@@ -70,7 +70,7 @@ export function RemoteFrameComponent(
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [ready, setReady] = useState(false);
 
-    // Expose the `post` method via ref
+    /** Expose the {@link RemoteFrameHandle.post} method to parent components via ref. */
     useImperativeHandle(
         ref,
         () => ({
@@ -89,7 +89,7 @@ export function RemoteFrameComponent(
         [ready]
     );
 
-    /** Mark iframe as ready once loaded */
+    /** Sets `ready` to `true` once the iframe's `load` event fires, enabling `post`. */
     const handleLoad = () => setReady(true);
 
     /**
@@ -128,6 +128,17 @@ export function RemoteFrameComponent(
     );
 }
 
+/**
+ * `RemoteFrame` is the ref-forwarding wrapper around {@link RemoteFrameComponent}.
+ * Use this export when you need to call {@link RemoteFrameHandle.post} imperatively.
+ *
+ * @example
+ * ```tsx
+ * const ref = useRef<RemoteFrameHandle>(null);
+ * <RemoteFrame ref={ref} src="/embed" onMessage={handleMsg} />
+ * ref.current?.post({ type: 'ping' });
+ * ```
+ */
 const RemoteFrame = forwardRef<RemoteFrameHandle, RemoteFrameProps>(RemoteFrameComponent);
 
 export default RemoteFrame;

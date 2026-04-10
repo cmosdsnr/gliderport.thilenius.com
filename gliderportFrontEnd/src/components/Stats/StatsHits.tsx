@@ -1,23 +1,43 @@
-// StatsHitsComponent.tsx
+/**
+ * @packageDocumentation
+ * Site-traffic statistics component.  Fetches hit data from the
+ * `StatusCollection` context and renders a summary table plus an interactive
+ * chart that can be filtered by time granularity and metric type.
+ */
 import React, { useState, useEffect, useMemo } from 'react';
 import { Row, Col, Form } from 'react-bootstrap';
 import { useStatusCollection } from 'contexts/StatusCollection';
 import StatsPlot from './StatsHitsPlot';
 import { DateTime } from 'luxon';
 
+/** Chart time-granularity options available to the user. */
 type ViewOption = 'day' | 'week' | 'month';
+/** Metric displayed in the chart: all visits or unique-IP visits. */
 type MetricOption = 'total' | 'unique';
 
 /**
- * StatsHitsComponent displays site statistics and a chart of visits.
- * Allows toggling between day/week/month and total/unique metrics.
- * @returns {React.ReactElement} The rendered stats hits component.
+ * Displays a site-traffic summary table and an interactive time-series chart.
+ *
+ * @remarks
+ * Reads `siteHits` from {@link useStatusCollection} and rebuilds derived state
+ * (summaries, chart arrays, labels) whenever `siteHits.timestamp` changes.
+ * The user can switch chart granularity between day / week / month and toggle
+ * between total visits and unique-IP visits.  The chart itself is rendered by
+ * `StatsPlot` which receives a `[timestamp, value][]` array.
+ *
+ * @returns The rendered statistics panel including table and chart.
+ *
+ * @example
+ * ```tsx
+ * <StatsHitsComponent />
+ * ```
  */
 export function StatsHitsComponent(): React.ReactElement {
     const { siteHits } = useStatusCollection();
 
-    // 1) New state for "view" (day/week/month) and "metric" (total/unique)
+    /** Currently selected time granularity for the chart. */
     const [view, setView] = useState<ViewOption>('week');
+    /** Currently selected metric for the chart (total hits or unique IPs). */
     const [metric, setMetric] = useState<MetricOption>('total');
 
     const [data, setData] = useState<{
@@ -138,7 +158,11 @@ export function StatsHitsComponent(): React.ReactElement {
         });
     }, [siteHits?.timestamp]);
 
-    // 2) chartPoints: pick day/ week/ month and total/ unique based on both state vars
+    /**
+     * Derives the chart data points from the current `view` and `metric` selections.
+     * Each element is a `[epochMs, value]` tuple where `epochMs` is the start of the
+     * bucket and `value` is the hit count for that bucket.
+     */
     const chartPoints = useMemo<[number, number][]>(() => {
         if (view === 'day') {
             return data.day[metric].map((val, i) => [

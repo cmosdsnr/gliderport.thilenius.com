@@ -6,7 +6,16 @@
 import React, { useRef, useEffect } from 'react'
 
 /**
- * Props for the StatusCanvas component.
+ * Props for the {@link StatusCanvas} component.
+ *
+ * @property data      - Array of `[fractionOfDay, status]` tuples where `status` is
+ *                       `0` (offline/red), `1` (online/green), or `2` (future/grey).
+ * @property width     - Pixel width of the canvas, typically the parent container's
+ *                       `clientWidth`. The canvas is re-drawn whenever this changes.
+ * @property lastOne   - When `true`, the row is today's row: hour labels (0–24) are
+ *                       rendered below the hash marks instead of just tick lines.
+ * @property dayLabel  - Short date string (e.g. `"04-10"`) printed on the left side
+ *                       of the canvas bar.
  */
 export interface CanvasProps {
     data: any,
@@ -27,8 +36,24 @@ export function StatusCanvas({ data, width, lastOne, dayLabel }: CanvasProps): R
     const height = 30
 
     useEffect(() => {
+        /**
+         * Main draw routine: iterates over status segments, paints coloured
+         * rectangles for each, then overlays hour tick marks (and labels on the
+         * last/today row).
+         *
+         * @param context - The 2-D rendering context of the canvas element.
+         */
         const draw = (context: CanvasRenderingContext2D) => {
 
+            /**
+             * Paints a single status segment as a filled rectangle.
+             *
+             * @param startRatio - Start of the segment as a fraction of the day (0–1).
+             * @param endRatio   - End of the segment as a fraction of the day (0–1).
+             * @param context    - Canvas 2-D context.
+             * @param status     - `0` → red (offline), `1` → LightGreen (online),
+             *                     `2` → LightGrey (future/unknown).
+             */
             var drawSection = function (startRatio: number, endRatio: number, context: CanvasRenderingContext2D, status: number) {
                 context.beginPath();
                 context.fillStyle = (status === 0) ? "red" : (status === 2 ? "LightGrey" : "LightGreen");
@@ -37,6 +62,13 @@ export function StatusCanvas({ data, width, lastOne, dayLabel }: CanvasProps): R
                 context.closePath();
             }
 
+            /**
+             * Draws vertical tick marks every 2 hours across the status bar.
+             * On the last (today) row, also renders numeric hour labels beneath
+             * the ticks.
+             *
+             * @param context - Canvas 2-D context.
+             */
             var AddHashMarks = function (context: CanvasRenderingContext2D) {
                 context.beginPath();
                 if (!lastOne) {

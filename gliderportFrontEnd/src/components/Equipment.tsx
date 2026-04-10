@@ -17,7 +17,12 @@ import RaspberryAndESP32 from 'images/Equipment/Pi/RaspberryAndESP32.jpg'
 import ESP32Box from 'images/Equipment/Pi/ESP32Box.jpg'
 
 /**
- * Props for the MyPill navigation component.
+ * Props for the {@link MyPill} navigation pill.
+ *
+ * @property no          - Zero-based index of this pill, matched against `page` to apply the active style.
+ * @property name        - Display label rendered inside the pill.
+ * @property handleClick - Callback invoked when the pill is clicked; receives `{ no }`.
+ * @property page        - Index of the currently active page; used to highlight the active pill.
  */
 interface MyPillProps {
     no: number;
@@ -27,9 +32,11 @@ interface MyPillProps {
 }
 
 /**
- * Navigation pill component for equipment pages.
- * @param props - MyPillProps
- * @returns {React.ReactElement}
+ * Navigation pill rendered inside the Equipment sidebar.
+ * Applies the `"eqNav active"` CSS class when `page === no`.
+ *
+ * @param props - See {@link MyPillProps}.
+ * @returns A centred `<Nav.Item>` element styled as a pill.
  */
 function MyPill({ no, name, handleClick, page }: MyPillProps): React.ReactElement {
     return (
@@ -40,8 +47,11 @@ function MyPill({ no, name, handleClick, page }: MyPillProps): React.ReactElemen
 }
 
 /**
- * Manuals section for the Equipment page.
- * @returns {React.ReactElement}
+ * Renders the Manuals tab — a list of PDF links for equipment documentation
+ * including the ULTIMETER 100/2000, Lorex camera models, GM816 anemometer,
+ * and Yaesu VX-170 radio.
+ *
+ * @returns A Bootstrap `<Col>` containing an unordered list of document links.
  */
 function Manuals(): React.ReactElement {
     return (
@@ -95,8 +105,11 @@ function Manuals(): React.ReactElement {
 }
 
 /**
- * Camera section for the Equipment page.
- * @returns {React.ReactElement}
+ * Renders the Camera tab — describes the Lorex E841CAB 4K PoE camera setup
+ * (pole, waterproof enclosure, PoE switch) and displays reference photos of
+ * the hub, Ultimeter 2000, and associated hardware.
+ *
+ * @returns A Bootstrap `<Col>` with descriptive text and equipment images.
  */
 function Camera(): React.ReactElement {
     return (
@@ -135,8 +148,11 @@ function Camera(): React.ReactElement {
 }
 
 /**
- * Radio section for the Equipment page.
- * @returns {React.ReactElement}
+ * Renders the Radio tab — describes the legacy radio weather-data relay system
+ * (designed by Rich Perry) that used an Ultimeter 2000 serial output transmitted
+ * over radio to a QUALCOMM building receiver, which fed a remote database.
+ *
+ * @returns A Bootstrap `<Col>` with descriptive text, an equipment photo, and a PDF link.
  */
 function Radio(): React.ReactElement {
     return (
@@ -159,8 +175,9 @@ function Radio(): React.ReactElement {
 }
 
 /**
- * Netatmo section for the Equipment page.
- * @returns {React.ReactElement}
+ * Renders the Netatmo tab — placeholder content for the Netatmo weather station setup.
+ *
+ * @returns A Bootstrap `<Col>` with a heading (content pending).
  */
 function Netatmo(): React.ReactElement {
     return (
@@ -169,8 +186,10 @@ function Netatmo(): React.ReactElement {
 }
 
 /**
- * Surfline section for the Equipment page.
- * @returns {React.ReactElement}
+ * Renders the Surfline tab — describes the high-quality Surfline wind and video
+ * system installed at the site and the ongoing effort to gain API access to its data.
+ *
+ * @returns A Bootstrap `<Col>` with descriptive text.
  */
 function Surfline(): React.ReactElement {
     return (
@@ -185,8 +204,10 @@ function Surfline(): React.ReactElement {
 }
 
 /**
- * Internet section for the Equipment page.
- * @returns {React.ReactElement}
+ * Renders the Internet/Software tab — placeholder heading for the Gliderport
+ * software overview (content pending).
+ *
+ * @returns A Bootstrap `<Col>` with a heading.
  */
 function Internet(): React.ReactElement {
     return (
@@ -195,8 +216,11 @@ function Internet(): React.ReactElement {
 }
 
 /**
- * Esp32 section for the Equipment page.
- * @returns {React.ReactElement}
+ * Renders the ESP32 tab — explains how the custom ESP32-S3 box monitors the
+ * anemometer and wind-direction sensor and transmits data directly to the
+ * website database over the site's internet connection.
+ *
+ * @returns A Bootstrap `<Col>` with descriptive text.
  */
 function Esp32(): React.ReactElement {
     return (
@@ -213,8 +237,10 @@ function Esp32(): React.ReactElement {
 }
 
 /**
- * Raspberry section for the Equipment page.
- * @returns {React.ReactElement}
+ * Renders the Raspberry Pi tab — placeholder content for the Raspberry Pi 3
+ * server setup (content pending).
+ *
+ * @returns A Bootstrap `<Col>` with a text placeholder.
  */
 function Raspberry(): React.ReactElement {
     return (
@@ -223,8 +249,14 @@ function Raspberry(): React.ReactElement {
 }
 
 /**
- * Main Equipment component for the Equipment page.
- * @returns {React.ReactElement} The Equipment page JSX.
+ * Top-level Equipment page component.
+ *
+ * Renders a responsive two-column layout: a collapsible sidebar navigation of
+ * {@link MyPill} items (Manuals, Camera, Radio, Netatmo, Surfline, Internet, Esp32,
+ * Raspberry) and a main content area that swaps the active section based on the
+ * selected pill index stored in local state.
+ *
+ * @returns The full equipment reference page.
  */
 export function Equipment(): React.ReactElement {
     const [page, setPage] = useState<number>(0)

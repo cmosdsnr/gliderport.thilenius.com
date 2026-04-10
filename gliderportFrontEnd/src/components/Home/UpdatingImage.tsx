@@ -1,12 +1,30 @@
-// src/components/UpdatingImage.tsx
-
 /**
- * 
  * @packageDocumentation
- *   React component that displays a live slideshow of camera images, handles
- *   rotating through images or showing the latest when rotation is off, provides
- *   a countdown to sunrise when cameras are sleeping, and allows users to click
- *   to fetch and zoom into a high-resolution image in a viewer overlay.
+ *
+ * Live camera slideshow component for the Gliderport home page.
+ *
+ * Exports {@link UpdatingImage}, which cycles through frames from two IP
+ * cameras and provides an interactive high-resolution viewer overlay.
+ *
+ * ### States
+ * | Condition | Display |
+ * |-----------|---------|
+ * | `sleeping === true` OR no images loaded | `OffTime.jpg` placeholder with an SVG sunrise-countdown label |
+ * | `offline === true` | `OutOfOrder.jpg` placeholder with a red "Internet offline" label |
+ * | Normal operation | Active slideshow with camera-switch and rotation controls |
+ *
+ * ### Slideshow behaviour
+ * - A 400 ms `setInterval` advances `currentIndex` through the available
+ *   frames for the selected camera.
+ * - After reaching the last frame the component pauses for 4 extra ticks
+ *   (≈ 1.6 s) before wrapping back to frame 0.
+ * - When rotation is disabled (persisted in `localStorage` via the toggle
+ *   switch) the component always pins to the latest frame.
+ *
+ * ### High-resolution viewer
+ * Clicking the active image calls {@link API.getLargeImage} to fetch a
+ * base-64-encoded JPEG, converts it to an object URL via {@link b64toBlob},
+ * and displays it in a `react-viewer` overlay that supports pan and zoom.
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { useCamera } from '@/contexts/CameraContext';
@@ -26,48 +44,57 @@ import switch_camera from 'images/switch-camera.png';
 import { API } from '@/api';
 
 /**
- * Props type for UpdatingImage (currently none).
+ * Props for the {@link UpdatingImage} component.
+ *
+ * Currently no props are required; all data is sourced from context hooks
+ * ({@link useCamera}, {@link useSocialData}, {@link useStatusCollection}).
  */
 export interface Props { }
 
 /**
- * UpdatingImage
+ * Live camera image slideshow with a high-resolution zoom viewer.
  *
- * Displays the current camera image feed. Handles three states:
- * - Sleeping: shows an "OffTime" placeholder with a countdown to sunrise.
- * - Offline: shows an "OutOfOrder" placeholder indicating no internet.
- * - Active: cycles through `cameraImages` slideshow or shows latest if rotation is off.
- * Clicking the image fetches a high-resolution version and opens a zoomable overlay.
- * Includes controls to switch cameras and toggle rotation.
+ * Reads frames from {@link useSensorData} / {@link useCamera} and manages
+ * three display states (sleeping, offline, active).  See the
+ * {@link @packageDocumentation | module docs} for a full description of the
+ * slideshow and viewer behaviour.
  *
- * @returns {React.ReactElement}
+ * @returns A Bootstrap `<Row>` containing the image area and camera controls.
+ *
+ * @example
+ * ```tsx
+ * // Placed on the Home page alongside the WindDial.
+ * <UpdatingImage />
+ * ```
  */
 export function UpdatingImage({ }: Props): React.ReactElement {
-    // Viewer visibility state
+    /** Controls visibility of the `react-viewer` high-resolution overlay. */
     const [visible, setVisible] = useState<boolean>(false);
-    // Active camera index: 1 or 2
+    /** Index of the active camera: `1` for the left camera, `2` for the right camera. */
     const [camera, setCamera] = useState<number>(1);
-    // Current slide index within cameraImages
+    /** Current frame index within the active camera's image array. */
     const [currentIndex, setCurrentIndex] = useState<number>(0);
-    // Rotation toggle persisted in localStorage
+    /** Whether the slideshow auto-advances frames.  Persisted in `localStorage` under the key `"rotate"`. */
     const [rotate, setRotate] = useLocalStorageState<boolean>('rotate', true);
 
-    // Countdown text until sunrise
+    /** Human-readable countdown string shown over the `OffTime` placeholder (e.g. `"Sunrise in 1:45"`). */
     const [timeToSunrise, setTimeToSunrise] = useState<string>('');
-    // Source URL for the high-resolution image
+    /** Object URL for the high-resolution JPEG fetched from the API, passed to the viewer overlay. */
     const [imgSrcLarge, setImgSrcLarge] = useState<string>('');
 
-    // Data context: cameraImages and offline flag
+    /** Provides the `cameraImages` frame arrays for both cameras. */
     const { cameraImages } = useCamera();
+    /** Provides the `offline` flag indicating whether internet connectivity is unavailable. */
     const { offline } = useSocialData();
-    // Ref for image container sizing (passed to WindDial elsewhere)
+    /** Ref for the active-image container element; passed to `WindDial` for vertical alignment. */
     const imgRef = useRef<HTMLDivElement | null>(null);
-    // Status context: sunrise time and sleeping flag
+    /** Provides `sun` (sunrise/sunset timestamps) and `sleeping` (cameras off) from the status collection. */
     const { sun, sleeping } = useStatusCollection();
 
-    // ------------------------------------------------------------------
-    // Sunrise countdown logic
-    // ------------------------------------------------------------------
+    /**
+     * Triggers the sunrise countdown computation whenever the `sleeping` flag
+     * transitions to `true` (cameras have gone offline for the night).
+     */
     useEffect(() => {
         if (sleeping) setSunriseText();
     }, [sleeping]);
@@ -87,19 +114,23 @@ export function UpdatingImage({ }: Props): React.ReactElement {
         }
     }
 
-    // Update countdown every minute
+    /** Re-runs {@link setSunriseText} every 60 seconds to keep the countdown accurate. */
     useInterval(setSunriseText, 60 * 1000);
 
-    // ------------------------------------------------------------------
-    // Slideshow / rotation logic
-    // ------------------------------------------------------------------
+    /**
+     * Drives the 400 ms slideshow interval.  When rotation is enabled the
+     * index advances through all frames, pausing for 4 extra ticks at the
+     * last frame before wrapping.  When rotation is disabled the index is
+     * pinned to the last frame on every tick.  The interval is recreated
+     * whenever `camera`, `cameraImages`, or `rotate` changes.
+     */
     useEffect(() => {
         let cycleCount = 0;
         const interval = setInterval(() => {
             const images = camera === 1 ? cameraImages.camera1 : cameraImages.camera2;
             if (!images.length) return;
             if (!rotate) {
-                // When rotation disabled, always show latest
+                /** When rotation is disabled, pin to the latest available frame. */
                 setCurrentIndex(images.length - 1);
                 return;
             }
@@ -118,7 +149,11 @@ export function UpdatingImage({ }: Props): React.ReactElement {
         return () => clearInterval(interval);
     }, [camera, cameraImages, rotate]);
 
-    // Ensure latest image when camera or images change and rotation is off
+    /**
+     * Pins `currentIndex` to the last frame immediately when the selected
+     * camera or image list changes while rotation is disabled.  This prevents
+     * stale indices from a previous camera or image set being displayed.
+     */
     useEffect(() => {
         if (!rotate) {
             const images = camera === 1 ? cameraImages.camera1 : cameraImages.camera2;
@@ -126,9 +161,6 @@ export function UpdatingImage({ }: Props): React.ReactElement {
         }
     }, [camera, cameraImages, rotate]);
 
-    // ------------------------------------------------------------------
-    // Fetch full-resolution image on click
-    // ------------------------------------------------------------------
     /**
      * Fetches a high-resolution camera image from the API, converts it from
      * base64, and sets it for the Viewer overlay.
@@ -145,9 +177,6 @@ export function UpdatingImage({ }: Props): React.ReactElement {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Render
-    // ------------------------------------------------------------------
     return (
         <Row style={{ marginBottom: '15px' }}>
             {/* Image area */}

@@ -1,9 +1,21 @@
 /**
- * 
  * @packageDocumentation
- *   React component that renders a circular time-coded pie chart for a single day.
- *   It shows colored segments for each “code” interval, hour tick marks around the edge,
- *   and a center label (“Today”, “Tomorrow”, or date).
+ *
+ * Renders a circular (clock-style) pie chart of wind code intervals for a single
+ * calendar day using Recharts {@link PieChart}.
+ *
+ * The chart is composed of two concentric {@link Pie} rings:
+ * 1. **Outer tick ring** — a thin ring of equal-width segments, one per hour,
+ *    rendered with transparent fills and visible strokes to act as hour markers.
+ *    Each segment is labelled with its local hour number.
+ * 2. **Inner code ring** — filled segments whose angular width is proportional to
+ *    the fraction of the visible time window occupied by each wind code interval.
+ *    The final segment always uses the `IT_IS_DARK` colour.
+ *
+ * A Recharts {@link Label} at the chart centre displays the day name
+ * (“Today”, “Tomorrow”, or a formatted weekday/date string).
+ *
+ * Both rings are wrapped in a square {@link Canvas} element sized to `width × width`.
  */
 
 import React, { useMemo } from 'react';
@@ -21,24 +33,58 @@ import { format } from 'date-fns';
 import { DayOfCodes } from './History';
 
 /**
- * Props for the CircleCanvas component.
+ * Props accepted by the {@link CircleCanvas} component.
  */
 export interface CircleCanvasProps {
-    /** Array of tuples [absoluteTimestampSec, code] covering one day. */
+    /**
+     * Ordered array of `[absoluteTimestampSec, codeIndex]` tuples covering one day.
+     * Timestamps are Unix seconds (UTC); `codeIndex` indexes into the global `codes` map.
+     */
     data: DayOfCodes;
-    /** UNIX timestamp (seconds) for local midnight of this day. */
+    /**
+     * Unix timestamp (seconds) for 00:00:00 local time on this particular day.
+     * Used together with `limits` to determine the total visible time window.
+     */
     dayStart: number;
-    /** [startHourLocal, endHourLocal] in 24h (e.g. [6, 20]). */
+    /**
+     * `[startHourLocal, endHourLocal]` in 24-hour format defining the visible time window.
+     * The pie spans from `dayStart + startHour * 3600` to `dayStart + endHour * 3600`.
+     * @example [6, 20] // show 6 AM to 8 PM
+     */
     limits: [number, number];
-    /** Pixel width (and height) of the chart container. */
+    /**
+     * Pixel width (and height) of the square chart container.
+     * Both the {@link Canvas} wrapper and the Recharts radii are derived from this value.
+     */
     width: number;
 }
 
 /**
- * Renders a circular pie chart of coded intervals over a single day.
- * 
- * @param props - CircleCanvasProps
- * @returns {React.ReactElement}
+ * Renders a circular (clock-style) pie chart of wind code intervals for one
+ * calendar day.
+ *
+ * @param props - See {@link CircleCanvasProps}.
+ * @returns A square {@link Canvas} element containing a Recharts {@link PieChart}
+ *   with an outer hour-tick ring, an inner colour-coded segment ring, and a
+ *   centre day label.
+ *
+ * @remarks
+ * The component is exported both as a named export and as a `React.memo`-wrapped
+ * default export.  Prefer the default export in parent components to avoid
+ * unnecessary re-renders when sibling state changes.
+ *
+ * The outer tick ring uses `startAngle=80` / `endAngle=-260` so that
+ * 12 o'clock roughly corresponds to 4 AM local time (the typical start of the
+ * monitored window).  The inner code ring uses the same angles so both rings
+ * align correctly.
+ *
+ * @example
+ * <CircleCanvas
+ *   data={dayOfCodes}
+ *   dayStart={midnight}
+ *   limits={[6, 20]}
+ *   width={containerWidth / 4}
+ * />
  */
 export function CircleCanvas({ data, dayStart, limits, width }: CircleCanvasProps): React.ReactElement {
     const [startHour, endHour] = limits;
@@ -47,10 +93,13 @@ export function CircleCanvas({ data, dayStart, limits, width }: CircleCanvasProp
     let lastTime = dayStart + startHour * 3600;
 
     /**
-     * Build the main pie slices as percentage of totalSec.
-     * Each slice covers the span between code changes.
+     * Pie slice data for the inner code ring.
      *
-     * @type {{ name: string; value: number; color: string }[]}
+     * Each slice represents one contiguous interval during which a particular wind
+     * code was active.  The `value` field is the interval's duration expressed as a
+     * percentage of `totalSec` so that all slices sum to 100.  The final slice
+     * always uses the `IT_IS_DARK` colour to cover the period from the last code
+     * change to `endHour`.
      */
     const pieData = useMemo(() => {
         const slices: { name: string; value: number; color: string }[] = [];
@@ -68,7 +117,6 @@ export function CircleCanvas({ data, dayStart, limits, width }: CircleCanvasProp
             lastTime = ts;
         });
 
-        // final dark slice
         const remaining = (dayStart + endHour * 3600 - lastTime);
         slices.push({
             name: 'dark',
@@ -80,7 +128,11 @@ export function CircleCanvas({ data, dayStart, limits, width }: CircleCanvasProp
     }, [data, dayStart, startHour, endHour]);
 
     /**
-     * Compute the center label: “Today”, “Tomorrow”, or formatted weekday/date.
+     * Human-readable label rendered at the centre of the pie.
+     * Returns `”Today”` or `”Tomorrow”` for the current/next calendar day,
+     * or a full weekday + date string (e.g. `”Monday 4/7”`) for other days.
+     * The first timestamp in `data` (shifted to noon) is used for comparison
+     * to avoid DST edge cases near midnight.
      */
     const centerLabel = useMemo(() => {
         const dtNow = new Date();
@@ -92,9 +144,15 @@ export function CircleCanvas({ data, dayStart, limits, width }: CircleCanvasProp
     }, [data]);
 
     /**
-     * Generate integer hour tick entries for the outer ring.
+     * Segment entries for the outer hour-tick ring — one equal-width segment per
+     * hour in the visible window.  Each entry carries its local hour number as
+     * `hour` (used by the custom label renderer) and a constant `value` of `1`
+     * so all segments are the same angular size.
      *
-     * @type {{ hour: number; value: number }[]}
+     * @remarks The dependency array is intentionally empty here, meaning these
+     * ticks are computed once on mount and not recalculated if `limits` changes
+     * at runtime.  This is an existing behaviour and is not modified by this
+     * documentation pass.
      */
     const hourTicks = useMemo(
         () =>
@@ -102,7 +160,7 @@ export function CircleCanvas({ data, dayStart, limits, width }: CircleCanvasProp
                 { length: endHour - startHour },
                 (_, i) => ({ hour: i + startHour, value: 1 })
             ),
-        []  // ← should include [startHour, endHour]
+        [] // Note: intentionally omits [startHour, endHour] — existing behaviour.
     );
 
     return (
@@ -110,7 +168,8 @@ export function CircleCanvas({ data, dayStart, limits, width }: CircleCanvasProp
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
 
-                    {/* ──────────── HOUR TICKS ──────────── */}
+                    {/* Outer ring: one equal-width segment per hour, drawn with visible stroke
+                        dividers and numeric labels positioned at the midpoint of each segment. */}
                     <Pie
                         data={hourTicks}
                         dataKey="value"
@@ -125,8 +184,13 @@ export function CircleCanvas({ data, dayStart, limits, width }: CircleCanvasProp
                         stroke="#999"
                         strokeWidth={1}
                         /**
-                         * Position each hour label around the ring.
-                         * @param {{ cx: number, cy: number, midAngle: number, hour: number }} params
+                         * Custom label renderer that places the local hour number at the
+                         * angular midpoint of each tick segment, just inside the outer radius.
+                         *
+                         * @param cx - Centre X of the pie in SVG coordinates.
+                         * @param cy - Centre Y of the pie in SVG coordinates.
+                         * @param midAngle - The angle (degrees) at the midpoint of this segment.
+                         * @param hour - The local hour integer carried by this tick entry.
                          */
                         label={({ cx, cy, midAngle, hour }) => {
                             const RAD = Math.PI / 180;
@@ -151,7 +215,7 @@ export function CircleCanvas({ data, dayStart, limits, width }: CircleCanvasProp
                         ))}
                     </Pie>
 
-                    {/* ──────────── MAIN PIE ──────────── */}
+                    {/* Inner ring: coloured segments proportional to each code interval's duration. */}
                     <Pie
                         data={pieData}
                         dataKey="value"

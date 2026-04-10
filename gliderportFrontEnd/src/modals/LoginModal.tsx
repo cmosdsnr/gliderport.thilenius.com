@@ -26,6 +26,14 @@ function LoginModal(): React.ReactElement {
     const { googleLogin, login, pb } = useAuth();
     const { openModal, closeModal } = useModal();
 
+    /**
+     * Handles email/password login form submission. Navigates to `/dashboard`
+     * on success or `/verify` if the account is unverified. Sets the error
+     * state when authentication fails.
+     *
+     * @param data - Form values provided by react-hook-form, containing
+     *   `email` and `password` fields.
+     */
     const onLogin = async (data: any) => {
         setIsError(false);
         try {
@@ -48,6 +56,11 @@ function LoginModal(): React.ReactElement {
         }
     }
 
+    /**
+     * Initiates Google OAuth login via the auth context. On success, navigates
+     * to `/dashboard` for verified accounts or `/verify` for unverified ones.
+     * Sets the error state if authentication fails.
+     */
     const handleGoogleLogin = async () => {
         setIsError(false);
         await googleLogin();

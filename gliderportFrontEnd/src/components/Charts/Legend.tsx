@@ -1,7 +1,20 @@
 /**
- * Legend component renders a semicircular wind-direction color legend using D3.
- * It dynamically resizes to its container width and draws colored wedges,
- * gradient definitions, directional markers, and annotations.
+ * Wind-direction color legend rendered with D3.
+ *
+ * Displays a 90° semicircular arc (130°–221° screen angle, mapping to the westerly
+ * wind-direction window used on the site) divided into 30 equal wedges.  Each wedge is
+ * painted with a radial gradient that blends between the three quality palettes defined
+ * in {@link ColorGradients.colors} based on its angular distance from the ideal 270°
+ * (due-west) wind direction.
+ *
+ * Additional visual elements:
+ * - Arrow baselines from the arc centre indicating the primary approach direction and
+ *   the cliff edge reference.
+ * - Degree labels (220°–310°) and tick marks around the outer arc.
+ * - Six concentric circles clipped to the arc to suggest radial wind-speed bands.
+ *
+ * The SVG width is kept in sync with its container via a `resize` event listener so
+ * the legend scales correctly at any viewport width.
  *
  * @packageDocumentation Legend
  */
@@ -10,8 +23,12 @@ import * as d3 from 'd3';
 import { colors, blendColors } from './ColorGradients';
 
 /**
- * Legend component.
- * @returns {React.ReactElement} A div containing the D3-rendered legend.
+ * Renders the wind-direction color legend as a D3 SVG inside a plain `<div>`.
+ *
+ * No props are required; the component manages its own width state by observing
+ * the container element's `clientWidth` via a `window` resize listener.
+ *
+ * @returns A `div` element containing a 600 px tall SVG with the rendered legend.
  */
 export function Legend(): React.ReactElement {
     const [svgWidth, setSvgWidth] = useState<number>(0);

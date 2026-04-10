@@ -1,21 +1,44 @@
+/**
+ * FIR (Finite Impulse Response) filter definitions and coefficient builder for wind data smoothing.
+ *
+ * Filter designs were generated at {@link http://t-filter.engineerjs.com/}.
+ * Each entry stores only the left half (plus optional center tap) of the symmetric impulse
+ * response; `getFilter` mirrors and normalises them to produce a unit-gain kernel ready
+ * for convolution.
+ *
+ * @packageDocumentation filters
+ */
 
+/**
+ * Describes one FIR filter design.
+ */
 type Filter = {
-    taps: number;          // Number of taps in the filter
-    weights: number[];    // Coefficients for the filter
+    /** Total number of taps (length of the full symmetric kernel). */
+    taps: number;
+    /** Left-half (and optional center) coefficients of the symmetric impulse response. */
+    weights: number[];
 };
-//  http://t-filter.engineerjs.com/    
-// roughly 11 tap filter
-// Fs = 2000Hz
-// Fp = 200Hz (10%)
-// Fst = 300Hz (15%)
-const filters =
+
+/**
+ * Library of pre-designed FIR low-pass filters at different tap counts and cut-off ratios.
+ *
+ * All designs assume Fs = 2000 Hz. Only the left half (and centre tap for odd-tap filters)
+ * of each symmetric kernel is stored; `getFilter` mirrors and normalises on demand.
+ *
+ * | Index | Taps | Pass-band | Stop-band | Notes                          |
+ * |-------|------|-----------|-----------|--------------------------------|
+ * | 0     |  11  | 200 Hz    | 300 Hz    | Lightweight, ~10 % / 15 %      |
+ * | 1     |  50  | —         | —         | Medium roll-off                |
+ * | 2     | 100  | 50 Hz     | 90 Hz     | Default (`filterSelect = 2`)   |
+ * | 3     | 100  | 100 Hz    | 200 Hz    | Wider pass-band alternative    |
+ */
+const filters: Filter[] =
     [{
         taps: 11, weights: [
             -0.08515745644422122, 0.0379292561786139, 0.09900577545371485, 0.17567660801675092, 0.23862805298056225,
             0.26269897977212336,
         ]
     },
-    // 50 tap filter 
     {
         taps: 50, weights: [
             -0.0005519179729534347, 0.00022990491087123774, 0.000964556512193067, 0.0022138703609847045, 0.003878845712614388,
@@ -25,7 +48,7 @@ const filters =
             0.061976496641276003, 0.08809722110860864, 0.11132638621159739, 0.12874367244612944, 0.13807457440106205,
         ]
     },
-    // 100 tap filter  50/90/1000 (50 numbers as it's symmetrical)
+    // 100-tap filter  50/90/1000 — stored as 50 half-coefficients (symmetrical)
     {
         taps: 100, weights: [
             -0.00013939454546656245, 0.0013626915351227131, 0.001137183610719298, 0.0014717070174845809, 0.001899687436787478,
@@ -40,7 +63,7 @@ const filters =
             0.05579967786768862, 0.0593731198539503, 0.06214641629190559, 0.0640407266214166, 0.06500163538254261,
         ]
     },
-    // 100 tap filter  100/200/1000 (50 numbers as it's symmetrical)
+    // 100-tap filter  100/200/1000 — stored as 50 half-coefficients (symmetrical)
     {
         taps: 100, weights: [
             0.0018356013174504735, -0.002066562630488025, -0.001656736305998838, -0.00156006372856121, -0.0015796520914371423,
@@ -58,9 +81,34 @@ const filters =
     }
     ];
 
+/**
+ * Index into `filters` that selects the active filter design.
+ * 0 = 11-tap, 1 = 50-tap, 2 = 100-tap 50/90 Hz (default), 3 = 100-tap 100/200 Hz.
+ */
 const filterSelect: number = 2;
+
+/** The currently active filter design selected by `filterSelect`. */
 const filter: Filter = filters[filterSelect];
 
+/**
+ * Builds and returns the full, normalised FIR kernel for the active filter.
+ *
+ * The stored half-coefficients are mirrored to produce a symmetric kernel:
+ * `[left..., center?, ...left.reversed()]`.  The kernel is then divided by
+ * its sum so that DC gain equals 1 (unit gain).
+ *
+ * @returns An array of `taps` normalised filter coefficients ready for convolution.
+ *
+ * @example
+ * ```ts
+ * import { getFilter } from 'contexts/filters';
+ *
+ * const kernel = getFilter();            // e.g. 100 coefficients for filter index 2
+ * const smoothed = signal.map((v, i) =>
+ *   kernel.reduce((acc, w, k) => acc + w * (signal[i - k + kernel.length / 2] ?? 0), 0)
+ * );
+ * ```
+ */
 export function getFilter(): number[] {
     const { taps, weights } = filter;
     const half = Math.floor(taps / 2);

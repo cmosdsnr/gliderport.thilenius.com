@@ -107,7 +107,7 @@ interface CodeHistoryDetails {
  * @returns {React.ReactElement}
  */
 export function InfoDisplay(): React.ReactElement {
-    // State hooks for each data segment
+    /** Metadata about the gliderport record table (first/last record, counts). */
     const [gliderportInfo, setGliderportInfo] = useState<GliderportInfo>({
         lastRecord: null,
         firstRecord: null,
@@ -117,13 +117,19 @@ export function InfoDisplay(): React.ReactElement {
         latestHoursString: null,
     });
 
+    /** Hourly aggregation table: total count and per-hour breakdown entries. */
     const [hoursTable, setHoursTable] = useState<{ count: number; entries: HourEntry[] }>({
         count: 0,
         entries: [],
     });
 
+    /** Sun-time and computed delta data pushed from the server. `null` until loaded. */
     const [serverSent, setServerSent] = useState<ServerSentData | null>(null);
+
+    /** Code-history overview list and optional latest-day details. */
     const [codeHistory, setCodeHistory] = useState<CodeHistory>({ overview: [], latestDetails: undefined });
+
+    /** ETL (add-data) process status including forecast schedule and per-hour results. */
     const [addData, setAddData] = useState<AddDataInfo>({
         lastCalled: 0,
         lastCalledString: "",

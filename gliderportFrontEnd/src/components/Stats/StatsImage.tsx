@@ -5,8 +5,18 @@ import { Row, Col, Button, Form, Table, Card, Modal } from 'react-bootstrap';
 import StatsImageListViewer from './StatsImageListViewer';
 import { API } from '@/api';
 
+/** Abbreviated month names used to populate the date-picker month selector. */
 const abbrMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+/**
+ * Custom trigger element rendered by `react-datepicker` instead of its default input.
+ * Displays a "Pick a date:" heading above a styled button showing the selected value.
+ *
+ * @param value - The currently selected date string provided by `react-datepicker`.
+ * @param onClick - Click handler provided by `react-datepicker` to open the calendar.
+ * @param className - CSS class forwarded from the `customInput` prop.
+ * @param ref - Forwarded ref attached to the button element.
+ */
 const CustomInput = forwardRef(
     ({ value, onClick, className }: any, ref: any) => (
         <>
@@ -18,32 +28,61 @@ const CustomInput = forwardRef(
     )
 );
 
+/** Props for {@link StatsImageComponent}. Currently unused — reserved for future extension. */
 interface StatsImageComponentProps { }
 
 /**
- * StatsImageComponent displays a date picker, camera selector, image/video details,
- * and a list of images for the selected day and hour range.
- * @returns {React.ReactElement} The rendered stats image component.
+ * Displays a date picker, dual-camera selector, image/video metadata table,
+ * an hour-range filter, and a scrollable image list for the selected day.
+ *
+ * @remarks
+ * On mount the component fetches the full image listing (years/months/days)
+ * from the API to drive the date-picker's enabled-date filter.  When the user
+ * picks a date the component fetches per-day metadata and populates the camera
+ * details table.  Selecting a different camera or adjusting the hour-range
+ * re-fetches the filtered image list via {@link API.imageCount}.  Clicking the
+ * video filename opens an inline Bootstrap `Modal` with an auto-playing
+ * `<video>` element.
+ *
+ * @returns The rendered date-picker / camera-selector / image-viewer panel.
+ *
+ * @example
+ * ```tsx
+ * <StatsImageComponent />
+ * ```
  */
 export function StatsImageComponent(): React.ReactElement {
-    // Date and listing state (for date filtering)
+    /** Currently selected date in the date-picker. */
     const [pickedDate, setPickedDate] = useState(new Date());
+    /** Full image listing keyed by year → month → day array, used to enable calendar dates. */
     const [listing, setListing] = useState<any>({});
+    /** Available years derived from `listing`, shown in the year `<select>`. */
     const [years, setYears] = useState<string[]>([]);
+    /** Available months (abbreviated) for the selected year, shown in the month `<select>`. */
     const [months, setMonths] = useState<string[]>([]);
 
-    // States for imageDetails and cameraDetails
+    /** Raw metadata object for the selected day returned by the image-data API. */
     const [imageDetails, setImageDetails] = useState<any>(null);
+    /** Metadata for the currently active camera, derived from `imageDetails`. */
     const [cameraDetails, setCameraDetails] = useState<any>(null);
+    /** Which camera feed is currently selected. */
     const [camera, setCamera] = useState<"CameraA" | "CameraB">("CameraA");
 
+    /** `[fromHour, toHour]` selected by the user for filtering the image list. */
     const [hourRange, setHourRange] = useState([0, 0]);
+    /** Options available in the "To" hour `<select>`, derived from camera end time and `fromHour`. */
     const [toHourOptions, setToHourOptions] = useState<number[]>([]);
+    /** Options available in the "From" hour `<select>`, derived from camera start time and `toHour`. */
     const [fromHourOptions, setFromHourOptions] = useState<number[]>([]);
+    /** Filenames returned by the image-count API for the selected day, camera, and hour range. */
     const [imageList, setImageList] = useState<string[]>([]);
+    /** Filename of the timelapse video for the selected day and camera. */
     const [video, setVideo] = useState<string>("")
+    /** Fully-qualified URL of the video currently open in the modal. */
     const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
+    /** Ref to the `<video>` element inside the modal, used to reset and auto-play on open. */
     const videoRef = useRef<HTMLVideoElement>(null)
+    /** Selected day formatted as `YYYY-MM-DD`, or `null` when no data exists for the picked date. */
     const [imageDay, setImageDay] = useState<string | null>(null);
 
 
@@ -92,7 +131,7 @@ export function StatsImageComponent(): React.ReactElement {
 
     }, [hourRange]);
 
-    // Fetch listing data for date selection when component mounts
+    /** Fetches the full image listing on mount to populate the date-picker's enabled dates. */
     useEffect(() => {
         fetch(API.listing())
             .then((response) => response.json())
@@ -114,7 +153,7 @@ export function StatsImageComponent(): React.ReactElement {
             });
     }, []);
 
-    // Fetch image data based on pickedDate
+    /** Fetches per-day image metadata whenever `pickedDate` changes. */
     useEffect(() => {
         const year = pickedDate.getFullYear();
         const month = (pickedDate.getMonth() + 1).toString().padStart(2, "0");
@@ -136,7 +175,11 @@ export function StatsImageComponent(): React.ReactElement {
             });
     }, [pickedDate]);
 
-    // Update cameraDetails whenever imageDetails or camera changes, update the possible range of hours
+    /**
+     * Re-derives `cameraDetails`, `hourRange`, and `video` whenever `imageDetails` or
+     * the selected `camera` changes.  Also resets the hour selectors to the full
+     * available range for the new camera.
+     */
     useEffect(() => {
         if (imageDetails) {
             setCameraDetails(imageDetails[camera]);
@@ -150,6 +193,10 @@ export function StatsImageComponent(): React.ReactElement {
     }, [imageDetails, camera]);
 
 
+    /**
+     * Resets the video `<video>` element to time 0 and starts playback.
+     * Called via `onAfterOpen` when the video modal becomes visible.
+     */
     function afterOpenModal() {
         if (videoRef?.current) {
             videoRef.current.currentTime = 0;
@@ -157,12 +204,23 @@ export function StatsImageComponent(): React.ReactElement {
         }
     }
 
+    /**
+     * Constructs the base directory URL for images belonging to the currently selected day.
+     *
+     * @returns A URL string ending with a trailing slash, e.g.
+     *   `https://example.com/images/2024/09/2024-09-07/`.
+     */
     const getImageDirectoryUrl = () => {
         const [year, month] = imageDay!.split('-');
         return `${import.meta.env.VITE_SERVER_URL}/images/${year}/${month}/${imageDay}/`;
     }
 
-    // Handler for clicking an image item
+    /**
+     * Handles a click on an individual image filename in the list.
+     * Fetches the image resource from the server and logs the response.
+     *
+     * @param item - The filename of the image that was clicked.
+     */
     const handleImageClick = (item: string) => {
         //split imageDay on'-' to get year, month and day
         const [year, month] = imageDay!.split('-');
@@ -176,9 +234,15 @@ export function StatsImageComponent(): React.ReactElement {
             .catch((err) => console.error("Error fetching image:", err));
     };
 
+    /** Controls visibility of the video playback modal. */
     const [showModal, setShowModal] = useState<boolean>(false);
+    /** Closes the video playback modal. */
     const closeModal = () => setShowModal(false);
 
+    /**
+     * Builds the full video URL from the selected day's year and the `video` filename,
+     * stores it in `selectedVideo`, then opens the playback modal.
+     */
     const openVideoModal = () => {
         const [year] = imageDay!.split("-");
         const videoUrl = `${import.meta.env.VITE_SERVER_URL}/images/video/${year}/${video}`;

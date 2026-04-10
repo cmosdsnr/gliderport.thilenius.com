@@ -22,8 +22,10 @@ import useLocalStorageState from "@/hooks/useLocalStorageState";
 import { useStatusCollection } from "@/contexts/StatusCollection";
 import "./Forecast.css"
 // --------------------------------------------------------------------
-// Types                                                               
+// Types
 // --------------------------------------------------------------------
+
+/** Temperature, pressure, and humidity values for a single forecast slice. */
 export interface MainWeather {
     temp: number;
     feels_like: number;
@@ -36,6 +38,7 @@ export interface MainWeather {
     temp_kf: number;
 }
 
+/** OpenWeatherMap weather condition descriptor attached to a forecast entry. */
 export interface WeatherInfo {
     id: number;
     main: string;
@@ -43,14 +46,22 @@ export interface WeatherInfo {
     icon: string;
 }
 
+/** Wind data for a single forecast slice (imperial units when `units=imperial`). */
 export interface Wind {
     speed: number; // mph when units=imperial
-    deg: number;   // wind direction (0‑360°)
+    deg: number;   // wind direction (0-360°)
     gust: number;
 }
 
+/**
+ * A single 3-hour forecast slice from the OpenWeatherMap 5-day/3-hour API.
+ *
+ * @property dt     - Unix UTC timestamp (seconds).
+ * @property dt_txt - Human-readable UTC datetime string, e.g. `"2025-04-10 12:00:00"`.
+ * @property sys    - `pod` is `"d"` for daytime or `"n"` for night-time.
+ */
 export interface ForecastEntry {
-    dt: number; // UTC seconds
+    dt: number;
     main: MainWeather;
     weather: WeatherInfo[];
     clouds: { all: number };
@@ -61,6 +72,7 @@ export interface ForecastEntry {
     dt_txt: string;
 }
 
+/** Metadata for the forecast city returned by the OpenWeatherMap API. */
 export interface City {
     id: number;
     name: string;
@@ -72,6 +84,10 @@ export interface City {
     sunset: number;
 }
 
+/**
+ * Top-level response shape from the OpenWeatherMap 5-day/3-hour forecast endpoint
+ * (`/data/2.5/forecast`).
+ */
 export interface ForecastResponse {
     cod: string;
     message: number;
@@ -81,12 +97,23 @@ export interface ForecastResponse {
 }
 
 // --------------------------------------------------------------------
-// Helpers                                                             
+// Helpers
 // --------------------------------------------------------------------
+
+/** Formats a `Date` to a zero-padded 24-hour string in the America/Los_Angeles timezone. */
 const hourFmt = new Intl.DateTimeFormat("en-US", { hour: "2-digit", hour12: false, timeZone: "America/Los_Angeles" });
+
+/** Formats a `Date` to a short weekday + month + day string, e.g. `"Thu, Apr 10"`. */
 const dateFmt = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric" });
 
-
+/**
+ * Transforms the raw `ForecastEntry` list into a flat array of chart data points.
+ * Each point's `index` is `3 * i` (hours elapsed from the first slice), making the
+ * x-axis a continuous hour scale across the full 5-day window.
+ *
+ * @param entries - Raw forecast entries from {@link ForecastResponse.list}.
+ * @returns Array of chart-ready objects with flattened weather fields.
+ */
 const buildChartData = (entries: ForecastEntry[]) =>
     entries?.map((e, i) => ({
         index: 3 * i,
@@ -104,7 +131,7 @@ const buildChartData = (entries: ForecastEntry[]) =>
         wind_dir: e.wind.deg,
     }));
 
-// build alternating day bands (every 8 points) ----------
+/** Alternating background fill colours for the day-band reference areas. */
 const bandColors = ["#d5f5f5", "#e8f0de"];
 // const buildBands = (startHour: number) => {
 //     const bands: { x1: number; x2: number }[] = [
@@ -117,6 +144,14 @@ const bandColors = ["#d5f5f5", "#e8f0de"];
 //     return bands;
 // };
 
+/**
+ * Builds the list of day-band descriptors used as Recharts `<ReferenceArea>` props.
+ * Each band spans one calendar day on the hour-indexed x-axis and is labelled with
+ * a short date string (e.g. `"Thu, Apr 10"`).
+ *
+ * @param data - Chart data produced by {@link buildChartData}.
+ * @returns Array of `{ x1, x2, fill, label }` objects, one per day (up to 6).
+ */
 const buildBands = (data: ReturnType<typeof buildChartData>) => {
     if (!data || !data.length) return [];
     const bands: { x1: number; x2: number; fill: string; label: string }[] = [];
@@ -145,6 +180,15 @@ const buildTicks = (data: ReturnType<typeof buildChartData>) => {
     return ticks;
 };
 
+/**
+ * Formats an x-axis tick index into a human-readable hour label.
+ * Returns `"Midnight"` for hour 0 and `"Noon"` for hour 12;
+ * otherwise returns a zero-padded 24-h string (e.g. `"06"`).
+ *
+ * @param idx       - X-axis index (hours elapsed from the first forecast slice).
+ * @param startHour - Hour of day of the first forecast slice (0-23).
+ * @returns Formatted label string.
+ */
 const tickFormatter = (idx: number, startHour: number) => {
     const hr = (idx + startHour) % 24;
     switch (hr) {
@@ -155,9 +199,21 @@ const tickFormatter = (idx: number, startHour: number) => {
 }
 
 // --------------------------------------------------------------------
-// Selectable multi‑series chart                                       
+// Selectable multi-series chart
 // --------------------------------------------------------------------
 
+/**
+ * Shared props for the chart sub-components ({@link WindChart} and {@link Chart}).
+ *
+ * @property data          - Flattened forecast rows from {@link buildChartData}.
+ * @property bands         - Day-band descriptors from {@link buildBands}.
+ * @property ticks         - X-axis tick positions from {@link buildTicks}.
+ * @property startHour     - Hour-of-day of the first forecast slice, used by
+ *                           {@link tickFormatter} to render correct labels.
+ * @property seriesOptions - Data series definitions (key, label, colour) for
+ *                           generic {@link Chart} instances. Not used by {@link WindChart}.
+ * @property title         - Chart card heading displayed above the Recharts area.
+ */
 interface ChartProps {
     data: ReturnType<typeof buildChartData>,
     bands: { x1: number; x2: number; fill: string; label: string }[],
@@ -172,9 +228,13 @@ interface ChartProps {
 // Wind Speed & Direction chart                                        
 // --------------------------------------------------------------------
 /**
- * Wind Speed & Direction chart component.
- * @param props - ChartProps
- * @returns {React.ReactElement}
+ * Specialised Recharts chart showing wind speed (mph, left y-axis, blue) and
+ * wind direction (degrees 0–360, right y-axis, orange) over the 5-day window.
+ * Gust data is fetched but intentionally hidden because OpenWeatherMap gust
+ * values are often lower than the reported speed.
+ *
+ * @param props - See {@link ChartProps} (`seriesOptions` and `title` are unused here).
+ * @returns A Bootstrap `Card` wrapping a Recharts `LineChart`.
  */
 function WindChart({ data, bands, ticks, startHour }: ChartProps): React.ReactElement {
 
@@ -275,6 +335,13 @@ function WindChart({ data, bands, ticks, startHour }: ChartProps): React.ReactEl
 }
 
 
+/**
+ * Defines one data series to be rendered as a `<Line>` in a generic {@link Chart}.
+ *
+ * @property key   - `dataKey` passed to Recharts — must match a field in the chart data object.
+ * @property label - Human-readable legend label (e.g. `"Temp (°F)"`).
+ * @property color - Hex or CSS colour for the line stroke.
+ */
 type SeriesOptions = {
     key: string;
     label: string;
@@ -282,9 +349,17 @@ type SeriesOptions = {
 }[];
 
 /**
- * Generic multi-series chart component.
- * @param props - ChartProps
- * @returns {React.ReactElement}
+ * Generic multi-series line chart card.
+ * Renders one `<Line>` per entry in `seriesOptions` with shared day-band reference
+ * areas and evenly-spaced 6-hour x-axis ticks.
+ *
+ * @param props - See {@link ChartProps}.
+ * @returns A Bootstrap `Card` wrapping a Recharts `LineChart`.
+ *
+ * @example
+ * // Temperature profile usage inside ForecastChart:
+ * <Chart data={data} bands={bands} ticks={ticks} startHour={startHour}
+ *        seriesOptions={tempOptions} title="Temperature Profile" />
  */
 function Chart({ data, bands, ticks, startHour, seriesOptions, title }: ChartProps): React.ReactElement {
 
@@ -345,8 +420,20 @@ function Chart({ data, bands, ticks, startHour, seriesOptions, title }: ChartPro
 // Container component                                                  
 // --------------------------------------------------------------------
 /**
- * Main ForecastChart component for displaying the 5-day forecast charts.
- * @returns {React.ReactElement} The rendered forecast charts.
+ * Top-level 5-day forecast page component.
+ *
+ * Fetches forecast data from the {@link useStatusCollection} context (sourced from
+ * OpenWeatherMap), derives shared chart state (`data`, `bands`, `ticks`) via
+ * `useMemo`, and renders a checkbox toolbar that lets the user toggle individual
+ * chart panels. Selected chart state persists across page reloads via
+ * {@link useLocalStorageState}.
+ *
+ * @remarks
+ * Available chart panels: Wind Speed & Direction, Temperature Profile,
+ * Humidity Profile, Pressure Profile, and Cloud Cover.
+ *
+ * @returns The full forecast page including the heading, chart toggles, and all
+ *          selected {@link WindChart} / {@link Chart} panels.
  */
 export function ForecastChart(): React.ReactElement {
     const [startHour, setStartHour] = useState<number>(0);

@@ -16,22 +16,48 @@ import { useSensorData } from '@/contexts/SensorDataContext';
 import type { Reading } from '@/contexts/SensorDataContext';
 
 /**
- * Props for the SimpleChart component.
- * clientWidth - The width of the container to size the chart.
- * label - The data field to chart (e.g., "Direction", "Pressure").
+ * Props for the {@link SimpleChart} component.
  */
 export interface SimpleChartProps {
+    /**
+     * Pixel width of the parent container.  The chart uses this to derive its own
+     * SVG width and a proportional height (container width / 5).
+     */
     clientWidth: number;
+    /**
+     * Human-readable name of the sensor field to plot.  Must match (case-insensitively)
+     * a key of the `Reading` type — e.g. `"Temperature"`, `"Pressure"`, `"Humidity"`,
+     * `"Direction"`.  The value is also used as the Y-axis label and to trigger
+     * Direction-specific tick rendering and Pressure-specific annotations.
+     */
     label: string;
 }
 
 /**
- * A simple time-series line chart using D3, rendering one or more filled data segments.
- * Automatically scales axes based on filtered data limits and redraws on resize or data change.
+ * A responsive D3 time-series line chart for a single sensor field.
  *
- * @param props.clientWidth - container width for responsive sizing
- * @param props.label - name of the field in each reading to plot
- * @returns A React element wrapping the D3-generated SVG chart.
+ * Reads live sensor data from `SensorDataContext` and pre-processed segments from
+ * `FilterContext`.  On each data or dimension change the chart is fully redrawn:
+ *
+ * - **X axis** — linear Unix-timestamp scale with 2-hour ticks aligned to even hours
+ *   in the `America/Los_Angeles` timezone.  Midnight ticks show a short date instead
+ *   of `"00"`.
+ * - **Y axis** — auto-scaled from filtered `yMin`/`yMax` limits, shown on both left
+ *   and right sides.  For `"Direction"` the axis uses fixed 90° compass ticks
+ *   (N/E/S/W/N/E); for `"Humidity"` the range is clamped to the observed data ± 5 %
+ *   rather than the generic filter limits.
+ * - **Grid lines** — light grey, aligned to axis ticks on both axes.
+ * - **Annotation** — `"Pressure"` charts include a helpful meteorological note.
+ * - **Segments** — each gap-free stretch of readings is drawn as a separate steel-blue
+ *   path so that missing data does not produce spurious connecting lines.
+ *
+ * @param props - See {@link SimpleChartProps}.
+ * @returns A full-width Bootstrap `Col` wrapping a `div` that holds the D3 SVG.
+ *
+ * @example
+ * ```tsx
+ * <SimpleChart clientWidth={containerRef.current?.clientWidth ?? 800} label="Pressure" />
+ * ```
  */
 export const SimpleChart: React.FC<SimpleChartProps> = ({ clientWidth, label }) => {
     const chartRef = useRef<HTMLDivElement>(null);

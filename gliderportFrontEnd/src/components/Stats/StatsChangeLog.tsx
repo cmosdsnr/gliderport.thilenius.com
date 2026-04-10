@@ -1,18 +1,27 @@
 /**
- * 
  * @packageDocumentation
- *   Displays a list of site changes and updates. Hovering over a date shows the corresponding change details.
- *   Used in the Gliderport statistics page.
+ * Changelog display for the Gliderport statistics page.
+ * Renders a navigable list of dated site revisions; hovering a date
+ * populates the adjacent panel with the corresponding change details.
  */
 import React, { useState } from 'react'
 import { Row, Col } from 'react-bootstrap'
 import './stats.css'
 
+/**
+ * Represents a single entry in the site revision history.
+ */
 type Change = {
-    date: string,
-    html: React.ReactElement
+    /** Human-readable date string displayed in the left-hand navigation list, e.g. `"9/7/24"`. */
+    date: string;
+    /** JSX content shown in the detail panel when this entry is hovered. */
+    html: React.ReactElement;
 }
 
+/**
+ * Static list of site revision entries in reverse-chronological order.
+ * Each entry corresponds to one {@link Change} rendered by {@link StatsChangeLogComponent}.
+ */
 const changes: Change[] = [
     {
         date: "9/7/24", html: <>
@@ -209,12 +218,24 @@ const changes: Change[] = [
 ]
 
 /**
- * StatsChangeLogComponent displays a list of site changes and updates.
- * Hovering over a date shows the corresponding change details.
- * @returns {React.ReactElement} The rendered change log component.
+ * Renders the Gliderport site changelog as a two-column layout.
+ *
+ * @remarks
+ * The left column lists dated revision entries from the {@link changes} array.
+ * Hovering a date highlights it and populates the right column with the
+ * corresponding JSX detail block.  No API calls are made — all data is static.
+ *
+ * @returns The rendered changelog panel.
+ *
+ * @example
+ * ```tsx
+ * <StatsChangeLogComponent />
+ * ```
  */
 export function StatsChangeLogComponent(): React.ReactElement {
+    /** JSX content currently displayed in the detail column. */
     const [changeText, setChangeText] = useState<React.ReactElement>(<></>)
+    /** Index into {@link changes} for the currently hovered / active entry. */
     const [changeId, setChangeId] = useState<number>(0)
 
     return (

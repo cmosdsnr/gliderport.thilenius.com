@@ -1,28 +1,72 @@
+/**
+ * @file ArchiveStats.tsx
+ * @module ArchiveStats
+ *
+ * @description
+ * Admin panel component that displays statistical summaries for a selected
+ * monthly wind-data archive.  The user picks a year and month; the component
+ * fetches the unpacked archive via {@link API.unpackArchive} and renders a
+ * Bootstrap table showing record count, time range, and min/max values for
+ * speed, direction, temperature, humidity, and pressure.
+ */
 import React, { useEffect, useState } from 'react';
 import { API } from '@/api';
 import { Form, Table } from 'react-bootstrap';
 import { DateTime } from 'luxon';
 
+/**
+ * Statistical summary returned by the `unpackArchive` API endpoint for a
+ * single monthly archive file.
+ */
 interface Stats {
+    /** Total number of records in the archive. */
     count: number;
+    /** Unix timestamp (seconds) of the earliest record. */
     minTimestamp: number;
+    /** Unix timestamp (seconds) of the latest record. */
     maxTimestamp: number;
+    /** Minimum wind speed (tenths of mph, divide by 10 to display). */
     minSpeed: number;
+    /** Maximum wind speed (tenths of mph, divide by 10 to display). */
     maxSpeed: number;
+    /** Minimum wind direction in degrees. */
     minDirection: number;
+    /** Maximum wind direction in degrees. */
     maxDirection: number;
+    /** Minimum temperature (tenths of °F, divide by 10 to display). */
     minTemperature: number;
+    /** Maximum temperature (tenths of °F, divide by 10 to display). */
     maxTemperature: number;
+    /** Minimum relative humidity (%). */
     minHumidity: number;
+    /** Maximum relative humidity (%). */
     maxHumidity: number;
+    /** Minimum barometric pressure (raw sensor units). */
     minPressure: number;
+    /** Maximum barometric pressure (raw sensor units). */
     maxPressure: number;
+    /** ISO string representing the start of the archive window. */
     startTime: string;
+    /** ISO string representing the end of the archive window. */
     endTime: string;
 }
 
+/**
+ * Displays statistical summaries for a user-selected monthly wind archive.
+ *
+ * Renders year/month `<Form.Select>` controls (years from 2015 up to the
+ * previous complete month) and, once data is fetched, a responsive Bootstrap
+ * table with min/max columns for every sensor field.
+ *
+ * @returns The rendered archive statistics panel.
+ *
+ * @example
+ * ```tsx
+ * <ArchiveStats />
+ * ```
+ */
 const ArchiveStats: React.FC = () => {
-    // Compute year/month options
+    /** Compute year/month options — restrict to completed months. */
     const today = new Date();
     const end = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const years: number[] = [];
@@ -141,4 +185,5 @@ const ArchiveStats: React.FC = () => {
         </div>
     );
 };
+
 export default ArchiveStats;

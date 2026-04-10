@@ -43,12 +43,17 @@ interface FrequencyResponseData {
 interface DataPoint {
     /** Formatted time string (MM/dd HH:mm) */
     time: string;
-    /** (unfiltered) speed */
+    /** Raw (unfiltered) wind speed (mph). */
     speed: number;
+    /** Raw wind direction (degrees). */
     direction: number;
+    /** Temperature reading (°F). */
     temperature: number;
+    /** Relative humidity (%). */
     humidity: number;
+    /** Barometric pressure (raw sensor units). */
     pressure: number;
+    /** Minimum speed envelope within the sliding window. */
     min: number;
     /** Maximum speed envelope */
     max: number;
@@ -102,6 +107,14 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
             : dt.hour.toString().padStart(2, '0');
     };
 
+    /**
+     * Formats a frequency value (Hz) as a period string for X-axis tick labels
+     * on the frequency-response chart.  Returns an empty string for 0 Hz to
+     * avoid a divide-by-zero label.
+     *
+     * @param f - Frequency in Hz.
+     * @returns Human-readable period string such as `"2.00 min"`, or `""` when `f === 0`.
+     */
     const tickFreqFormatter = (f: number) => {
         if (f === 0) return '';
         const r = Math.round(1 / f) / 60;
@@ -112,7 +125,8 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
      * Compute frequency response of FIR filter.
      */
     const frequencyResponse = useMemo<FrequencyResponseData[]>(() => {
-        const Fs = 1 / 60; // Sampling frequency (Hz), one sample per minute
+        /** Sampling frequency in Hz — one wind reading per minute. */
+        const Fs = 1 / 60;
         const numPoints = 512;
         const resp: FrequencyResponseData[] = [];
         for (let i = 0; i < numPoints; i++) {
@@ -131,12 +145,12 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
                 magnitude: parseFloat(db.toFixed(2))
             });
         }
-        // debugger
         return resp;
     }, [filter]);
 
-    // Speed chart: domain from 0 to 12 mph, ticks every 2 mph.
+    /** Y-axis domain for speed charts: 0–12 mph. */
     const speedDomain: [number, number] = [0, 12];
+    /** Y-axis tick values for speed charts, spaced every 2 mph. */
     const speedTicks = Array.from({ length: 7 }, (_, i) => i * 2);
 
     /**
@@ -294,14 +308,16 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
     }, [readings, filter]);
 
     /**
-     * Build consistent 2-hour ticks: from earliest even hour to latest, stepping by 2h.
+     * Precomputed X-axis tick positions for the time-series charts, aligned to
+     * even hours (00, 02, 04, …) and stepping by 2 h across the full data range.
+     * An empty array is returned when `Data` has no entries.
      */
     const xTicks2h = useMemo(() => {
         if (Data.length === 0) return [];
         const times = Data.map(d => DateTime.fromFormat(d.time, 'MM/dd HH:mm'));
         const first = times[0].startOf('hour');
         const last = times[times.length - 1].startOf('hour');
-        // Align to next even hour if needed
+        /** Align to the next even hour boundary if the first hour is odd. */
         const start = first.hour % 2 === 0 ? first : first.plus({ hours: 1 });
         const ticks: string[] = [];
         for (let dt = start; dt <= last; dt = dt.plus({ hours: 2 })) {
@@ -310,11 +326,16 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
         return ticks;
     }, [Data]);
 
-    // somewhere at top of your file
+    /**
+     * Formats a raw frequency value (Hz) as a human-readable period string for
+     * the Recharts Tooltip label on the frequency-response chart.
+     *
+     * @param rawFreq - Frequency in Hz from the `frequency` data key.
+     * @returns Period string such as `”0.50 min”`.
+     */
     const tooltipFreqFormatter = (rawFreq: number) => {
-        // rawFreq is the dataKey value -- here frequency in Hz
-        const periodMin = 1 / (rawFreq * 60);      // seconds → minutes
-        return periodMin.toFixed(2) + ' min';      // “0.50 min”, etc.
+        const periodMin = 1 / (rawFreq * 60);
+        return periodMin.toFixed(2) + ' min';
     };
 
 
@@ -374,7 +395,6 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
                     <Tooltip formatter={(v: number) => `${v.toFixed(1)}`} />
                     <Legend
                         onClick={(e: any) => {
-                            // e.dataKey is the name you gave each Line
                             setHiddenLines(h => ({
                                 ...h,
                                 [e.dataKey!]: !h[e.dataKey!]
@@ -407,7 +427,6 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
                     <Tooltip formatter={(v: number) => `${v.toFixed(1)}`} />
                     <Legend
                         onClick={(e: any) => {
-                            // e.dataKey is the name you gave each Line
                             setHiddenLines(h => ({
                                 ...h,
                                 [e.dataKey!]: !h[e.dataKey!]
@@ -439,7 +458,6 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
                     <Tooltip />
                     <Legend
                         onClick={(e: any) => {
-                            // e.dataKey is the name you gave each Line
                             setHiddenLines(h => ({
                                 ...h,
                                 [e.dataKey!]: !h[e.dataKey!]
@@ -470,7 +488,6 @@ const FilterFrequencyResponse: React.FC = (): React.JSX.Element => {
                     <Tooltip />
                     <Legend
                         onClick={(e: any) => {
-                            // e.dataKey is the name you gave each Line
                             setHiddenLines(h => ({
                                 ...h,
                                 [e.dataKey!]: !h[e.dataKey!]

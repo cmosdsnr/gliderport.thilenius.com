@@ -15,14 +15,13 @@ import { useSocialData } from '@/contexts/SocialDataContext';
 import './admin.css';
 
 /**
- * Represents a single message record in the logger.
+ * Represents a single message record stored in the {@link MessageContext}.
  *
- * Message
- * {number} direction - 0 for SENT, 1 for RECEIVED
- * {string|null} command - The command name, if any
- * {string|null} subcommand - The subcommand name, if any
- * {any|null} data - The payload data associated with this message
- * {Date} timestamp - When the message was logged
+ * @property direction   - `0` for SENT (outbound), `1` for RECEIVED (inbound).
+ * @property command     - Top-level command name, or `null` if not applicable.
+ * @property subcommand  - Sub-command name, or `null` if not applicable.
+ * @property data        - Arbitrary payload associated with this message, or `null`.
+ * @property timestamp   - JavaScript `Date` of when the message was logged.
  */
 export type Message = {
     direction: number;
@@ -33,14 +32,15 @@ export type Message = {
 };
 
 /**
- * Shape of the MessageContext value.
+ * Value shape exposed by {@link MessageContext}.
  *
- * MessageContextType
- * {Message[]} messages - Array of logged messages
- * {(direction: number, command: string|null, subcommand: string|null, data: any|null) => void} messageLogger
- *           - Function to log a new message
- * {number} chartLength - Current length of the message chart (alias for messages.length)
- * {(length: number) => void} setChartLength - Setter for chartLength (rarely used)
+ * @property messages      - Ordered array of up to 500 logged {@link Message} entries.
+ * @property messageLogger - Appends a new {@link Message} to the log.  Call this from
+ *                           any component that sends or receives WebSocket messages.
+ * @property chartLength   - Mirrors `messages.length`; exposed separately so consumers
+ *                           can subscribe to length changes without re-rendering on
+ *                           every individual message update.
+ * @property setChartLength - Setter for `chartLength` (reserved for future use).
  */
 export type MessageContextType = {
     messages: Message[];
@@ -78,7 +78,13 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [chartLength, setChartLength] = useState<number>(0);
 
     /**
-     * Logs a new message into the context state, keeping max 500 entries.
+     * Appends a new {@link Message} to the log, capping the array at 500 entries
+     * (oldest entries are dropped when the limit is exceeded).
+     *
+     * @param direction   - `0` for SENT, `1` for RECEIVED.
+     * @param command     - Top-level command name, or `null`.
+     * @param subcommand  - Sub-command name, or `null`.
+     * @param data        - Arbitrary message payload, or `null`.
      */
     const messageLogger = (
         direction: number,
@@ -107,7 +113,10 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
 };
 
 /**
- * Props for the DataCell component.
+ * Props for the {@link DataCell} table-cell component.
+ *
+ * @property fullData  - The full string to display (may be truncated).
+ * @property maxLength - Maximum characters shown before truncation; defaults to `100`.
  */
 export type DataCellProps = {
     fullData: string;
@@ -115,10 +124,11 @@ export type DataCellProps = {
 };
 
 /**
- * Table cell that truncates long text and reveals full text on hover.
+ * Table cell (`<td>`) that truncates text beyond `maxLength` characters and reveals
+ * the full string on mouse hover, avoiding overly wide table rows for large payloads.
  *
- * @param {DataCellProps} props
- * @returns {React.ReactElement}
+ * @param props - See {@link DataCellProps}.
+ * @returns A `<td>` element with word-break wrapping and hover-expand behaviour.
  */
 export const DataCell: React.FC<DataCellProps> = ({ fullData, maxLength = 100 }) => {
     const [hover, setHover] = useState(false);
@@ -146,9 +156,17 @@ export const DataCell: React.FC<DataCellProps> = ({ fullData, maxLength = 100 })
 export const useMessages = () => useContext(MessageContext);
 
 /**
- * Component that renders the message log with pause/resume and data summary.
+ * Admin UI component that displays the full WebSocket message log in a striped table.
  *
- * @returns {React.ReactElement}
+ * Features:
+ * - Pause/Resume toggle — freezes the displayed list while new messages continue to
+ *   accumulate in context; resumes by syncing the full current list on un-pause.
+ * - Most-recent-first ordering (messages are reversed before rendering).
+ * - Long data payloads are truncated to 100 characters via {@link DataCell} and
+ *   expand on hover.
+ * - Renders a {@link DataSummaryComponent} above the table for quick status overview.
+ *
+ * @returns A Bootstrap `Container` with the data summary and paginated message table.
  */
 export function MessageLogger(): React.ReactElement {
     const { messages, chartLength } = useMessages();
@@ -211,17 +229,22 @@ export function MessageLogger(): React.ReactElement {
 };
 
 /**
- * Props for ExpandableObjectCell component.
+ * Props for the {@link ExpandableObjectCell} component.
+ *
+ * @property obj - Any value to render. Non-object primitives are converted to strings;
+ *                 objects are rendered as a nested expandable table.
  */
 export type ExpandableObjectCellProps = {
     obj: any;
 };
 
 /**
- * Recursively renders an object as an expandable nested table cell.
+ * Renders a value inline: primitives are stringified; objects are shown as a
+ * collapsed `"object"` hyperlink that expands into a nested key/value table on
+ * click. Nested objects recurse into additional {@link ExpandableObjectCell} instances.
  *
- * @param {ExpandableObjectCellProps} props
- * @returns {React.ReactElement}
+ * @param props - See {@link ExpandableObjectCellProps}.
+ * @returns A React fragment (primitive) or a collapsible nested table (object).
  */
 export const ExpandableObjectCell: React.FC<ExpandableObjectCellProps> = ({ obj }) => {
     const [expanded, setExpanded] = useState(false);
@@ -262,19 +285,26 @@ export const ExpandableObjectCell: React.FC<ExpandableObjectCellProps> = ({ obj 
 };
 
 /**
- * Renders a value, delegating objects to ExpandableObjectCell.
+ * Renders a single summary-table cell value.
+ * Delegates object values to {@link ExpandableObjectCell}; converts everything
+ * else to a string via `String()`.
  *
- * @param {any} value - Value to render.
- * @returns {React.ReactElement}
+ * @param value - The value to render (any type).
+ * @returns A React fragment containing the rendered value.
  */
 const renderValue = (value: any): React.ReactElement => {
     return typeof value === 'object' && value !== null ? <ExpandableObjectCell obj={value} /> : <>{String(value)}</>;
 };
 
 /**
- * Summarizes key DataContext values and message count in a table.
+ * Admin summary panel that displays key real-time context values in a compact table.
  *
- * @returns {React.ReactElement}
+ * Reads from {@link useWebSocket}, {@link useCamera}, {@link useSocialData}, and
+ * {@link useMessages} to surface values such as connected client count, last network
+ * check timestamp, WebSocket uptime (`passedSeconds`), camera image count, offline
+ * flag, last forecast time, active connections, and total logged messages.
+ *
+ * @returns A Bootstrap `Container` with a labelled two-column summary table.
  */
 const DataSummaryComponent: React.FC = () => {
     const { passedSeconds } = useWebSocket();

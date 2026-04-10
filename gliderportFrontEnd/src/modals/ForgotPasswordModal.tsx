@@ -19,7 +19,14 @@ export function ForgotPasswordModal() {
     const { resetPassword } = useAuth();
     const { openModal, closeModal } = useModal();
 
-    // done for folks not logged in
+    /**
+     * Handles password-reset form submission. Closes the modal and triggers a
+     * reset email via the auth context. Intended for users who are not
+     * currently logged in.
+     *
+     * @param data - Form values provided by react-hook-form, containing the
+     *   `email` field to send the reset link to.
+     */
     async function onResetPasswordSubmit(data: any) {
         closeModal()
         resetPassword(data.email)

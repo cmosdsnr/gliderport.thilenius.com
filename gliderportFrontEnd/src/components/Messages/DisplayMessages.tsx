@@ -10,6 +10,7 @@ import { pb } from '@/contexts/pb'
 import { formatter } from '@/components/Globals'
 import DisplayMessage, { MessageItem } from './DisplayMessage'
 
+/** Expanded PocketBase user record fields returned when `expand: 'user'` is requested. */
 interface RecordUser {
     id: string;
     username?: string;
@@ -17,6 +18,10 @@ interface RecordUser {
     name?: string;
 }
 
+/**
+ * Minimal shape of a `posts` collection record as returned by PocketBase,
+ * including the optionally-expanded `user` relation.
+ */
 interface RecordType {
     id: string;
     created?: string;
@@ -87,14 +92,22 @@ export function DisplayMessages(): React.ReactElement {
     const [messages, setMessages] = useState<MessageItem[]>([])
     const [messagesLoaded, setMessagesLoaded] = useState<boolean>(false)
 
+    /**
+     * On mount: loads the initial message list then subscribes to realtime
+     * `create`, `update`, and `delete` events on the `posts` PocketBase collection
+     * so the UI reflects changes made by any connected client without a page refresh.
+     * Returns a cleanup function that unsubscribes when the component unmounts.
+     */
     useEffect(() => {
-        // Load initial messages on mount
         loadInitialMessages(setMessages)
 
-        // Subscribe to realtime events: create, update, delete
         pb.collection('posts').subscribe('*', e => {
             setMessages(prev => {
                 let updated = [...prev]
+                /**
+                 * Normalises a raw PocketBase record into the {@link MessageItem} shape
+                 * expected by {@link DisplayMessage}.
+                 */
                 const formatRecord = (rec: RecordType): MessageItem => ({
                     id: rec.id,
                     created: rec.created ? formatter.format(new Date(rec.created)) : 'Unknown',
@@ -124,7 +137,6 @@ export function DisplayMessages(): React.ReactElement {
         setMessagesLoaded(true)
 
         return () => {
-            // Cleanup realtime subscription
             pb.collection('posts').unsubscribe()
         }
     }, [])

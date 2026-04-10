@@ -7,6 +7,13 @@ import React, { useState, useEffect, ChangeEvent } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { API } from '@/api';
 
+/**
+ * Map of carrier keys to a tuple of `[mmsGateway, displayName, fonefinderName]`.
+ * Used to resolve a carrier string returned by fonefinder.net into an SMS gateway address.
+ *
+ * @example
+ * // provider['att'] → ['mms.att.net', 'AT&T', 'NotFoundYet']
+ */
 export interface Provider {
     [key: string]: [string, string, string]
 }
@@ -32,10 +39,18 @@ const provider: Provider = {
     'bellmobility': ['txt.bellmobility.ca', 'Bell Mobility Canada', 'Bell Mobility']
 }
 
+/**
+ * Props accepted by {@link PhoneNumberInput}.
+ * Any additional HTML input attributes (e.g. `style`, `className`) are forwarded
+ * directly to the underlying `<input>` element.
+ */
 export interface PhoneNumberInputProps {
     [key: string]: any
 }
 
+/**
+ * Minimal user shape used when the full `AuthContext` user type is not needed.
+ */
 export interface User {
     phone: string
 }
@@ -55,6 +70,13 @@ export function PhoneNumberInput(props: PhoneNumberInputProps): React.ReactEleme
         console.log("phone changed: ", currentUser?.settings.phone)
     }, [currentUser?.settings.phone])
 
+    /**
+     * Handles input change events: formats the raw value and, once a complete
+     * 10-digit number is entered (14 formatted chars), triggers a carrier lookup
+     * and persists the phone number to user settings.
+     *
+     * @param e - The change event from the `<input>` element.
+     */
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const fn = formatPhoneNumber(e.target.value)
         if (fn.length === 14) {
@@ -64,6 +86,16 @@ export function PhoneNumberInput(props: PhoneNumberInputProps): React.ReactEleme
         }
     }
 
+    /**
+     * Formats a raw string into `(NXX) NXX-XXXX` US phone number format,
+     * stripping all non-digit characters first.
+     *
+     * @param value - Raw input string (may contain dashes, spaces, parentheses, etc.).
+     * @returns The formatted phone number string, or the raw digits for partial input.
+     *
+     * @example
+     * formatPhoneNumber("5559991234") // "(555) 999-1234"
+     */
     const formatPhoneNumber = (value: string): string => {
         if (!value) return ""
         const numbersOnly = value.replace(/[^\d]/g, '')
@@ -75,6 +107,13 @@ export function PhoneNumberInput(props: PhoneNumberInputProps): React.ReactEleme
             return `(${numbersOnly.slice(0, 3)}) ${numbersOnly.slice(3, 6)}-${numbersOnly.slice(6, 10)}`
     }
 
+    /**
+     * Looks up the carrier for a 10-digit phone number via fonefinder.net (proxied
+     * through the Gliderport API) and, if found in the {@link provider} map, updates
+     * the user's SMS gateway address and provider display name.
+     *
+     * @param value - The formatted phone number string (digits will be extracted).
+     */
     const gatewayPhoneNumber = (value: string): void => {
         const numbersOnly = value.replace(/[^\d]/g, '')
         if (numbersOnly.length === 10) {

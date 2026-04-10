@@ -260,7 +260,7 @@ The backend Express server (`gliderport/`) serves the frontend from that network
 ## Documentation
 
 ```bash
-yarn docs:generate   # generate TypeDoc → copy to \\192.168.0.5\passport\gliderport\docs\frontend\
+yarn docs:generate   # generate TypeDoc → copy to \\buddbliss\passport\gliderport\docs\frontend\
 yarn docs:serve      # generate + serve locally
 ```
 

@@ -19,14 +19,16 @@ import HLSPlayer from '../HlsPlayer';
  * @returns React.ReactElement rendering camera streams and latest wind data.
  */
 export function Debug(): React.ReactElement {
-    // Access camera image URLs from shared data context
+    /** Camera image URLs from the shared {@link CameraContext}. */
     const { cameraImages } = useCamera();
 
-    // Current index for each camera feed (not used in this component)
+    /** Current image index for camera feed 1 (reserved for future pagination use). */
     const [currentIndex1, setCurrentIndex1] = useState<number>(0);
+
+    /** Current image index for camera feed 2 (reserved for future pagination use). */
     const [currentIndex2, setCurrentIndex2] = useState<number>(0);
 
-    // Holds the latest wind record fetched from PocketBase
+    /** The most recent wind record received from PocketBase. `null` while loading. */
     const [latestRecord, setLatestRecord] = useState<any>(null);
 
     /**
@@ -38,7 +40,7 @@ export function Debug(): React.ReactElement {
 
             try {
                 const latest = await pb.collection('wind').getList(1, 1, {
-                    sort: '-created'  // or sort: '-timestamp' if you have a custom field
+                    sort: '-created'
                 });
                 setLatestRecord(latest.items[0]);
             } catch (error) {
