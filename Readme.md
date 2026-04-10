@@ -59,6 +59,18 @@ Source: `C:\Git\web\buddStServer\thilenius.com\Stephen\espserver`
 
 ---
 
+## Authentication
+
+### Google Login (OAuth2)
+
+Google OAuth client settings are managed in the Google Cloud Console:
+- **Console URL:** https://console.cloud.google.com/auth/clients/141154615933-vl6lodfectkpkiv01t5hot709igpqicn.apps.googleusercontent.com?project=gliderport
+
+The Client ID and Client Secret from that page go into PocketBase under:
+**Settings → Auth providers → Google**
+
+---
+
 ## Gliderport Router (MikroTik)
 - Accessed from within the gliderport at `192.168.88.1` (via WinBox)
 - Remote access: `ssh -L 90:192.168.88.1:80 pi@104.36.31.118` then browse `localhost:90`

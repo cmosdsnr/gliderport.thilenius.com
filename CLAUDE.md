@@ -32,7 +32,7 @@ cd gp_pi3_server && yarn build # TypeScript compile
 
 ## Documentation
 
-All three Node.js projects use **TypeDoc** to generate HTML API docs. Generated docs are copied to `\\192.168.0.5\passport\gliderport\docs\<project>\` via each project's `docs:generate` script.
+All three Node.js projects use **TypeDoc** to generate HTML API docs. Generated docs are copied to `\\buddbliss\passport\gliderport\docs\<project>\` via each project's `docs:generate` script.
 
 ### Generating docs
 
