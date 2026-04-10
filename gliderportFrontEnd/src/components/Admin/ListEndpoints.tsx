@@ -295,10 +295,10 @@ const META: Record<string, EndpointMeta> = {
 // ─── Method badge ─────────────────────────────────────────────────────────────
 
 const METHOD_COLORS: Record<string, string> = {
-    GET:    '#28a745',
-    POST:   '#0d6efd',
-    PUT:    '#fd7e14',
-    PATCH:  '#6f42c1',
+    GET: '#28a745',
+    POST: '#0d6efd',
+    PUT: '#fd7e14',
+    PATCH: '#6f42c1',
     DELETE: '#dc3545',
 };
 
@@ -426,7 +426,7 @@ export function ListEndpoints(): React.ReactElement {
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px' }}>
             <div style={{ marginBottom: 28 }}>
                 <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 4 }}>
-                    Backend API Endpoints
+                    Backend API Endpoints!!
                 </h1>
                 <p style={{ color: '#6c757d', fontSize: '0.875rem', marginBottom: 0 }}>
                     All registered routes on <code>gliderport.thilenius.com</code> — fetched live from{' '}
