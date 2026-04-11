@@ -5,9 +5,9 @@
  * @packageDocumentation MessageBoard
  */
 import React from 'react'
+import { Container, Row, Col } from 'react-bootstrap'
 import PostMessage from './PostMessage'
 import DisplayMessages from './DisplayMessages'
-import 'css/message.css'
 
 /**
  * React component that displays a message board with a posting form
@@ -17,11 +17,18 @@ import 'css/message.css'
  */
 export function MessageBoard(): React.ReactElement {
     return (
-        <div className="msgBoardC" style={{ width: '80%', margin: '40px auto' }}>
-            <h1>Feel free to post for all pilots to see!</h1>
-            <PostMessage />
-            <DisplayMessages />
-        </div>
+        <Container className="py-4" style={{ maxWidth: '960px' }}>
+            <h2 className="mb-4">Community Board</h2>
+            <p className="text-muted mb-4">Feel free to post for all pilots to see!</p>
+            <Row className="g-4">
+                <Col md={4}>
+                    <PostMessage />
+                </Col>
+                <Col md={8}>
+                    <DisplayMessages />
+                </Col>
+            </Row>
+        </Container>
     )
 }
 export default MessageBoard;

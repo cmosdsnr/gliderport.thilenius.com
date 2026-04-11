@@ -1,5 +1,7 @@
 import React from 'react'
-import { Row } from 'react-bootstrap';
+import Container from 'react-bootstrap/Container';
+import Card from 'react-bootstrap/Card';
+import ListGroup from 'react-bootstrap/ListGroup';
 
 export interface StatsUsefulLinksProps {
     // define your props here if you have any
@@ -12,17 +14,25 @@ export interface StatsUsefulLinksProps {
  */
 export function StatsUsefulLinksComponent(props: StatsUsefulLinksProps): React.ReactElement {
     return (
-        <Row className="blueBorder">
-            <h4>Some useful links:</h4>
-            <ul style={{ fontSize: '23px' }}>
-                <li><a href="https://www.windy.com/32.892/-117.240?100m,32.883,-117.240,14,m:ezYacTK">Wind Predictions (location = Torrey Pines)</a></li>
-                <li><a href="http://findu.com/cgi-bin/wx.cgi?call=W9IF-4&last=4">Analog gliderport system Weather</a>
-                </li>
-                <li><a href="https://www.tidesandcurrents.noaa.gov/stationhome.html?id=9410230">NOAA Scripps Pier
-                    Weather</a></li>
-                <li><a href="https://www.flytorrey.com/">Torrey Pines Gliderport Site</a></li>
-            </ul>
-        </Row>
+        <Container className="py-4" style={{ maxWidth: '600px' }}>
+            <Card className="shadow">
+                <Card.Header className="fw-semibold fs-5">Useful Links</Card.Header>
+                <ListGroup variant="flush">
+                    <ListGroup.Item action href="https://www.windy.com/32.892/-117.240?100m,32.883,-117.240,14,m:ezYacTK" target="_blank" rel="noopener noreferrer">
+                        Wind Predictions (location = Torrey Pines)
+                    </ListGroup.Item>
+                    <ListGroup.Item action href="http://findu.com/cgi-bin/wx.cgi?call=W9IF-4&last=4" target="_blank" rel="noopener noreferrer">
+                        Analog gliderport system Weather
+                    </ListGroup.Item>
+                    <ListGroup.Item action href="https://www.tidesandcurrents.noaa.gov/stationhome.html?id=9410230" target="_blank" rel="noopener noreferrer">
+                        NOAA Scripps Pier Weather
+                    </ListGroup.Item>
+                    <ListGroup.Item action href="https://www.flytorrey.com/" target="_blank" rel="noopener noreferrer">
+                        Torrey Pines Gliderport Site
+                    </ListGroup.Item>
+                </ListGroup>
+            </Card>
+        </Container>
     )
 }
 

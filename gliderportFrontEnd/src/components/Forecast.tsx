@@ -483,7 +483,7 @@ export function ForecastChart(): React.ReactElement {
 
     return (
         <>
-            <center><h1>5 Day Forecast</h1></center>
+            <h1 className="text-center py-3">5 Day Forecast</h1>
             <div className="d-flex flex-wrap gap-3 mb-3 justify-content-center">
                 {charts.map((chart, i) => (
                     <Form.Check
@@ -500,7 +500,7 @@ export function ForecastChart(): React.ReactElement {
             {selected.includes("Temperature Profile") && <Chart data={data} bands={bands} ticks={ticks} startHour={startHour} seriesOptions={tempOptions} title={"Temperature Profile"} />}
             {selected.includes("Humidity Profile") && <Chart data={data} bands={bands} ticks={ticks} startHour={startHour} seriesOptions={humidityOptions} title={"Humidity Profile"} />}
             {selected.includes("Pressure Profile") && <Chart data={data} bands={bands} ticks={ticks} startHour={startHour} seriesOptions={pressureOptions} title={"Pressure Profile"} />}
-            {selected.includes("Cloud CoverCloud Cover") && <Chart data={data} bands={bands} ticks={ticks} startHour={startHour} seriesOptions={cloudsOptions} title={"Cloud Cover"} />}
+            {selected.includes("Cloud Cover") && <Chart data={data} bands={bands} ticks={ticks} startHour={startHour} seriesOptions={cloudsOptions} title={"Cloud Cover"} />}
         </>
     );
 }

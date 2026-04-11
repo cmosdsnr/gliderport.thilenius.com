@@ -6,6 +6,7 @@
  * @packageDocumentation DisplayMessages
  */
 import React, { useState, useEffect } from 'react'
+import { Card } from 'react-bootstrap'
 import { pb } from '@/contexts/pb'
 import { formatter } from '@/components/Globals'
 import DisplayMessage, { MessageItem } from './DisplayMessage'
@@ -142,13 +143,12 @@ export function DisplayMessages(): React.ReactElement {
     }, [])
 
     return (
-        <div
-            className="msgsC"
-            style={{ background: '#ccc', width: '55%', float: 'right', padding: '20px' }}
-        >
-            <h2>Messages</h2>
-            {getMessages(messagesLoaded, messages)}
-        </div>
+        <Card className="shadow-sm h-100">
+            <Card.Header className="fw-semibold">Messages</Card.Header>
+            <Card.Body style={{ maxHeight: '520px', overflowY: 'auto' }}>
+                {getMessages(messagesLoaded, messages)}
+            </Card.Body>
+        </Card>
     )
 }
 

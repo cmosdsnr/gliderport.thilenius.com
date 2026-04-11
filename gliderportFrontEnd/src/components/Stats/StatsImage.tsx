@@ -1,7 +1,7 @@
 import React, { useState, useEffect, forwardRef, useRef } from 'react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { Row, Col, Button, Form, Table, Card, Modal } from 'react-bootstrap';
+import { Row, Col, Button, Form, Table, Card, Modal, Container } from 'react-bootstrap';
 import StatsImageListViewer from './StatsImageListViewer';
 import { API } from '@/api';
 
@@ -251,255 +251,187 @@ export function StatsImageComponent(): React.ReactElement {
     };
 
     return (
-        <Row className="blueBorder">
-            <Row>
-                <Col xs={12}>
-                    <center>
-                        <h4>Past Videos</h4>
-                    </center>
-                </Col>
-            </Row>
+        <Container className="py-4" style={{ maxWidth: '680px' }}>
+            <Card className="shadow">
+                <Card.Header className="bg-primary text-white py-3">
+                    <h4 className="mb-0">Past Videos</h4>
+                </Card.Header>
+                <Card.Body>
 
-            {/* DatePicker and Camera Selection Row */}
-            <Row
-                style={{
-                    backgroundColor: "#e7f3ff",
-                    marginBottom: "20px",
-                    paddingTop: "10px",
-                    paddingBottom: "20px",
-                }}
-            >
-                <Col xs={6} className="text-center">
-                    <DatePicker
-                        renderCustomHeader={({
-                            date,
-                            changeYear,
-                            changeMonth,
-                            decreaseMonth,
-                            increaseMonth,
-                            prevMonthButtonDisabled,
-                            nextMonthButtonDisabled,
-                        }) => (
-                            <div
-                                style={{
-                                    margin: 10,
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
+                    {/* Date picker and camera selection */}
+                    <Row className="g-3 mb-3 align-items-start">
+                        <Col xs={6} className="text-center">
+                            <DatePicker
+                                renderCustomHeader={({
+                                    date,
+                                    changeYear,
+                                    changeMonth,
+                                    decreaseMonth,
+                                    increaseMonth,
+                                    prevMonthButtonDisabled,
+                                    nextMonthButtonDisabled,
+                                }) => (
+                                    <div
+                                        style={{
+                                            margin: 10,
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <select
+                                            style={{ marginLeft: "20px" }}
+                                            value={date.getFullYear()}
+                                            onChange={({ target: { value } }) => {
+                                                changeYear(parseInt(value, 10));
+                                                const m: string[] = [];
+                                                if (listing[value]) {
+                                                    Object.keys(listing[value]).forEach((v) => {
+                                                        m.push(abbrMonths[parseInt(v, 10) - 1]);
+                                                    });
+                                                }
+                                                setMonths(m);
+                                            }}
+                                        >
+                                            {years.map((option) => (
+                                                <option key={option} value={option}>{option}</option>
+                                            ))}
+                                        </select>
+                                        <select
+                                            style={{ marginRight: "20px" }}
+                                            value={months[date.getMonth()]}
+                                            onChange={({ target: { value } }) => {
+                                                changeMonth(abbrMonths.indexOf(value));
+                                            }}
+                                        >
+                                            {months.map((option) => (
+                                                <option key={option} value={option}>{option}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                                selected={pickedDate}
+                                onChange={(date) => setPickedDate(date!)}
+                                filterDate={(date) => {
+                                    const year = date.getFullYear();
+                                    const month = date.getMonth() + 1;
+                                    const day = date.getDate();
+                                    if (!listing[year] || !listing[year][month]) return false;
+                                    return listing[year][month].includes(day);
                                 }}
-                            >
-                                <select
-                                    style={{ marginLeft: "20px" }}
-                                    value={date.getFullYear()}
-                                    onChange={({ target: { value } }) => {
-                                        changeYear(parseInt(value, 10));
-                                        const m: string[] = [];
-                                        if (listing[value]) {
-                                            Object.keys(listing[value]).forEach((v) => {
-                                                m.push(abbrMonths[parseInt(v, 10) - 1]);
-                                            });
-                                        }
-                                        setMonths(m);
-                                    }}
+                                customInput={<CustomInput className="example-custom-input" />}
+                            />
+                        </Col>
+                        <Col xs={6} className="text-center">
+                            <h6 className="fw-semibold mb-2">Camera</h6>
+                            <div className="d-flex gap-2 justify-content-center">
+                                <Button
+                                    variant={camera === "CameraA" ? "primary" : "outline-secondary"}
+                                    onClick={() => setCamera("CameraA")}
                                 >
-                                    {years.map((option) => (
-                                        <option key={option} value={option}>
-                                            {option}
-                                        </option>
-                                    ))}
-                                </select>
-                                <select
-                                    style={{ marginRight: "20px" }}
-                                    value={months[date.getMonth()]}
-                                    onChange={({ target: { value } }) => {
-                                        changeMonth(abbrMonths.indexOf(value));
-                                    }}
+                                    Camera A
+                                </Button>
+                                <Button
+                                    variant={camera === "CameraB" ? "primary" : "outline-secondary"}
+                                    onClick={() => setCamera("CameraB")}
                                 >
-                                    {months.map((option) => (
-                                        <option key={option} value={option}>
-                                            {option}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-                        selected={pickedDate}
-                        onChange={(date) => setPickedDate(date!)}
-                        filterDate={(date) => {
-                            const year = date.getFullYear();
-                            const month = date.getMonth() + 1;
-                            const day = date.getDate();
-                            if (!listing[year] || !listing[year][month]) return false;
-                            return listing[year][month].includes(day);
-                        }}
-                        customInput={<CustomInput className="example-custom-input" />}
-                    />
-                </Col>
-                <Col xs={6} className="text-center">
-                    <h5>Camera</h5>
-                    <Button
-                        style={{ backgroundColor: camera === "CameraA" ? "blue" : "lightgray" }}
-                        onClick={() => setCamera("CameraA")}
-                    >
-                        A
-                    </Button>
-                    <Button
-                        style={{ backgroundColor: camera === "CameraB" ? "blue" : "lightgray" }}
-                        onClick={() => setCamera("CameraB")}
-                    >
-                        B
-                    </Button>
-                </Col>
-            </Row>
-
-            {imageDetails && cameraDetails &&
-                <>
-                    <Table striped bordered hover>
-                        <thead>
-                            <tr>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colSpan={2} className="text-start" style={{ fontWeight: "bolder", paddingLeft: "10%" }}>First Image</td>
-                            </tr>
-                            <tr>
-                                <td className="text-end">File</td>
-                                <td className="text-start">{cameraDetails.starting.file}</td>
-                            </tr>
-                            <tr>
-                                <td className="text-end">Time</td>
-                                <td className="text-start">
-                                    {new Date(cameraDetails.starting.time).toLocaleTimeString()}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colSpan={2} className="text-start" style={{ fontWeight: "bolder", paddingLeft: "10%" }}>Last Image</td>
-                            </tr>
-                            <tr>
-                                <td className="text-end">File</td>
-                                <td className="text-start">{cameraDetails.ending.file}</td>
-                            </tr>
-                            <tr>
-                                <td className="text-end">Time</td>
-                                <td className="text-start">
-                                    {new Date(cameraDetails.ending.time).toLocaleTimeString()}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colSpan={2} className="text-start" style={{ fontWeight: "bolder", paddingLeft: "10%" }}>Other Settings</td>
-                            </tr>
-                            <tr>
-                                <td className="text-center" colSpan={2}>Files are {cameraDetails.isContinuous === true ? "continuous" : "not Continuous"}</td>
-                            </tr>
-                            <tr>
-                                <td className="text-end">Files Range</td>
-                                <td className="text-start">
-                                    {(10000 + cameraDetails.smallestIndex).toString() +
-                                        " to " +
-                                        (10000 + cameraDetails.largestIndex).toString()}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td className="text-end">Video</td>
-                                <td className="text-start" style={{ cursor: "pointer", color: "blue" }} onClick={openVideoModal}>
-                                    {video}</td>
-                            </tr>
-                        </tbody>
-                    </Table>
-
-                    <Row
-                        style={{
-                            backgroundColor: "#e7f3ff",
-                            marginBottom: "20px",
-                            padding: "10px",
-                        }}
-                    >
-                        <Col xs={12} className="text-center">
-                            <div
-                                style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    fontSize: "1.2em",
-                                }}
-                            >
-                                <span>Enter an hour range</span>
-                                {/* <Form.Check
-                                    type="checkbox"
-                                    id="hourRangeCheckbox"
-                                    checked={enterRange}
-                                    onChange={(e) => setEnterRange(e.target.checked)}
-                                    style={{
-                                        transform: "scale(1.5)",
-                                        marginLeft: "10px",
-                                        marginTop: "12px",
-                                    }}
-                                /> */}
+                                    Camera B
+                                </Button>
                             </div>
                         </Col>
-
-                        <Col xs={12} className="text-center" style={{ marginTop: "10px" }}>
-                            <div
-                                style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "10px",
-                                }}
-                            >
-                                <span>From:</span>
-                                <Form.Select
-                                    id="fromHourSelect"
-                                    value={hourRange[0]}
-                                    onChange={(e) => {
-                                        const s = [parseInt(e.target.value, 10), hourRange[1]];
-                                        setHourRange(s);
-                                    }}
-                                    style={{ width: "90px", textAlign: "center" }}
-                                >
-                                    {fromHourOptions.map((h) => (
-                                        <option key={h} value={h}>
-                                            {h}
-                                        </option>
-                                    ))}
-                                </Form.Select>
-                                <span>To:</span>
-                                <Form.Select
-                                    id="toHourSelect"
-                                    value={hourRange[1]}
-                                    onChange={(e) => {
-                                        const s = [hourRange[0], parseInt(e.target.value, 10)];
-                                        setHourRange(s);
-                                    }}
-                                    style={{ width: "90px", textAlign: "center" }}
-                                >
-                                    {toHourOptions.map((h) => (
-                                        <option key={h} value={h}>
-                                            {h}
-                                        </option>
-                                    ))}
-                                </Form.Select>
-                            </div>
-                        </Col>
-
                     </Row>
 
+                    {imageDetails && cameraDetails && (
+                        <>
+                            <Table bordered size="sm" className="mt-2">
+                                <tbody>
+                                    <tr className="table-secondary">
+                                        <td colSpan={2} className="fw-semibold">First Image</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-end text-muted" style={{ width: '40%' }}>File</td>
+                                        <td>{cameraDetails.starting.file}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-end text-muted">Time</td>
+                                        <td>{new Date(cameraDetails.starting.time).toLocaleTimeString()}</td>
+                                    </tr>
+                                    <tr className="table-secondary">
+                                        <td colSpan={2} className="fw-semibold">Last Image</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-end text-muted">File</td>
+                                        <td>{cameraDetails.ending.file}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-end text-muted">Time</td>
+                                        <td>{new Date(cameraDetails.ending.time).toLocaleTimeString()}</td>
+                                    </tr>
+                                    <tr className="table-secondary">
+                                        <td colSpan={2} className="fw-semibold">Other</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-end text-muted">Continuity</td>
+                                        <td>{cameraDetails.isContinuous === true ? "Continuous" : "Not continuous"}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-end text-muted">Files range</td>
+                                        <td>
+                                            {(10000 + cameraDetails.smallestIndex).toString()}
+                                            {" – "}
+                                            {(10000 + cameraDetails.largestIndex).toString()}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="text-end text-muted">Video</td>
+                                        <td>
+                                            <span
+                                                style={{ cursor: "pointer" }}
+                                                className="text-primary text-decoration-underline"
+                                                onClick={openVideoModal}
+                                            >
+                                                {video}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </Table>
 
-                    <StatsImageListViewer imageList={imageList} url={getImageDirectoryUrl()} />
+                            {/* Hour range filter */}
+                            <div className="bg-light rounded p-3 mt-3">
+                                <p className="fw-semibold mb-2 text-center">Hour Range Filter</p>
+                                <div className="d-flex align-items-center justify-content-center gap-3">
+                                    <span>From:</span>
+                                    <Form.Select
+                                        id="fromHourSelect"
+                                        value={hourRange[0]}
+                                        onChange={(e) => setHourRange([parseInt(e.target.value, 10), hourRange[1]])}
+                                        style={{ width: "90px" }}
+                                    >
+                                        {fromHourOptions.map((h) => (
+                                            <option key={h} value={h}>{h}</option>
+                                        ))}
+                                    </Form.Select>
+                                    <span>To:</span>
+                                    <Form.Select
+                                        id="toHourSelect"
+                                        value={hourRange[1]}
+                                        onChange={(e) => setHourRange([hourRange[0], parseInt(e.target.value, 10)])}
+                                        style={{ width: "90px" }}
+                                    >
+                                        {toHourOptions.map((h) => (
+                                            <option key={h} value={h}>{h}</option>
+                                        ))}
+                                    </Form.Select>
+                                </div>
+                            </div>
 
-                    {/* <Row>
-                        <Col xs={12}>
-                            <center>
-                                <h5 style={{ marginTop: '20px' }}>
-                                    <button className="btn btn-primary"
-                                        onClick={e => setModalIsOpen(true)}>
-                                        Play {selectedVideo}
-                                    </button>
-                                </h5>
-                            </center>
-                        </Col>
-                    </Row> */}
-                </>}
+                            <StatsImageListViewer imageList={imageList} url={getImageDirectoryUrl()} />
+                        </>
+                    )}
 
+                </Card.Body>
+            </Card>
 
             <Modal
                 show={showModal}
@@ -510,21 +442,17 @@ export function StatsImageComponent(): React.ReactElement {
                 centered
             >
                 <Modal.Header closeButton>
-                    <Modal.Title id="image-viewer-modal">
-                        {selectedVideo}
-                    </Modal.Title>
+                    <Modal.Title id="image-viewer-modal">{selectedVideo}</Modal.Title>
                 </Modal.Header>
-                <Modal.Body style={{ textAlign: 'center' }}>
+                <Modal.Body className="text-center">
                     <video ref={videoRef} controls autoPlay preload="none" style={{ width: "100%" }}>
                         <source src={selectedVideo || ""} type="video/mp4" />
                         Your browser does not support the video tag.
                     </video>
                 </Modal.Body>
-                <Modal.Footer>
-
-                </Modal.Footer>
+                <Modal.Footer />
             </Modal>
-        </Row>
+        </Container>
     );
 };
 

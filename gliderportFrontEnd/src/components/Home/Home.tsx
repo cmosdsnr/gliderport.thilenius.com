@@ -98,7 +98,7 @@ export function Home(): React.ReactElement {
             )}
 
             {/* Wind dial and live feed */}
-            <Row style={{ paddingTop: '20px', backgroundColor: 'rgb(200,220,255)' }}>
+            <Row className="home-wind-row">
                 <Col xs={12} lg={{ span: 5 }} xl={{ span: 4 }}>
                     <WindDial picRef={picRef} passedSeconds={passedSeconds} />
                 </Col>
@@ -124,7 +124,7 @@ export function Home(): React.ReactElement {
             )}
 
             {/* Today, CurrentTable, and donate section */}
-            <Row style={{ paddingTop: '30px', backgroundColor: 'rgb(255,255,200)' }}>
+            <Row className="home-data-row">
                 <Col xs={6} lg={{ span: 3 }} className="homePanel">
                     <Today />
                 </Col>
@@ -133,25 +133,25 @@ export function Home(): React.ReactElement {
                     <CurrentTable fontSize="min(15px, 1.5vw)" />
                 </Col>
                 <Col lg={{ span: 3, offset: 1 }} className="d-none d-lg-block homePanel">
-                    <center>
-                        <p>
-                            If you enjoy this site … please consider leaving a donation!<br /><br />
-                            <a href="https://ko-fi.com/O5O818HM4U" target="_blank" rel="noopener noreferrer">
-                                <img
-                                    src="https://storage.ko-fi.com/cdn/kofi2.png?v=6"
-                                    alt="Buy Me a Coffee at ko-fi.com"
-                                    height={36}
-                                    style={{ border: 0 }}
-                                />
-                            </a>
-                            <KoFiWidget />
-                        </p>
-                    </center>
+                    <div className="text-center">
+                        <div className="my-2">
+                            If you enjoy this site … please consider leaving a donation!
+                        </div>
+                        <a href="https://ko-fi.com/O5O818HM4U" target="_blank" rel="noopener noreferrer">
+                            <img
+                                src="https://storage.ko-fi.com/cdn/kofi2.png?v=6"
+                                alt="Buy Me a Coffee at ko-fi.com"
+                                height={36}
+                                style={{ border: 0 }}
+                            />
+                        </a>
+                        <KoFiWidget />
+                    </div>
                 </Col>
             </Row>
 
             {/* Tabs for Charts, History & Forecast, Status */}
-            <Row style={{ backgroundColor: 'rgb(240,255,255)' }}>
+            <Row className="home-tabs-row">
                 <Tabs defaultIndex={0} selectedTabClassName="selected-tab">
                     <TabList>
                         <Tab>Charts</Tab>

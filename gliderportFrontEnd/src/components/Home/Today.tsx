@@ -1,11 +1,12 @@
 /**
- * 
+ *
  * @packageDocumentation
  *   React component that fetches and displays today's wind forecast codes
  *   in a simple table format. Retrieves forecast codes from the server,
  *   removes the final "dark" entry, and displays each timestamp and code.
  */
 import React, { useState, useEffect } from 'react';
+import { Table } from 'react-bootstrap';
 import { DayOfCodes } from '../History/History';
 import { codes } from '../Globals';
 import { API } from '@/api';
@@ -57,9 +58,9 @@ export function Today(): React.ReactElement {
     }, []);
 
     return (
-        <table className="forecast-table">
+        <Table size="sm" bordered hover className="forecast-table">
             <thead>
-                <tr>
+                <tr className="table-primary">
                     <th colSpan={2}>Today's Forecast</th>
                 </tr>
             </thead>
@@ -82,7 +83,7 @@ export function Today(): React.ReactElement {
                     );
                 })}
             </tbody>
-        </table>
+        </Table>
     );
 };
 

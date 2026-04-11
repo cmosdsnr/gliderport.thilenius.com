@@ -33,7 +33,6 @@ import Stats from 'components/Stats/Stats'
 import StatsImageComponent from 'components/Stats/StatsImage'
 import StatsHitsComponent from 'components/Stats/StatsHits'
 import StatsChangeLogComponent from 'components/Stats/StatsChangeLog'
-import StatsUsefulLinksComponent from 'components/Stats/StatsUsefulLinks'
 
 import Contribute from 'components/Contribute'
 import Contact from 'components/Contact'
@@ -97,7 +96,6 @@ export function App(): React.ReactElement {
                                     <Route path="/stats/images" element={<PrivateRoute><StatsImageComponent /></PrivateRoute>} />
                                     <Route path="/stats/hits" element={<PrivateRoute><StatsHitsComponent /></PrivateRoute>} />
                                     <Route path="/stats/changes" element={<PrivateRoute><StatsChangeLogComponent /></PrivateRoute>} />
-                                    <Route path="/stats/links" element={<PrivateRoute><StatsUsefulLinksComponent /></PrivateRoute>} />
 
                                     {/* Public and Private Pages */}
                                     <Route path="/forecast" element={<Forecast />} />

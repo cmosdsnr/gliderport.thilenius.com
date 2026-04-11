@@ -3,7 +3,7 @@
  * @packageDocumentation
  *   Main statistics page for the Gliderport application.
  *   Renders a responsive two-column layout displaying various stats components.
- *   Left column shows hits, images, and useful links; right column shows change logs.
+ *   Left column shows hits and images; right column shows change logs.
  */
 import React from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -11,7 +11,6 @@ import { Row, Col } from 'react-bootstrap';
 import StatsImageComponent from './StatsImage';
 import StatsHitsComponent from './StatsHits';
 import StatsChangeLogComponent from './StatsChangeLog';
-import StatsUsefulLinksComponent from './StatsUsefulLinks';
 
 /**
  * StatsPage component assembles individual stat widgets into a cohesive layout.
@@ -25,7 +24,6 @@ export function StatsPage(): React.ReactElement {
                 <Col xs={12} md={6} className="stats-col">
                     <StatsHitsComponent />
                     <StatsImageComponent />
-                    <StatsUsefulLinksComponent />
                 </Col>
 
                 <Col xs={12} md={6} className="leftBorder">

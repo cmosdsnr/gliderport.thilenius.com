@@ -11,7 +11,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { API } from '@/api';
-import { Form, Table } from 'react-bootstrap';
+import { Container, Card, Form, Table, Spinner, Alert } from 'react-bootstrap';
 import { DateTime } from 'luxon';
 
 /**
@@ -96,93 +96,103 @@ const ArchiveStats: React.FC = () => {
     }, [year, month]);
 
     return (
-        <div className="p-4">
-            <Form className="d-flex mb-4">
-                <Form.Group controlId="yearSelect" className="me-3">
-                    <Form.Label>Year</Form.Label>
-                    <Form.Select
-                        value={year}
-                        onChange={e => setYear(Number(e.target.value))}
-                    >
-                        {years.map(y => (
-                            <option key={y} value={y}>{y}</option>
-                        ))}
-                    </Form.Select>
-                </Form.Group>
-                <Form.Group controlId="monthSelect">
-                    <Form.Label>Month</Form.Label>
-                    <Form.Select
-                        value={month}
-                        onChange={e => setMonth(Number(e.target.value))}
-                    >
-                        {months.map(m => (
-                            <option key={m} value={m}>{String(m).padStart(2, '0')}</option>
-                        ))}
-                    </Form.Select>
-                </Form.Group>
-            </Form>
+        <Container className="py-4" style={{ maxWidth: '900px' }}>
+            <Card className="shadow-sm mb-4">
+                <Card.Header className="fw-semibold">Select Archive Period</Card.Header>
+                <Card.Body>
+                    <Form className="d-flex">
+                        <Form.Group controlId="yearSelect" className="me-3">
+                            <Form.Label>Year</Form.Label>
+                            <Form.Select
+                                value={year}
+                                onChange={e => setYear(Number(e.target.value))}
+                            >
+                                {years.map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </Form.Select>
+                        </Form.Group>
+                        <Form.Group controlId="monthSelect">
+                            <Form.Label>Month</Form.Label>
+                            <Form.Select
+                                value={month}
+                                onChange={e => setMonth(Number(e.target.value))}
+                            >
+                                {months.map(m => (
+                                    <option key={m} value={m}>{String(m).padStart(2, '0')}</option>
+                                ))}
+                            </Form.Select>
+                        </Form.Group>
+                    </Form>
+                </Card.Body>
+            </Card>
 
-            {loading && <div>Loading...</div>}
-            {error && <div className="text-danger">Error: {error}</div>}
+            {loading && <div className="text-center py-4"><Spinner animation="border" variant="primary" /></div>}
+            {error && <Alert variant="danger">Error: {error}</Alert>}
 
             {data && (
-                <Table striped bordered hover responsive style={{ maxWidth: '800px', margin: '0 auto' }}>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Min</th>
-                            <th>Max</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Filename</td>
-                            <td colSpan={2}>{data.filename}</td>
-                        </tr>
-                        <tr>
-                            <td>Count</td>
-                            <td colSpan={2}>{data.stats.count}</td>
-                        </tr>
-                        <tr>
-                            <td>Time Range</td>
-                            <td>
-                                {DateTime.fromSeconds(data.stats.minTimestamp)
-                                    .toFormat("LLL'.' dd, yyyy HH:mm:ss")}
-                            </td>
-                            <td>
-                                {DateTime.fromSeconds(data.stats.maxTimestamp)
-                                    .toFormat("LLL'.' dd, yyyy HH:mm:ss")}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Speed</td>
-                            <td>{data.stats.minSpeed / 10} mph</td>
-                            <td>{data.stats.maxSpeed / 10} mph</td>
-                        </tr>
-                        <tr>
-                            <td>Direction</td>
-                            <td>{data.stats.minDirection}°</td>
-                            <td>{data.stats.maxDirection}°</td>
-                        </tr>
-                        <tr>
-                            <td>Temperature</td>
-                            <td>{data.stats.minTemperature / 10}°F</td>
-                            <td>{data.stats.maxTemperature / 10}°F</td>
-                        </tr>
-                        <tr>
-                            <td>Humidity</td>
-                            <td>{data.stats.minHumidity}%</td>
-                            <td>{data.stats.maxHumidity}%</td>
-                        </tr>
-                        <tr>
-                            <td>Pressure</td>
-                            <td>{data.stats.minPressure}</td>
-                            <td>{data.stats.maxPressure}</td>
-                        </tr>
-                    </tbody>
-                </Table>
+                <Card className="shadow-sm">
+                    <Card.Header className="fw-semibold">Statistics — {year}/{String(month).padStart(2, '0')}</Card.Header>
+                    <Card.Body className="p-0">
+                        <Table striped bordered hover responsive className="mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Min</th>
+                                    <th>Max</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Filename</td>
+                                    <td colSpan={2}>{data.filename}</td>
+                                </tr>
+                                <tr>
+                                    <td>Count</td>
+                                    <td colSpan={2}>{data.stats.count}</td>
+                                </tr>
+                                <tr>
+                                    <td>Time Range</td>
+                                    <td>
+                                        {DateTime.fromSeconds(data.stats.minTimestamp)
+                                            .toFormat("LLL'.' dd, yyyy HH:mm:ss")}
+                                    </td>
+                                    <td>
+                                        {DateTime.fromSeconds(data.stats.maxTimestamp)
+                                            .toFormat("LLL'.' dd, yyyy HH:mm:ss")}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Speed</td>
+                                    <td>{data.stats.minSpeed / 10} mph</td>
+                                    <td>{data.stats.maxSpeed / 10} mph</td>
+                                </tr>
+                                <tr>
+                                    <td>Direction</td>
+                                    <td>{data.stats.minDirection}°</td>
+                                    <td>{data.stats.maxDirection}°</td>
+                                </tr>
+                                <tr>
+                                    <td>Temperature</td>
+                                    <td>{data.stats.minTemperature / 10}°F</td>
+                                    <td>{data.stats.maxTemperature / 10}°F</td>
+                                </tr>
+                                <tr>
+                                    <td>Humidity</td>
+                                    <td>{data.stats.minHumidity}%</td>
+                                    <td>{data.stats.maxHumidity}%</td>
+                                </tr>
+                                <tr>
+                                    <td>Pressure</td>
+                                    <td>{data.stats.minPressure}</td>
+                                    <td>{data.stats.maxPressure}</td>
+                                </tr>
+                            </tbody>
+                        </Table>
+                    </Card.Body>
+                </Card>
             )}
-        </div>
+        </Container>
     );
 };
 

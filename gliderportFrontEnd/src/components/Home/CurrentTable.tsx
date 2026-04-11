@@ -1,19 +1,20 @@
 /**
- * 
+ *
  * @packageDocumentation
  *   Renders a table showing the most recent sensor readings (wind speed, direction,
  *   temperature, pressure, humidity) along with sunrise/sunset times and when the
- *   last reading was taken. The “last seen” timestamp updates every 5 seconds.
+ *   last reading was taken. The "last seen" timestamp updates every 5 seconds.
  */
 
 import React, { useState } from 'react';
+import { Table } from 'react-bootstrap';
 import { useSensorData } from '@/contexts/SensorDataContext';
 import { useStatusCollection } from '@/contexts/StatusCollection';
 import useInterval from 'hooks/useInterval';
 
 /**
  * Props for CurrentTable.
- * {React.CSSProperties} [rest] - Additional CSS style properties to merge into the table’s inline style.
+ * {React.CSSProperties} [rest] - Additional CSS style properties to merge into the table's inline style.
  */
 export type CurrentTableProps = React.CSSProperties;
 
@@ -25,7 +26,7 @@ export type CurrentTableProps = React.CSSProperties;
  * - Pressure (mBar)
  * - Humidity (%)
  * - Sunrise and sunset times (HH:mm, 24-hour)
- * - Last reading timestamp with “time ago” label
+ * - Last reading timestamp with "time ago" label
  *
  * @param props - Additional style or props for the table.
  * @returns {React.ReactElement} The rendered current readings table.
@@ -68,7 +69,7 @@ export function CurrentTable({ ...rest }: CurrentTableProps): React.ReactElement
     }, 5000);
 
     /**
-     * Format a “time ago” string given a UNIX timestamp.
+     * Format a "time ago" string given a UNIX timestamp.
      *
      * @param {number} ts - Seconds since epoch for the event.
      * @returns {string} e.g. "3 minutes ago", "just now"
@@ -90,7 +91,7 @@ export function CurrentTable({ ...rest }: CurrentTableProps): React.ReactElement
         }
     }
 
-    // Build the formatted “Latest Reading” label
+    // Build the formatted "Latest Reading" label
     const lastSeen = (() => {
         const dt = new Date(latest.time * 1000);
         return `Latest Reading: ${dt.toLocaleString(undefined, {
@@ -116,40 +117,35 @@ export function CurrentTable({ ...rest }: CurrentTableProps): React.ReactElement
         : 'N/A';
 
     return (
-        <table style={{ width: '100%', ...rest }}>
+        <Table size="sm" borderless style={{ width: '100%', ...rest }}>
+            <caption className="text-center text-muted small caption-top">{lastSeen}</caption>
             <tbody>
                 <tr>
-                    <td colSpan={4} className="bold">
-                        <center>{lastSeen}</center>
-                        <br />
-                    </td>
+                    <td className="text-primary">Speed:</td>
+                    <td className="fw-bold">{latest.speed} mph</td>
+                    <td className="text-primary">Temperature:</td>
+                    <td className="fw-bold">{latest.temperature} °F</td>
                 </tr>
                 <tr>
-                    <td className="blue">Speed:</td>
-                    <td className="bold">{latest.speed} mph</td>
-                    <td className="blue">Temperature:</td>
-                    <td className="bold">{latest.temperature} °F</td>
-                </tr>
-                <tr>
-                    <td className="blue">Direction:</td>
-                    <td className="bold">
+                    <td className="text-primary">Direction:</td>
+                    <td className="fw-bold">
                         {latest.direction}° ({Math.abs(270 - latest.direction)}° off)
                     </td>
-                    <td className="blue">Pressure:</td>
-                    <td className="bold">{latest.pressure} mBar</td>
+                    <td className="text-primary">Pressure:</td>
+                    <td className="fw-bold">{latest.pressure} mBar</td>
                 </tr>
                 <tr>
-                    <td className="blue">Sunrise:</td>
-                    <td className="bold">{sunrise}</td>
-                    <td className="blue">Humidity:</td>
-                    <td className="bold">{latest.humidity}%</td>
+                    <td className="text-primary">Sunrise:</td>
+                    <td className="fw-bold">{sunrise}</td>
+                    <td className="text-primary">Humidity:</td>
+                    <td className="fw-bold">{latest.humidity}%</td>
                 </tr>
                 <tr>
-                    <td className="blue">Sunset:</td>
-                    <td className="bold">{sunset}</td>
+                    <td className="text-primary">Sunset:</td>
+                    <td className="fw-bold">{sunset}</td>
                 </tr>
             </tbody>
-        </table>
+        </Table>
     );
 };
 

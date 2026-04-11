@@ -6,3 +6,7 @@
   .offline-row {
     background-color: #bf65f0;
   }
+
+.home-wind-row { padding-top: 20px; background-color: rgb(200,220,255); }
+.home-data-row { padding-top: 30px; background-color: rgb(255,255,200); }
+.home-tabs-row { background-color: rgb(240,255,255); }

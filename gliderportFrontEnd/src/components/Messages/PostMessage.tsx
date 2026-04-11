@@ -1,8 +1,9 @@
 /**
- * 
+ *
  * @packageDocumentation Component for posting messages to the PocketBase 'posts' collection.
  */
 import React, { useState, ChangeEvent, FormEvent } from 'react';
+import { Card, Form, Button } from 'react-bootstrap';
 import { pb } from '@/contexts/pb';
 
 /**
@@ -66,33 +67,22 @@ export function PostMessage(props: PostMessageProps): React.ReactElement {
     };
 
     return (
-        <div
-            className="postMsgC"
-            style={{
-                background: "#ccc",
-                width: "30%",
-                float: "left",
-                padding: "20px"
-            }}
-        >
-            <form onSubmit={postFormUpdate}>
-                <h2>Post A Message</h2>
-
-                <textarea
-                    name="msg"
-                    value={message}
-                    onChange={updateFormEdits}
-                    placeholder="Enter message"
-                    style={{ width: "98%", height: "80px" }}
-                />
-                <br /><br />
-                <input
-                    type="submit"
-                    value="Post Message"
-                    style={{ width: "100px", height: "30px" }}
-                />
-            </form>
-        </div>
+        <Card className="shadow-sm h-100">
+            <Card.Header className="fw-semibold">Post a Message</Card.Header>
+            <Card.Body>
+                <Form onSubmit={postFormUpdate}>
+                    <Form.Control
+                        as="textarea"
+                        rows={4}
+                        value={message}
+                        onChange={updateFormEdits}
+                        placeholder="Share conditions, tips, or a message for fellow pilots..."
+                        className="mb-3"
+                    />
+                    <Button variant="primary" type="submit">Post Message</Button>
+                </Form>
+            </Card.Body>
+        </Card>
     );
 }
 

@@ -6,8 +6,8 @@
  * @packageDocumentation DisplayMessage
  */
 import React from 'react'
+import { Button } from 'react-bootstrap'
 import { pb } from '@/contexts/pb'
-import "css/message.css"
 
 /**
  * Represents a single message record.
@@ -73,24 +73,30 @@ export function DisplayMessage({ msgItem }: DisplayMessageProps): React.ReactEle
     const currentUser = pb.authStore.record
 
     return (
-        <div className="message" style={{ paddingBottom: "20px" }}>
+        <div className="d-flex gap-3 mb-3 pb-3 border-bottom">
             {msgItem.avatar.length > 0
                 ? <img
                     src={msgItem.avatar}
                     alt="avatar"
-                    style={{ width: "50px", borderRadius: "50%" }}
+                    style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
                 />
-                : <></>
+                : <div style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: '#dee2e6', flexShrink: 0 }} />
             }
-            <b>{msgItem.name} / {msgItem.username}</b> posted on <b>{msgItem.created}</b>
-            {msgItem.uid === currentUser?.id ? (
-                <span
-                    className="deleteBtn"
-                    onClick={() => deleteMessage(msgItem)}
-                >❌</span>
-            ) : <></>}
-            <br />
-            {msgItem.message}
+            <div className="flex-grow-1">
+                <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span className="fw-semibold">{msgItem.name}</span>
+                        <span className="text-muted ms-1 small">@{msgItem.username}</span>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                        <small className="text-muted">{msgItem.created}</small>
+                        {msgItem.uid === currentUser?.id ? (
+                            <Button variant="outline-danger" size="sm" onClick={() => deleteMessage(msgItem)}>Delete</Button>
+                        ) : null}
+                    </div>
+                </div>
+                <p className="mb-0 mt-1">{msgItem.message}</p>
+            </div>
         </div>
     )
 }

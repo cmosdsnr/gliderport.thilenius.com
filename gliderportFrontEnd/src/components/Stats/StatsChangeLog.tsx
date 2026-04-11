@@ -1,11 +1,11 @@
 /**
  * @packageDocumentation
  * Changelog display for the Gliderport statistics page.
- * Renders a navigable list of dated site revisions; hovering a date
+ * Renders a navigable list of dated site revisions; clicking a date
  * populates the adjacent panel with the corresponding change details.
  */
 import React, { useState } from 'react'
-import { Row, Col } from 'react-bootstrap'
+import { Row, Col, Container, Card, ListGroup } from 'react-bootstrap'
 import './stats.css'
 
 /**
@@ -14,7 +14,7 @@ import './stats.css'
 type Change = {
     /** Human-readable date string displayed in the left-hand navigation list, e.g. `"9/7/24"`. */
     date: string;
-    /** JSX content shown in the detail panel when this entry is hovered. */
+    /** JSX content shown in the detail panel when this entry is clicked. */
     html: React.ReactElement;
 }
 
@@ -222,7 +222,7 @@ const changes: Change[] = [
  *
  * @remarks
  * The left column lists dated revision entries from the {@link changes} array.
- * Hovering a date highlights it and populates the right column with the
+ * Clicking a date highlights it and populates the right column with the
  * corresponding JSX detail block.  No API calls are made — all data is static.
  *
  * @returns The rendered changelog panel.
@@ -234,25 +234,42 @@ const changes: Change[] = [
  */
 export function StatsChangeLogComponent(): React.ReactElement {
     /** JSX content currently displayed in the detail column. */
-    const [changeText, setChangeText] = useState<React.ReactElement>(<></>)
-    /** Index into {@link changes} for the currently hovered / active entry. */
-    const [changeId, setChangeId] = useState<number>(0)
+    const [changeText, setChangeText] = useState<React.ReactElement | null>(null)
+    /** Index into {@link changes} for the currently clicked / active entry. */
+    const [changeId, setChangeId] = useState<number>(-1)
 
     return (
-        <Row>
-            <center>
-                <h2>Changes & Updates</h2>
-            </center>
-            <Col xs={2}>
-                {changes.map((v: Change, i) => {
-                    return (<h5 key={i}
-                        style={{ backgroundColor: changeId === i ? "lightblue" : "white" }}
-                        onMouseEnter={() => { setChangeId(i); setChangeText(v.html) }}>{v.date}</h5>)
-                })
-                }
-            </Col>
-            <Col xs={10}>{changeText}</Col>
-        </Row>
+        <Container className="py-4">
+            <h2 className="text-center mb-4">Changes & Updates</h2>
+            <Row className="g-3">
+                <Col md={3}>
+                    <Card className="shadow-sm">
+                        <Card.Body className="p-0">
+                            <ListGroup variant="flush">
+                                {changes.map((v: Change, i) => (
+                                    <ListGroup.Item
+                                        key={i}
+                                        action
+                                        active={changeId === i}
+                                        onClick={() => { setChangeId(i); setChangeText(v.html) }}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {v.date}
+                                    </ListGroup.Item>
+                                ))}
+                            </ListGroup>
+                        </Card.Body>
+                    </Card>
+                </Col>
+                <Col md={9}>
+                    <Card className="shadow-sm">
+                        <Card.Body>
+                            {changeText ?? <p className="text-muted">Select a revision from the list.</p>}
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+        </Container>
     )
 }
 

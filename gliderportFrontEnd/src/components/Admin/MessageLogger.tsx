@@ -8,7 +8,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Table, Container, Button } from 'react-bootstrap';
+import { Table, Container, Button, Badge } from 'react-bootstrap';
 import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useCamera } from '@/contexts/CameraContext';
 import { useSocialData } from '@/contexts/SocialDataContext';
@@ -203,19 +203,17 @@ export function MessageLogger(): React.ReactElement {
             <Table striped bordered hover responsive className="mt-3">
                 <thead>
                     <tr>
-                        <th style={{ width: '5%' }}>Direction</th>
-                        <th style={{ width: '5%' }}>Command</th>
-                        <th style={{ width: '5%' }}>Subcommand</th>
-                        <th style={{ width: '20%' }}>Date/Time</th>
-                        <th style={{ width: '65%' }}>Data</th>
+                        <th>Direction</th>
+                        <th>Command</th>
+                        <th>Subcommand</th>
+                        <th>Date/Time</th>
+                        <th>Data</th>
                     </tr>
                 </thead>
                 <tbody>
                     {displayedMessages.slice().reverse().map((msg, index) => (
                         <tr key={index}>
-                            <td style={{ fontWeight: 'bold', color: msg.direction === 0 ? 'blue' : 'red' }}>
-                                {msg.direction === 0 ? 'SENT' : 'RECEIVED'}
-                            </td>
+                            <td><Badge bg={msg.direction === 0 ? 'primary' : 'danger'}>{msg.direction === 0 ? 'SENT' : 'RECEIVED'}</Badge></td>
                             <td>{msg.command}</td>
                             <td>{msg.subcommand}</td>
                             <td>{msg.timestamp.toLocaleString()}</td>
@@ -333,13 +331,8 @@ const DataSummaryComponent: React.FC = () => {
     ];
 
     return (
-        <Container style={{ marginBottom: '50px' }} className="mt-4">
+        <Container className="mb-4 mt-4">
             <h2>Data Summary</h2>
-            <style>{`
-         /* Styled summary table */
-         .table { border-collapse: collapse; border: 1px solid #000 !important; }
-         .table td, .table th { border:1px solid #000 !important; margin:0; padding:2px !important; }
-      `}</style>
             <Table striped bordered hover style={{ width: 'auto' }}>
                 <tbody>
                     {dataSummary.map((item, idx) => (

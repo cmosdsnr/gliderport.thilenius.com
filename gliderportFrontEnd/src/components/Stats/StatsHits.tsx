@@ -5,7 +5,7 @@
  * chart that can be filtered by time granularity and metric type.
  */
 import React, { useState, useEffect, useMemo } from 'react';
-import { Row, Col, Form } from 'react-bootstrap';
+import { Row, Col, Form, Container, Card, Table } from 'react-bootstrap';
 import { useStatusCollection } from 'contexts/StatusCollection';
 import StatsPlot from './StatsHitsPlot';
 import { DateTime } from 'luxon';
@@ -85,7 +85,7 @@ export function StatsHitsComponent(): React.ReactElement {
             zone: 'America/Los_Angeles',
         });
 
-        // Build “summary” objects for day/week/month
+        // Build "summary" objects for day/week/month
         const lastMonthIndex = siteHits.months.total.length - 1;
         const monthSummary = {
             total: siteHits.months.total[lastMonthIndex],
@@ -120,7 +120,7 @@ export function StatsHitsComponent(): React.ReactElement {
                 .toLocaleString(DateTime.DATE_SHORT),
         };
 
-        // Store raw arrays (we’ll pick total vs. unique later)
+        // Store raw arrays (we'll pick total vs. unique later)
         const month = {
             start: siteHits.months.start,
             total: siteHits.months.total,
@@ -185,131 +185,126 @@ export function StatsHitsComponent(): React.ReactElement {
 
     return (
         <>
-            <Row>
-                <Col xs={12} className="greyBackground">
-                    <h4>Site Statistics:</h4>
-                    <center>
-                        <table className="stats-table">
+            <Container className="py-3">
+                <Card className="shadow-sm mb-4">
+                    <Card.Header className="fw-semibold">Site Statistics</Card.Header>
+                    <Card.Body className="p-0">
+                        <Table className="table-sm table-bordered table-striped mb-0">
+                            <thead className="table-dark">
+                                <tr>
+                                    <th>Period</th>
+                                    <th>Total Hits</th>
+                                    <th>Unique IPs</th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 <tr>
-                                    <th></th>
-                                    <th>all</th>
-                                    <th>unique IP’s</th>
+                                    <td>Daily Visits {data.daySummary.startLabel}</td>
+                                    <td>{data.daySummary.total}</td>
+                                    <td>{data.daySummary.unique}</td>
                                 </tr>
                                 <tr>
-                                    <th>
-                                        Daily Visits {data.daySummary.startLabel}
-                                    </th>
-                                    <th>{data.daySummary.total}</th>
-                                    <th>{data.daySummary.unique}</th>
-                                </tr>
-                                <tr>
-                                    <th>
+                                    <td>
                                         Weekly Visits {data.weekSummary.startLabel}-
                                         {data.weekSummary.stopLabel}
-                                    </th>
-                                    <th>{data.weekSummary.total}</th>
-                                    <th>{data.weekSummary.unique}</th>
+                                    </td>
+                                    <td>{data.weekSummary.total}</td>
+                                    <td>{data.weekSummary.unique}</td>
                                 </tr>
                                 <tr>
-                                    <th>
-                                        Monthly Visits ({data.monthSummary.label})
-                                    </th>
-                                    <th>{data.monthSummary.total}</th>
-                                    <th>{data.monthSummary.unique}</th>
+                                    <td>Monthly Visits ({data.monthSummary.label})</td>
+                                    <td>{data.monthSummary.total}</td>
+                                    <td>{data.monthSummary.unique}</td>
                                 </tr>
                                 <tr>
-                                    <th>Total visits:</th>
-                                    <th>{data.all.total}</th>
-                                    <th>{data.all.unique}</th>
+                                    <td>Total visits:</td>
+                                    <td>{data.all.total}</td>
+                                    <td>{data.all.unique}</td>
                                 </tr>
                                 <tr>
-                                    <th>Last reset:</th>
-                                    <th>{data.lastResetLabel}</th>
+                                    <td>Last reset:</td>
+                                    <td>{data.lastResetLabel}</td>
+                                    <td></td>
                                 </tr>
                             </tbody>
-                        </table>
-                    </center>
-                </Col>
-            </Row>
+                        </Table>
+                    </Card.Body>
+                </Card>
 
-            <Row>
-                <Col xs={12}>
-                    {/* ─── Both radio groups in a single flex container ─────────────────── */}
-                    <div
-                        style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: 10,
-                            marginTop: 10,
-                        }}
-                    >
-                        {/* ─── Top‐Left: Day / Week / Month ────────────── */}
-                        <Form>
-                            <Form.Check
-                                inline
-                                label="Day"
-                                name="granularity"
-                                type="radio"
-                                id="radio-day"
-                                value="day"
-                                checked={view === 'day'}
-                                onChange={() => setView('day')}
-                            />
-                            <Form.Check
-                                inline
-                                label="Week"
-                                name="granularity"
-                                type="radio"
-                                id="radio-week"
-                                value="week"
-                                checked={view === 'week'}
-                                onChange={() => setView('week')}
-                            />
-                            <Form.Check
-                                inline
-                                label="Month"
-                                name="granularity"
-                                type="radio"
-                                id="radio-month"
-                                value="month"
-                                checked={view === 'month'}
-                                onChange={() => setView('month')}
-                            />
-                        </Form>
+                <Row>
+                    <Col xs={12}>
+                        {/* ─── Both radio groups in a single flex container ─────────────────── */}
+                        <div className="d-flex justify-content-between align-items-center my-3">
+                            {/* ─── Top‐Left: Day / Week / Month ────────────── */}
+                            <Form>
+                                <Form.Check
+                                    inline
+                                    label="Day"
+                                    name="granularity"
+                                    type="radio"
+                                    id="radio-day"
+                                    value="day"
+                                    checked={view === 'day'}
+                                    onChange={() => setView('day')}
+                                />
+                                <Form.Check
+                                    inline
+                                    label="Week"
+                                    name="granularity"
+                                    type="radio"
+                                    id="radio-week"
+                                    value="week"
+                                    checked={view === 'week'}
+                                    onChange={() => setView('week')}
+                                />
+                                <Form.Check
+                                    inline
+                                    label="Month"
+                                    name="granularity"
+                                    type="radio"
+                                    id="radio-month"
+                                    value="month"
+                                    checked={view === 'month'}
+                                    onChange={() => setView('month')}
+                                />
+                            </Form>
 
-                        {/* ─── Top‐Right: Total / Unique ───────────────── */}
-                        <Form>
-                            <Form.Check
-                                inline
-                                label="Total"
-                                name="metric"
-                                type="radio"
-                                id="radio-total"
-                                value="total"
-                                checked={metric === 'total'}
-                                onChange={() => setMetric('total')}
-                            />
-                            <Form.Check
-                                inline
-                                label="Unique"
-                                name="metric"
-                                type="radio"
-                                id="radio-unique"
-                                value="unique"
-                                checked={metric === 'unique'}
-                                onChange={() => setMetric('unique')}
-                            />
-                        </Form>
-                    </div>
+                            {/* ─── Top‐Right: Total / Unique ───────────────── */}
+                            <Form>
+                                <Form.Check
+                                    inline
+                                    label="Total"
+                                    name="metric"
+                                    type="radio"
+                                    id="radio-total"
+                                    value="total"
+                                    checked={metric === 'total'}
+                                    onChange={() => setMetric('total')}
+                                />
+                                <Form.Check
+                                    inline
+                                    label="Unique"
+                                    name="metric"
+                                    type="radio"
+                                    id="radio-unique"
+                                    value="unique"
+                                    checked={metric === 'unique'}
+                                    onChange={() => setMetric('unique')}
+                                />
+                            </Form>
+                        </div>
 
-                    {/* ─── Chart container ───────────────────────────────────────────────── */}
-                    <div style={{ width: '100%', height: 400 }}>
-                        <StatsPlot data={chartPoints} />
-                    </div>
-                </Col>
-            </Row>
+                        {/* ─── Chart container ───────────────────────────────────────────────── */}
+                        <Card className="shadow-sm">
+                            <Card.Body>
+                                <div style={{ width: '100%', height: 400 }}>
+                                    <StatsPlot data={chartPoints} />
+                                </div>
+                            </Card.Body>
+                        </Card>
+                    </Col>
+                </Row>
+            </Container>
         </>
     );
 };

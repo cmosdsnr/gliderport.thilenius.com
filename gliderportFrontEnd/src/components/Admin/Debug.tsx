@@ -8,7 +8,7 @@
  * - Cleanup unsubscribes from `posts` instead of `wind` subscription, so the wind subscription may remain active.
  */
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Card, Spinner, Table } from 'react-bootstrap';
 import { useCamera } from '@/contexts/CameraContext';
 import { pb } from '@/contexts/pb';
 import HLSPlayer from '../HlsPlayer';
@@ -63,42 +63,68 @@ export function Debug(): React.ReactElement {
     }, []);
 
     return (
-        <Row>
-            <div>
-                <h1>Camera Stream</h1>
-                <HLSPlayer src={import.meta.env.VITE_SERVER_URL + "/stream/camera1/index.m3u8"}
-                />
-            </div>
+        <Container className="py-4">
+            <Row className="g-3 mb-4">
+                <Col xs={12} lg={6}>
+                    <Card className="shadow-sm">
+                        <Card.Header className="fw-semibold">Camera 1</Card.Header>
+                        <Card.Body className="p-0">
+                            <HLSPlayer src={import.meta.env.VITE_SERVER_URL + "/stream/camera1/index.m3u8"} />
+                        </Card.Body>
+                    </Card>
+                </Col>
+                <Col xs={12} lg={6}>
+                    <Card className="shadow-sm">
+                        <Card.Header className="fw-semibold">Camera 2</Card.Header>
+                        <Card.Body className="p-0">
+                            <HLSPlayer src={import.meta.env.VITE_SERVER_URL + "/stream/camera2/index.m3u8"} />
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
 
-            <div>
-                <h1>Camera Stream</h1>
-                <HLSPlayer src={import.meta.env.VITE_SERVER_URL + "/stream/camera2/index.m3u8"}
-                />
-            </div>
-            <Col>
-                <Card>
-                    <Card.Header>Latest Wind Record</Card.Header>
-                    <Card.Body>
-                        <Row>
-                            <Col>
-                                {latestRecord ? (
-                                    <div style={{ fontSize: '1.2em' }}>
-                                        <p>Speed: {latestRecord.speed / 10} mph</p>
-                                        <p>Direction: {latestRecord.direction}°</p>
-                                        <p>Temperature: {latestRecord.temperature / 10}°F</p>
-                                        <p>Humidity: {latestRecord.humidity}%</p>
-                                        <p>Pressure: {latestRecord.pressure + 100325} mBar</p>
-                                        <p>Created: {new Date(latestRecord.created).toLocaleString()}</p>
-                                    </div>
-                                ) : (
-                                    <Spinner animation="border" variant="primary" />
-                                )}
-                            </Col>
-                        </Row>
-                    </Card.Body>
-                </Card>
-            </Col>
-        </Row>
+            <Row className="g-3">
+                <Col xs={12} lg={6}>
+                    <Card className="shadow-sm">
+                        <Card.Header>Latest Wind Record</Card.Header>
+                        <Card.Body>
+                            {latestRecord ? (
+                                <Table size="sm" borderless className="mb-0">
+                                    <tbody>
+                                        <tr>
+                                            <td className="text-muted">Speed</td>
+                                            <td className="fw-bold">{latestRecord.speed / 10} mph</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="text-muted">Direction</td>
+                                            <td className="fw-bold">{latestRecord.direction}°</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="text-muted">Temperature</td>
+                                            <td className="fw-bold">{latestRecord.temperature / 10}°F</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="text-muted">Humidity</td>
+                                            <td className="fw-bold">{latestRecord.humidity}%</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="text-muted">Pressure</td>
+                                            <td className="fw-bold">{latestRecord.pressure + 100325} mBar</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="text-muted">Created</td>
+                                            <td className="fw-bold">{new Date(latestRecord.created).toLocaleString()}</td>
+                                        </tr>
+                                    </tbody>
+                                </Table>
+                            ) : (
+                                <Spinner animation="border" variant="primary" />
+                            )}
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
+        </Container>
     );
 };
 

@@ -1,23 +1,32 @@
 /**
  * @packageDocumentation
  * Dashboard page for the Gliderport application.
- * Displays user profile information and settings, allows editing, and provides logout functionality.
+ *
+ * Displays a three-card summary (Profile, Current Conditions, Text Alerts)
+ * and opens an Alerts Settings modal for configuring SMS notifications.
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Button, Alert, Row, Col } from 'react-bootstrap';
+import { Card, Button, Alert, Row, Col, Modal, Badge, Container } from 'react-bootstrap';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { PhoneNumberInput } from './PhoneNumber';
 import TextField from '@mui/material/TextField';
 import { ToggleSlider } from 'react-toggle-slider';
 import { API } from '@/api';
+import { useSensorData } from '@/contexts/SensorDataContext';
+
+/** Convert degrees to a compass direction label. */
+function degreesToCompass(deg: number): string {
+    const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    return dirs[Math.round(deg / 22.5) % 16];
+}
 
 /**
- * Custom hook to handle clicks outside a specified element.
- * When a click occurs outside the element, it sets the editing state to 0.
+ * Custom hook to detect clicks outside a referenced element.
+ * Resets `editing` to 0 when a click lands outside.
  *
- * @param ref - The reference to the element to monitor for outside clicks.
- * @param setEditing - Function to update the editing state.
+ * @param ref - Element to watch.
+ * @param setEditing - State setter to call on outside click.
  */
 export function useOutsideAlerter(
     ref: React.RefObject<HTMLDivElement | null>,
@@ -29,32 +38,38 @@ export function useOutsideAlerter(
                 setEditing(0);
             }
         }
-        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener('mousedown', handleClickOutside);
         return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [ref, setEditing]);
 }
 
 /**
- * Dashboard component displays user profile information and settings.
- * Allows editing of user details, mobile number, and text alert settings.
- * Provides functionality to send a test SMS and log out.
- * 
- * @returns {React.ReactElement} The dashboard UI.
+ * Dashboard component — profile summary, live conditions, and alert status.
+ *
+ * @returns The dashboard UI.
  */
 export function Dashboard(): React.ReactElement {
-    const [error, setError] = useState<string>("");
-    const [editing, setEditing] = useState<number>(0);
+    const [error, setError] = useState('');
+    const [editing, setEditing] = useState(0);
+    const [showAlerts, setShowAlerts] = useState(false);
     const editRef = useRef<HTMLDivElement | null>(null);
     useOutsideAlerter(editRef, setEditing);
+
     const { currentUser, logout, updateUser, updateUserSettings, resetPassword } = useAuth();
+    const { readings } = useSensorData();
     const navigate = useNavigate();
 
-    /**
-     * Logs the current user out and redirects to the Login page.
-     * Sets an error message if the logout attempt fails.
-     */
+    const latest = readings[readings.length - 1];
+
+    // Determine whether current conditions meet the user's alert threshold
+    const alertSpeed = currentUser?.settings.speed ?? 10;
+    const alertAngle = currentUser?.settings.errorAngle ?? 20;
+    const windDiff = Math.abs(((latest?.direction ?? 270) - 270 + 360) % 360);
+    const normalizedDiff = windDiff > 180 ? 360 - windDiff : windDiff;
+    const conditionsMet = (latest?.speed ?? 0) >= alertSpeed && normalizedDiff <= alertAngle;
+
     async function handleLogout() {
         setError('');
         try {
@@ -65,211 +80,302 @@ export function Dashboard(): React.ReactElement {
         }
     }
 
-    /**
-     * Fires a test SMS to the current user's configured SMS gateway address.
-     * Alerts the user to check their phone after the request is sent.
-     */
-    const sendTestSms = () => {
+    function sendTestSms() {
         if (currentUser) {
             fetch(API.sendTestSms(currentUser.firstName || '', currentUser.settings.address || ''));
-            alert("Please check your phone for the test SMS");
+            alert('Please check your phone for the test SMS');
         }
     }
 
     return (
-        <Row>
-            <Col xs={3}>
-                <div className='w-100 mx-auto pt-4'>
-                    <Card>
-                        <h2 className="text-center mb-4" style={{ marginTop: "50px" }}>Instructions</h2>
+        <Container className="py-4">
+            {error && <Alert variant="danger">{error}</Alert>}
+
+            {/* ── Summary cards ── */}
+            <Row className="g-3 mb-4">
+
+                {/* Profile */}
+                <Col md={4}>
+                    <Card className="h-100 shadow-sm">
+                        <Card.Header className="bg-primary text-white fw-semibold">Profile</Card.Header>
                         <Card.Body>
-                            <p>
-                                Enabling Text Alerts will send you <b>a single text</b> on any given day
-                                that the wind meets or exceeds your criteria of speed and direction between
-                                8 AM and 7 PM. Only 1 text per day will ever be sent out when and only when
-                                these conditions are first met.
-                            </p>
-                            <p>
-                                Servers can't text, they can only email. Text messages work using a email to
-                                sms gateway and is carrier specific. For example if my phone carrier is AT&T
-                                the server can Email a wind alert text message to 5559991234@att.net and the
-                                email shows up as a text
-                            </p>
-                            <p>
-                                My site can often identify your carrier from your number using <a href="http://www.fonefinder.net/">fonfinder.net</a>,
-                                but sometimes it can't identify it from your phone number. If you would still like to proceed send me an
-                                email <a href="mailto:stephen@thilenius.com">stephen@thilenius.com</a> with your <b>number and carrier</b>,
-                                and what would be even more helpful is if you also know the gateway for your carrier. Something like
-                                [10-digit-number]@yourCarrier.com. Try googling 'your carrier' email to sms gateway and see if
-                                you can find it, and I will add it to the list. </p>
+                            {currentUser && (
+                                <div ref={editRef}>
+                                    {editing === 1 ? (
+                                        <div className="d-flex flex-column gap-3">
+                                            <TextField
+                                                label="First Name"
+                                                variant="standard"
+                                                size="small"
+                                                value={currentUser.firstName}
+                                                onChange={e => updateUser('firstName', e.target.value)}
+                                            />
+                                            <TextField
+                                                label="Last Name"
+                                                variant="standard"
+                                                size="small"
+                                                value={currentUser.lastName}
+                                                onChange={e => updateUser('lastName', e.target.value)}
+                                            />
+                                            <small className="text-muted">Click outside to save</small>
+                                        </div>
+                                    ) : (
+                                        <dl className="mb-0">
+                                            <dt>Name</dt>
+                                            <dd>
+                                                <span
+                                                    className="text-primary"
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={() => setEditing(1)}
+                                                    title="Click to edit"
+                                                >
+                                                    {currentUser.firstName} {currentUser.lastName}
+                                                </span>{' '}
+                                                <small className="text-muted">(click to edit)</small>
+                                            </dd>
+                                            <dt>Email</dt>
+                                            <dd>{currentUser.email}</dd>
+                                            <dt>Role</dt>
+                                            <dd>
+                                                <Badge bg={currentUser.role === 'Administrator' ? 'danger' : 'secondary'}>
+                                                    {currentUser.role}
+                                                </Badge>
+                                                {' '}
+                                                {currentUser.verified
+                                                    ? <Badge bg="success">Verified</Badge>
+                                                    : <Badge bg="warning" text="dark">Unverified</Badge>
+                                                }
+                                            </dd>
+                                            {currentUser.role === 'Administrator' && (
+                                                <>
+                                                    <dt>Version</dt>
+                                                    <dd>{import.meta.env.VITE_SITE_VERSION}</dd>
+                                                </>
+                                            )}
+                                        </dl>
+                                    )}
+                                </div>
+                            )}
                         </Card.Body>
+                        <Card.Footer className="d-flex gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline-secondary"
+                                onClick={() => currentUser && resetPassword(currentUser.email)}
+                            >
+                                Change Password
+                            </Button>
+                            <Button size="sm" variant="outline-danger" onClick={handleLogout}>
+                                Log Out
+                            </Button>
+                        </Card.Footer>
                     </Card>
-                </div>
-            </Col>
-            <Col xs={7} >
-                <div className='w-100 mx-auto pt-4' style={{ maxWidth: "600px" }} >
-                    <Card>
+                </Col>
+
+                {/* Current Conditions */}
+                <Col md={4}>
+                    <Card className="h-100 shadow-sm">
+                        <Card.Header className="fw-semibold" style={{ backgroundColor: '#17a2b8', color: 'white' }}>
+                            Current Conditions
+                        </Card.Header>
                         <Card.Body>
-                            <h2 className="text-center mb-4">Profile</h2>
-                            {error && <Alert variant="danger">{error}</Alert>}
-                            <div style={{ textAlign: 'center' }}>(Click to edit)</div>
-                            {currentUser ?
+                            {latest ? (
+                                <dl className="mb-0">
+                                    <dt>Wind Speed</dt>
+                                    <dd>
+                                        <span className="fs-4 fw-bold">{latest.speed.toFixed(1)}</span>
+                                        <small className="text-muted ms-1">mph</small>
+                                    </dd>
+                                    <dt>Direction</dt>
+                                    <dd>{latest.direction}° — {degreesToCompass(latest.direction)}</dd>
+                                    <dt>Temperature</dt>
+                                    <dd>{latest.temperature.toFixed(1)} °C</dd>
+                                    <dt>Humidity</dt>
+                                    <dd>{latest.humidity}%</dd>
+                                    <dt>Pressure</dt>
+                                    <dd>{latest.pressure.toFixed(1)} mBar</dd>
+                                </dl>
+                            ) : (
+                                <p className="text-muted">Loading sensor data…</p>
+                            )}
+                        </Card.Body>
+                        {currentUser?.textMe && (
+                            <Card.Footer>
+                                <Badge bg={conditionsMet ? 'success' : 'secondary'}>
+                                    {conditionsMet ? '✓ Flying conditions met' : 'Below your threshold'}
+                                </Badge>
+                            </Card.Footer>
+                        )}
+                    </Card>
+                </Col>
+
+                {/* Text Alerts */}
+                <Col md={4}>
+                    <Card className="h-100 shadow-sm">
+                        <Card.Header className="fw-semibold" style={{ backgroundColor: '#ffc107', color: '#212529' }}>
+                            Text Alerts
+                        </Card.Header>
+                        <Card.Body>
+                            {currentUser && (
                                 <>
-                                    <div ref={editRef} >
-                                        {editing === 1 ?
-                                            <Row className="profileBox">
-                                                <Col xs={12} style={{ marginBottom: "15px" }}>
-                                                    <TextField
-                                                        label="First Name"
-                                                        variant="standard"
-                                                        value={currentUser.firstName}
-                                                        onChange={(e) => {
-                                                            updateUser('firstName', e.target.value)
-                                                        }}
-                                                    />
-                                                </Col>
-                                                <Col xs={12} >
+                                    <div className="mb-3">
+                                        <Badge bg={currentUser.textMe ? 'success' : 'secondary'} className="fs-6">
+                                            {currentUser.textMe ? 'Enabled' : 'Disabled'}
+                                        </Badge>
+                                    </div>
+                                    {currentUser.settings.address ? (
+                                        <dl className="mb-0">
+                                            <dt>Phone</dt>
+                                            <dd>{currentUser.settings.phone || '—'}</dd>
+                                            <dt>Carrier</dt>
+                                            <dd>{currentUser.settings.provider || '—'}</dd>
+                                            <dt>Trigger Speed</dt>
+                                            <dd>≥ {currentUser.settings.speed} mph</dd>
+                                            <dt>Direction Tolerance</dt>
+                                            <dd>±{currentUser.settings.errorAngle}° from west</dd>
+                                        </dl>
+                                    ) : (
+                                        <p className="text-muted small">
+                                            No phone number configured yet. Click Configure to set one up.
+                                        </p>
+                                    )}
+                                </>
+                            )}
+                        </Card.Body>
+                        <Card.Footer>
+                            <Button
+                                size="sm"
+                                variant="outline-warning"
+                                onClick={() => setShowAlerts(true)}
+                            >
+                                Configure Alerts
+                            </Button>
+                        </Card.Footer>
+                    </Card>
+                </Col>
+            </Row>
 
-                                                    <TextField
-                                                        label="Last Name"
-                                                        variant="standard"
-                                                        value={currentUser.lastName}
-                                                        onChange={(e) => {
-                                                            updateUser('lastName', e.target.value)
-                                                        }}
-                                                    />
-                                                </Col>
-                                            </Row>
-                                            :
-                                            <Row className="profileBox" onClick={() => setEditing(1)}>
-                                                <Col xs={3}>
-                                                    <strong>Name: </strong>
-                                                </Col>
-                                                <Col xs={5} onClick={() => setEditing(1)}>
-                                                    {currentUser.firstName + " " + currentUser.lastName}
-                                                </Col>
-                                                <Col xs={4} className="text-end">
-                                                    <Button variant="primary" onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        resetPassword(currentUser.email);
+            {/* ── Alerts Settings Modal ── */}
+            <Modal show={showAlerts} onHide={() => setShowAlerts(false)} size="lg">
+                <Modal.Header closeButton>
+                    <Modal.Title>Text Alert Settings</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {currentUser && (
+                        <Row>
+                            <Col md={5} className="border-end pe-4">
+                                <h6 className="fw-semibold">How It Works</h6>
+                                <p className="small text-muted">
+                                    You'll receive <strong>one text per day</strong> when wind first meets your
+                                    speed and direction criteria between 8 AM and 7 PM.
+                                </p>
+                                <p className="small text-muted">
+                                    Servers send email, not SMS — each carrier has an email-to-SMS gateway.
+                                    For example AT&T users receive texts sent to{' '}
+                                    <code>5559991234@att.net</code>.
+                                </p>
+                                <p className="small text-muted">
+                                    Can't find your gateway? Email{' '}
+                                    <a href="mailto:stephen@thilenius.com">stephen@thilenius.com</a> your
+                                    number and carrier name.
+                                </p>
+                            </Col>
+                            <Col md={7} className="ps-4">
+                                <div className="mb-3">
+                                    <label className="form-label fw-semibold">Mobile Number</label>
+                                    <PhoneNumberInput />
+                                </div>
 
-                                                    }}>
-                                                        Change Password
-                                                    </Button>
-                                                </Col>
-                                            </Row>
-
-
-                                        }
-
-                                        <Row className="profileBox">
-                                            <Col xs={12}>
-                                                <label>Mobile Number:
-                                                    <PhoneNumberInput
-                                                        style={{ marginLeft: "20px" }}
-                                                    />
-                                                </label>
-                                            </Col>
-                                            <Col xs={12}>
-                                                {(currentUser.settings.address?.length ?? 0) > 0 ?
-                                                    <>
-                                                        <Row><Col xs={4} style={{ marginBottom: "5px" }}><strong>Provider:</strong></Col><Col xs={6}>{currentUser.settings.provider}</Col></Row>
-                                                        <Row className="smsAddress">
-                                                            <Col xs={4}><strong>SMS address:</strong></Col>
-                                                            <Col xs={6}>{currentUser.settings.address}</Col>
-                                                            <Col
-                                                                xs={2}
-                                                                onClick={() => sendTestSms()}
-                                                                className="tryMe toolTip">try me!
-                                                                <span
-                                                                    className="toolTipText">
-                                                                    You should receive a text from the gliderport if you press this button
-                                                                </span>
-                                                            </Col>
-                                                        </Row>
-                                                        {currentUser.settings.address && (
-                                                            <>
-                                                                <Row>Enable Text Alerts: <ToggleSlider active={currentUser.textMe} onToggle={state => updateUserSettings({}, state)} /></Row>
-                                                            </>
-                                                        )}
-                                                        {currentUser.textMe ?
-                                                            <>
-                                                                <Row>
-                                                                    <Col xs={{ span: 6, offset: 0 }} style={{ paddingTop: "20px" }}>
-                                                                        <label>Trigger speed <span className="toolTip">(?)<span className="toolTipText">Minimum speed in mph</span></span>:
-                                                                            <span className="vlu">{currentUser.settings.speed}</span><br />
-                                                                            <input
-                                                                                value={currentUser.settings.speed}
-                                                                                type="range"
-                                                                                min="5"
-                                                                                max="20"
-                                                                                onChange={(e) => updateUserSettings({ speed: parseInt(e.target.value) }, currentUser.textMe)}
-                                                                            />
-                                                                        </label>
-                                                                    </Col>
-                                                                    <Col xs={6} >
-                                                                        <b> Use:</b><br />
-                                                                        <div >
-                                                                            <input
-                                                                                type="radio"
-                                                                                value="0"
-                                                                                name="criteria"
-                                                                                checked={currentUser.settings.duration === 0}
-                                                                                onChange={(e) => updateUserSettings({ duration: parseInt(e.target.value) })}
-                                                                            /> Instantaneous<br />
-                                                                            <input
-                                                                                type="radio"
-                                                                                value="1"
-                                                                                name="criteria"
-                                                                                checked={currentUser.settings.duration === 1}
-                                                                                onChange={(e) => updateUserSettings({ duration: parseInt(e.target.value) })}
-                                                                            /> 5 min Average<br />
-                                                                            <input
-                                                                                type="radio"
-                                                                                value="2"
-                                                                                name="criteria"
-                                                                                checked={currentUser.settings.duration === 2}
-                                                                                onChange={(e) => updateUserSettings({ duration: parseInt(e.target.value) })}
-                                                                            /> 15 Min Average<br />
-                                                                        </div>
-                                                                    </Col>
-                                                                </Row>
-                                                                <Row>
-                                                                    <Col xs={{ span: 5, offset: 0 }} md={{ span: 4, offset: 2 }} style={{ paddingTop: "20px" }}>
-                                                                        <label>Trigger Max angle <span className="toolTip">(?)<span className="toolTipText">maximum the wind can be off from
-                                                                            270&deg; (west)</span></span>: <span className="vlu">&plusmn;{currentUser.settings.errorAngle}&deg;</span><br />
-                                                                            <input
-                                                                                value={currentUser.settings.errorAngle}
-                                                                                type="range"
-                                                                                min="5"
-                                                                                max="40"
-                                                                                onChange={(e) => updateUserSettings({ errorAngle: parseInt(e.target.value) })}
-                                                                            />
-                                                                        </label>
-                                                                    </Col>
-                                                                </Row>
-                                                            </> : null}
-                                                    </> : null}
+                                {currentUser.settings.address && (
+                                    <>
+                                        <Row className="mb-2 align-items-center">
+                                            <Col xs={4}><strong>Provider:</strong></Col>
+                                            <Col>{currentUser.settings.provider}</Col>
+                                        </Row>
+                                        <Row className="mb-3 align-items-center">
+                                            <Col xs={4}><strong>SMS address:</strong></Col>
+                                            <Col className="text-break">{currentUser.settings.address}</Col>
+                                            <Col xs="auto">
+                                                <Button size="sm" variant="outline-info" onClick={sendTestSms}>
+                                                    Test SMS
+                                                </Button>
                                             </Col>
                                         </Row>
-                                    </div>
-                                    <Row className="profileBox"><Col xs={12}>
-                                        <Row><Col xs={4}><strong>Email:</strong></Col><Col xs={6}>{currentUser.email}</Col></Row>
-                                        <Row><Col xs={4}><strong>Role:</strong></Col><Col xs={6}>{currentUser.role}</Col></Row>
-                                        {currentUser.role == 'Administrator' ?
-                                            <Row><Col xs={4}><strong>Version:</strong></Col><Col xs={6}>{import.meta.env.VITE_SITE_VERSION}</Col></Row> : null}
-                                    </Col></Row>
 
-                                </> : null}
-                        </Card.Body>
-                    </Card>
-                    <div className="w-100 text-center mt-2">
-                        <Button variant="link" onClick={handleLogout}>Log Out</Button>
-                    </div>
-                </div>
-            </Col>
-            <Col xs={2}></Col>
-        </Row>
-    )
+                                        <div className="mb-3 d-flex align-items-center gap-3">
+                                            <span className="fw-semibold">Enable Alerts:</span>
+                                            <ToggleSlider
+                                                active={currentUser.textMe}
+                                                onToggle={state => updateUserSettings({}, state)}
+                                            />
+                                        </div>
+
+                                        {currentUser.textMe && (
+                                            <>
+                                                <div className="mb-3">
+                                                    <label className="form-label">
+                                                        Trigger Speed:{' '}
+                                                        <strong className="text-primary">{currentUser.settings.speed} mph</strong>
+                                                    </label>
+                                                    <input
+                                                        type="range"
+                                                        className="form-range"
+                                                        value={currentUser.settings.speed}
+                                                        min="5"
+                                                        max="20"
+                                                        onChange={e => updateUserSettings(
+                                                            { speed: parseInt(e.target.value) },
+                                                            currentUser.textMe
+                                                        )}
+                                                    />
+                                                </div>
+
+                                                <div className="mb-3">
+                                                    <label className="form-label fw-semibold">Averaging Window</label>
+                                                    {(['Instantaneous', '5 min Average', '15 min Average'] as const).map((label, val) => (
+                                                        <div className="form-check" key={val}>
+                                                            <input
+                                                                className="form-check-input"
+                                                                type="radio"
+                                                                name="criteria"
+                                                                value={val}
+                                                                checked={currentUser.settings.duration === val}
+                                                                onChange={e => updateUserSettings({ duration: parseInt(e.target.value) })}
+                                                            />
+                                                            <label className="form-check-label">{label}</label>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <div className="mb-3">
+                                                    <label className="form-label">
+                                                        Max Direction Offset:{' '}
+                                                        <strong className="text-primary">±{currentUser.settings.errorAngle}°</strong>{' '}
+                                                        from west
+                                                    </label>
+                                                    <input
+                                                        type="range"
+                                                        className="form-range"
+                                                        value={currentUser.settings.errorAngle}
+                                                        min="5"
+                                                        max="40"
+                                                        onChange={e => updateUserSettings({ errorAngle: parseInt(e.target.value) })}
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
+                                    </>
+                                )}
+                            </Col>
+                        </Row>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowAlerts(false)}>Close</Button>
+                </Modal.Footer>
+            </Modal>
+        </Container>
+    );
 }
+
 export default Dashboard;

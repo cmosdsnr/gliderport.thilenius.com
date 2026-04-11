@@ -13,6 +13,7 @@
  * @component
  */
 import React, { useEffect, useState } from 'react';
+import { Container, Card, Table } from 'react-bootstrap';
 import { API } from '@/api';
 
 /**
@@ -107,7 +108,6 @@ interface CodeHistoryDetails {
  * @returns {React.ReactElement}
  */
 export function InfoDisplay(): React.ReactElement {
-    /** Metadata about the gliderport record table (first/last record, counts). */
     const [gliderportInfo, setGliderportInfo] = useState<GliderportInfo>({
         lastRecord: null,
         firstRecord: null,
@@ -117,31 +117,26 @@ export function InfoDisplay(): React.ReactElement {
         latestHoursString: null,
     });
 
-    /** Hourly aggregation table: total count and per-hour breakdown entries. */
     const [hoursTable, setHoursTable] = useState<{ count: number; entries: HourEntry[] }>({
         count: 0,
         entries: [],
     });
 
-    /** Sun-time and computed delta data pushed from the server. `null` until loaded. */
     const [serverSent, setServerSent] = useState<ServerSentData | null>(null);
-
-    /** Code-history overview list and optional latest-day details. */
     const [codeHistory, setCodeHistory] = useState<CodeHistory>({ overview: [], latestDetails: undefined });
 
-    /** ETL (add-data) process status including forecast schedule and per-hour results. */
     const [addData, setAddData] = useState<AddDataInfo>({
         lastCalled: 0,
-        lastCalledString: "",
+        lastCalledString: '',
         numberRecordsReceived: 0,
         lastEntryInHours: 0,
-        lastEntryInHoursString: "",
+        lastEntryInHoursString: '',
         hoursInfo: [],
         forecast: {
             nextUpdate: 0,
-            nextUpdateString: "",
+            nextUpdateString: '',
             lastUpdate: 0,
-            lastUpdateString: "",
+            lastUpdateString: '',
             forecastHours: 0,
             forecastStart: 0,
             forecastEnd: 0,
@@ -149,9 +144,6 @@ export function InfoDisplay(): React.ReactElement {
         codeHistoryUpdate: {},
     });
 
-    /**
-     * Fetches InfoResponse from API on mount.
-     */
     useEffect(() => {
         fetch(API.info())
             .then(res => res.json())
@@ -166,167 +158,210 @@ export function InfoDisplay(): React.ReactElement {
     }, []);
 
     return (
-        <div>
-            {/* Gliderport Info Section */}
-            <h3>Gliderport Info</h3>
-            <table>
-                <tbody>
-                    <tr>
-                        <td>Last Record in gliderport table:</td>
-                        <td>{gliderportInfo.lastRecord}</td>
-                    </tr>
-                    {gliderportInfo.firstRecord === null ? (
-                        <>
-                            <tr>
-                                <td>Most recent addData at:</td>
-                                <td>Never Called</td>
-                            </tr>
-                            <tr>
-                                <td>First Record of last added:</td>
-                                <td>Never Called</td>
-                            </tr>
-                            <tr>
-                                <td>Number of Records added:</td>
-                                <td>Never Called</td>
-                            </tr>
-                        </>
-                    ) : (
-                        <>
-                            <tr>
-                                <td>Most recent addData at:</td>
-                                <td>{gliderportInfo.tdLast}</td>
-                            </tr>
-                            <tr>
-                                <td>First Record of last added:</td>
-                                <td>{gliderportInfo.firstRecord}</td>
-                            </tr>
-                            <tr>
-                                <td>Number of Records added:</td>
-                                <td>{gliderportInfo.numberRecords}</td>
-                            </tr>
-                        </>
-                    )}
-                    <tr>
-                        <td>Latest Hours table timestamp is:</td>
-                        <td>
-                            {gliderportInfo.latestHours === 0
-                                ? "Never Called"
-                                : `${gliderportInfo.latestHours} (${gliderportInfo.latestHoursString})`}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <Container className="py-4">
 
-            {/* Hours Table Section */}
-            <h3>Hours has {hoursTable.count} entries</h3>
-            <table style={{ textAlign: 'center' }}>
-                <thead>
-                    <tr>
-                        <th>Hour Start</th>
-                        <th>Hours Count</th>
-                        <th>Gliderport Count</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {hoursTable.entries.map((entry, idx) => (
-                        <tr key={idx}>
-                            <td>{entry.startString}</td>
-                            <td>{entry.hoursCount}</td>
-                            <td>{entry.gliderportCount}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {/* Server Sent Section */}
-            <h3>Server Sent Table</h3>
-            {serverSent ? (
-                <table>
-                    <tbody>
-                        <tr>
-                            <td><b>Now</b></td>
-                            <td>({serverSent.now})</td>
-                        </tr>
-                        {serverSent.sun &&
-                            Object.entries(serverSent.sun).map(([key, value]) => (
-                                <tr key={key}>
-                                    <td>{key}</td>
-                                    <td>{value}</td>
-                                </tr>
-                            ))}
-                        {serverSent.computed &&
-                            Object.entries(serverSent.computed).map(([key, comp]) => (
-                                <tr key={key}>
-                                    <td>{key}</td>
-                                    <td>({comp.original}) <b>{comp.display}</b> ({comp.delta})</td>
-                                </tr>
-                            ))}
-                    </tbody>
-                </table>
-            ) : (
-                <p>No server sent data available.</p>
-            )}
-
-            {/* Code History Overview Section */}
-            <h3>Code History Table (last 10 overview)</h3>
-            <table>
-                <thead>
-                    <tr><th>Date</th><th>Code Changes</th></tr>
-                </thead>
-                <tbody>
-                    {codeHistory.overview.map((entry, idx) => (
-                        <tr key={idx}>
-                            <td>{entry.dateString}</td>
-                            <td>{entry.codeChanges} changes</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {/* Code History Latest Details Section */}
-            {codeHistory.latestDetails && (
-                <>
-                    <h3>Latest Code History Table details for {codeHistory.latestDetails.dateString} with {codeHistory.latestDetails.codes.length} code changes</h3>
-                    <table>
+            {/* Gliderport Info */}
+            <Card className="mb-4 shadow-sm">
+                <Card.Header className="fw-semibold bg-secondary text-white">Gliderport Info</Card.Header>
+                <Card.Body className="p-0">
+                    <Table className="table table-sm table-striped table-bordered mb-0">
                         <tbody>
-                            <tr><td>start</td><td>{codeHistory.latestDetails.limits[0]} hr</td><td>{codeHistory.latestDetails.limits[0] * 3600} s</td></tr>
-                            <tr><td>stop</td><td>{codeHistory.latestDetails.limits[1]} hr</td><td>{codeHistory.latestDetails.limits[1] * 3600} s</td></tr>
-                            {codeHistory.latestDetails.codes.length > 0 && (
-                                <tr>
-                                    <td>First at</td>
-                                    <td>{codeHistory.latestDetails.codes[0].time} s after start</td>
-                                    <td>{codeHistory.latestDetails.codes[0].timeHMS} from day start</td>
-                                </tr>
+                            <tr>
+                                <td className="fw-semibold w-50">Last Record</td>
+                                <td>{gliderportInfo.lastRecord ?? '—'}</td>
+                            </tr>
+                            {gliderportInfo.firstRecord === null ? (
+                                <>
+                                    <tr><td className="fw-semibold">Most recent addData</td><td>Never called</td></tr>
+                                    <tr><td className="fw-semibold">First record of last batch</td><td>Never called</td></tr>
+                                    <tr><td className="fw-semibold">Records added</td><td>Never called</td></tr>
+                                </>
+                            ) : (
+                                <>
+                                    <tr><td className="fw-semibold">Most recent addData</td><td>{gliderportInfo.tdLast}</td></tr>
+                                    <tr><td className="fw-semibold">First record of last batch</td><td>{String(gliderportInfo.firstRecord)}</td></tr>
+                                    <tr><td className="fw-semibold">Records added</td><td>{gliderportInfo.numberRecords}</td></tr>
+                                </>
                             )}
-                            {codeHistory.latestDetails.codes.map((ci, j) => (
-                                <tr key={j}><td>{ci.time}</td><td>{ci.timeHMS}</td><td>{ci.description} ({ci.code})</td></tr>
+                            <tr>
+                                <td className="fw-semibold">Latest Hours table timestamp</td>
+                                <td>
+                                    {gliderportInfo.latestHours === 0
+                                        ? 'Never called'
+                                        : `${gliderportInfo.latestHours} (${gliderportInfo.latestHoursString})`}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </Table>
+                </Card.Body>
+            </Card>
+
+            {/* Hours Table */}
+            <Card className="mb-4 shadow-sm">
+                <Card.Header className="fw-semibold bg-secondary text-white">
+                    Hours Table — {hoursTable.count} entries
+                </Card.Header>
+                <Card.Body className="p-0">
+                    <Table className="table table-sm table-striped table-bordered mb-0">
+                        <thead className="table-dark">
+                            <tr>
+                                <th>Hour Start</th>
+                                <th>Hours Count</th>
+                                <th>Gliderport Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {hoursTable.entries.map((entry, idx) => (
+                                <tr key={idx}>
+                                    <td>{entry.startString}</td>
+                                    <td>{entry.hoursCount}</td>
+                                    <td>{entry.gliderportCount}</td>
+                                </tr>
                             ))}
                         </tbody>
-                    </table>
-                </>
+                    </Table>
+                </Card.Body>
+            </Card>
+
+            {/* Server Sent */}
+            <Card className="mb-4 shadow-sm">
+                <Card.Header className="fw-semibold bg-secondary text-white">Server Sent Data</Card.Header>
+                <Card.Body className="p-0">
+                    {serverSent ? (
+                        <Table className="table table-sm table-striped table-bordered mb-0">
+                            <tbody>
+                                <tr>
+                                    <td className="fw-semibold w-40">Now</td>
+                                    <td>{serverSent.now}</td>
+                                </tr>
+                                {serverSent.sun &&
+                                    Object.entries(serverSent.sun).map(([key, value]) => (
+                                        <tr key={key}>
+                                            <td className="fw-semibold">{key}</td>
+                                            <td>{value}</td>
+                                        </tr>
+                                    ))}
+                                {serverSent.computed &&
+                                    Object.entries(serverSent.computed).map(([key, comp]) => (
+                                        <tr key={key}>
+                                            <td className="fw-semibold">{key}</td>
+                                            <td>
+                                                ({comp.original}) <strong>{comp.display}</strong>{' '}
+                                                <span className="text-muted">({comp.delta})</span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                            </tbody>
+                        </Table>
+                    ) : (
+                        <Card.Body><p className="text-muted mb-0">No server sent data available.</p></Card.Body>
+                    )}
+                </Card.Body>
+            </Card>
+
+            {/* Code History Overview */}
+            <Card className="mb-4 shadow-sm">
+                <Card.Header className="fw-semibold bg-secondary text-white">Code History (last 10 days)</Card.Header>
+                <Card.Body className="p-0">
+                    <Table className="table table-sm table-striped table-bordered mb-0">
+                        <thead className="table-dark">
+                            <tr>
+                                <th>Date</th>
+                                <th>Code Changes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {codeHistory.overview.map((entry, idx) => (
+                                <tr key={idx}>
+                                    <td>{entry.dateString}</td>
+                                    <td>{entry.codeChanges}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </Card.Body>
+            </Card>
+
+            {/* Code History Latest Details */}
+            {codeHistory.latestDetails && (
+                <Card className="mb-4 shadow-sm">
+                    <Card.Header className="fw-semibold bg-secondary text-white">
+                        Latest Code History — {codeHistory.latestDetails.dateString}{' '}
+                        ({codeHistory.latestDetails.codes.length} changes)
+                    </Card.Header>
+                    <Card.Body className="p-0">
+                        <Table className="table table-sm table-striped table-bordered mb-0">
+                            <thead className="table-dark">
+                                <tr><th>Time (s)</th><th>HMS</th><th>Description</th><th>Code</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colSpan={2} className="fw-semibold">Window</td>
+                                    <td colSpan={2}>
+                                        {codeHistory.latestDetails.limits[0]} – {codeHistory.latestDetails.limits[1]} hr
+                                    </td>
+                                </tr>
+                                {codeHistory.latestDetails.codes.map((ci, j) => (
+                                    <tr key={j}>
+                                        <td>{ci.time}</td>
+                                        <td>{ci.timeHMS}</td>
+                                        <td>{ci.description}</td>
+                                        <td>{ci.code}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </Card.Body>
+                </Card>
             )}
 
-            {/* Add Data Section */}
-            <h3>Add Data</h3>
-            <p>Data and Hours table update Info:</p>
-            <table>
-                <tbody>
-                    <tr><td>Last called:</td><td>{addData.lastCalledString} ({addData.lastCalled})</td></tr>
-                    <tr><td>Received records:</td><td>{addData.numberRecordsReceived} records received from PI3 and added to gliderport table</td></tr>
-                    <tr><td>Last entry in hours table:</td><td>{addData.lastEntryInHoursString} ({addData.lastEntryInHours})</td></tr>
-                    {addData.hoursInfo.map((hi, k) => (
-                        <tr key={k}><td>Hour {k + 1}:</td><td>Found {hi.resultsFound} entries for {hi.tsString || hi.ts}</td></tr>
-                    ))}
-                    <tr><td>Next forecast update:</td><td>{addData.forecast.nextUpdateString} ({addData.forecast.nextUpdate})</td></tr>
-                    <tr><td>Last forecast update:</td><td>{addData.forecast.lastUpdateString} ({addData.forecast.lastUpdate})</td></tr>
-                    <tr><td>Forecast hours:</td><td>{addData.forecast.forecastHours}</td></tr>
-                    <tr><td>Forecast start:</td><td>{addData.forecast.forecastStart}</td></tr>
-                    <tr><td>Forecast end:</td><td>{addData.forecast.forecastEnd}</td></tr>
-                </tbody>
-            </table>
-            <div style={{ height: '300px' }} />
-        </div>
+            {/* Add Data / ETL */}
+            <Card className="mb-4 shadow-sm">
+                <Card.Header className="fw-semibold bg-secondary text-white">Add Data (ETL)</Card.Header>
+                <Card.Body className="p-0">
+                    <Table className="table table-sm table-striped table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <td className="fw-semibold w-40">Last called</td>
+                                <td>{addData.lastCalledString} ({addData.lastCalled})</td>
+                            </tr>
+                            <tr>
+                                <td className="fw-semibold">Records received</td>
+                                <td>{addData.numberRecordsReceived}</td>
+                            </tr>
+                            <tr>
+                                <td className="fw-semibold">Last entry in hours table</td>
+                                <td>{addData.lastEntryInHoursString} ({addData.lastEntryInHours})</td>
+                            </tr>
+                            {addData.hoursInfo.map((hi, k) => (
+                                <tr key={k}>
+                                    <td className="fw-semibold">Hour {k + 1}</td>
+                                    <td>{hi.resultsFound} entries for {hi.tsString ?? hi.ts}</td>
+                                </tr>
+                            ))}
+                            <tr>
+                                <td className="fw-semibold">Next forecast update</td>
+                                <td>{addData.forecast.nextUpdateString} ({addData.forecast.nextUpdate})</td>
+                            </tr>
+                            <tr>
+                                <td className="fw-semibold">Last forecast update</td>
+                                <td>{addData.forecast.lastUpdateString} ({addData.forecast.lastUpdate})</td>
+                            </tr>
+                            <tr>
+                                <td className="fw-semibold">Forecast hours / start / end</td>
+                                <td>
+                                    {addData.forecast.forecastHours} hrs &nbsp;|&nbsp;
+                                    {addData.forecast.forecastStart} &nbsp;→&nbsp;
+                                    {addData.forecast.forecastEnd}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </Table>
+                </Card.Body>
+            </Card>
+
+        </Container>
     );
-};
+}
 
 export default InfoDisplay;

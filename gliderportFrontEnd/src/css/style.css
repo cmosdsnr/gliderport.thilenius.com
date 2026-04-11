@@ -8,9 +8,12 @@
 }
 
 #myContainer {   /*used in site nav*/
-    /* background-image: url('images/banner.jpg'); */
     background-repeat: repeat;
     background-position: 0 0;
+    /* Semi-transparent overlay so the banner image shows through while keeping text readable */
+    background-color: rgba(255, 255, 255, 0.55) !important;
+    border-bottom: none !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
 }
 
 #dirChart .nv-y .tick line {
@@ -56,12 +59,6 @@ svg.mysvg {
 width: 200px;
 }
 
-table  {
-  text-align: center;
-}
-table th {
-  text-align: center;
-}
 table p {
   font-size: 14px;
 }
@@ -299,23 +296,39 @@ a.nav-link {
 }
 
 
-.navbar-nav a:hover {    
+.navbar-nav a:hover {
     background-color: #64c2d3;
     color: #6e2258 !important;
 }
 
 a.nav-link.active {
-
     background-color: #8fd8ff;
     color: #7a4100 !important;
     font-size: 18px;
 }
 
 a.nav-link {
-    font-size: 16px;   
-    margin: 0px 15px 0px 15px;
+    font-size: 16px;
+    margin: 0px 8px 0px 8px;
     border-radius: 12px;
     color: #050104 !important;
+}
+
+/* Login / Sign-up action items in the navbar */
+.nav-auth-action {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 16px;
+    color: #050104;
+    cursor: pointer;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+.nav-auth-action:hover {
+    background-color: #64c2d3;
+    color: #6e2258;
 }
 
 /* ************************************************ */
@@ -468,4 +481,9 @@ background-color: rgb(32, 32, 197);
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+/* Blend the top of the page content with the navbar banner above it */
+body {
+    background: linear-gradient(180deg, #d6eef7 0px, #ffffff 90px) fixed, #ffffff;
 }

@@ -9,16 +9,14 @@
  *
  * Navigation structure:
  * - **Public links** — Home, Forecast, Contact (always visible).
- * - **Auth-gated links** — Equipment, Contribute, Dashboard, Blog
- *   (visible only when a user is signed in).
- * - **Stats dropdown** — Images, Hits, Changes, Links
+ * - **Stats dropdown** — Images, Hits, Changes, Links (signed-in users only).
+ * - **Account dropdown** — Dashboard, Equipment, Contribute, Blog, Logout
  *   (signed-in users only).
  * - **Admin dropdown** — Endpoints, Server Info, Messages, Debug,
  *   DB Archive, and TypeDoc links for all three server projects
  *   (visible only to users whose role is `"Administrator"`).
  * - **Login / Sign-up** — Opens the respective modal when no user
  *   session is active.
- * - **Logout** — Navigates to `/logout` when a session is active.
  */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -30,12 +28,25 @@ import {
     faHome,
     faDonate,
     faInfoCircle,
-    faTty,
-    faAtom,
+    faPhone,
     faWind,
     faSignInAlt,
+    faUserPlus,
+    faUser,
+    faUserShield,
+    faTachometerAlt,
+    faWrench,
+    faNewspaper,
     faSignOutAlt,
-    faUserPlus
+    faImage,
+    faChartBar,
+    faHistory,
+    faNetworkWired,
+    faServer,
+    faEnvelope,
+    faBook,
+    faBug,
+    faDatabase,
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -62,35 +73,9 @@ export const MyFontAwesomeIcon: React.FC<{ icon: IconDefinition; inverse?: boole
 };
 
 /**
- * Props for NavImageText component.
- */
-interface NavImageTextProps {
-    /** Icon for the link */
-    icon: IconDefinition | null;
-    /** Route name and label */
-    name: string;
-}
-
-/**
- * Renders a navigation link with optional icon.
- *
- * @param icon - Icon definition or null.
- * @param name - Route segment and display name.
- * @returns Nav.Link component.
- */
-function NavImageText({ icon, name }: NavImageTextProps) {
-    return (
-        <Nav.Link as={Link} to={`/${name}`} href={`/${name}`}>
-            {icon && <FontAwesomeIcon icon={icon} />}
-            <span style={{ paddingLeft: '5px' }}>{name}</span>
-        </Nav.Link>
-    );
-}
-
-/**
  * Configuration for navigation pages.
  */
-interface Page {
+export interface Page {
     icon: IconDefinition;
     name: string;
     /** Show when user is logged in */
@@ -105,50 +90,20 @@ interface Page {
  * Main application navigation bar.
  *
  * Renders a Bootstrap `Navbar` containing the paraglider brand logo, a
- * responsive hamburger toggler, and the full set of navigation links.
- * Authentication state (from {@link useAuth}) determines which items are
- * shown:
- *
- * - Unauthenticated visitors see public links plus Login / Sign-up buttons.
- * - Authenticated users additionally see auth-gated page links and the
- *   Stats dropdown.
- * - Users with the `"Administrator"` role also see the Admin dropdown,
- *   which includes links to the TypeDoc documentation for all three
- *   server projects (backend, frontend, gp_pi3_server).
+ * responsive hamburger toggler (collapses at lg), and the full set of
+ * navigation links. Authentication state (from {@link useAuth}) determines
+ * which items are shown.
  *
  * The navbar background image animates by shifting its `background-position`
  * on a 100 ms interval, cycling through a 500 px offset range.
  *
  * @returns The rendered Bootstrap Navbar element.
- *
- * @example
- * ```tsx
- * // Rendered once at the application root, above all routes.
- * <GpNavbar />
- * ```
  */
 export function GpNavbar(): React.ReactElement {
     const [bannerStyle, setBannerStyle] = useState<string>('-500px 500px');
     const [bannerTimer, setBannerTimer] = useState<number>(0);
     const { openModal } = useModal();
     const { currentUser } = useAuth();
-
-    /** Logs the current authenticated user to the console whenever it changes. */
-    useEffect(() => {
-        console.log('currentUser:', currentUser);
-    }, [currentUser]);
-
-    const pages: Page[] = [
-        { icon: faHome, name: 'Home' },
-        { icon: faInfoCircle, name: 'Stats', loggedIn: true },
-        { icon: faWind, name: 'Forecast' },
-        { icon: faAtom, name: 'Equipment', loggedIn: true },
-        { icon: faTty, name: 'Contact' },
-        { icon: faDonate, name: 'Contribute', loggedIn: true },
-        { icon: faTty, name: 'Dashboard', loggedIn: true },
-        { icon: faTty, name: 'Blog', loggedIn: true },
-        { icon: faTty, name: 'Admin', admin: true }
-    ];
 
     /**
      * Animates the navbar banner background by shifting its `background-position`
@@ -171,8 +126,7 @@ export function GpNavbar(): React.ReactElement {
 
     return (
         <Navbar
-            bg="light"
-            expand="md"
+            expand="lg"
             id="myContainer"
             style={{ backgroundPosition: bannerStyle, backgroundImage: `url(${banner})` }}
         >
@@ -182,77 +136,101 @@ export function GpNavbar(): React.ReactElement {
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="mr-auto">
-                    {pages.map((page, i) => {
-                        if (currentUser && (page.loggedIn || page.admin)) {
-                            if (page.admin && currentUser.role === 'Administrator') {
-                                return (
-                                    <NavDropdown key={i} title={<><MyFontAwesomeIcon icon={faUserPlus} /> Admin</>} id="admin-nav-dropdown">
-                                        <NavDropdown.Item as={Link} to="/admin/listEndpoints">Endpoints</NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/admin/information">Server Info</NavDropdown.Item>
-                                        <NavDropdown.Divider />
-                                        <NavDropdown.Item as={Link} to="/admin/Messages">Messages</NavDropdown.Item>
-                                        <NavDropdown.Item
-                                            href={API.docs.backend()}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            backend Documentation
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item
-                                            href={API.docs.frontend()}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            frontend Documentation
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item
-                                            href={API.docs.pi3Server()}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            gp_pi3_server Documentation
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/admin/Debug">Debug</NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/admin/archive">DB Archive</NavDropdown.Item>
-                                    </NavDropdown>
-                                );
-                            }
-                            if (page.name === 'Stats') {
-                                return (
-                                    <NavDropdown key={i} title={<><MyFontAwesomeIcon icon={faInfoCircle} /> Stats</>} id="stats-nav-dropdown">
-                                        <NavDropdown.Item as={Link} to="/stats/images">Images</NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/stats/hits">Hits</NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/stats/changes">Changes</NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/stats/links">Links</NavDropdown.Item>
-                                    </NavDropdown>
-                                );
-                            }
-                            if (page.loggedIn) {
-                                return <NavImageText key={i} icon={page.icon} name={page.name} />;
-                            }
-                        }
-                        if (!currentUser && page.loggedOut) {
-                            return <NavImageText key={i} icon={page.icon} name={page.name} />;
-                        }
-                        if (!page.loggedIn && !page.loggedOut && !page.admin) {
-                            return <NavImageText key={i} icon={page.icon} name={page.name} />;
-                        }
-                        return null;
-                    })}
-                    {currentUser ? (
-                        <Nav.Link as={Link} to="/logout">
-                            <MyFontAwesomeIcon icon={faSignOutAlt} />
-                            <span className="navText">Logout</span>
-                        </Nav.Link>
-                    ) : (
+                    {/* Public links — always visible */}
+                    <Nav.Link as={Link} to="/home">
+                        <FontAwesomeIcon icon={faHome} /> Home
+                    </Nav.Link>
+                    <Nav.Link as={Link} to="/forecast">
+                        <FontAwesomeIcon icon={faWind} /> Forecast
+                    </Nav.Link>
+                    <Nav.Link as={Link} to="/contact">
+                        <FontAwesomeIcon icon={faPhone} /> Contact
+                    </Nav.Link>
+
+                    {/* Signed-in links */}
+                    {currentUser && (
                         <>
-                            <div style={{ paddingTop: '8px', paddingRight: '25px' }} onClick={() => openModal(ModalType.Login)}>
-                                <MyFontAwesomeIcon icon={faSignInAlt} />
-                                <span className="navText"> Login</span>
+                            <NavDropdown
+                                title={<><FontAwesomeIcon icon={faInfoCircle} /> Stats</>}
+                                id="stats-nav-dropdown"
+                            >
+                                <NavDropdown.Item as={Link} to="/stats/images">
+                                    <FontAwesomeIcon icon={faImage} fixedWidth /> Images
+                                </NavDropdown.Item>
+                                <NavDropdown.Item as={Link} to="/stats/hits">
+                                    <FontAwesomeIcon icon={faChartBar} fixedWidth /> Hits
+                                </NavDropdown.Item>
+                                <NavDropdown.Item as={Link} to="/stats/changes">
+                                    <FontAwesomeIcon icon={faHistory} fixedWidth /> Changes
+                                </NavDropdown.Item>
+                            </NavDropdown>
+
+                            <NavDropdown
+                                title={<><FontAwesomeIcon icon={faUser} /> Account</>}
+                                id="account-nav-dropdown"
+                            >
+                                <NavDropdown.Item as={Link} to="/dashboard">
+                                    <FontAwesomeIcon icon={faTachometerAlt} fixedWidth /> Dashboard
+                                </NavDropdown.Item>
+                                <NavDropdown.Item as={Link} to="/equipment">
+                                    <FontAwesomeIcon icon={faWrench} fixedWidth /> Equipment
+                                </NavDropdown.Item>
+                                <NavDropdown.Item as={Link} to="/contribute">
+                                    <FontAwesomeIcon icon={faDonate} fixedWidth /> Contribute
+                                </NavDropdown.Item>
+                                <NavDropdown.Item as={Link} to="/blog">
+                                    <FontAwesomeIcon icon={faNewspaper} fixedWidth /> Blog
+                                </NavDropdown.Item>
+                                <NavDropdown.Divider />
+                                <NavDropdown.Item as={Link} to="/logout">
+                                    <FontAwesomeIcon icon={faSignOutAlt} fixedWidth /> Log Out
+                                </NavDropdown.Item>
+                            </NavDropdown>
+                        </>
+                    )}
+
+                    {/* Admin dropdown */}
+                    {currentUser?.role === 'Administrator' && (
+                        <NavDropdown
+                            title={<><FontAwesomeIcon icon={faUserShield} /> Admin</>}
+                            id="admin-nav-dropdown"
+                        >
+                            <NavDropdown.Item as={Link} to="/admin/listEndpoints">
+                                <FontAwesomeIcon icon={faNetworkWired} fixedWidth /> Endpoints
+                            </NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to="/admin/information">
+                                <FontAwesomeIcon icon={faServer} fixedWidth /> Server Info
+                            </NavDropdown.Item>
+                            <NavDropdown.Divider />
+                            <NavDropdown.Item as={Link} to="/admin/Messages">
+                                <FontAwesomeIcon icon={faEnvelope} fixedWidth /> Messages
+                            </NavDropdown.Item>
+                            <NavDropdown.Item href={API.docs.backend()} target="_blank" rel="noopener noreferrer">
+                                <FontAwesomeIcon icon={faBook} fixedWidth /> Backend Docs
+                            </NavDropdown.Item>
+                            <NavDropdown.Item href={API.docs.frontend()} target="_blank" rel="noopener noreferrer">
+                                <FontAwesomeIcon icon={faBook} fixedWidth /> Frontend Docs
+                            </NavDropdown.Item>
+                            <NavDropdown.Item href={API.docs.pi3Server()} target="_blank" rel="noopener noreferrer">
+                                <FontAwesomeIcon icon={faBook} fixedWidth /> Pi3 Server Docs
+                            </NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to="/admin/Debug">
+                                <FontAwesomeIcon icon={faBug} fixedWidth /> Debug
+                            </NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to="/admin/archive">
+                                <FontAwesomeIcon icon={faDatabase} fixedWidth /> DB Archive
+                            </NavDropdown.Item>
+                        </NavDropdown>
+                    )}
+
+                    {/* Auth actions — logged out */}
+                    {!currentUser && (
+                        <>
+                            <div className="nav-auth-action" onClick={() => openModal(ModalType.Login)}>
+                                <FontAwesomeIcon icon={faSignInAlt} /> Login
                             </div>
-                            <div style={{ paddingTop: '8px', paddingRight: '25px' }} onClick={() => openModal(ModalType.SignUp)}>
-                                <MyFontAwesomeIcon icon={faUserPlus} />
-                                <span className="navText"> Sign-up</span>
+                            <div className="nav-auth-action" onClick={() => openModal(ModalType.SignUp)}>
+                                <FontAwesomeIcon icon={faUserPlus} /> Sign Up
                             </div>
                         </>
                     )}
