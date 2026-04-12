@@ -10,6 +10,7 @@ import React, { useState } from 'react';
 import { Table } from 'react-bootstrap';
 import { useSensorData } from '@/contexts/SensorDataContext';
 import { useStatusCollection } from '@/contexts/StatusCollection';
+import { useUnits } from '@/contexts/UnitsContext';
 import useInterval from 'hooks/useInterval';
 
 /**
@@ -33,9 +34,10 @@ export type CurrentTableProps = React.CSSProperties;
  */
 export function CurrentTable({ ...rest }: CurrentTableProps): React.ReactElement {
     // Pull in the array of readings from context
-    const { readings } = useSensorData();
-    // Pull in sunrise/sunset info from context
+    const { readings, dataLoaded, noData } = useSensorData();
     const { sun } = useStatusCollection();
+    const { fmtSpeed } = useUnits();
+    const outOfOrder = dataLoaded && noData;
 
     /**
      * The most recent reading, or defaults if no readings exist yet.
@@ -116,36 +118,37 @@ export function CurrentTable({ ...rest }: CurrentTableProps): React.ReactElement
         })
         : 'N/A';
 
+    const lbl: React.CSSProperties = { textAlign: 'right', color: '#555', fontWeight: 500, paddingRight: 6, whiteSpace: 'nowrap', width: '40%' };
+    const val: React.CSSProperties = { fontWeight: 700, paddingLeft: 2 };
+    const shade: React.CSSProperties = { backgroundColor: 'rgba(0,0,0,0.03)' };
+
+    const rows: [string, string][] = [
+        ['Speed',       outOfOrder ? '—' : fmtSpeed(latest.speed)],
+        ['Direction',   outOfOrder ? '—' : `${latest.direction}° (${Math.abs(270 - latest.direction)}° off)`],
+        ['Temperature', outOfOrder ? '—' : `${latest.temperature} °F`],
+        ['Pressure',    outOfOrder ? '—' : `${latest.pressure} mBar`],
+        ['Humidity',    outOfOrder ? '—' : `${latest.humidity}%`],
+        ['Sunrise',     sunrise],
+        ['Sunset',      sunset],
+        ['Last Reading', outOfOrder ? '—' : lastSeen],   // TODO: remove or style differently
+    ];
+
     return (
-        <Table size="sm" borderless style={{ width: '100%', ...rest }}>
-            <caption className="text-center text-muted small caption-top">{lastSeen}</caption>
-            <tbody>
-                <tr>
-                    <td className="text-primary">Speed:</td>
-                    <td className="fw-bold">{latest.speed} mph</td>
-                    <td className="text-primary">Temperature:</td>
-                    <td className="fw-bold">{latest.temperature} °F</td>
-                </tr>
-                <tr>
-                    <td className="text-primary">Direction:</td>
-                    <td className="fw-bold">
-                        {latest.direction}° ({Math.abs(270 - latest.direction)}° off)
-                    </td>
-                    <td className="text-primary">Pressure:</td>
-                    <td className="fw-bold">{latest.pressure} mBar</td>
-                </tr>
-                <tr>
-                    <td className="text-primary">Sunrise:</td>
-                    <td className="fw-bold">{sunrise}</td>
-                    <td className="text-primary">Humidity:</td>
-                    <td className="fw-bold">{latest.humidity}%</td>
-                </tr>
-                <tr>
-                    <td className="text-primary">Sunset:</td>
-                    <td className="fw-bold">{sunset}</td>
-                </tr>
-            </tbody>
-        </Table>
+        <div style={{ borderRadius: 8, border: '1px solid #b0c4de', overflow: 'hidden' }}>
+            <div style={{ backgroundColor: '#1a5276', color: 'white', padding: '5px 12px' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Current Conditions</div>
+            </div>
+            <Table size="sm" borderless style={{ width: '100%', marginBottom: 0, ...rest }}>
+                <tbody>
+                    {rows.map(([label, value], i) => (
+                        <tr key={label} style={i % 2 === 1 ? shade : undefined}>
+                            <td style={lbl}>{label}</td>
+                            <td style={val}>{value}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </Table>
+        </div>
     );
 };
 

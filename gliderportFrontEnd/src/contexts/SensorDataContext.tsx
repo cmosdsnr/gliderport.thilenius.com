@@ -56,6 +56,10 @@ const normalizeRecords = (raw: RawRecord[], initialDir: number): { readings: Rea
 
 interface SensorDataContextInterface {
     readings: Reading[];
+    /** True once the initial fetch completed (success or empty). */
+    dataLoaded: boolean;
+    /** True if the initial fetch returned no records — sensor system may be offline. */
+    noData: boolean;
 }
 
 const SensorDataContext = createContext<SensorDataContextInterface>({} as SensorDataContextInterface);
@@ -68,6 +72,8 @@ export function SensorDataProvider({ children }: { children: React.ReactNode }):
     const [readings, setReadings] = useState<Reading[]>([
         { time: 0, speed: 0, direction: 0, humidity: 0, pressure: 0, temperature: 0 },
     ]);
+    const [dataLoaded, setDataLoaded] = useState(false);
+    const [noData, setNoData] = useState(false);
     const { lastMessage } = useWebSocket();
 
     // Initial 24-hour fetch on mount
@@ -79,9 +85,14 @@ export function SensorDataProvider({ children }: { children: React.ReactNode }):
                 if (Array.isArray(data) && data.length > 0) {
                     const { readings: normalized } = normalizeRecords(data, 270);
                     setReadings(normalized);
+                } else {
+                    setNoData(true);
                 }
             } catch (err: unknown) {
                 console.error('Error fetching sensor data:', err instanceof Error ? err.message : err);
+                setNoData(true);
+            } finally {
+                setDataLoaded(true);
             }
         };
         fetchInitial();
@@ -103,7 +114,7 @@ export function SensorDataProvider({ children }: { children: React.ReactNode }):
     }, [lastMessage]);
 
     return (
-        <SensorDataContext.Provider value={{ readings }}>
+        <SensorDataContext.Provider value={{ readings, dataLoaded, noData }}>
             {children}
         </SensorDataContext.Provider>
     );

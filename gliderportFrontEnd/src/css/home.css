@@ -8,5 +8,11 @@
   }
 
 .home-wind-row { padding-top: 20px; background-color: rgb(200,220,255); }
-.home-data-row { padding-top: 30px; background-color: rgb(255,255,200); }
+
+/* 50px gap below the dial when stacked (xs through md); removed at lg+ */
+.home-video-col { margin-top: 50px; }
+@media (min-width: 992px) {
+    .home-video-col { margin-top: 0; }
+}
+.home-data-row { padding: 20px; background-color: rgb(255,255,200); }
 .home-tabs-row { background-color: rgb(240,255,255); }

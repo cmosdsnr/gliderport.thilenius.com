@@ -17,6 +17,7 @@ import { SensorDataProvider } from '@/contexts/SensorDataContext'
 import { CameraProvider } from '@/contexts/CameraContext'
 import { SocialDataProvider } from '@/contexts/SocialDataContext'
 import { StatusCollectionProvider } from '@/contexts/StatusCollection'
+import { UnitsProvider } from '@/contexts/UnitsContext'
 
 import Modals, { ModalProvider } from 'modals/Modals'
 
@@ -68,7 +69,8 @@ export function App(): React.ReactElement {
                     <SensorDataProvider>
                         <CameraProvider>
                             <SocialDataProvider>
-                                <StatusCollectionProvider>
+                                <UnitsProvider>
+                <StatusCollectionProvider>
                     <Router>
                         <ModalProvider>
                             <Modals />
@@ -112,6 +114,7 @@ export function App(): React.ReactElement {
                         </ModalProvider>
                     </Router>
                                 </StatusCollectionProvider>
+                                </UnitsProvider>
                             </SocialDataProvider>
                         </CameraProvider>
                     </SensorDataProvider>

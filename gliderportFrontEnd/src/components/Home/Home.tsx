@@ -15,6 +15,7 @@ import 'react-tabs/style/react-tabs.css';
 
 import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useSocialData } from '@/contexts/SocialDataContext';
+import { useSensorData } from '@/contexts/SensorDataContext';
 import History from '../History/History';
 import CurrentTable from './CurrentTable';
 import Today from './Today';
@@ -41,19 +42,28 @@ import { text } from 'd3';
 */
 const Message: React.FC = () => {
     const { siteMessages } = useStatusCollection();
+    const { dataLoaded, noData } = useSensorData();
 
     useEffect(() => {
         console.log('Site messages updated:', siteMessages);
     }, [siteMessages]);
 
+    const hasContent = siteMessages?.[0] != null || siteMessages?.[1] != null || (dataLoaded && noData);
+    if (!hasContent) return null;
+
     return (
         <Row>
             <Col xs={12} className="message-row">
-                {siteMessages?.[0] ?? 'No message'}
+                {siteMessages?.[0]}
                 {siteMessages?.[1] != null && (
                     <>
                         <br /> {siteMessages[1]}
                     </>
+                )}
+                {dataLoaded && noData && (
+                    <div style={{ color: '#f44336', fontWeight: 600, marginTop: 4 }}>
+                        ⚠ No sensor data received — the data collection system may be offline.
+                    </div>
                 )}
             </Col>
         </Row>
@@ -82,19 +92,24 @@ export function Home(): React.ReactElement {
     const { offline, loadData } = useSocialData();
 
     // Development toggle to display current grid size
-    const showGridSize: boolean = false;
+    const showGridSize: boolean = true;
 
     return (
         <>
-            {/* Grid size debug */}
+            {/* Fixed bottom grid-size banner */}
             {showGridSize && (
-                <Row style={{ textAlign: 'center' }}>
-                    <Col xs={12} className="d-sm-none">Extra Small ({width}px)</Col>
-                    <Col sm={12} className="d-none d-sm-block d-md-none">Small ({width}px)</Col>
-                    <Col md={12} className="d-none d-md-block d-lg-none">Medium ({width}px)</Col>
-                    <Col md={12} className="d-none d-lg-block d-xl-none">Large ({width}px)</Col>
-                    <Col md={12} className="d-none d-xl-block">Extra Large ({width}px)</Col>
-                </Row>
+                <div style={{
+                    position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
+                    backgroundColor: 'rgba(0,0,0,0.75)', color: '#fff',
+                    fontSize: 11, textAlign: 'center', padding: '2px 0',
+                    pointerEvents: 'none',
+                }}>
+                    <span className="d-sm-none">XS {width}px</span>
+                    <span className="d-none d-sm-block d-md-none">SM {width}px</span>
+                    <span className="d-none d-md-block d-lg-none">MD {width}px</span>
+                    <span className="d-none d-lg-block d-xl-none">LG {width}px</span>
+                    <span className="d-none d-xl-block">XL {width}px</span>
+                </div>
             )}
 
             {/* Wind dial and live feed */}
@@ -102,7 +117,7 @@ export function Home(): React.ReactElement {
                 <Col xs={12} lg={{ span: 5 }} xl={{ span: 4 }}>
                     <WindDial picRef={picRef} passedSeconds={passedSeconds} />
                 </Col>
-                <Col xs={12} lg={{ span: 7 }} className="homePanel" ref={picRef}>
+                <Col xs={12} lg={{ span: 7 }} className="homePanel home-video-col" ref={picRef}>
                     <Row>
                         <Col xs={12} className="container">
                             <UpdatingVideo />
@@ -125,11 +140,10 @@ export function Home(): React.ReactElement {
 
             {/* Today, CurrentTable, and donate section */}
             <Row className="home-data-row">
-                <Col xs={6} lg={{ span: 3 }} className="homePanel">
+                <Col xs={4} lg={{ span: 3 }} className="homePanel">
                     <Today />
                 </Col>
-                <Col xs={6} className="d-lg-none homePanel">–</Col>
-                <Col xs={12} lg={{ span: 5 }} className="homePanel">
+                <Col xs={8} lg={{ span: 5 }} className="homePanel">
                     <CurrentTable fontSize="min(15px, 1.5vw)" />
                 </Col>
                 <Col lg={{ span: 3, offset: 1 }} className="d-none d-lg-block homePanel">
@@ -146,6 +160,20 @@ export function Home(): React.ReactElement {
                             />
                         </a>
                         <KoFiWidget />
+                        <div className="mt-3">
+                            <div className="mb-1" style={{ fontSize: '0.85rem' }}>
+                                Get the Android app!
+                            </div>
+                            {/* TODO: replace href with your Play Store listing URL */}
+                            <a href="https://play.google.com/store/apps" target="_blank" rel="noopener noreferrer">
+                                <img
+                                    src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+                                    alt="Get it on Google Play"
+                                    height={48}
+                                    style={{ marginLeft: '-8px' }}
+                                />
+                            </a>
+                        </div>
                     </div>
                 </Col>
             </Row>

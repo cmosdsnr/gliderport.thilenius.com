@@ -30,6 +30,7 @@ import React, { useState, useRef, useEffect, useCallback, WheelEvent } from 'rea
 import * as d3 from 'd3'
 import 'css/windDial.css'
 import { useSensorData } from '@/contexts/SensorDataContext'
+import { useUnits, SPEED_UNITS } from '@/contexts/UnitsContext'
 
 /**
  * Props for the {@link WindDial} component.
@@ -68,7 +69,8 @@ export interface WindDialProps {
 export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactElement {
     const divRef = useRef<HTMLDivElement>(null)
     const [lastSeen, setLastSeen] = useState<string>('')
-    const { readings } = useSensorData()
+    const { readings, dataLoaded, noData } = useSensorData()
+    const { unit, fmtSpeed } = useUnits()
 
     const svgWidth = useRef<number>(0)
     const sizeInPx = 400
@@ -160,6 +162,14 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
         if (!readings) return
         /** Margin in pixels around the circular plot area. */
         const margin = 25
+
+        // Scale factor: 5 rings × 90 domain-units/ring = 450 domain units to the outer ring.
+        // Outer ring represents OUTER_RING[unit] in the selected unit = outerMph in mph.
+        // So domainUnitsPerMph = 450 / outerMph.
+        const OUTER_RING_VALS: Record<string, number> = { mph: 20, kmh: 30, fts: 30, ms: 10 }
+        const _unitDef = SPEED_UNITS.find(u => u.key === unit) ?? SPEED_UNITS[0]
+        const _outerMph = (OUTER_RING_VALS[unit] ?? 20) / _unitDef.factor
+        const domainUnitsPerMph = 450 / _outerMph
 
         var x = d3.scaleLinear()
             .domain([-500 / zoomFactor.current, 500 / zoomFactor.current])
@@ -282,55 +292,58 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
                 .style("stroke-dasharray", ("3, 3"))
                 .attr("clip-path", "url(#wdClip)")
         }
-        /** Plot the last 10 wind readings as × markers and surround them with a bounding ellipse to visualise spread. */
-        if (readings.length > 10) {
-            var lxMin = 1000, lyMin = 1000
-            var lxMax = -1000, lyMax = -1000
-            for (let i = 0; i < 10; i++) {
-                // debugger
-                var lx = 22.5 * readings[readings.length - 10 + i].speed * Math.cos((360 + 90 - readings[readings.length - 10 + i].direction) * Math.PI / 180)
-                var ly = 22.5 * readings[readings.length - 10 + i].speed * Math.sin((360 + 90 - readings[readings.length - 10 + i].direction) * Math.PI / 180)
+        const outOfOrder = dataLoaded && noData
 
-                //Draw X
-                svg.append('line')
-                    .attr("x1", x(lx) - 3)
-                    .attr("y1", y(ly) + 3)
-                    .attr("x2", x(lx) + 3)
-                    .attr("y2", y(ly) - 3)
-                    .style("stroke-width", 1)
-                    .style("stroke", ArrowColor)
-                svg.append('line')
-                    .attr("x1", x(lx) - 3)
-                    .attr("y1", y(ly) - 3)
-                    .attr("x2", x(lx) + 3)
-                    .attr("y2", y(ly) + 3)
-                    .style("stroke-width", 1)
-                    .style("stroke", ArrowColor)
-                if (lx > lxMax) lxMax = lx
-                if (ly > lyMax) lyMax = ly
-                if (lx < lxMin) lxMin = lx
-                if (ly < lyMin) lyMin = ly
+        if (!outOfOrder) {
+            /** Plot the last 10 wind readings as × markers and surround them with a bounding ellipse to visualise spread. */
+            if (readings.length > 10) {
+                var lxMin = 1000, lyMin = 1000
+                var lxMax = -1000, lyMax = -1000
+                for (let i = 0; i < 10; i++) {
+                    var lx = domainUnitsPerMph * readings[readings.length - 10 + i].speed * Math.cos((360 + 90 - readings[readings.length - 10 + i].direction) * Math.PI / 180)
+                    var ly = domainUnitsPerMph * readings[readings.length - 10 + i].speed * Math.sin((360 + 90 - readings[readings.length - 10 + i].direction) * Math.PI / 180)
+
+                    //Draw X
+                    svg.append('line')
+                        .attr("x1", x(lx) - 3)
+                        .attr("y1", y(ly) + 3)
+                        .attr("x2", x(lx) + 3)
+                        .attr("y2", y(ly) - 3)
+                        .style("stroke-width", 1)
+                        .style("stroke", ArrowColor)
+                    svg.append('line')
+                        .attr("x1", x(lx) - 3)
+                        .attr("y1", y(ly) - 3)
+                        .attr("x2", x(lx) + 3)
+                        .attr("y2", y(ly) + 3)
+                        .style("stroke-width", 1)
+                        .style("stroke", ArrowColor)
+                    if (lx > lxMax) lxMax = lx
+                    if (ly > lyMax) lyMax = ly
+                    if (lx < lxMin) lxMin = lx
+                    if (ly < lyMin) lyMin = ly
+                }
+                cx = (lxMax + lxMin) / 2
+                cy = (lyMax + lyMin) / 2
+                var rx = (lxMax - cx) * 1.5
+                var ry = (lyMax - cy) * 1.5
+
+                svg.append('ellipse')
+                    .attr('cx', x(cx))
+                    .attr('cy', y(cy))
+                    .attr('rx', r(rx))
+                    .attr('ry', r(ry))
+                    .attr('stroke', ArrowColor)
+                    .attr('fill', 'none')
             }
-            cx = (lxMax + lxMin) / 2
-            cy = (lyMax + lyMin) / 2
-            var rx = (lxMax - cx) * 1.5
-            var ry = (lyMax - cy) * 1.5
-
-            // console.log(cx + " " + cy + " " + rx + " " + ry)
-            svg.append('ellipse')
-                .attr('cx', x(cx))
-                .attr('cy', y(cy))
-                .attr('rx', r(rx))
-                .attr('ry', r(ry))
-                .attr('stroke', ArrowColor)
-                .attr('fill', 'none')
         }
+
         /** Latest reading values — also referenced by the text labels rendered below. */
         const speed = readings.length > 0 ? readings[readings.length - 1].speed : 0
         const direction = readings.length > 0 ? readings[readings.length - 1].direction : 0
 
-        lx = 22.5 * speed * Math.cos((360 + 90 - direction) * Math.PI / 180)
-        ly = 22.5 * speed * Math.sin((360 + 90 - direction) * Math.PI / 180)
+        lx = domainUnitsPerMph * speed * Math.cos((360 + 90 - direction) * Math.PI / 180)
+        ly = domainUnitsPerMph * speed * Math.sin((360 + 90 - direction) * Math.PI / 180)
 
         var markerBoxWidth = 10,
             markerBoxHeight = 10,
@@ -338,28 +351,29 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
             refY = 5,
             arrowPoints: [number, number][] = [[0, 0], [0, 10], [10, 5]]
 
-        // if (data.direction.length > 2) debugger
-        /** Define an SVG arrowhead marker and draw the primary wind-vector line from the origin to the current reading. */
-        svgDefs.append('marker')
-            .attr('id', 'arrow')
-            .attr('viewBox', [0, 0, markerBoxWidth, markerBoxHeight])
-            .attr('refX', refX)
-            .attr('refY', refY)
-            .attr('markerWidth', markerBoxWidth)
-            .attr('markerHeight', markerBoxHeight)
-            .attr('orient', 'auto-start-reverse')
-            .append('path')
-            .attr('d', d3.line()(arrowPoints))
-            .attr('stroke', ArrowColor)
-            .attr('fill', ArrowColor)
+        if (!outOfOrder) {
+            /** Define an SVG arrowhead marker and draw the primary wind-vector line from the origin to the current reading. */
+            svgDefs.append('marker')
+                .attr('id', 'arrow')
+                .attr('viewBox', [0, 0, markerBoxWidth, markerBoxHeight])
+                .attr('refX', refX)
+                .attr('refY', refY)
+                .attr('markerWidth', markerBoxWidth)
+                .attr('markerHeight', markerBoxHeight)
+                .attr('orient', 'auto-start-reverse')
+                .append('path')
+                .attr('d', d3.line()(arrowPoints))
+                .attr('stroke', ArrowColor)
+                .attr('fill', ArrowColor)
 
-        svg.append('path')
-            .attr('d', d3.line()(
-                [[x(0), y(0)], [x(lx), y(ly)]]
-            ))
-            .attr('stroke', ArrowColor)
-            .attr('marker-end', 'url(#arrow)')
-            .attr('fill', 'none')
+            svg.append('path')
+                .attr('d', d3.line()(
+                    [[x(0), y(0)], [x(lx), y(ly)]]
+                ))
+                .attr('stroke', ArrowColor)
+                .attr('marker-end', 'url(#arrow)')
+                .attr('fill', 'none')
+        }
 
         /** Draw the vertical N–S axis line. */
         svg.append("line")
@@ -390,33 +404,47 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
         svg.append("text").attr("x", xa(0) - fontSize / 3).attr("y", ya(-500)).text("S")
 
         fontSize = 14
-        //rotate(-45 " + x(0) + " " + y(0) + ")")
+        // Ring labels: outer ring = nearest 10 in selected unit; 5 equal steps
+        const OUTER_RING: Record<string, number> = { mph: 20, kmh: 30, fts: 30, ms: 10 }
+        const unitDef    = SPEED_UNITS.find(u => u.key === unit) ?? SPEED_UNITS[0]
+        const outerUnit  = OUTER_RING[unit] ?? 20
+        const ringStep   = outerUnit / 5
         var block = svg.append('g').attr("class", "wind-dial-text").attr("clip-path", "url(#wdClip)").attr("transform", "translate(0,0) rotate(-45 " + xa(10) + " " + ya(10) + ")")
-        block.append("text").attr("x", x(0) - fontSize / 2).attr("y", y(-1 * 90) - fontSize / 2).text("4")
-        block.append("text").attr("x", x(0) - fontSize / 2).attr("y", y(-2 * 90) - fontSize / 2).text("8")
-        block.append("text").attr("x", x(0) - fontSize / 2).attr("y", y(-3 * 90) - fontSize / 2).text("12")
-        block.append("text").attr("x", x(0) - fontSize / 2).attr("y", y(-4 * 90) - fontSize / 2).text("16")
-        block.append("text").attr("x", x(0) - fontSize / 2).attr("y", y(-5 * 90) - fontSize / 2).text("20")
-
+        for (let ri = 1; ri <= 5; ri++) {
+            block.append("text").attr("x", x(0) - fontSize / 2).attr("y", y(-ri * 90) - fontSize / 2).text(String(ri * ringStep))
+        }
 
         block = svg.append('g').attr("class", "wind-dial-mph").attr("transform", "translate(0,0) rotate(-45 " + xa(10) + " " + ya(10) + ")")
-        block.append("text").attr("x", xa(0) - fontSize / 2).attr("y", ya(-500) - fontSize).text("mph")
+        block.append("text").attr("x", xa(0) - fontSize / 2).attr("y", ya(-500) - fontSize).text(unitDef.label)
 
+        if (outOfOrder) {
+            /** Diagonal "Out of Order" overlay when no sensor data is available. */
+            const cx0 = svgWidth.current / 2
+            const cy0 = svgWidth.current / 2
+            svg.append("text")
+                .attr("x", cx0)
+                .attr("y", cy0)
+                .attr("text-anchor", "middle")
+                .attr("dominant-baseline", "middle")
+                .attr("transform", `rotate(-45, ${cx0}, ${cy0})`)
+                .style("font", "bold 36px times")
+                .style("fill", "rgba(180,0,0,0.55)")
+                .style("pointer-events", "none")
+                .text("Out of Order")
+        } else {
+            svg.append("text").attr("class", "wind-dial-latest-reading").attr("text-anchor", "end").attr("x", xa(-140)).attr("y", ya(460)).text("Latest Reading:")
+            svg.append("text").attr("class", "wind-dial-latest-reading").attr("text-anchor", "end").attr("x", xa(-140)).attr("y", ya(460) + 16).text(lastSeen)
+            svg.append("text").attr("class", "wind-dial-info").attr("x", xa(150)).attr("y", ya(460)).text("Speed: " + fmtSpeed(speed))
+            svg.append("text").attr("class", "wind-dial-info").attr("x", xa(150)).attr("y", ya(460) + 16).text("Direction: " + direction + "\u00B0")
 
-        svg.append("text").attr("class", "wind-dial-latest-reading").attr("x", xa(-500)).attr("y", ya(470)).text("Latest Reading: ")
-        svg.append("text").attr("class", "wind-dial-latest-reading").attr("x", xa(-500)).attr("y", ya(430)).text(lastSeen)
-        svg.append("text").attr("class", "wind-dial-speed").attr("x", xa(350) - 0).attr("y", ya(460)).text("Speed:")
-        svg.append("text").attr("x", xa(350) - 20).attr("y", ya(460) + 21).text(speed + " mph")
-        svg.append("text").attr("x", xa(350) - 10).attr("y", ya(460) + 46).text("Direction:")
-        svg.append("text").attr("x", xa(350) - 20).attr("y", ya(460) + 67).text(direction + " Deg")
-
-
-        svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400)).text("Cliff \u27C2 wind: " + (Math.cos((direction - 265) * Math.PI / 180) * speed).toFixed(1) + " mph")
-        const cross = Math.abs(Math.sin((direction - 265) * Math.PI / 180) * speed).toFixed(1)
-        const crossDir = Math.sin((direction - 265) * Math.PI / 180) > 0 ? 'S' : 'N'
-        svg.append("text").attr("x", xa(-490) - 0).attr("y", ya(-400) + 18).text("Cross wind: " + cross + " mph " + crossDir)
+            const perpMph = Math.cos((direction - 265) * Math.PI / 180) * speed
+            const crossMph = Math.abs(Math.sin((direction - 265) * Math.PI / 180) * speed)
+            const crossDir = Math.sin((direction - 265) * Math.PI / 180) > 0 ? 'S' : 'N'
+            svg.append("text").attr("class", "wind-dial-info").attr("x", xa(-490)).attr("y", ya(-400)).text("Cliff \u27C2 wind: " + fmtSpeed(perpMph))
+            svg.append("text").attr("class", "wind-dial-info").attr("x", xa(-490)).attr("y", ya(-400) + 15).text("Cross wind: " + fmtSpeed(crossMph) + " " + crossDir)
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [readings, lastSeen])
+    }, [readings, lastSeen, dataLoaded, noData, unit])
 
     return (
         <div
@@ -426,13 +454,11 @@ export function WindDial({ passedSeconds, picRef }: WindDialProps): React.ReactE
             onWheel={zoom}
             style={{
                 marginTop:
-                    picRef.current && picRef.current.clientHeight > sizeInPx
+                    window.innerWidth >= 992 && picRef.current && picRef.current.clientHeight > sizeInPx
                         ? (picRef.current.clientHeight - sizeInPx) / 2
-                        : 0,
-                marginLeft:
-                    divRef.current && divRef.current.clientWidth > sizeInPx
-                        ? (divRef.current.clientWidth - sizeInPx) / 2
-                        : 0,
+                        : window.innerWidth < 992 ? 50 : 0,
+                display: 'flex',
+                justifyContent: 'center',
             }}
         />
     )

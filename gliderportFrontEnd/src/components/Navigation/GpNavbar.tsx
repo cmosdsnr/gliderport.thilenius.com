@@ -214,6 +214,9 @@ export function GpNavbar(): React.ReactElement {
                             <NavDropdown.Item href={API.docs.pi3Server()} target="_blank" rel="noopener noreferrer">
                                 <FontAwesomeIcon icon={faBook} fixedWidth /> Pi3 Server Docs
                             </NavDropdown.Item>
+                            <NavDropdown.Item href={API.docs.mobileApp()} target="_blank" rel="noopener noreferrer">
+                                <FontAwesomeIcon icon={faBook} fixedWidth /> Mobile App Docs
+                            </NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/Debug">
                                 <FontAwesomeIcon icon={faBug} fixedWidth /> Debug
                             </NavDropdown.Item>

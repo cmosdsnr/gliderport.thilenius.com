@@ -143,7 +143,7 @@ export function HLSPlayer({
             autoPlay={autoPlay}
             muted={muted}
             playsInline
-            style={{ width: `${width}px`, height: height ? `${height}px` : 'auto' }}
+            style={{ width: '100%', maxWidth: `${width}px`, height: height ? `${height}px` : 'auto' }}
         >
             Your browser does not support HTML5 video.
         </video>

@@ -7,9 +7,11 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Table } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import { DayOfCodes } from '../History/History';
 import { codes } from '../Globals';
 import { API } from '@/api';
+import { useUnits, SPEED_UNITS } from '@/contexts/UnitsContext';
 
 /**
  * Displays today's wind forecast codes in a table.
@@ -20,10 +22,7 @@ import { API } from '@/api';
  * @returns {React.ReactElement} The rendered forecast table.
  */
 export function Today(): React.ReactElement {
-    /**
-     * State holding an array of forecast entries for today.
-     * Each entry is a tuple [timestampSec, codeValue].
-     */
+    const { unit, setUnit } = useUnits();
     const [today, setToday] = useState<DayOfCodes>([]);
 
     useEffect(() => {
@@ -58,32 +57,60 @@ export function Today(): React.ReactElement {
     }, []);
 
     return (
-        <Table size="sm" bordered hover className="forecast-table">
-            <thead>
-                <tr className="table-primary">
-                    <th colSpan={2}>Today's Forecast</th>
-                </tr>
-            </thead>
-            <tbody>
-                {today.map((codeEntry, i) => {
-                    const [ts, code] = codeEntry;
-                    return (
-                        <tr key={i}>
-                            <td className="forecast-time">
-                                {new Date(ts * 1000)
-                                    .toLocaleTimeString('en-GB', {
-                                        hour: '2-digit',
-                                        hour12: false,
-                                    })}
-                            </td>
-                            <td className="forecast-wind">
-                                {codes[code]?.code ?? 'Unknown'}
-                            </td>
-                        </tr>
-                    );
-                })}
-            </tbody>
-        </Table>
+        <div style={{ borderRadius: 8, border: '1px solid #b0c4de', overflow: 'hidden', marginBottom: 10 }}>
+            <div style={{
+                backgroundColor: '#1a5276', color: 'white',
+                padding: '5px 10px', fontWeight: 600, fontSize: '0.9rem',
+            }}>
+                Today's Forecast
+            </div>
+            <Table size="sm" bordered={false} className="forecast-table" style={{ marginBottom: 0 }}>
+                <tbody>
+                    {today.map((codeEntry, i) => {
+                        const [ts, code] = codeEntry;
+                        const bg = codes[code]?.color ?? 'transparent';
+                        return (
+                            <tr key={i} style={{ backgroundColor: bg }}>
+                                <td style={{ padding: '3px 8px', fontWeight: 600, whiteSpace: 'nowrap', fontSize: '0.82rem', width: 40 }}>
+                                    {new Date(ts * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                </td>
+                                <td style={{ padding: '3px 8px', fontSize: '0.82rem' }}>
+                                    {codes[code]?.code ?? 'Unknown'}
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </Table>
+            <div style={{ textAlign: 'center', padding: '4px 0', borderTop: '1px solid #b0c4de', fontSize: '0.8rem' }}>
+                <Link to="/forecast">Full Forecast</Link>
+            </div>
+            {/* Speed unit selector */}
+            <div style={{ borderTop: '1px solid #b0c4de', padding: '6px 6px 5px' }}>
+                <div style={{ fontSize: '0.7rem', color: '#666', marginBottom: 4, textAlign: 'center' }}>Speed units</div>
+                <div style={{ display: 'flex', gap: 4 }}>
+                    {SPEED_UNITS.map(({ key, label }) => (
+                        <button
+                            key={key}
+                            onClick={() => setUnit(key)}
+                            style={{
+                                flex: 1,
+                                padding: '3px 0',
+                                fontSize: '0.75rem',
+                                fontWeight: unit === key ? 600 : 400,
+                                color: unit === key ? '#fff' : '#1a5276',
+                                backgroundColor: unit === key ? '#1a5276' : 'transparent',
+                                border: '1px solid #1a5276',
+                                borderRadius: 4,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
     );
 };
 

@@ -230,5 +230,7 @@ export const API = {
         frontend:  () => url('/docs/frontend'),
         /** `GET /docs/pi3_server` — Pi 3 server TypeDoc site */
         pi3Server: () => url('/docs/pi3_server'),
+        /** `GET /docs/gliderportApp` — Mobile app TypeDoc site */
+        mobileApp: () => url('/docs/gliderportApp'),
     },
 };

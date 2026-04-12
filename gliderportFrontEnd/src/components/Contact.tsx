@@ -83,6 +83,18 @@ export function Contact(): React.ReactElement {
                 <Card.Header className="fw-semibold fs-5">Useful Links</Card.Header>
                 <ListGroup variant="flush">
                     <ListGroup.Item>
+                        {/* TODO: replace href with your Play Store listing URL */}
+                        <a href="https://play.google.com/store/apps" target="_blank" rel="noopener noreferrer">
+                            <img
+                                src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+                                alt="Get it on Google Play"
+                                height={48}
+                                style={{ marginLeft: '-8px', verticalAlign: 'middle' }}
+                            />
+                        </a>
+                        {' '}Android app — live wind, camera feed, text alert settings
+                    </ListGroup.Item>
+                    <ListGroup.Item>
                         <a href="https://www.windy.com/32.892/-117.240?100m,32.883,-117.240,14,m:ezYacTK" target="_blank" rel="noopener noreferrer">
                             Wind Predictions (location = Torrey Pines)
                         </a>

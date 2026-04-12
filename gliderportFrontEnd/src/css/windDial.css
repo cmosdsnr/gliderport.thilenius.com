@@ -7,10 +7,14 @@
 }
 
 .wind-dial-latest-reading {
-  font: 15px times;
+  font: 12px times;
 }
 
 .wind-dial-speed {
+  font: 12px times;
+}
+
+.wind-dial-info {
   font: 12px times;
 }
   
