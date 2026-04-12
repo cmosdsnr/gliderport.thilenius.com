@@ -140,13 +140,13 @@ export function Home(): React.ReactElement {
 
             {/* Today, CurrentTable, and donate section */}
             <Row className="home-data-row">
-                <Col xs={4} lg={{ span: 3 }} className="homePanel">
+                <Col xs={12} lg={{ span: 3 }} className="homePanel">
                     <Today />
                 </Col>
-                <Col xs={8} lg={{ span: 5 }} className="homePanel">
-                    <CurrentTable fontSize="min(15px, 1.5vw)" />
+                <Col xs={12} lg={{ span: 5 }} className="homePanel">
+                    <CurrentTable />
                 </Col>
-                <Col lg={{ span: 3, offset: 1 }} className="d-none d-lg-block homePanel">
+                <Col xs={12} lg={{ span: 3, offset: 1 }} className="homePanel">
                     <div className="text-center">
                         <div className="my-2">
                             If you enjoy this site … please consider leaving a donation!
@@ -175,10 +175,10 @@ export function Home(): React.ReactElement {
                             </a>
                             <div>
                                 <a
-                                    href="https://gliderport.thilenius.com/docs/gliderportApp/app.AAB"
+                                    href="https://expo.dev/accounts/cmosdsnr/projects/gliderport-app/builds/c0babe7d-2cac-434e-b0d2-e2f32f64401c"
                                     style={{ fontSize: '0.8rem' }}
                                 >
-                                    Temporary install link
+                                    Temporary Android install link
                                 </a>
                             </div>
                         </div>

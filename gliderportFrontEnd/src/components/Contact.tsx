@@ -95,10 +95,10 @@ export function Contact(): React.ReactElement {
                         {' '}Android app — live wind, camera feed, text alert settings
                         <div>
                             <a
-                                href="https://gliderport.thilenius.com/docs/gliderportApp/app.AAB"
+                                href="https://expo.dev/accounts/cmosdsnr/projects/gliderport-app/builds/c0babe7d-2cac-434e-b0d2-e2f32f64401c"
                                 style={{ fontSize: '0.8rem' }}
                             >
-                                Temporary install link
+                                Temporary Android install link
                             </a>
                         </div>
                     </ListGroup.Item>
