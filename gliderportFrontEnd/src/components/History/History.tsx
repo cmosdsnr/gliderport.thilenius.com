@@ -131,6 +131,7 @@ export function History(): React.ReactElement {
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const forecastCodes: Codes = await res.json();
 
+                // Merge today's forecast into the last (today's) row after the last sensor reading
                 const lastDay = codes[codes.length - 1];
                 const today = forecastCodes[0];
                 const lastTs = lastDay[lastDay.length - 1][0];
@@ -143,7 +144,6 @@ export function History(): React.ReactElement {
                     }
                 }
 
-                codes.push(forecastCodes[1]);
                 setHistory(codes);
             } catch (err: any) {
                 console.error('Error fetching forecast codes:', err.message);
@@ -171,7 +171,7 @@ export function History(): React.ReactElement {
                     </Button>
                 </Col>
                 <Col sm={6}>
-                    <h4>8 Day History with 2 Day Forecast</h4>
+                    <h4>Last 7 Days + Today</h4>
                 </Col>
             </Row>
 
