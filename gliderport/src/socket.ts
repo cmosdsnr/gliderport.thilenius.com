@@ -16,6 +16,7 @@ import fs from "fs";
 import path from "path";
 import { __logDir, log } from "log";
 import { DateTime } from "luxon";
+import { pb } from "./pb";
 
 /** Absolute path to the WebSocket ping/pong log file. */
 const __LogFile = path.join(__logDir, "pings.log");
@@ -30,6 +31,10 @@ interface ClientMetadata {
   ip: string;
   /** Timestamp (ms) of the last received message or pong */
   lastMessage: number;
+  /** Whether this client is a mobile app or web frontend */
+  clientType: "mobile" | "frontend";
+  /** Authenticated username (email), set on identify for mobile clients */
+  username?: string;
 }
 
 /** Map of WebSocket connections to their metadata. */
@@ -96,6 +101,7 @@ export function socketServer(server: http.Server): void {
       id: uuidv4(),
       ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress?.replace(/.*:/, "") || "unknown",
       lastMessage: Date.now(),
+      clientType: "frontend",
     };
     clients.set(ws, metadata);
     updateClients();
@@ -113,9 +119,28 @@ export function socketServer(server: http.Server): void {
       if (meta && message.command === "pong") {
         meta.lastMessage = Date.now();
         log(__LogFile, "ping", "pong from:", meta.id);
+      } else if (message.command === "identify") {
+        meta.clientType = message.clientType === "mobile" ? "mobile" : "frontend";
+        meta.username = message.username;
+        if (meta.clientType === "mobile") {
+          log(__LogFile, "socket", "Mobile client identified:", meta.username, "ip:", meta.ip);
+          if (pb) {
+            pb.collection("mobileConnections").create({
+              username: meta.username ?? "",
+              ip: meta.ip,
+            }).catch((err: any) => console.error("Failed to log mobile connection:", err.message));
+          }
+        }
+      } else if (message.command === "getConnectionCounts") {
+        let mobile = 0;
+        let frontend = 0;
+        for (const m of clients.values()) {
+          if (m.clientType === "mobile") mobile++;
+          else frontend++;
+        }
+        ws.send(JSON.stringify({ command: "connectionCounts", mobile, frontend }));
       } else if (message.command === "fetchData") {
         // Placeholder for handling various fetchData sub-commands
-        // e.g. Status, Forecast, Image1, etc.
       }
     });
   });
