@@ -173,6 +173,14 @@ export function Home(): React.ReactElement {
                                     style={{ marginLeft: '-8px' }}
                                 />
                             </a>
+                            <div>
+                                <a
+                                    href="https://gliderport.thilenius.com/docs/gliderportApp/app.AAB"
+                                    style={{ fontSize: '0.8rem' }}
+                                >
+                                    Temporary install link
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </Col>

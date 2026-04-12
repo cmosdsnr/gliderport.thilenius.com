@@ -93,6 +93,14 @@ export function Contact(): React.ReactElement {
                             />
                         </a>
                         {' '}Android app — live wind, camera feed, text alert settings
+                        <div>
+                            <a
+                                href="https://gliderport.thilenius.com/docs/gliderportApp/app.AAB"
+                                style={{ fontSize: '0.8rem' }}
+                            >
+                                Temporary install link
+                            </a>
+                        </div>
                     </ListGroup.Item>
                     <ListGroup.Item>
                         <a href="https://www.windy.com/32.892/-117.240?100m,32.883,-117.240,14,m:ezYacTK" target="_blank" rel="noopener noreferrer">
