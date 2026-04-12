@@ -307,8 +307,35 @@ export const convertToCodes = (windTable: WindTable): void => {
  * @param req - Express request (unused).
  * @param res - Express response.
  */
+/**
+ * Returns the last `numDays` days of codes, padding with NO_DATA days
+ * from the day after the last entry up to and including today.
+ */
+function getPaddedCodes(numDays: number): DayOfCodes[] {
+  if (codes.length === 0) return [];
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const todayMidnight = getLastMidnightLA(nowSec);
+
+  const result: DayOfCodes[] = [...codes];
+
+  // Advance one day past the last day in codes
+  let currentMidnight = getLastMidnightLA(result[result.length - 1][0][0]) + 24 * 3600;
+
+  // Pad with NO_DATA days up to and including today
+  while (currentMidnight <= todayMidnight) {
+    const sunData = getSun(DateTime.fromSeconds(currentMidnight).toJSDate());
+    const sr = Math.floor(sunData.sunrise.getTime() / 1000);
+    const ss = Math.floor(sunData.sunset.getTime() / 1000);
+    result.push([[sr, WindCode.NO_DATA], [ss, WindCode.IT_IS_DARK]]);
+    currentMidnight += 24 * 3600;
+  }
+
+  return result.slice(-numDays);
+}
+
 async function getWindTableCodesHandler(req: Request, res: Response): Promise<void> {
-  res.status(200).json({ codes });
+  res.status(200).json({ codes: getPaddedCodes(8) });
 }
 
 /**
