@@ -40,6 +40,10 @@ interface ClientMetadata {
 /** Map of WebSocket connections to their metadata. */
 const clients = new Map<WebSocket, ClientMetadata>();
 
+/** Tracks last PocketBase log time (ms) per username to deduplicate rapid reconnects. */
+const recentMobileConnections = new Map<string, number>();
+const MOBILE_CONNECTION_DEBOUNCE_MS = 60_000;
+
 /**
  * Logs the current number of connected clients.
  */
@@ -124,11 +128,16 @@ export function socketServer(server: http.Server): void {
         meta.username = message.username;
         if (meta.clientType === "mobile") {
           log(__LogFile, "socket", "Mobile client identified:", meta.username, "ip:", meta.ip);
-          if (pb) {
-            pb.collection("mobileConnections").create({
-              username: meta.username ?? "",
-              ip: meta.ip,
-            }).catch((err: any) => console.error("Failed to log mobile connection:", err.message));
+          const key = meta.username ?? meta.ip;
+          const lastSeen = recentMobileConnections.get(key) ?? 0;
+          if (Date.now() - lastSeen > MOBILE_CONNECTION_DEBOUNCE_MS) {
+            recentMobileConnections.set(key, Date.now());
+            if (pb) {
+              pb.collection("mobileConnections").create({
+                username: meta.username ?? "",
+                ip: meta.ip,
+              }).catch((err: any) => console.error("Failed to log mobile connection:", err.message));
+            }
           }
         }
       } else if (message.command === "getConnectionCounts") {
