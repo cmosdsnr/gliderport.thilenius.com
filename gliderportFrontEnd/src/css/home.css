@@ -15,4 +15,40 @@
     .home-video-col { margin-top: 0; }
 }
 .home-data-row { padding: 20px; background-color: rgb(255,255,200); }
-.home-tabs-row { background-color: rgb(240,255,255); }
+.home-tabs-row { background-color: rgb(240,255,255); margin-top: 10px; }
+
+/* Tab bar */
+.home-tabs-row .react-tabs__tab-list {
+    border-bottom: 2px solid #a0c4d8;
+    margin: 0;
+    padding: 8px 12px 0;
+    background: transparent;
+}
+
+/* Individual tabs */
+.home-tabs-row .react-tabs__tab {
+    border: 1px solid #a0c4d8;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 6px 18px;
+    margin-right: 4px;
+    background-color: rgb(210, 240, 248);
+    color: #2c6e8a;
+    font-weight: 500;
+    font-size: 0.9rem;
+    bottom: -2px;
+    cursor: pointer;
+}
+
+.home-tabs-row .react-tabs__tab:hover {
+    background-color: rgb(190, 228, 240);
+}
+
+/* Active/selected tab */
+.home-tabs-row .react-tabs__tab--selected {
+    background-color: rgb(240,255,255);
+    color: #1a5276;
+    font-weight: 700;
+    border-color: #a0c4d8;
+    border-bottom-color: rgb(240,255,255);
+}

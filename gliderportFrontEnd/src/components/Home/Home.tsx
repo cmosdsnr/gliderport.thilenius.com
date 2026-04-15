@@ -17,8 +17,7 @@ import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useSocialData } from '@/contexts/SocialDataContext';
 import { useSensorData } from '@/contexts/SensorDataContext';
 import History from '../History/History';
-import CurrentTable from './CurrentTable';
-import Today from './Today';
+import ConditionsPanel from './ConditionsPanel';
 import WindDial from './WindDial';
 import Status from '../Status';
 import Charts from '../Charts/Charts';
@@ -138,13 +137,10 @@ export function Home(): React.ReactElement {
                 </Row>
             )}
 
-            {/* Today, CurrentTable, and donate section */}
+            {/* Conditions panel + donate section */}
             <Row className="home-data-row">
-                <Col xs={12} lg={{ span: 3 }} className="homePanel">
-                    <Today />
-                </Col>
-                <Col xs={12} lg={{ span: 5 }} className="homePanel">
-                    <CurrentTable />
+                <Col xs={12} lg={{ span: 8 }} className="homePanel">
+                    <ConditionsPanel />
                 </Col>
                 <Col xs={12} lg={{ span: 3, offset: 1 }} className="homePanel">
                     <div className="text-center">
