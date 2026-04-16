@@ -8,7 +8,7 @@
  *   custom context hooks for data and status.
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Row, Col } from 'react-bootstrap';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
@@ -23,6 +23,7 @@ import Status from '../Status';
 import Charts from '../Charts/Charts';
 import UpdatingVideo from './UpdatingVideo';
 import KoFiWidget from './KoFiWidget';
+import { AndroidBetaModal } from '../AndroidBetaModal';
 import { useStatusCollection } from '@/contexts/StatusCollection';
 import 'css/home.css';
 import { useWindow } from 'hooks/useWindow';
@@ -82,6 +83,7 @@ const Message: React.FC = () => {
  * @returns {React.ReactElement}
  */
 export function Home(): React.ReactElement {
+    const [showBeta, setShowBeta] = useState(false);
     // Reference for sizing the WindDial container
     const picRef = useRef<HTMLDivElement>(null);
     const width = useWindow();
@@ -95,6 +97,7 @@ export function Home(): React.ReactElement {
 
     return (
         <>
+            <AndroidBetaModal show={showBeta} onHide={() => setShowBeta(false)} />
             {/* Fixed bottom grid-size banner */}
             {showGridSize && (
                 <div style={{
@@ -171,8 +174,9 @@ export function Home(): React.ReactElement {
                             </a>
                             <div>
                                 <a
-                                    href="https://expo.dev/accounts/cmosdsnr/projects/gliderport-app/builds/c0babe7d-2cac-434e-b0d2-e2f32f64401c"
+                                    href="#"
                                     style={{ fontSize: '0.8rem' }}
+                                    onClick={(e) => { e.preventDefault(); setShowBeta(true); }}
                                 >
                                     Temporary Android install link
                                 </a>

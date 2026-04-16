@@ -3,12 +3,13 @@
  * Contact page for the Gliderport application.
  * Displays contact information and a description of the site.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container';
 import Card from 'react-bootstrap/Card';
 import ListGroup from 'react-bootstrap/ListGroup';
+import { AndroidBetaModal } from './AndroidBetaModal';
 import 'css/contact.css';
 
 /**
@@ -16,8 +17,11 @@ import 'css/contact.css';
  * @returns {React.ReactElement} The rendered contact page.
  */
 export function Contact(): React.ReactElement {
+    const [showBeta, setShowBeta] = useState(false);
+
     return (
         <Container className="py-4">
+            <AndroidBetaModal show={showBeta} onHide={() => setShowBeta(false)} />
             <Card className="shadow-sm mx-auto" style={{ maxWidth: '800px' }}>
                 <Card.Body>
                     <p>
@@ -95,8 +99,9 @@ export function Contact(): React.ReactElement {
                         {' '}Android app — live wind, camera feed, text alert settings
                         <div>
                             <a
-                                href="https://expo.dev/accounts/cmosdsnr/projects/gliderport-app/builds/c0babe7d-2cac-434e-b0d2-e2f32f64401c"
+                                href="#"
                                 style={{ fontSize: '0.8rem' }}
+                                onClick={(e) => { e.preventDefault(); setShowBeta(true); }}
                             >
                                 Temporary Android install link
                             </a>
