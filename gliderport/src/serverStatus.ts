@@ -19,7 +19,7 @@ let online: boolean = false;
 let lastOnline: boolean = false;
 
 /** URL of the ESP32 device at Gliderport, externally exposed. Polled every 60 seconds. */
-const url = "http://104.36.31.118:8082/name";
+const url = "http://104.36.31.118:8080/name";
 
 /**
  * Number of consecutive failed HTTP requests to {@link url}.
