@@ -2,6 +2,7 @@
   "folders": [                                                                                                                            
     { "path": ".", "name": "____ 🗂 Root" }, 
     { "path": "gliderportFrontEnd", "name": "____ 🖥 Frontend" },
+    { "path": "D:\\gliderportApp", "name": "____ 📱 Mobile App (Expo/RN)" },
     { "path": "gliderport", "name": "____ ⚙️ Backend" },
     { "path": "C:\\Git\\web\\buddStServer\\thilenius.com\\Stephen\\4inDisplay_S3", "name": "____ 🔧 ESP32 Firmware (PlatformIO)" },
     { "path": "gp_pi3_server", "name": "____ 📡 PI3 Server (JS)" },
@@ -10,6 +11,7 @@
  "settings": {
     "files.exclude": {   
         "gliderportFrontEnd/**": true,
+        "gliderportApp/**": true,
         "gliderport/**": true,
         "gp_pi3_server/**": true,
         ".vscode/**": true   

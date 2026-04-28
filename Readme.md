@@ -10,10 +10,35 @@ An Express/TypeScript Node.js server (Node 22, ESM) running as the primary produ
 ### 2. `gliderportFrontEnd` (The Web Portal)
 A React 18/Vite TypeScript single-page application. Renders wind data charts, live HLS camera streams, image galleries, and real-time dashboards. Communicates with the backend for live and historical data via REST and WebSockets. Built output is served by `gliderport`.
 
-### 3. `gp_pi3_server` (The Pi 3 Data Logger)
+### 3. `gliderportApp` (The Mobile App)
+A React Native app built with Expo SDK 53 and Expo Router (file-based navigation). Provides the core gliderport experience on iOS and Android:
+
+| Tab           | Content                                                                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Home**      | SVG wind dial with last-10-readings history, live HLS camera feed (camera 1/2 toggle), current conditions table, today's hourly wind codes |
+| **Charts**    | 24-hour SVG line charts — wind speed, direction, temperature, pressure, humidity                                                           |
+| **History**   | Colour-coded wind-code grid for the last 8 days plus today's forecast; horizontal scroll                                                   |
+| **Forecast**  | 5-day OpenWeatherMap forecast (3-hour slots) grouped by day                                                                                |
+| **Dashboard** | User profile, live conditions, text-alert settings — login-gated via PocketBase                                                            |
+
+**Key libraries:** `react-native-svg` (dial + charts), `expo-video` (HLS), `pocketbase` (auth), `expo-secure-store` (token persistence).
+
+**Setup:**
+```bash
+cd gliderportApp
+cp .env.example .env   # fill in EXPO_PUBLIC_SERVER_URL, EXPO_PUBLIC_WS_URL, EXPO_PUBLIC_PB_URL
+yarn install
+yarn start             # scan QR with Expo Go
+```
+
+Assets (`assets/icon.png`, `assets/splash.png`, `assets/adaptive-icon.png`, `assets/favicon.png`) must be added before building a standalone binary with EAS.
+
+---
+
+### 4. `gp_pi3_server` (The Pi 3 Data Logger)
 An Express/TypeScript server (Node 22, ESM) running on a Raspberry Pi 3 on-site. Handles weather station data ingestion, cron-based logging to MySQL and PocketBase, and local sensor interfacing. Receives ESP32 sensor data and IP registration requests.
 
-### 4. `4inDisplay_S3` (The ESP32-S3 Firmware)
+### 5. `4inDisplay_S3` (The ESP32-S3 Firmware)
 PlatformIO/Arduino C++ firmware for an ESP32-S3 with a 4-inch ILI9488 TFT touchscreen display. Built with the `-D GLIDERPORT` compile flag for this project. Responsibilities:
 
 - **Wind measurement** — reads a reed-switch anemometer (speed pin + direction pin) via a 2 ms hardware timer ISR with hysteresis filtering. Converts pulse timing to mph (`speed = 1337.6 / period`) and direction in degrees (`dir = 143 - (360 * dirLow / speedHigh)`).
@@ -25,21 +50,21 @@ PlatformIO/Arduino C++ firmware for an ESP32-S3 with a 4-inch ILI9488 TFT touchs
 
 Firmware source: `C:\Git\web\buddStServer\thilenius.com\Stephen\4inDisplay_S3`
 
-### 5. `espserver` (The ESP32 Onboard Web UI)
+### 6. `espserver` (The ESP32 Onboard Web UI)
 A React 18 + TypeScript SPA that is flashed onto the ESP32's LittleFS filesystem and served directly from the device. It connects back to the ESP32 via WebSocket and provides a full device-management interface with 10 tabs:
 
-| Tab | Function |
-|---|---|
-| Reprogram | OTA firmware / filesystem / individual file upload with MD5 verification |
-| Filesystem | Visual flash partition map; LittleFS and SD card file browser / upload / download / delete |
-| Logs | Real-time event log pushed by firmware via `SocketCode.EVENT` |
-| Other Devices | ESP device registry fetched from Cloudflare Worker (refreshes every 60 s) |
-| WiFi & Networks | WiFi status, network scan, saved credential management |
-| Miscellaneous | Placeholder |
-| Interrupts | Placeholder |
-| Pin Values | Real-time 48-pin GPIO grid (green = HIGH, red = LOW, yellow = unknown) |
-| Readings | Full `variables` JSON inspector |
-| Serial Text | Web serial terminal with dynamic firmware-defined command buttons |
+| Tab             | Function                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| Reprogram       | OTA firmware / filesystem / individual file upload with MD5 verification                   |
+| Filesystem      | Visual flash partition map; LittleFS and SD card file browser / upload / download / delete |
+| Logs            | Real-time event log pushed by firmware via `SocketCode.EVENT`                              |
+| Other Devices   | ESP device registry fetched from Cloudflare Worker (refreshes every 60 s)                  |
+| WiFi & Networks | WiFi status, network scan, saved credential management                                     |
+| Miscellaneous   | Placeholder                                                                                |
+| Interrupts      | Placeholder                                                                                |
+| Pin Values      | Real-time 48-pin GPIO grid (green = HIGH, red = LOW, yellow = unknown)                     |
+| Readings        | Full `variables` JSON inspector                                                            |
+| Serial Text     | Web serial terminal with dynamic firmware-defined command buttons                          |
 
 **Deployment:** `go.bat` runs `yarn build` and copies the output into `4inDisplay_S3/data/`, which PlatformIO then uploads to the ESP32's LittleFS partition via `pio run --target uploadfs`.
 
@@ -84,8 +109,9 @@ The Client ID and Client Secret from that page go into PocketBase under:
 2× Lorex E841CA-E, installed Sept. 2024. Both route to a waterproof box under the solar panels containing a PoE 5-port switch (power + ethernet from office).
 
 Fixed IPs set in MikroTik DHCP leases:
-- `104.36.31.118:8080` (left-looking) → `192.168.88.217` — MAC: `00:1F:54:8B:90:19`
-- `104.36.31.118:8081` (right-looking) → `192.168.88.216` — MAC: `00:1F:54:8B:8C:23`
+- `104.36.31.118:8080` ESP32 → `192.168.88.140` — MAC: `80:B5:4E:C6:32:DC`
+- `104.36.31.118:8081` (left-looking) → `192.168.88.217` — MAC: `00:1F:54:8B:90:19`
+- `104.36.31.118:8082` (right-looking) → `192.168.88.216` — MAC: `00:1F:54:8B:8C:23`
 - u: admin / pw: gliderport (both cameras)
 
 To fix IP in MikroTik: IP → DHCP Server → Leases
