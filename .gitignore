@@ -33,6 +33,7 @@ gliderport/info/
 gliderport/objects/
 gliderport/refs/
 gliderport/packed-refs
+gliderport/public
 
 gliderportFrontEnd/HEAD
 gliderportFrontEnd/ORIG_HEAD
